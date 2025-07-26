@@ -1,0 +1,452 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+
+{% block title %}Register - Professional eCommerce{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h2>Create Account</h2>
+                <p>Join our community and start shopping today</p>
+            </div>
+
+            <!-- Display Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" class="auth-form" id="registerForm">
+                {% csrf_token %}
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="first_name" class="form-label">First Name</label>
+                        <input type="text" 
+                               id="first_name" 
+                               name="first_name" 
+                               class="form-control" 
+                               placeholder="Enter your first name"
+                               required>
+                        <div class="form-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="last_name" class="form-label">Last Name</label>
+                        <input type="text" 
+                               id="last_name" 
+                               name="last_name" 
+                               class="form-control" 
+                               placeholder="Enter your last name"
+                               required>
+                        <div class="form-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input type="email" 
+                           id="email" 
+                           name="email" 
+                           class="form-control" 
+                           placeholder="Enter your email"
+                           required>
+                    <div class="form-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone" class="form-label">Phone Number (Optional)</label>
+                    <input type="tel" 
+                           id="phone" 
+                           name="phone" 
+                           class="form-control" 
+                           placeholder="Enter your phone number">
+                    <div class="form-icon">
+                        <i class="fas fa-phone"></i>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" 
+                           id="password" 
+                           name="password" 
+                           class="form-control" 
+                           placeholder="Create a password"
+                           required
+                           minlength="8">
+                    <div class="form-icon">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm_password" class="form-label">Confirm Password</label>
+                    <input type="password" 
+                           id="confirm_password" 
+                           name="confirm_password" 
+                           class="form-control" 
+                           placeholder="Confirm your password"
+                           required
+                           minlength="8">
+                    <div class="form-icon">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <button type="button" class="password-toggle" onclick="togglePassword('confirm_password')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+
+                <!-- Password Strength Indicator -->
+                <div class="password-strength">
+                    <div class="strength-bar">
+                        <div class="strength-fill" id="strengthFill"></div>
+                    </div>
+                    <div class="strength-text" id="strengthText">Password strength</div>
+                </div>
+
+                <div class="form-options">
+                    <label class="checkbox-container">
+                        <input type="checkbox" name="terms_accepted" required>
+                        <span class="checkmark"></span>
+                        I agree to the <a href="#" target="_blank">Terms of Service</a> and <a href="#" target="_blank">Privacy Policy</a>
+                    </label>
+                </div>
+
+                <div class="form-options">
+                    <label class="checkbox-container">
+                        <input type="checkbox" name="newsletter_subscription">
+                        <span class="checkmark"></span>
+                        Subscribe to our newsletter for deals and updates
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">
+                    <i class="fas fa-user-plus"></i>
+                    Create Account
+                </button>
+            </form>
+
+            <div class="auth-divider">
+                <span>or</span>
+            </div>
+
+            <div class="social-login">
+                <button class="btn btn-social btn-google">
+                    <i class="fab fa-google"></i>
+                    Sign up with Google
+                </button>
+                <button class="btn btn-social btn-facebook">
+                    <i class="fab fa-facebook"></i>
+                    Sign up with Facebook
+                </button>
+            </div>
+
+            <div class="auth-footer">
+                <p>Already have an account? 
+                    <a href="{% url 'frontend:login' %}">Sign in here</a>
+                </p>
+            </div>
+        </div>
+
+        <div class="auth-benefits">
+            <h3>Join thousands of happy customers</h3>
+            <div class="benefits-grid">
+                <div class="benefit-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <h4>Secure Shopping</h4>
+                    <p>Your data is protected with industry-standard security</p>
+                </div>
+                <div class="benefit-item">
+                    <i class="fas fa-shipping-fast"></i>
+                    <h4>Fast Delivery</h4>
+                    <p>Quick and reliable shipping to your doorstep</p>
+                </div>
+                <div class="benefit-item">
+                    <i class="fas fa-headset"></i>
+                    <h4>24/7 Support</h4>
+                    <p>Get help whenever you need it from our support team</p>
+                </div>
+                <div class="benefit-item">
+                    <i class="fas fa-tags"></i>
+                    <h4>Exclusive Deals</h4>
+                    <p>Access to member-only discounts and promotions</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .password-strength {
+        margin: -1rem 0 1.5rem 0;
+    }
+
+    .strength-bar {
+        width: 100%;
+        height: 4px;
+        background: var(--border-color);
+        border-radius: 2px;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+    }
+
+    .strength-fill {
+        height: 100%;
+        width: 0%;
+        transition: all 0.3s ease;
+        border-radius: 2px;
+    }
+
+    .strength-text {
+        font-size: 0.875rem;
+        color: var(--secondary-color);
+    }
+
+    .strength-weak { background-color: #dc3545; }
+    .strength-fair { background-color: #ffc107; }
+    .strength-good { background-color: #17a2b8; }
+    .strength-strong { background-color: #28a745; }
+
+    .benefits-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .benefit-item {
+        text-align: center;
+        padding: 1rem;
+        background: var(--white);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .benefit-item i {
+        font-size: 2rem;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .benefit-item h4 {
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+        color: var(--dark-color);
+    }
+
+    .benefit-item p {
+        font-size: 0.875rem;
+        color: var(--secondary-color);
+        line-height: 1.4;
+    }
+
+    .checkbox-container a {
+        color: var(--primary-color);
+        text-decoration: none;
+    }
+
+    .checkbox-container a:hover {
+        text-decoration: underline;
+    }
+
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 0;
+        }
+
+        .benefits-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function togglePassword(fieldId) {
+        const passwordInput = document.getElementById(fieldId);
+        const toggleButton = passwordInput.nextElementSibling.nextElementSibling.querySelector('i');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleButton.className = 'fas fa-eye-slash';
+        } else {
+            passwordInput.type = 'password';
+            toggleButton.className = 'fas fa-eye';
+        }
+    }
+
+    // Password strength checker
+    function checkPasswordStrength(password) {
+        let strength = 0;
+        let feedback = 'Weak';
+        
+        if (password.length >= 8) strength += 1;
+        if (password.match(/[a-z]/)) strength += 1;
+        if (password.match(/[A-Z]/)) strength += 1;
+        if (password.match(/[0-9]/)) strength += 1;
+        if (password.match(/[^a-zA-Z0-9]/)) strength += 1;
+        
+        const strengthFill = document.getElementById('strengthFill');
+        const strengthText = document.getElementById('strengthText');
+        
+        strengthFill.className = 'strength-fill';
+        
+        switch(strength) {
+            case 0:
+            case 1:
+                strengthFill.style.width = '25%';
+                strengthFill.classList.add('strength-weak');
+                feedback = 'Weak';
+                break;
+            case 2:
+                strengthFill.style.width = '50%';
+                strengthFill.classList.add('strength-fair');
+                feedback = 'Fair';
+                break;
+            case 3:
+            case 4:
+                strengthFill.style.width = '75%';
+                strengthFill.classList.add('strength-good');
+                feedback = 'Good';
+                break;
+            case 5:
+                strengthFill.style.width = '100%';
+                strengthFill.classList.add('strength-strong');
+                feedback = 'Strong';
+                break;
+        }
+        
+        strengthText.textContent = `Password strength: ${feedback}`;
+        return strength;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('registerForm');
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirm_password');
+
+        // Password strength checker
+        passwordInput.addEventListener('input', function() {
+            checkPasswordStrength(this.value);
+        });
+
+        // Form validation
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+            
+            // Remove previous error styling
+            document.querySelectorAll('.form-control').forEach(input => {
+                input.classList.remove('error');
+            });
+
+            // Get form data
+            const formData = new FormData(form);
+            const firstName = formData.get('first_name').trim();
+            const lastName = formData.get('last_name').trim();
+            const email = formData.get('email').trim();
+            const password = formData.get('password');
+            const confirmPassword = formData.get('confirm_password');
+            const termsAccepted = formData.get('terms_accepted');
+
+            // Validation
+            if (!firstName) {
+                document.getElementById('first_name').classList.add('error');
+                isValid = false;
+            }
+
+            if (!lastName) {
+                document.getElementById('last_name').classList.add('error');
+                isValid = false;
+            }
+
+            if (!email || !isValidEmail(email)) {
+                document.getElementById('email').classList.add('error');
+                isValid = false;
+            }
+
+            if (!password || password.length < 8) {
+                document.getElementById('password').classList.add('error');
+                isValid = false;
+            }
+
+            if (password !== confirmPassword) {
+                document.getElementById('confirm_password').classList.add('error');
+                ecommerceApp.showNotification('Passwords do not match', 'error');
+                isValid = false;
+            }
+
+            if (!termsAccepted) {
+                ecommerceApp.showNotification('Please accept the Terms of Service', 'error');
+                isValid = false;
+            }
+
+            const passwordStrength = checkPasswordStrength(password);
+            if (passwordStrength < 2) {
+                document.getElementById('password').classList.add('error');
+                ecommerceApp.showNotification('Please use a stronger password', 'error');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+            }
+        });
+
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        // Real-time email validation
+        document.getElementById('email').addEventListener('blur', function() {
+            if (this.value && !isValidEmail(this.value)) {
+                this.classList.add('error');
+                ecommerceApp.showNotification('Please enter a valid email address', 'error');
+            } else {
+                this.classList.remove('error');
+            }
+        });
+
+        // Phone number formatting (optional)
+        document.getElementById('phone').addEventListener('input', function() {
+            let value = this.value.replace(/\D/g, '');
+            if (value.length > 0) {
+                if (value.length <= 3) {
+                    value = `(${value}`;
+                } else if (value.length <= 6) {
+                    value = `(${value.slice(0, 3)}) ${value.slice(3)}`;
+                } else {
+                    value = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6, 10)}`;
+                }
+            }
+            this.value = value;
+        });
+    });
+</script>
+{% endblock %}

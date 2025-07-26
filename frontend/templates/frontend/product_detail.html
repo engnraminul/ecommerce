@@ -1,0 +1,2685 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} - Professional eCommerce{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb">
+            <a href="{% url 'frontend:home' %}">Home</a>
+            <span class="breadcrumb-separator">/</span>
+            <a href="{% url 'frontend:categories' %}">Categories</a>
+            <span class="breadcrumb-separator">/</span>
+            <a href="{% url 'frontend:category_products' product.category.slug %}">{{ product.category.name }}</a>
+            <span class="breadcrumb-separator">/</span>
+            <span class="current">{{ product.name }}</span>
+        </nav>
+
+        <!-- Product Detail Section -->
+        <div class="product-detail">
+            <div class="product-detail-grid">
+                <!-- Product Images -->
+                <div class="product-images">
+                    <div class="main-image-container">
+                        {% if product.images.exists %}
+                            <img src="{{ product.images.first.image.url }}" 
+                                 alt="{{ product.name }}" 
+                                 id="main-product-image"
+                                 class="main-image"
+                                 onerror="this.onerror=null; this.src='{{ MEDIA_URL }}default.webp';">
+                        {% else %}
+                            <img src="{{ MEDIA_URL }}default.webp" 
+                                 alt="{{ product.name }}" 
+                                 id="main-product-image"
+                                 class="main-image"
+                                 onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAwIiBoZWlnaHQ9IjUwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjhmOWZhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzZjNzU3ZCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';">
+                        {% endif %}
+                        
+                        <!-- Image Badge -->
+                        {% if product.is_featured %}
+                        <div class="image-badge featured">
+                            <i class="fas fa-star"></i>
+                            Featured
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Zoom Button -->
+                        <button class="zoom-btn" onclick="openImageModal()">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Thumbnail Gallery -->
+                    {% if product.images.count > 1 %}
+                    <div class="thumbnail-gallery">
+                        {% for image in product.images.all %}
+                        <img src="{{ image.image.url }}" 
+                             alt="{{ product.name }}" 
+                             class="thumbnail {% if forloop.first %}active{% endif %}"
+                             onclick="changeMainImage(this.src)"
+                             onerror="this.onerror=null; this.src='{{ MEDIA_URL }}default.webp';">
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Product Information -->
+                <div class="product-info">
+                    <div class="product-header">
+                        <div class="product-category">
+                            <a href="{% url 'frontend:category_products' product.category.slug %}">
+                                {{ product.category.name }}
+                            </a>
+                        </div>
+                        <h1 class="product-title">{{ product.name }}</h1>
+                        
+                        <!-- Product Rating -->
+                        <div class="product-rating">
+                            <div class="rating-stars">
+                                {% for i in "12345" %}
+                                    <i class="fas fa-star {% if i|add:0 <= product.average_rating %}filled{% endif %}"></i>
+                                {% endfor %}
+                            </div>
+                            <span class="rating-text">({{ product.reviews.count }} reviews)</span>
+                        </div>
+                        
+                        <!-- Product Price -->
+                        <div class="product-pricing">
+                            <div class="price-container">
+                                <span class="current-price" id="variant-current-price">${{ product.price }}</span>
+                                {% if product.compare_price and product.compare_price > product.price %}
+                                <span class="original-price" id="variant-original-price">${{ product.compare_price }}</span>
+                                <span class="discount-badge" id="variant-discount-badge">
+                                    {% widthratio product.price product.compare_price 100 as discount %}
+                                    {{ discount|floatformat:0 }}% OFF
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div class="savings" id="variant-savings">
+                                {% if product.compare_price and product.compare_price > product.price %}
+                                You save ${{ product.compare_price|floatformat:2|add:"-"|add:product.price }}
+                                {% endif %}
+                            </div>
+                            <div class="price-note" id="variant-price-note" style="display: none;">
+                                <small>Price varies by variant selection</small>
+                            </div>
+                        </div>
+                    </div>
+
+                                        <!-- Product Variants -->
+                    {% if product.variants.exists %}
+                    <div class="product-variants">
+                        <h3>{{ product.variants.first.name|truncatewords:2 }} Options</h3>
+                        
+                        <!-- Color Selector -->
+                        {% with available_colors=product.variants.all %}
+                        {% regroup available_colors by color as color_groups %}
+                        {% if color_groups %}
+                        <div class="variant-selector color-selector">
+                            <label>Color: <span id="selected-color-label">Please select</span></label>
+                            <div class="color-grid">
+                                {% for color_group in color_groups %}
+                                {% if color_group.grouper %}
+                                {% with first_variant=color_group.list.0 %}
+                                <button class="color-btn" 
+                                        data-color="{{ color_group.grouper }}" 
+                                        data-color-name="{% for word in first_variant.name.split %}{% if forloop.first %}{{ word }}{% endif %}{% endfor %}"
+                                        title="{% for word in first_variant.name.split %}{% if forloop.first %}{{ word }}{% endif %}{% endfor %}">
+                                    {% if first_variant.image %}
+                                    <img src="{{ first_variant.image.url }}" 
+                                         alt="{% for word in first_variant.name.split %}{% if forloop.first %}{{ word }}{% endif %}{% endfor %}" 
+                                         class="color-thumbnail"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                    <span class="color-display" style="background-color: {{ color_group.grouper }}; display: none;"></span>
+                                    {% else %}
+                                    <span class="color-display" style="background-color: {{ color_group.grouper }};"></span>
+                                    {% endif %}
+                                    <span class="color-name">{% for word in first_variant.name.split %}{% if forloop.first %}{{ word }}{% endif %}{% endfor %}</span>
+                                </button>
+                                {% endwith %}
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endwith %}
+                        
+                        <!-- Size Selector -->
+                        {% with available_sizes=product.variants.all %}
+                        {% regroup available_sizes by size as size_groups %}
+                        {% if size_groups %}
+                        <div class="variant-selector size-selector">
+                            <label>Size: <span id="selected-size-label">Please select color first</span></label>
+                            <div class="size-grid">
+                                {% for size_group in size_groups %}
+                                {% if size_group.grouper %}
+                                <button class="size-btn disabled" 
+                                        data-size="{{ size_group.grouper }}" 
+                                        title="{{ size_group.grouper }}"
+                                        disabled>
+                                    {{ size_group.grouper }}
+                                </button>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endwith %}
+                        
+                        <!-- Hidden variants data for JavaScript -->
+                        <script type="application/json" id="variants-data">
+                        [
+                            {% for variant in product.variants.all %}
+                            {% if variant.is_active %}
+                            {
+                                "id": {{ variant.id }},
+                                "name": "{{ variant.name|escapejs }}",
+                                "color": "{{ variant.color|default:""|escapejs }}",
+                                "colorName": "{% for word in variant.name.split %}{% if forloop.first %}{{ word }}{% endif %}{% endfor %}",
+                                "size": "{{ variant.size|default:""|escapejs }}",
+                                "price": "{{ variant.effective_price }}",
+                                "comparePrice": "{{ product.compare_price|default:0 }}",
+                                "stock": {{ variant.stock_quantity }},
+                                "sku": "{{ variant.sku|escapejs }}",
+                                "image": "{% if variant.image %}{{ variant.image.url }}{% else %}{{ MEDIA_URL }}default.webp{% endif %}"
+                            }{% if not forloop.last %},{% endif %}
+                            {% endif %}
+                            {% endfor %}
+                        ]
+                        </script>
+                    </div>
+                    {% endif %}
+
+                    <!-- Product Actions -->
+                    <div class="product-actions">
+                        {% if product.is_active %}
+                        <div class="quantity-selector">
+                            <label for="quantity">Quantity:</label>
+                            <div class="quantity-controls">
+                                <button type="button" onclick="changeQuantity(-1)">-</button>
+                                <input type="number" id="quantity" value="1" min="1" max="10">
+                                <button type="button" onclick="changeQuantity(1)">+</button>
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button class="add-to-cart-btn primary" data-product-id="{{ product.id }}">
+                                <i class="fas fa-shopping-cart"></i>
+                                Add to Cart
+                            </button>
+                            <button class="wishlist-btn secondary" data-product-id="{{ product.id }}">
+                                <i class="far fa-heart"></i>
+                                Wishlist
+                            </button>
+                        </div>
+                        
+                        <button class="buy-now-btn" data-product-id="{{ product.id }}">
+                            <i class="fas fa-bolt"></i>
+                            Buy Now
+                        </button>
+                        {% else %}
+                        <div class="out-of-stock">
+                            <i class="fas fa-times-circle"></i>
+                            <span>Currently Out of Stock</span>
+                            <button class="notify-btn">Notify When Available</button>
+                        </div>
+                        {% endif %}
+                    </div>
+
+
+
+                    
+
+                    <!-- Share Options -->
+                    <div class="share-section">
+                        <span>Share:</span>
+                        <div class="share-buttons">
+                            <button class="share-btn facebook">
+                                <i class="fab fa-facebook-f"></i>
+                            </button>
+                            <button class="share-btn twitter">
+                                <i class="fab fa-twitter"></i>
+                            </button>
+                            <button class="share-btn pinterest">
+                                <i class="fab fa-pinterest"></i>
+                            </button>
+                            <button class="share-btn copy-link">
+                                <i class="fas fa-link"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Details Tabs -->
+        <div class="product-tabs">
+            <div class="tab-navigation">
+                <button class="tab-btn active" data-tab="description">Description</button>
+                <button class="tab-btn" data-tab="specifications">Specifications</button>
+                <button class="tab-btn" data-tab="reviews">Reviews ({{ product.reviews.count }})</button>
+                <button class="tab-btn" data-tab="shipping">Shipping & Returns</button>
+            </div>
+            
+            <div class="tab-content">
+                <!-- Description Tab -->
+                <div class="tab-panel active" id="description">
+                    <div class="description-content">
+                        <h3>Product Description</h3>
+                        <div class="description-text">
+                            {{ product.description|linebreaks }}
+                        </div>
+                        {% if product.features %}
+                        <h4>Key Features</h4>
+                        <ul class="features-list">
+                            {% for feature in product.features %}
+                            <li>{{ feature }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Specifications Tab -->
+                <div class="tab-panel" id="specifications">
+                    <div class="specifications-content">
+                        <h3>Product Specifications</h3>
+                        <div class="spec-table">
+                            <div class="spec-row">
+                                <span class="spec-label">SKU:</span>
+                                <span class="spec-value">{{ product.sku|default:"Not specified" }}</span>
+                            </div>
+                            <div class="spec-row">
+                                <span class="spec-label">Category:</span>
+                                <span class="spec-value">{{ product.category.name }}</span>
+                            </div>
+                            <div class="spec-row">
+                                <span class="spec-label">Weight:</span>
+                                <span class="spec-value">{{ product.weight|default:"Not specified" }}</span>
+                            </div>
+                            <div class="spec-row">
+                                <span class="spec-label">Dimensions:</span>
+                                <span class="spec-value">{{ product.dimensions|default:"Not specified" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Reviews Tab -->
+                <div class="tab-panel" id="reviews">
+                    <div class="reviews-content">
+                        <div class="reviews-summary">
+                            <div class="rating-overview">
+                                <div class="average-rating">
+                                    <span class="rating-number">{{ product.average_rating|floatformat:1 }}</span>
+                                    <div class="rating-stars">
+                                        {% for i in "12345" %}
+                                            <i class="fas fa-star {% if i|add:0 <= product.average_rating %}filled{% endif %}"></i>
+                                        {% endfor %}
+                                    </div>
+                                    <span class="total-reviews">Based on {{ product.reviews.count }} reviews</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if user.is_authenticated %}
+                        <div class="add-review">
+                            <h4>Write a Review</h4>
+                            <form class="review-form">
+                                <div class="rating-input">
+                                    <label>Your Rating:</label>
+                                    <div class="star-rating">
+                                        {% for i in "12345" %}
+                                        <i class="far fa-star" data-rating="{{ i }}"></i>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <textarea placeholder="Write your review here..." rows="4"></textarea>
+                                <button type="submit" class="submit-review-btn">Submit Review</button>
+                            </form>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="reviews-list">
+                            {% for review in product.reviews.all|slice:":5" %}
+                            <div class="review-item">
+                                <div class="review-header">
+                                    <div class="reviewer-info">
+                                        <strong>{{ review.user.get_full_name|default:review.user.username }}</strong>
+                                        <div class="review-rating">
+                                            {% for i in "12345" %}
+                                                <i class="fas fa-star {% if i|add:0 <= review.rating %}filled{% endif %}"></i>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <span class="review-date">{{ review.created_at|date:"M d, Y" }}</span>
+                                </div>
+                                <p class="review-text">{{ review.comment }}</p>
+                            </div>
+                            {% empty %}
+                            <p class="no-reviews">No reviews yet. Be the first to review this product!</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Shipping Tab -->
+                <div class="tab-panel" id="shipping">
+                    <div class="shipping-content">
+                        <h3>Shipping & Returns</h3>
+                        <div class="shipping-info">
+                            <div class="info-section">
+                                <h4><i class="fas fa-truck"></i> Shipping Information</h4>
+                                <ul>
+                                    <li>Free standard shipping on orders over $50</li>
+                                    <li>Express shipping available for $9.99</li>
+                                    <li>Orders processed within 1-2 business days</li>
+                                    <li>Delivery time: 3-7 business days</li>
+                                </ul>
+                            </div>
+                            <div class="info-section">
+                                <h4><i class="fas fa-undo"></i> Return Policy</h4>
+                                <ul>
+                                    <li>30-day return window from delivery date</li>
+                                    <li>Items must be in original condition</li>
+                                    <li>Free return shipping on defective items</li>
+                                    <li>Refunds processed within 5-10 business days</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Related Products -->
+        {% if related_products %}
+        <div class="related-products-section">
+            <div class="section-header">
+                <h2>Related Products</h2>
+                <p>You might also like these products</p>
+            </div>
+            
+            <div class="related-products-grid">
+                {% for related_product in related_products %}
+                <div class="product-card">
+                    <div class="product-image-container">
+                        {% if related_product.images.exists %}
+                            <img src="{{ related_product.images.first.image.url }}" 
+                                 alt="{{ related_product.name }}" 
+                                 class="product-image"
+                                 onerror="this.onerror=null; this.src='{{ MEDIA_URL }}default.webp';">
+                        {% else %}
+                            <img src="{{ MEDIA_URL }}default.webp" 
+                                 alt="{{ related_product.name }}" 
+                                 class="product-image"
+                                 onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjMyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjhmOWZhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzZjNzU3ZCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';">
+                        {% endif %}
+                        
+                        {% if related_product.is_featured %}
+                        <span class="product-badge featured">Featured</span>
+                        {% endif %}
+                        
+                        <div class="product-overlay">
+                            <a href="{% url 'frontend:product_detail' related_product.slug %}" class="view-product-btn">
+                                View Product
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="product-info-card">
+                        <h3 class="product-name">
+                            <a href="{% url 'frontend:product_detail' related_product.slug %}">
+                                {{ related_product.name }}
+                            </a>
+                        </h3>
+                        <div class="product-price">
+                            <span class="current-price">${{ related_product.price }}</span>
+                            {% if related_product.compare_price and related_product.compare_price > related_product.price %}
+                            <span class="original-price">${{ related_product.compare_price }}</span>
+                            {% endif %}
+                        </div>
+                        <button class="quick-add-btn" data-product-id="{{ related_product.id }}">
+                            <i class="fas fa-plus"></i>
+                            Quick Add
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Product Features -->
+                <div class="container">
+                    <div class="product-features">
+                        <div class="feature-item">
+                            <i class="fas fa-shipping-fast"></i>
+                            <div>
+                                <strong>Free Shipping</strong>
+                                <span>On orders over $50</span>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-undo"></i>
+                            <div>
+                                <strong>30-Day Returns</strong>
+                                <span>Easy return policy</span>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <div>
+                                <strong>Secure Payment</strong>
+                                <span>SSL encrypted checkout</span>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-headset"></i>
+                            <div>
+                                <strong>24/7 Support</strong>
+                                <span>Customer service</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+    <!-- Image Modal -->
+    <div id="imageModal" class="image-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeImageModal()">&times;</span>
+            <img id="modalImage" src="" alt="Product Image">
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Breadcrumb */
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+        padding: 1rem 0;
+        font-size: 0.9rem;
+    }
+
+    .breadcrumb a {
+        color: var(--primary-color);
+        text-decoration: none;
+        transition: var(--transition);
+    }
+
+    .breadcrumb a:hover {
+        color: var(--primary-dark);
+    }
+
+    .breadcrumb-separator {
+        color: var(--secondary-color);
+        opacity: 0.6;
+    }
+
+    .breadcrumb .current {
+        color: var(--secondary-color);
+    }
+
+    /* Product Detail Grid */
+    .product-detail {
+        margin-bottom: 4rem;
+    }
+
+    .product-detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+        margin-bottom: 4rem;
+    }
+
+    /* Product Images */
+    .product-images {
+        position: relative;
+    }
+
+    .main-image-container {
+        position: relative;
+        margin-bottom: 1rem;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        background: var(--light-color);
+    }
+
+    .main-image {
+        width: 100%;
+        height: 500px;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.3s ease;
+    }
+
+    .main-image:hover {
+        transform: scale(1.05);
+    }
+
+    .image-badge {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        background: var(--warning-color);
+        color: var(--white);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        z-index: 2;
+    }
+
+    .zoom-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.9);
+        border: none;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: var(--transition);
+        opacity: 0;
+        z-index: 2;
+    }
+
+    .main-image-container:hover .zoom-btn {
+        opacity: 1;
+    }
+
+    .zoom-btn:hover {
+        background: var(--white);
+        transform: scale(1.1);
+    }
+
+    .thumbnail-gallery {
+        display: flex;
+        gap: 1rem;
+        overflow-x: auto;
+        padding: 0.5rem 0;
+    }
+
+    .thumbnail {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: var(--transition);
+        flex-shrink: 0;
+    }
+
+    .thumbnail:hover,
+    .thumbnail.active {
+        border-color: var(--primary-color);
+        transform: scale(1.05);
+    }
+
+    /* Product Information */
+    .product-info {
+        padding: 1rem 0;
+    }
+
+    .product-category a {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .product-title {
+        font-size: 2.5rem;
+        font-weight: 300;
+        color: var(--dark-color);
+        margin: 1rem 0;
+        line-height: 1.2;
+    }
+
+    .product-rating {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .rating-stars {
+        display: flex;
+        gap: 0.25rem;
+    }
+
+    .rating-stars i {
+        color: var(--border-color);
+        font-size: 1.2rem;
+    }
+
+    .rating-stars i.filled {
+        color: var(--warning-color);
+    }
+
+    .rating-text {
+        color: var(--secondary-color);
+        font-size: 0.9rem;
+    }
+
+    .product-pricing {
+        margin-bottom: 0rem;
+        padding: 1rem;
+        background: var(--light-color);
+        border-radius: var(--border-radius);
+    }
+
+    .price-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .current-price {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+
+    .original-price {
+        font-size: 1.5rem;
+        color: var(--secondary-color);
+        text-decoration: line-through;
+    }
+
+    .discount-badge {
+        background: var(--danger-color);
+        color: var(--white);
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .savings {
+        color: var(--success-color);
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .price-note {
+        margin-top: 0.5rem;
+        color: var(--secondary-color);
+        font-style: italic;
+    }
+
+    .price-note small {
+        font-size: 0.9rem;
+    }
+
+    /* Product Actions */
+    .product-actions {
+        margin-bottom: 3rem;
+    }
+
+    .quantity-selector {
+        margin-bottom: 2rem;
+    }
+
+    .quantity-selector label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--dark-color);
+    }
+
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        width: fit-content;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        overflow: hidden;
+    }
+
+    .quantity-controls button {
+        width: 40px;
+        height: 40px;
+        background: var(--light-color);
+        border: none;
+        cursor: pointer;
+        font-size: 1.2rem;
+        font-weight: 600;
+        transition: var(--transition);
+    }
+
+    .quantity-controls button:hover {
+        background: var(--primary-color);
+        color: var(--white);
+    }
+
+    .quantity-controls input {
+        width: 60px;
+        height: 40px;
+        border: none;
+        text-align: center;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .add-to-cart-btn {
+        flex: 2;
+        padding: 1rem 2rem;
+        background: var(--primary-color);
+        color: var(--white);
+        border: none;
+        border-radius: var(--border-radius);
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .add-to-cart-btn:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+
+    .wishlist-btn {
+        flex: 1;
+        padding: 1rem;
+        background: var(--white);
+        color: var(--primary-color);
+        border: 2px solid var(--primary-color);
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .wishlist-btn:hover {
+        background: var(--primary-color);
+        color: var(--white);
+    }
+
+    .buy-now-btn {
+        width: 100%;
+        padding: 1rem 2rem;
+        background: var(--success-color);
+        color: var(--white);
+        border: none;
+        border-radius: var(--border-radius);
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .buy-now-btn:hover {
+        background: var(--success-dark);
+        transform: translateY(-2px);
+    }
+
+    .out-of-stock {
+        text-align: center;
+        padding: 2rem;
+        background: var(--light-color);
+        border-radius: var(--border-radius);
+        color: var(--danger-color);
+    }
+
+    .out-of-stock i {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+
+    .out-of-stock span {
+        display: block;
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .notify-btn {
+        padding: 0.75rem 1.5rem;
+        background: var(--primary-color);
+        color: var(--white);
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .notify-btn:hover {
+        background: var(--primary-dark);
+    }
+
+    /* Product Variants */
+    .product-variants {
+        margin-bottom: 3rem;
+        padding: 2rem;
+        background: var(--white);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+    }
+
+    .product-variants h3 {
+        margin-bottom: 1.5rem;
+        color: var(--dark-color);
+        font-size: 1.5rem;
+    }
+
+    .variant-selector {
+        margin-bottom: 2rem;
+    }
+
+    .variant-selector label {
+        display: block;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+        color: var(--dark-color);
+        font-size: 1.1rem;
+    }
+
+    /* Color Grid */
+    .color-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        max-width: 600px;
+    }
+
+    .color-btn {
+        position: relative;
+        padding: 0.75rem 1rem;
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius);
+        background: var(--white);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--dark-color);
+        min-height: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .color-btn:hover {
+        border-color: var(--primary-color);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .color-btn.selected {
+        border-color: var(--primary-color);
+        background: var(--light-color);
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    }
+
+    .color-btn.selected::after {
+        content: '✓';
+        position: absolute;
+        top: 4px;
+        right: 6px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+
+    .color-display {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: 2px solid #ddd;
+        display: block;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .color-thumbnail {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: 2px solid #ddd;
+        object-fit: cover;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .color-name {
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-top: 0.25rem;
+    }
+
+    /* Size Grid */
+    .size-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+        gap: 0.75rem;
+        max-width: 400px;
+    }
+
+    .size-btn {
+        padding: 0.75rem;
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius);
+        background: var(--white);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--dark-color);
+        min-height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .size-btn:hover:not(.disabled):not(.out-of-stock) {
+        border-color: var(--primary-color);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .size-btn.selected {
+        border-color: var(--primary-color);
+        background: var(--primary-color);
+        color: var(--white);
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    }
+
+    .size-btn.disabled {
+        background: var(--light-color);
+        color: var(--secondary-color);
+        border-color: var(--border-color);
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+
+    .size-btn.out-of-stock {
+        background: #fff5f5;
+        color: var(--danger-color);
+        border-color: #fed7d7;
+        position: relative;
+        cursor: not-allowed;
+    }
+
+    .size-btn.out-of-stock::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 10%;
+        right: 10%;
+        height: 2px;
+        background: var(--danger-color);
+        transform: translateY(-50%) rotate(-15deg);
+    }
+
+    /* Product Features */
+    .product-features {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+        padding: 2rem;
+        background: var(--white);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+    }
+
+    .feature-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .feature-item i {
+        font-size: 1.5rem;
+        color: var(--primary-color);
+        width: 30px;
+        text-align: center;
+    }
+
+    .feature-item strong {
+        display: block;
+        color: var(--dark-color);
+        margin-bottom: 0.25rem;
+    }
+
+    .feature-item span {
+        color: var(--secondary-color);
+        font-size: 0.9rem;
+    }
+
+    /* Share Section */
+    .share-section {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.5rem;
+        background: var(--light-color);
+        border-radius: var(--border-radius);
+    }
+
+    .share-section span {
+        font-weight: 600;
+        color: var(--dark-color);
+    }
+
+    .share-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .share-btn {
+        width: 40px;
+        height: 40px;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--white);
+    }
+
+    .share-btn.facebook {
+        background: #3b5998;
+    }
+
+    .share-btn.twitter {
+        background: #1da1f2;
+    }
+
+    .share-btn.pinterest {
+        background: #bd081c;
+    }
+
+    .share-btn.copy-link {
+        background: var(--secondary-color);
+    }
+
+    .share-btn:hover {
+        transform: scale(1.1);
+    }
+
+    /* Product Tabs */
+    .product-tabs {
+        margin-bottom: 4rem;
+    }
+
+    .tab-navigation {
+        display: flex;
+        border-bottom: 2px solid var(--border-color);
+        margin-bottom: 2rem;
+    }
+
+    .tab-btn {
+        padding: 1rem 2rem;
+        background: none;
+        border: none;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--secondary-color);
+        cursor: pointer;
+        transition: var(--transition);
+        border-bottom: 3px solid transparent;
+    }
+
+    .tab-btn:hover,
+    .tab-btn.active {
+        color: var(--primary-color);
+        border-bottom-color: var(--primary-color);
+    }
+
+    .tab-content {
+        background: var(--white);
+        padding: 3rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+    }
+
+    .tab-panel {
+        display: none;
+    }
+
+    .tab-panel.active {
+        display: block;
+    }
+
+    .tab-panel h3 {
+        margin-bottom: 2rem;
+        color: var(--dark-color);
+        font-size: 1.5rem;
+    }
+
+    .tab-panel h4 {
+        margin: 2rem 0 1rem;
+        color: var(--dark-color);
+    }
+
+    .description-text {
+        line-height: 1.8;
+        color: var(--secondary-color);
+        margin-bottom: 2rem;
+    }
+
+    .features-list {
+        list-style: none;
+        padding: 0;
+    }
+
+    .features-list li {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--border-color);
+        position: relative;
+        padding-left: 1.5rem;
+    }
+
+    .features-list li:before {
+        content: '✓';
+        position: absolute;
+        left: 0;
+        color: var(--success-color);
+        font-weight: bold;
+    }
+
+    /* Specifications */
+    .spec-table {
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        overflow: hidden;
+    }
+
+    .spec-row {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .spec-row:last-child {
+        border-bottom: none;
+    }
+
+    .spec-label {
+        padding: 1rem;
+        background: var(--light-color);
+        font-weight: 600;
+        color: var(--dark-color);
+        border-right: 1px solid var(--border-color);
+    }
+
+    .spec-value {
+        padding: 1rem;
+        color: var(--secondary-color);
+    }
+
+    /* Reviews */
+    .reviews-summary {
+        margin-bottom: 3rem;
+        padding: 2rem;
+        background: var(--light-color);
+        border-radius: var(--border-radius);
+        text-align: center;
+    }
+
+    .rating-number {
+        font-size: 3rem;
+        font-weight: bold;
+        color: var(--primary-color);
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .total-reviews {
+        color: var(--secondary-color);
+        margin-top: 0.5rem;
+        display: block;
+    }
+
+    .add-review {
+        margin-bottom: 3rem;
+        padding: 2rem;
+        background: var(--light-color);
+        border-radius: var(--border-radius);
+    }
+
+    .add-review h4 {
+        margin-bottom: 1.5rem;
+    }
+
+    .rating-input {
+        margin-bottom: 1rem;
+    }
+
+    .star-rating {
+        display: flex;
+        gap: 0.25rem;
+    }
+
+    .star-rating i {
+        font-size: 1.5rem;
+        color: var(--border-color);
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .star-rating i:hover,
+    .star-rating i.active {
+        color: var(--warning-color);
+    }
+
+    .review-form textarea {
+        width: 100%;
+        padding: 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        resize: vertical;
+        margin-bottom: 1rem;
+    }
+
+    .submit-review-btn {
+        padding: 0.75rem 2rem;
+        background: var(--primary-color);
+        color: var(--white);
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        font-weight: 600;
+        transition: var(--transition);
+    }
+
+    .submit-review-btn:hover {
+        background: var(--primary-dark);
+    }
+
+    .review-item {
+        padding: 2rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .review-item:last-child {
+        border-bottom: none;
+    }
+
+    .review-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .reviewer-info strong {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--dark-color);
+    }
+
+    .review-rating {
+        display: flex;
+        gap: 0.25rem;
+    }
+
+    .review-rating i {
+        font-size: 0.9rem;
+        color: var(--border-color);
+    }
+
+    .review-rating i.filled {
+        color: var(--warning-color);
+    }
+
+    .review-date {
+        color: var(--secondary-color);
+        font-size: 0.9rem;
+    }
+
+    .review-text {
+        line-height: 1.6;
+        color: var(--secondary-color);
+    }
+
+    .no-reviews {
+        text-align: center;
+        color: var(--secondary-color);
+        font-style: italic;
+        padding: 2rem;
+    }
+
+    /* Shipping Info */
+    .shipping-info {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 3rem;
+    }
+
+    .info-section h4 {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        color: var(--dark-color);
+    }
+
+    .info-section ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    .info-section li {
+        padding: 0.5rem 0;
+        color: var(--secondary-color);
+        position: relative;
+        padding-left: 1.5rem;
+    }
+
+    .info-section li:before {
+        content: '•';
+        position: absolute;
+        left: 0;
+        color: var(--primary-color);
+        font-weight: bold;
+    }
+
+    /* Related Products */
+    .related-products-section {
+        margin-top: 4rem;
+    }
+
+    .section-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .section-header h2 {
+        font-size: 2.5rem;
+        font-weight: 300;
+        color: var(--dark-color);
+        margin-bottom: 1rem;
+    }
+
+    .section-header p {
+        color: var(--secondary-color);
+        font-size: 1.1rem;
+    }
+
+    .related-products-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 2rem;
+    }
+
+    .product-card {
+        background: var(--white);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        transition: var(--transition);
+        position: relative;
+    }
+
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .product-image-container {
+        position: relative;
+        height: 280px;
+        overflow: hidden;
+        background: var(--light-color);
+    }
+
+    .product-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .product-card:hover .product-image {
+        transform: scale(1.05);
+    }
+
+    .product-badge {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        background: var(--warning-color);
+        color: var(--white);
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+
+    .product-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 1rem;
+        transform: translateY(100%);
+        transition: var(--transition);
+    }
+
+    .product-card:hover .product-overlay {
+        transform: translateY(0);
+    }
+
+    .view-product-btn {
+        display: block;
+        width: 100%;
+        padding: 0.75rem;
+        background: var(--primary-color);
+        color: var(--white);
+        text-align: center;
+        text-decoration: none;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        transition: var(--transition);
+    }
+
+    .view-product-btn:hover {
+        background: var(--primary-dark);
+        color: var(--white);
+    }
+
+    .product-info-card {
+        padding: 1.5rem;
+    }
+
+    .product-name a {
+        color: var(--dark-color);
+        text-decoration: none;
+        font-size: 1.1rem;
+        font-weight: 600;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .product-name a:hover {
+        color: var(--primary-color);
+    }
+
+    .product-price {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 1rem 0;
+    }
+
+    .current-price {
+        font-size: 1.25rem;
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+
+    .original-price {
+        font-size: 0.9rem;
+        color: var(--secondary-color);
+        text-decoration: line-through;
+    }
+
+    .quick-add-btn {
+        width: 100%;
+        padding: 0.75rem;
+        background: var(--light-color);
+        color: var(--primary-color);
+        border: 1px solid var(--primary-color);
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .quick-add-btn:hover {
+        background: var(--primary-color);
+        color: var(--white);
+    }
+
+    /* Image Modal */
+    .image-modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.9);
+    }
+
+    .modal-content {
+        position: relative;
+        max-width: 90%;
+        max-height: 90%;
+        margin: auto;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .modal-content img {
+        width: 100%;
+        height: auto;
+        border-radius: var(--border-radius);
+    }
+
+    .close-modal {
+        position: absolute;
+        top: -40px;
+        right: 0;
+        color: var(--white);
+        font-size: 2rem;
+        font-weight: bold;
+        cursor: pointer;
+        background: rgba(0, 0, 0, 0.5);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .close-modal:hover {
+        background: rgba(0, 0, 0, 0.8);
+    }
+
+    /* Notification animations */
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+        .product-detail-grid {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        .related-products-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        .product-features {
+            grid-template-columns: 1fr;
+        }
+
+        .shipping-info {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .product-title {
+            font-size: 2rem;
+        }
+
+        .current-price {
+            font-size: 2rem;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .color-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+        
+        .size-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+        }
+        
+        .color-btn, .size-btn {
+            font-size: 0.85rem;
+            padding: 0.6rem;
+            min-height: 50px;
+        }
+
+        .color-display {
+            width: 25px;
+            height: 25px;
+        }
+
+        .product-variants {
+            padding: 1.5rem;
+        }
+
+        .related-products-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .product-image-container {
+            height: 200px;
+        }
+
+        .tab-navigation {
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .tab-content {
+            padding: 2rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .breadcrumb {
+            font-size: 0.8rem;
+        }
+
+        .product-title {
+            font-size: 1.5rem;
+        }
+
+        .main-image {
+            height: 300px;
+        }
+
+        .color-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .size-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .variant-selector {
+            margin-bottom: 1.5rem;
+        }
+
+        .variant-selector label {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-variants {
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .related-products-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .tab-content {
+            padding: 1rem;
+        }
+
+        .spec-row {
+            grid-template-columns: 1fr;
+        }
+
+        .spec-label {
+            border-right: none;
+            border-bottom: 1px solid var(--border-color);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Image gallery functionality
+        window.changeMainImage = function(src) {
+            const mainImage = document.getElementById('main-product-image');
+            const thumbnails = document.querySelectorAll('.thumbnail');
+            
+            mainImage.src = src;
+            
+            thumbnails.forEach(thumb => {
+                thumb.classList.remove('active');
+                if (thumb.src === src) {
+                    thumb.classList.add('active');
+                }
+            });
+        };
+
+        // Image modal functionality
+        window.openImageModal = function() {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            const mainImg = document.getElementById('main-product-image');
+            
+            modal.style.display = 'block';
+            modalImg.src = mainImg.src;
+        };
+
+        window.closeImageModal = function() {
+            const modal = document.getElementById('imageModal');
+            modal.style.display = 'none';
+        };
+
+        // Quantity controls
+        window.changeQuantity = function(change) {
+            const quantityInput = document.getElementById('quantity');
+            const currentValue = parseInt(quantityInput.value);
+            const newValue = currentValue + change;
+            
+            if (newValue >= 1 && newValue <= 10) {
+                quantityInput.value = newValue;
+            }
+        };
+
+        // Variant selection functionality with grid buttons
+        let selectedVariant = null;
+        let selectedColor = null;
+        let selectedSize = null;
+        let variantsData = [];
+        
+        // Parse variants data from JSON
+        const variantsScript = document.getElementById('variants-data');
+        if (variantsScript) {
+            try {
+                variantsData = JSON.parse(variantsScript.textContent);
+                console.log('Parsed variants data:', variantsData); // Debug log
+            } catch (e) {
+                console.error('Error parsing variants data:', e);
+            }
+        } else {
+            console.error('Variants data script not found!');
+        }
+        
+        const colorButtons = document.querySelectorAll('.color-btn');
+        const sizeButtons = document.querySelectorAll('.size-btn');
+        const selectedColorLabel = document.getElementById('selected-color-label');
+        const selectedSizeLabel = document.getElementById('selected-size-label');
+        const mainPriceElement = document.querySelector('.current-price');
+        
+        // Get DOM elements for main pricing section
+        const variantCurrentPrice = document.getElementById('variant-current-price');
+        const variantOriginalPrice = document.getElementById('variant-original-price');
+        const variantDiscountBadge = document.getElementById('variant-discount-badge');
+        const variantSavings = document.getElementById('variant-savings');
+        const variantPriceNote = document.getElementById('variant-price-note');
+        
+        // Debug: Check if elements are found
+        console.log('DOM Elements:', {
+            variantCurrentPrice: variantCurrentPrice,
+            variantOriginalPrice: variantOriginalPrice,
+            variantDiscountBadge: variantDiscountBadge,
+            variantSavings: variantSavings,
+            variantPriceNote: variantPriceNote
+        });
+
+        // Color selection functionality
+        colorButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Remove selected from all color buttons
+                colorButtons.forEach(btn => btn.classList.remove('selected'));
+                
+                // Add selected to clicked button
+                this.classList.add('selected');
+                selectedColor = this.dataset.color;
+                
+                // Update color label
+                if (selectedColorLabel) {
+                    const colorName = this.dataset.colorName || selectedColor;
+                    selectedColorLabel.textContent = colorName;
+                }
+                
+                // Reset size selection
+                selectedSize = null;
+                sizeButtons.forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                
+                // Update size label
+                if (selectedSizeLabel) {
+                    selectedSizeLabel.textContent = 'Please select';
+                }
+                
+                // Update main image with color variant image (if available)
+                updateMainImageForColor(selectedColor);
+                
+                // Show price range for selected color
+                updatePriceRangeForColor(selectedColor);
+                
+                // Enable/disable size buttons based on available combinations
+                updateSizeButtons();
+                
+                // Update variant selection
+                updateVariantSelection();
+            });
+        });
+
+        // Size selection functionality
+        sizeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Don't select disabled or out-of-stock buttons
+                if (this.classList.contains('disabled') || this.classList.contains('out-of-stock')) {
+                    return;
+                }
+                
+                // Remove selected from all size buttons
+                sizeButtons.forEach(btn => btn.classList.remove('selected'));
+                
+                // Add selected to clicked button
+                this.classList.add('selected');
+                selectedSize = this.dataset.size;
+                
+                // Update size label
+                if (selectedSizeLabel) {
+                    selectedSizeLabel.textContent = selectedSize;
+                }
+                
+                // Update variant selection
+                updateVariantSelection();
+            });
+        });
+
+        // Update main image based on selected color
+        function updateMainImageForColor(color) {
+            const mainImage = document.getElementById('main-product-image');
+            if (!mainImage || !color) return;
+            
+            // Find any variant with this color that has an image
+            const colorVariant = variantsData.find(v => 
+                v.color === color && v.image && v.image !== '{{ MEDIA_URL }}default.webp'
+            );
+            
+            if (colorVariant && colorVariant.image) {
+                mainImage.src = colorVariant.image;
+                mainImage.alt = colorVariant.name || colorVariant.colorName;
+            }
+        }
+
+        // Update pricing to show range for selected color
+        function updatePriceRangeForColor(color) {
+            if (!color) {
+                updateMainPricing(null);
+                return;
+            }
+
+            // Get all variants for this color
+            const colorVariants = variantsData.filter(v => v.color === color);
+            
+            if (colorVariants.length === 0) return;
+
+            // Find min and max prices for this color
+            const prices = colorVariants.map(v => parseFloat(v.price));
+            const minPrice = Math.min(...prices);
+            const maxPrice = Math.max(...prices);
+
+            // Update pricing display
+            if (variantCurrentPrice) {
+                if (minPrice === maxPrice) {
+                    variantCurrentPrice.textContent = '$' + minPrice.toFixed(2);
+                } else {
+                    variantCurrentPrice.textContent = '$' + minPrice.toFixed(2) + ' - $' + maxPrice.toFixed(2);
+                }
+            }
+
+            // Handle compare prices
+            const comparePrices = colorVariants.map(v => parseFloat(v.comparePrice) || 0).filter(p => p > 0);
+            if (comparePrices.length > 0) {
+                const minComparePrice = Math.min(...comparePrices);
+                const maxComparePrice = Math.max(...comparePrices);
+                
+                if (variantOriginalPrice) {
+                    variantOriginalPrice.style.display = 'inline';
+                    if (minComparePrice === maxComparePrice) {
+                        variantOriginalPrice.textContent = '$' + minComparePrice.toFixed(2);
+                    } else {
+                        variantOriginalPrice.textContent = '$' + minComparePrice.toFixed(2) + ' - $' + maxComparePrice.toFixed(2);
+                    }
+                }
+
+                // Show discount badge if there are savings
+                if (variantDiscountBadge) {
+                    variantDiscountBadge.style.display = 'inline';
+                    variantDiscountBadge.textContent = 'UP TO ' + Math.round((minPrice / minComparePrice) * 100) + '% OFF';
+                }
+
+                // Show savings
+                if (variantSavings) {
+                    variantSavings.style.display = 'block';
+                    const maxSavings = maxComparePrice - minPrice;
+                    variantSavings.textContent = 'Save up to $' + maxSavings.toFixed(2);
+                }
+            } else {
+                // Hide discount elements
+                if (variantOriginalPrice) variantOriginalPrice.style.display = 'none';
+                if (variantDiscountBadge) variantDiscountBadge.style.display = 'none';
+                if (variantSavings) variantSavings.style.display = 'none';
+            }
+
+            // Show price note
+            if (variantPriceNote) {
+                variantPriceNote.style.display = 'block';
+                if (minPrice !== maxPrice) {
+                    variantPriceNote.innerHTML = '<small>Price varies by size selection</small>';
+                } else {
+                    variantPriceNote.innerHTML = '<small>Select size to continue</small>';
+                }
+            }
+        }
+
+        // Update size buttons availability based on selected color
+        function updateSizeButtons() {
+            if (!selectedColor) {
+                // If no color selected, disable all size buttons
+                sizeButtons.forEach(btn => {
+                    btn.classList.add('disabled');
+                    btn.classList.remove('out-of-stock');
+                    btn.disabled = true;
+                });
+                return;
+            }
+            
+            // Enable/disable size buttons based on availability for selected color
+            sizeButtons.forEach(btn => {
+                const size = btn.dataset.size;
+                
+                // Find if this color-size combination exists and has stock
+                const variant = variantsData.find(v => 
+                    v.color === selectedColor && v.size === size
+                );
+                
+                if (variant) {
+                    btn.classList.remove('disabled');
+                    btn.disabled = false;
+                    
+                    if (variant.stock > 0) {
+                        btn.classList.remove('out-of-stock');
+                    } else {
+                        btn.classList.add('out-of-stock');
+                    }
+                } else {
+                    // No variant found for this combination
+                    btn.classList.add('disabled');
+                    btn.classList.remove('out-of-stock');
+                    btn.disabled = true;
+                }
+            });
+        }
+
+        // Update main pricing section based on variant
+        function updateMainPricing(variant) {
+            console.log('updateMainPricing called with variant:', variant);
+            
+            // Get DOM elements fresh each time to ensure they exist
+            const currentPriceElement = document.getElementById('variant-current-price');
+            const originalPriceElement = document.getElementById('variant-original-price');
+            const discountBadgeElement = document.getElementById('variant-discount-badge');
+            const savingsElement = document.getElementById('variant-savings');
+            const priceNoteElement = document.getElementById('variant-price-note');
+            
+            console.log('DOM elements found:', {
+                currentPriceElement: !!currentPriceElement,
+                originalPriceElement: !!originalPriceElement,
+                discountBadgeElement: !!discountBadgeElement,
+                savingsElement: !!savingsElement,
+                priceNoteElement: !!priceNoteElement
+            });
+            
+            const basePrice = {{ product.price }};
+            const baseComparePrice = {{ product.compare_price|default:0 }};
+            
+            if (!variant) {
+                console.log('No variant selected, showing base price:', basePrice);
+                // Reset to product base price
+                if (currentPriceElement) {
+                    currentPriceElement.textContent = '$' + basePrice.toFixed(2);
+                    console.log('Set base price:', currentPriceElement.textContent);
+                }
+                if (originalPriceElement) {
+                    if (baseComparePrice > basePrice) {
+                        originalPriceElement.style.display = 'inline';
+                        originalPriceElement.textContent = '$' + baseComparePrice.toFixed(2);
+                    } else {
+                        originalPriceElement.style.display = 'none';
+                    }
+                }
+                if (discountBadgeElement) {
+                    if (baseComparePrice > basePrice) {
+                        discountBadgeElement.style.display = 'inline';
+                        const discount = Math.round((basePrice / baseComparePrice) * 100);
+                        discountBadgeElement.textContent = discount + '% OFF';
+                    } else {
+                        discountBadgeElement.style.display = 'none';
+                    }
+                }
+                if (savingsElement) {
+                    if (baseComparePrice > basePrice) {
+                        savingsElement.style.display = 'block';
+                        const savings = baseComparePrice - basePrice;
+                        savingsElement.textContent = 'You save $' + savings.toFixed(2);
+                    } else {
+                        savingsElement.style.display = 'none';
+                    }
+                }
+                if (priceNoteElement) priceNoteElement.style.display = 'none';
+                return;
+            }
+
+            const price = parseFloat(variant.price);
+            const comparePrice = parseFloat(variant.comparePrice) || 0;
+            
+            console.log('Updating to variant price:', price, 'comparePrice:', comparePrice);
+
+            // Update current price
+            if (currentPriceElement) {
+                currentPriceElement.textContent = '$' + price.toFixed(2);
+                console.log('Updated main price to:', currentPriceElement.textContent);
+            } else {
+                console.error('Current price element not found!');
+            }
+
+            // Handle original price and discount
+            if (comparePrice > price) {
+                console.log('Showing discount pricing');
+                // Show discount elements
+                if (originalPriceElement) {
+                    originalPriceElement.style.display = 'inline';
+                    originalPriceElement.textContent = '$' + comparePrice.toFixed(2);
+                }
+                if (discountBadgeElement) {
+                    discountBadgeElement.style.display = 'inline';
+                    const discount = Math.round((price / comparePrice) * 100);
+                    discountBadgeElement.textContent = discount + '% OFF';
+                }
+                if (savingsElement) {
+                    savingsElement.style.display = 'block';
+                    const savings = comparePrice - price;
+                    savingsElement.textContent = 'You save $' + savings.toFixed(2);
+                }
+            } else {
+                console.log('Hiding discount pricing');
+                // Hide discount elements
+                if (originalPriceElement) originalPriceElement.style.display = 'none';
+                if (discountBadgeElement) discountBadgeElement.style.display = 'none';
+                if (savingsElement) savingsElement.style.display = 'none';
+            }
+
+            // Show variant price note
+            if (priceNoteElement) priceNoteElement.style.display = 'block';
+        }
+
+        // Update variant selection and display info
+        function updateVariantSelection() {
+            console.log('updateVariantSelection called - selectedColor:', selectedColor, 'selectedSize:', selectedSize);
+            
+            if (!selectedColor) {
+                // No color selected - reset everything
+                selectedVariant = null;
+                
+                // Reset main pricing section
+                updateMainPricing(null);
+                
+                return;
+            }
+            
+            // Color is selected, check if we also have size
+            if (selectedColor && selectedSize) {
+                // Find the exact variant with both color and size
+                const variant = variantsData.find(v => 
+                    v.color === selectedColor && v.size === selectedSize
+                );
+                
+                console.log('Found exact variant:', variant);
+                
+                if (variant) {
+                    selectedVariant = variant;
+                    
+                    // Update main pricing section with variant data
+                    updateMainPricing(variant);
+                    
+                    // Update main product image if variant has an image
+                    const mainImage = document.getElementById('main-product-image');
+                    if (mainImage && variant.image && variant.image !== '{{ MEDIA_URL }}default.webp') {
+                        mainImage.src = variant.image;
+                        mainImage.alt = variant.name;
+                    }
+                    
+                    // Update add to cart button
+                    const addToCartBtn = document.querySelector('.add-to-cart-btn');
+                    if (addToCartBtn) {
+                        addToCartBtn.dataset.variantId = variant.id;
+                        
+                        // Enable/disable based on stock
+                        if (variant.stock > 0) {
+                            addToCartBtn.disabled = false;
+                            addToCartBtn.textContent = 'Add to Cart';
+                        } else {
+                            addToCartBtn.disabled = true;
+                            addToCartBtn.textContent = 'Out of Stock';
+                        }
+                    }
+                    
+                    // Update quantity max based on stock
+                    const quantityInput = document.getElementById('quantity');
+                    if (quantityInput) {
+                        quantityInput.max = Math.min(10, parseInt(variant.stock));
+                        if (parseInt(quantityInput.value) > parseInt(variant.stock)) {
+                            quantityInput.value = Math.max(1, variant.stock);
+                        }
+                    }
+                } else {
+                    console.log('Exact variant not found');
+                    // Reset to color-only logic below
+                    selectedVariant = null;
+                }
+            }
+            
+            // If only color is selected (no size), or exact variant not found
+            if (selectedColor && (!selectedSize || !selectedVariant)) {
+                console.log('Only color selected, finding color variants');
+                
+                // Find all variants for this color
+                const colorVariants = variantsData.filter(v => v.color === selectedColor);
+                console.log('Color variants found:', colorVariants);
+                
+                if (colorVariants.length > 0) {
+                    // Check if this product has sizes at all
+                    const hasSizes = variantsData.some(v => v.size && v.size.trim() !== '');
+                    console.log('Product has sizes:', hasSizes);
+                    
+                    if (!hasSizes) {
+                        // No sizes available for this product - use the first color variant
+                        selectedVariant = colorVariants[0];
+                        console.log('No sizes available, selected variant:', selectedVariant);
+                        
+                        // Update add to cart button
+                        const addToCartBtn = document.querySelector('.add-to-cart-btn');
+                        if (addToCartBtn) {
+                            addToCartBtn.dataset.variantId = selectedVariant.id;
+                            
+                            // Enable/disable based on stock
+                            if (selectedVariant.stock > 0) {
+                                addToCartBtn.disabled = false;
+                                addToCartBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
+                            } else {
+                                addToCartBtn.disabled = true;
+                                addToCartBtn.innerHTML = '<i class="fas fa-times-circle"></i> Out of Stock';
+                            }
+                        }
+                        
+                        // Update quantity max based on stock
+                        const quantityInput = document.getElementById('quantity');
+                        if (quantityInput) {
+                            quantityInput.max = Math.min(10, parseInt(selectedVariant.stock));
+                            if (parseInt(quantityInput.value) > parseInt(selectedVariant.stock)) {
+                                quantityInput.value = Math.max(1, selectedVariant.stock);
+                            }
+                        }
+                    } else {
+                        // Product has sizes - need size selection
+                        selectedVariant = null;
+                        
+                        // Disable add to cart button
+                        const addToCartBtn = document.querySelector('.add-to-cart-btn');
+                        if (addToCartBtn) {
+                            addToCartBtn.disabled = true;
+                            addToCartBtn.innerHTML = '<i class="fas fa-exclamation-circle"></i> Select Size';
+                        }
+                    }
+                    
+                    // Use the first variant for this color to show pricing
+                    const firstColorVariant = colorVariants[0];
+                    
+                    // Update main pricing section with color variant data
+                    updateMainPricing(firstColorVariant);
+                    
+                    // Update main product image if variant has an image
+                    const mainImage = document.getElementById('main-product-image');
+                    if (mainImage && firstColorVariant.image && firstColorVariant.image !== '{{ MEDIA_URL }}default.webp') {
+                        mainImage.src = firstColorVariant.image;
+                        mainImage.alt = firstColorVariant.name;
+                    }
+                } else {
+                    console.log('No variants found for color:', selectedColor);
+                    // Reset main pricing section
+                    updateMainPricing(null);
+                    selectedVariant = null;
+                }
+            }
+        }
+
+        // Initialize size buttons state
+        updateSizeButtons();
+
+        // Tab functionality
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabPanels = document.querySelectorAll('.tab-panel');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const targetTab = this.dataset.tab;
+                
+                // Remove active class from all tabs and panels
+                tabBtns.forEach(b => b.classList.remove('active'));
+                tabPanels.forEach(p => p.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding panel
+                this.classList.add('active');
+                document.getElementById(targetTab).classList.add('active');
+            });
+        });
+
+        // Star rating for reviews
+        const starRating = document.querySelector('.star-rating');
+        if (starRating) {
+            const stars = starRating.querySelectorAll('i');
+            
+            stars.forEach((star, index) => {
+                star.addEventListener('click', function() {
+                    const rating = parseInt(this.dataset.rating);
+                    
+                    stars.forEach((s, i) => {
+                        if (i < rating) {
+                            s.classList.remove('far');
+                            s.classList.add('fas', 'active');
+                        } else {
+                            s.classList.remove('fas', 'active');
+                            s.classList.add('far');
+                        }
+                    });
+                });
+                
+                star.addEventListener('mouseenter', function() {
+                    const rating = parseInt(this.dataset.rating);
+                    
+                    stars.forEach((s, i) => {
+                        if (i < rating) {
+                            s.style.color = 'var(--warning-color)';
+                        } else {
+                            s.style.color = 'var(--border-color)';
+                        }
+                    });
+                });
+            });
+            
+            starRating.addEventListener('mouseleave', function() {
+                stars.forEach(s => {
+                    if (!s.classList.contains('active')) {
+                        s.style.color = 'var(--border-color)';
+                    }
+                });
+            });
+        }
+
+        // Add to cart functionality
+        const addToCartBtns = document.querySelectorAll('.add-to-cart-btn, .quick-add-btn');
+        addToCartBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const productId = this.dataset.productId;
+                const variantId = this.dataset.variantId || selectedVariant?.id || null;
+                const quantity = document.getElementById('quantity') ? 
+                    document.getElementById('quantity').value : 1;
+                
+                // Check if variant is selected and has stock
+                if (selectedVariant && parseInt(selectedVariant.stock) < parseInt(quantity)) {
+                    alert(`Only ${selectedVariant.stock} items available for ${selectedVariant.name}`);
+                    return;
+                }
+                
+                // Add loading state
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+                this.disabled = true;
+                
+                // Prepare data for API call
+                const cartData = {
+                    product_id: productId,
+                    variant_id: variantId,
+                    quantity: quantity
+                };
+                
+                console.log('Adding to cart:', cartData); // For debugging
+                
+                // Simulate API call (replace with actual implementation)
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-check"></i> Added!';
+                    this.style.background = 'var(--success-color)';
+                    
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                        this.style.background = '';
+                        this.disabled = false;
+                    }, 2000);
+                }, 1000);
+            });
+        });
+
+        // Wishlist functionality
+        const wishlistBtns = document.querySelectorAll('.wishlist-btn');
+        wishlistBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const icon = this.querySelector('i');
+                if (icon.classList.contains('far')) {
+                    icon.classList.remove('far');
+                    icon.classList.add('fas');
+                    this.style.background = 'var(--danger-color)';
+                    this.style.color = 'var(--white)';
+                    this.style.borderColor = 'var(--danger-color)';
+                } else {
+                    icon.classList.remove('fas');
+                    icon.classList.add('far');
+                    this.style.background = '';
+                    this.style.color = '';
+                    this.style.borderColor = '';
+                }
+            });
+        });
+
+        // Share functionality
+        const shareBtns = document.querySelectorAll('.share-btn');
+        shareBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const platform = this.classList[1]; // facebook, twitter, etc.
+                const url = window.location.href;
+                const title = document.querySelector('.product-title').textContent;
+                
+                let shareUrl = '';
+                
+                switch(platform) {
+                    case 'facebook':
+                        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+                        break;
+                    case 'twitter':
+                        shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
+                        break;
+                    case 'pinterest':
+                        const imageUrl = document.getElementById('main-product-image').src;
+                        shareUrl = `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(url)}&media=${encodeURIComponent(imageUrl)}&description=${encodeURIComponent(title)}`;
+                        break;
+                    case 'copy-link':
+                        navigator.clipboard.writeText(url).then(() => {
+                            this.innerHTML = '<i class="fas fa-check"></i>';
+                            setTimeout(() => {
+                                this.innerHTML = '<i class="fas fa-link"></i>';
+                            }, 2000);
+                        });
+                        return;
+                }
+                
+                if (shareUrl) {
+                    window.open(shareUrl, '_blank', 'width=600,height=400');
+                }
+            });
+        });
+
+        // Close modal on outside click
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('imageModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+        
+        // Add to cart functionality
+        function addToCart() {
+            const productId = document.querySelector('.add-to-cart-btn').dataset.productId;
+            const quantity = parseInt(document.getElementById('quantity').value) || 1;
+            
+            // Check if variants exist and are selected
+            if (variantsData.length > 0) {
+                if (!selectedVariant) {
+                    alert('Please select product options before adding to cart.');
+                    return;
+                }
+            }
+            
+            const data = {
+                product_id: parseInt(productId),
+                quantity: quantity
+            };
+            
+            if (selectedVariant) {
+                data.variant_id = selectedVariant.id;
+            }
+            
+            // Show loading state
+            const addToCartBtn = document.querySelector('.add-to-cart-btn');
+            const originalText = addToCartBtn.innerHTML;
+            addToCartBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+            addToCartBtn.disabled = true;
+            
+            fetch('/api/v1/cart/add/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    // Success feedback
+                    addToCartBtn.innerHTML = '<i class="fas fa-check"></i> Added!';
+                    addToCartBtn.style.backgroundColor = '#28a745';
+                    
+                    // Update cart count
+                    updateCartCount();
+                    
+                    // Reset button after 2 seconds
+                    setTimeout(() => {
+                        addToCartBtn.innerHTML = originalText;
+                        addToCartBtn.style.backgroundColor = '';
+                        addToCartBtn.disabled = false;
+                    }, 2000);
+                    
+                    // Show success message
+                    showNotification('Product added to cart successfully!', 'success');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error adding product to cart. Please try again.');
+            })
+            .finally(() => {
+                if (addToCartBtn.disabled) {
+                    addToCartBtn.innerHTML = originalText;
+                    addToCartBtn.disabled = false;
+                }
+            });
+        }
+        
+        // Buy now functionality
+        function buyNow() {
+            const productId = document.querySelector('.buy-now-btn').dataset.productId;
+            const quantity = parseInt(document.getElementById('quantity').value) || 1;
+            
+            // Check if variants exist and are selected
+            if (variantsData.length > 0) {
+                if (!selectedVariant) {
+                    alert('Please select product options before proceeding.');
+                    return;
+                }
+            }
+            
+            const data = {
+                product_id: parseInt(productId),
+                quantity: quantity
+            };
+            
+            if (selectedVariant) {
+                data.variant_id = selectedVariant.id;
+            }
+            
+            // Add to cart first, then redirect to checkout
+            fetch('/api/v1/cart/add/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    // Redirect to checkout
+                    window.location.href = '/checkout/';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error processing your request. Please try again.');
+            });
+        }
+        
+        // Utility functions
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        function updateCartCount() {
+            fetch('/api/v1/cart/', {
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const cartCount = document.querySelector('.cart-count');
+                if (cartCount && data.total_items) {
+                    cartCount.textContent = data.total_items;
+                }
+            })
+            .catch(error => console.error('Error updating cart count:', error));
+        }
+        
+        function showNotification(message, type = 'success') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            // Add styles
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#28a745' : '#dc3545'};
+                color: white;
+                padding: 15px 20px;
+                border-radius: 5px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-weight: 600;
+                animation: slideIn 0.3s ease;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        // Add event listeners
+        document.querySelector('.add-to-cart-btn').addEventListener('click', addToCart);
+        document.querySelector('.buy-now-btn').addEventListener('click', buyNow);
+        
+        // Update cart count on page load
+        updateCartCount();
+    });
+</script>
+{% endblock %}

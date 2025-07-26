@@ -1,0 +1,439 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+
+{% block title %}Login - Professional eCommerce{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h2>Welcome Back</h2>
+                <p>Sign in to your account to continue shopping</p>
+            </div>
+
+            <!-- Display Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" class="auth-form" id="loginForm">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input type="email" 
+                           id="email" 
+                           name="email" 
+                           class="form-control" 
+                           placeholder="Enter your email"
+                           required>
+                    <div class="form-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" 
+                           id="password" 
+                           name="password" 
+                           class="form-control" 
+                           placeholder="Enter your password"
+                           required>
+                    <div class="form-icon">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <button type="button" class="password-toggle" onclick="togglePassword()">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+
+                <div class="form-options">
+                    <label class="checkbox-container">
+                        <input type="checkbox" name="remember_me">
+                        <span class="checkmark"></span>
+                        Remember me
+                    </label>
+                    <a href="#" class="forgot-password">Forgot Password?</a>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Sign In
+                </button>
+            </form>
+
+            <div class="auth-divider">
+                <span>or</span>
+            </div>
+
+            <div class="social-login">
+                <button class="btn btn-social btn-google">
+                    <i class="fab fa-google"></i>
+                    Continue with Google
+                </button>
+                <button class="btn btn-social btn-facebook">
+                    <i class="fab fa-facebook"></i>
+                    Continue with Facebook
+                </button>
+            </div>
+
+            <div class="auth-footer">
+                <p>Don't have an account? 
+                    <a href="{% url 'frontend:register' %}">Create one now</a>
+                </p>
+            </div>
+        </div>
+
+        <div class="auth-benefits">
+            <h3>Why create an account?</h3>
+            <ul>
+                <li>
+                    <i class="fas fa-shipping-fast"></i>
+                    <span>Track your orders and shipping</span>
+                </li>
+                <li>
+                    <i class="fas fa-heart"></i>
+                    <span>Save items to your wishlist</span>
+                </li>
+                <li>
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Save your shopping cart</span>
+                </li>
+                <li>
+                    <i class="fas fa-tags"></i>
+                    <span>Get exclusive deals and offers</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+        max-width: 1000px;
+        margin: 3rem auto;
+        padding: 0 1rem;
+    }
+
+    .auth-card {
+        background: var(--white);
+        padding: 3rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .auth-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .auth-header h2 {
+        font-size: 2rem;
+        color: var(--dark-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .auth-header p {
+        color: var(--secondary-color);
+    }
+
+    .auth-form .form-group {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--secondary-color);
+        margin-top: 0.75rem;
+    }
+
+    .auth-form .form-control {
+        padding-left: 3rem;
+        height: 3rem;
+        font-size: 1rem;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--secondary-color);
+        cursor: pointer;
+        margin-top: 0.75rem;
+    }
+
+    .form-options {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .checkbox-container {
+        display: flex;
+        align-items: center;
+        font-size: 0.875rem;
+        cursor: pointer;
+    }
+
+    .checkbox-container input[type="checkbox"] {
+        display: none;
+    }
+
+    .checkmark {
+        width: 18px;
+        height: 18px;
+        border: 2px solid var(--border-color);
+        border-radius: 3px;
+        margin-right: 0.5rem;
+        position: relative;
+        transition: var(--transition);
+    }
+
+    .checkbox-container input[type="checkbox"]:checked + .checkmark {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .checkbox-container input[type="checkbox"]:checked + .checkmark::after {
+        content: '✓';
+        position: absolute;
+        top: -2px;
+        left: 2px;
+        color: var(--white);
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .forgot-password {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+
+    .forgot-password:hover {
+        text-decoration: underline;
+    }
+
+    .btn-full {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+    }
+
+    .auth-divider {
+        text-align: center;
+        position: relative;
+        margin: 1.5rem 0;
+        color: var(--secondary-color);
+    }
+
+    .auth-divider::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: var(--border-color);
+    }
+
+    .auth-divider span {
+        background: var(--white);
+        padding: 0 1rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .social-login {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .btn-social {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid var(--border-color);
+        background: var(--white);
+        color: var(--dark-color);
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    .btn-google:hover {
+        border-color: #db4437;
+        color: #db4437;
+    }
+
+    .btn-facebook:hover {
+        border-color: #4267b2;
+        color: #4267b2;
+    }
+
+    .btn-social i {
+        margin-right: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .auth-footer {
+        text-align: center;
+        color: var(--secondary-color);
+    }
+
+    .auth-footer a {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .auth-footer a:hover {
+        text-decoration: underline;
+    }
+
+    .auth-benefits {
+        background: var(--light-color);
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        height: fit-content;
+    }
+
+    .auth-benefits h3 {
+        color: var(--dark-color);
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+
+    .auth-benefits ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    .auth-benefits li {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        color: var(--dark-color);
+    }
+
+    .auth-benefits li i {
+        color: var(--primary-color);
+        margin-right: 1rem;
+        width: 20px;
+    }
+
+    @media (max-width: 768px) {
+        .auth-container {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin: 2rem auto;
+        }
+
+        .auth-card {
+            padding: 2rem;
+        }
+
+        .social-login {
+            flex-direction: row;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .social-login {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function togglePassword() {
+        const passwordInput = document.getElementById('password');
+        const toggleButton = document.querySelector('.password-toggle i');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleButton.className = 'fas fa-eye-slash';
+        } else {
+            passwordInput.type = 'password';
+            toggleButton.className = 'fas fa-eye';
+        }
+    }
+
+    // Form validation
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('loginForm');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+            
+            // Remove previous error styling
+            document.querySelectorAll('.form-control').forEach(input => {
+                input.classList.remove('error');
+            });
+
+            // Email validation
+            if (!emailInput.value.trim()) {
+                emailInput.classList.add('error');
+                isValid = false;
+            } else if (!isValidEmail(emailInput.value)) {
+                emailInput.classList.add('error');
+                ecommerceApp.showNotification('Please enter a valid email address', 'error');
+                isValid = false;
+            }
+
+            // Password validation
+            if (!passwordInput.value.trim()) {
+                passwordInput.classList.add('error');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+                if (!emailInput.value.trim() || !passwordInput.value.trim()) {
+                    ecommerceApp.showNotification('Please fill in all required fields', 'error');
+                }
+            }
+        });
+
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        // Add error styling
+        const style = document.createElement('style');
+        style.textContent = `
+            .form-control.error {
+                border-color: var(--danger-color);
+                box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+            }
+        `;
+        document.head.appendChild(style);
+    });
+</script>
+{% endblock %}
