@@ -35,22 +35,45 @@ class OrderDetailView(generics.RetrieveAPIView):
 class CreateOrderView(generics.CreateAPIView):
     """Create new order from cart"""
     serializer_class = CreateOrderSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]  # Allow guest users for now
     
     def create(self, request, *args, **kwargs):
-        with transaction.atomic():
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            
-            order = serializer.save()
-            
-            # Send order confirmation email (implement as needed)
-            # self.send_order_confirmation_email(order)
-            
+        # Check if user is authenticated
+        if not request.user.is_authenticated:
             return Response({
-                'message': 'Order created successfully',
-                'order': OrderDetailSerializer(order, context={'request': request}).data
-            }, status=status.HTTP_201_CREATED)
+                'error': 'Authentication required to place orders'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+            
+        try:
+            with transaction.atomic():
+                serializer = self.get_serializer(data=request.data)
+                
+                if not serializer.is_valid():
+                    return Response({
+                        'error': 'Invalid order data',
+                        'errors': serializer.errors
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                order = serializer.save()
+                
+                # Send order confirmation email (implement as needed)
+                # self.send_order_confirmation_email(order)
+                
+                response_data = {
+                    'message': 'Order created successfully',
+                    'order': OrderDetailSerializer(order, context={'request': request}).data
+                }
+                
+                print(f"Order created successfully: {order.order_number}")
+                print(f"Response data: {response_data}")
+                
+                return Response(response_data, status=status.HTTP_201_CREATED)
+                
+        except Exception as e:
+            print(f"Error creating order: {str(e)}")
+            return Response({
+                'error': f'Failed to create order: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])

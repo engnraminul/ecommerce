@@ -96,7 +96,12 @@ class Order(models.Model):
         """Recalculate order totals"""
         self.subtotal = sum(item.total_price for item in self.items.all())
         # Add shipping, tax, discount calculations here
-        self.total_amount = self.subtotal + self.shipping_cost + self.tax_amount - self.discount_amount - self.coupon_discount
+        shipping_cost = self.shipping_cost or 0
+        tax_amount = self.tax_amount or 0
+        discount_amount = self.discount_amount or 0
+        coupon_discount = self.coupon_discount or 0
+        
+        self.total_amount = self.subtotal + shipping_cost + tax_amount - discount_amount - coupon_discount
         self.save()
 
 
@@ -131,6 +136,8 @@ class OrderItem(models.Model):
     @property
     def total_price(self):
         """Calculate total price for this order item"""
+        if self.unit_price is None or self.quantity is None:
+            return 0
         return self.unit_price * self.quantity
 
 

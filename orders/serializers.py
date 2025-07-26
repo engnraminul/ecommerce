@@ -9,6 +9,12 @@ class ShippingAddressSerializer(serializers.ModelSerializer):
     full_name = serializers.ReadOnlyField()
     full_address = serializers.ReadOnlyField()
     
+    # Make these fields optional since we simplified the checkout form
+    city = serializers.CharField(required=False, allow_blank=True, default='Dhaka')
+    state = serializers.CharField(required=False, allow_blank=True, default='Dhaka')
+    postal_code = serializers.CharField(required=False, allow_blank=True, default='1000')
+    country = serializers.CharField(required=False, allow_blank=True, default='Bangladesh')
+    
     class Meta:
         model = ShippingAddress
         fields = (
@@ -110,17 +116,25 @@ class CreateOrderSerializer(serializers.Serializer):
         from cart.models import Cart, CouponUsage
         from django.utils import timezone
         from decimal import Decimal
+        import logging
         
+        logger = logging.getLogger(__name__)
         user = self.context['request'].user
         shipping_data = validated_data.pop('shipping_address')
+        
+        logger.info(f"Creating order for user: {user}")
+        logger.info(f"Shipping data: {shipping_data}")
         
         # Get user's cart
         try:
             cart = Cart.objects.get(user=user)
+            logger.info(f"Found cart with {cart.items.count()} items")
         except Cart.DoesNotExist:
+            logger.error("Cart not found for user")
             raise serializers.ValidationError("Cart is empty.")
         
         if not cart.items.exists():
+            logger.error("Cart has no items")
             raise serializers.ValidationError("Cart is empty.")
         
         # Calculate totals

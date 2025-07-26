@@ -321,9 +321,12 @@ def profile(request):
     return render(request, 'frontend/profile.html', context)
 
 
-@login_required
 def orders(request):
     """User orders page."""
+    if not request.user.is_authenticated:
+        # Redirect to login if user is not authenticated
+        return redirect('frontend:login')
+    
     orders_list = Order.objects.filter(user=request.user).order_by('-created_at')
     
     # Pagination
@@ -350,6 +353,19 @@ def order_detail(request, order_id):
         'order': order,
     }
     return render(request, 'frontend/order_detail.html', context)
+
+
+def order_confirmation(request, order_number):
+    """Order confirmation page - accessible without login."""
+    order = get_object_or_404(
+        Order.objects.prefetch_related('items__product'), 
+        order_number=order_number
+    )
+    
+    context = {
+        'order': order,
+    }
+    return render(request, 'frontend/order_confirmation.html', context)
 
 
 @login_required
