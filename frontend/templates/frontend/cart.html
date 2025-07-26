@@ -617,14 +617,31 @@
             const cartContent = document.getElementById('cart-content');
             cartContent.style.display = 'block';
             
-            fetch('/api/v1/cart/', {
-                headers: {
-                    'X-CSRFToken': getCookie('csrftoken')
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                displayCart(data);
+            // Load both cart items and summary
+            Promise.all([
+                fetch('/api/v1/cart/', {
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                }),
+                fetch('/api/v1/cart/summary/', {
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+            ])
+            .then(responses => Promise.all(responses.map(r => r.json())))
+            .then(([cartData, summaryData]) => {
+                // Combine cart data with summary
+                const combinedData = {
+                    ...cartData,
+                    ...summaryData,
+                    // Map field names to match frontend expectations
+                    total: summaryData.total_amount,
+                    shipping: summaryData.shipping_cost,
+                    tax: summaryData.tax_amount
+                };
+                displayCart(combinedData);
             })
             .catch(error => {
                 console.error('Error loading cart:', error);
@@ -671,6 +688,7 @@
                 const productName = item.product_name || (item.product ? item.product.name : 'Unknown Product');
                 const productSku = item.product_sku || (item.product ? item.product.sku : 'N/A');
                 const productImage = item.product_image || (item.product ? item.product.primary_image : null) || '/media/default.webp';
+                const totalPrice = item.total_price || '0.00';
                 
                 // Extract variant information - use flattened fields first
                 const variantName = item.variant_name || (item.variant ? item.variant.name : null);
@@ -705,7 +723,7 @@
                             <input type="number" value="${item.quantity}" min="1" readonly>
                             <button onclick="updateQuantity(${item.id}, 1)">+</button>
                         </div>
-                        <div class="item-price">$${item.total_price}</div>
+                        <div class="item-price">$${totalPrice}</div>
                         <button class="remove-item" onclick="removeItem(${item.id})">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -715,10 +733,16 @@
         }
         
         function updateCartSummary(cartData) {
-            document.getElementById('cart-subtotal').textContent = `$${cartData.subtotal}`;
-            document.getElementById('cart-shipping').textContent = cartData.shipping_cost > 0 ? `$${cartData.shipping_cost}` : 'FREE';
-            document.getElementById('cart-tax').textContent = `$${cartData.tax}`;
-            document.getElementById('cart-total').textContent = `$${cartData.total}`;
+            // Handle both the API field names and provide fallbacks
+            const subtotal = cartData.subtotal || '0.00';
+            const shipping = cartData.shipping_cost || cartData.shipping || '0.00';
+            const tax = cartData.tax_amount || cartData.tax || '0.00';
+            const total = cartData.total_amount || cartData.total || '0.00';
+            
+            document.getElementById('cart-subtotal').textContent = `$${subtotal}`;
+            document.getElementById('cart-shipping').textContent = shipping > 0 ? `$${shipping}` : 'FREE';
+            document.getElementById('cart-tax').textContent = `$${tax}`;
+            document.getElementById('cart-total').textContent = `$${total}`;
         }
         
         // Cart actions

@@ -91,14 +91,17 @@
                                 {% if product.compare_price and product.compare_price > product.price %}
                                 <span class="original-price" id="variant-original-price">${{ product.compare_price }}</span>
                                 <span class="discount-badge" id="variant-discount-badge">
-                                    {% widthratio product.price product.compare_price 100 as discount %}
-                                    {{ discount|floatformat:0 }}% OFF
+                                    <script>
+                                        document.write(Math.round(({{ product.compare_price }} - {{ product.price }}) / {{ product.compare_price }} * 100) + '% OFF');
+                                    </script>
                                 </span>
                                 {% endif %}
                             </div>
                             <div class="savings" id="variant-savings">
                                 {% if product.compare_price and product.compare_price > product.price %}
-                                You save ${{ product.compare_price|floatformat:2|add:"-"|add:product.price }}
+                                <script>
+                                    document.write('You save $' + ({{ product.compare_price }} - {{ product.price }}).toFixed(2));
+                                </script>
                                 {% endif %}
                             </div>
                             <div class="price-note" id="variant-price-note" style="display: none;">

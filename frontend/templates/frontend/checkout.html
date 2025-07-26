@@ -33,16 +33,16 @@
                             
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="full_name">Full Name *</label>
-                                    <input type="text" id="full_name" name="full_name" required>
+                                    <label for="full_name">Full Name</label>
+                                    <input type="text" id="full_name" name="full_name">
                                     <div class="field-error" id="full_name_error"></div>
                                 </div>
                             </div>
                             
                             <div class="form-row">
                                 <div class="form-group half">
-                                    <label for="email">Email Address *</label>
-                                    <input type="email" id="email" name="email" required>
+                                    <label for="email">Email Address</label>
+                                    <input type="email" id="email" name="email">
                                     <div class="field-error" id="email_error"></div>
                                 </div>
                                 <div class="form-group half">
@@ -62,49 +62,9 @@
                             
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="address">Street Address *</label>
-                                    <input type="text" id="address" name="address" placeholder="123 Main Street" required>
+                                    <label for="address">Street Address</label>
+                                    <textarea id="address" name="address" rows="3" placeholder="123 Main Street&#10;Apt 4B"></textarea>
                                     <div class="field-error" id="address_error"></div>
-                                </div>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group half">
-                                    <label for="city">City *</label>
-                                    <input type="text" id="city" name="city" required>
-                                    <div class="field-error" id="city_error"></div>
-                                </div>
-                                <div class="form-group quarter">
-                                    <label for="state">State/Province *</label>
-                                    <select id="state" name="state" required>
-                                        <option value="">Select State</option>
-                                        <option value="AL">Alabama</option>
-                                        <option value="CA">California</option>
-                                        <option value="FL">Florida</option>
-                                        <option value="NY">New York</option>
-                                        <option value="TX">Texas</option>
-                                        <!-- Add more states as needed -->
-                                    </select>
-                                    <div class="field-error" id="state_error"></div>
-                                </div>
-                                <div class="form-group quarter">
-                                    <label for="zip_code">ZIP Code *</label>
-                                    <input type="text" id="zip_code" name="zip_code" required>
-                                    <div class="field-error" id="zip_code_error"></div>
-                                </div>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="country">Country *</label>
-                                    <select id="country" name="country" required>
-                                        <option value="">Select Country</option>
-                                        <option value="US" selected>United States</option>
-                                        <option value="CA">Canada</option>
-                                        <option value="UK">United Kingdom</option>
-                                        <option value="AU">Australia</option>
-                                    </select>
-                                    <div class="field-error" id="country_error"></div>
                                 </div>
                             </div>
                         </div>
@@ -149,21 +109,10 @@
                                     <input type="radio" id="express_shipping" name="shipping_method" value="express">
                                     <label for="express_shipping">
                                         <div class="shipping-info">
-                                            <div class="shipping-name">Express Shipping</div>
-                                            <div class="shipping-description">2-3 business days</div>
+                                            <div class="shipping-name">Express Shipping (same Day)</div>
+                                            <div class="shipping-description">Only Dhaka City</div>
                                         </div>
                                         <div class="shipping-price">$9.99</div>
-                                    </label>
-                                </div>
-                                
-                                <div class="shipping-option">
-                                    <input type="radio" id="overnight_shipping" name="shipping_method" value="overnight">
-                                    <label for="overnight_shipping">
-                                        <div class="shipping-info">
-                                            <div class="shipping-name">Overnight Shipping</div>
-                                            <div class="shipping-description">Next business day</div>
-                                        </div>
-                                        <div class="shipping-price">$24.99</div>
                                     </label>
                                 </div>
                             </div>
@@ -178,61 +127,114 @@
                             
                             <div class="payment-options">
                                 <div class="payment-option">
-                                    <input type="radio" id="credit_card" name="payment_method" value="credit_card" checked>
-                                    <label for="credit_card">
-                                        <i class="fas fa-credit-card"></i>
-                                        Credit/Debit Card
+                                    <input type="radio" id="cod" name="payment_method" value="cod" checked>
+                                    <label for="cod">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                        Cash on Delivery
                                     </label>
                                 </div>
                                 
                                 <div class="payment-option">
-                                    <input type="radio" id="paypal" name="payment_method" value="paypal">
-                                    <label for="paypal">
-                                        <i class="fab fa-paypal"></i>
-                                        PayPal
+                                    <input type="radio" id="bkash" name="payment_method" value="bkash">
+                                    <label for="bkash">
+                                        <i class="fas fa-mobile-alt"></i>
+                                        bKash
                                     </label>
                                 </div>
                                 
                                 <div class="payment-option">
-                                    <input type="radio" id="apple_pay" name="payment_method" value="apple_pay">
-                                    <label for="apple_pay">
-                                        <i class="fab fa-apple-pay"></i>
-                                        Apple Pay
+                                    <input type="radio" id="nagad" name="payment_method" value="nagad">
+                                    <label for="nagad">
+                                        <i class="fas fa-wallet"></i>
+                                        Nagad
                                     </label>
                                 </div>
                             </div>
 
-                            <!-- Credit Card Form -->
-                            <div class="credit-card-form" id="credit-card-form">
+                            <!-- bKash Form -->
+                            <div class="payment-form" id="bkash-form" style="display: none;">
+                                <div class="payment-method-info">
+                                    <div class="info-header">
+                                        <i class="fas fa-mobile-alt"></i>
+                                        <h4>bKash Payment</h4>
+                                    </div>
+                                    <div class="payment-instructions">
+                                        <p><strong>Follow these steps:</strong></p>
+                                        <ol>
+                                            <li>Go to your bKash Mobile Menu by dialing *247#</li>
+                                            <li>Choose "Send Money"</li>
+                                            <li>Enter Merchant bKash Account Number: <strong>01XXXXXXXXX</strong></li>
+                                            <li>Enter the total amount: <strong id="bkash-amount">$0.00</strong></li>
+                                            <li>Enter a reference: Your phone number</li>
+                                            <li>Now enter your bKash Mobile Menu PIN and confirm</li>
+                                        </ol>
+                                    </div>
+                                </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="card_number">Card Number *</label>
-                                        <input type="text" id="card_number" name="card_number" placeholder="1234 5678 9012 3456" maxlength="19">
-                                        <div class="card-types">
-                                            <i class="fab fa-cc-visa"></i>
-                                            <i class="fab fa-cc-mastercard"></i>
-                                            <i class="fab fa-cc-amex"></i>
-                                            <i class="fab fa-cc-discover"></i>
+                                        <label for="bkash_transaction_id">bKash Transaction ID *</label>
+                                        <input type="text" id="bkash_transaction_id" name="bkash_transaction_id" placeholder="Enter transaction ID after payment">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="bkash_sender_number">Sender Mobile Number *</label>
+                                        <input type="tel" id="bkash_sender_number" name="bkash_sender_number" placeholder="01XXXXXXXXX">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Nagad Form -->
+                            <div class="payment-form" id="nagad-form" style="display: none;">
+                                <div class="payment-method-info">
+                                    <div class="info-header">
+                                        <i class="fas fa-wallet"></i>
+                                        <h4>Nagad Payment</h4>
+                                    </div>
+                                    <div class="payment-instructions">
+                                        <p><strong>Follow these steps:</strong></p>
+                                        <ol>
+                                            <li>Go to your Nagad Mobile Menu by dialing *167#</li>
+                                            <li>Choose "Send Money"</li>
+                                            <li>Enter Merchant Nagad Account Number: <strong>01XXXXXXXXX</strong></li>
+                                            <li>Enter the total amount: <strong id="nagad-amount">$0.00</strong></li>
+                                            <li>Enter a reference: Your phone number</li>
+                                            <li>Now enter your Nagad PIN and confirm</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="nagad_transaction_id">Nagad Transaction ID *</label>
+                                        <input type="text" id="nagad_transaction_id" name="nagad_transaction_id" placeholder="Enter transaction ID after payment">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="nagad_sender_number">Sender Mobile Number *</label>
+                                        <input type="tel" id="nagad_sender_number" name="nagad_sender_number" placeholder="01XXXXXXXXX">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- COD Form -->
+                            <div class="payment-form" id="cod-form">
+                                <div class="payment-method-info">
+                                    <div class="info-header">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                        <h4>Cash on Delivery</h4>
+                                    </div>
+                                    <div class="payment-instructions">
+                                        <p><strong>Payment Information:</strong></p>
+                                        <ul>
+                                            <li>Pay cash when you receive your order</li>
+                                            <li>Make sure to have exact amount ready</li>
+                                            <li>Our delivery person will collect the payment</li>
+                                            <li>You can inspect the product before payment</li>
+                                        </ul>
+                                        <div class="cod-total">
+                                            <strong>Total Amount to Pay: <span id="cod-amount">$0.00</span></strong>
                                         </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="form-row">
-                                    <div class="form-group half">
-                                        <label for="expiry_date">Expiry Date *</label>
-                                        <input type="text" id="expiry_date" name="expiry_date" placeholder="MM/YY" maxlength="5">
-                                    </div>
-                                    <div class="form-group half">
-                                        <label for="cvv">CVV *</label>
-                                        <input type="text" id="cvv" name="cvv" placeholder="123" maxlength="4">
-                                        <i class="fas fa-question-circle cvv-help" title="3 or 4 digits on the back of your card"></i>
-                                    </div>
-                                </div>
-                                
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="cardholder_name">Cardholder Name *</label>
-                                        <input type="text" id="cardholder_name" name="cardholder_name" placeholder="John Doe">
                                     </div>
                                 </div>
                             </div>
@@ -556,11 +558,73 @@
     }
 
     /* Credit Card Form */
-    .credit-card-form {
+    .credit-card-form,
+    .payment-form {
         margin-top: 2rem;
         padding: 2rem;
         background: var(--light-color);
         border-radius: var(--border-radius);
+    }
+
+    .payment-method-info {
+        margin-bottom: 1.5rem;
+    }
+
+    .info-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .info-header i {
+        font-size: 1.5rem;
+        color: var(--primary-color);
+    }
+
+    .info-header h4 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin: 0;
+    }
+
+    .payment-instructions {
+        background: var(--white);
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .payment-instructions p {
+        margin-bottom: 1rem;
+        color: var(--dark-color);
+    }
+
+    .payment-instructions ol,
+    .payment-instructions ul {
+        margin: 0;
+        padding-left: 1.5rem;
+    }
+
+    .payment-instructions li {
+        margin-bottom: 0.5rem;
+        color: var(--secondary-color);
+        line-height: 1.5;
+    }
+
+    .payment-instructions strong {
+        color: var(--primary-color);
+    }
+
+    .cod-total {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: var(--success-color);
+        color: var(--white);
+        border-radius: var(--border-radius);
+        text-align: center;
+        font-size: 1.1rem;
     }
 
     .card-types {
@@ -824,7 +888,7 @@
         }
 
         .payment-options {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, 1fr);
         }
     }
 
@@ -904,7 +968,6 @@
         loadOrderSummary();
         setupFormValidation();
         setupPaymentMethodToggle();
-        setupCardInputFormatting();
         
         // Load order summary
         function loadOrderSummary() {
@@ -987,7 +1050,6 @@
             if (shippingMethod) {
                 switch(shippingMethod.value) {
                     case 'express': shipping = 9.99; break;
-                    case 'overnight': shipping = 24.99; break;
                     default: shipping = subtotal > 50 ? 0 : 9.99;
                 }
             }
@@ -999,6 +1061,9 @@
             document.getElementById('order-shipping').textContent = shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`;
             document.getElementById('order-tax').textContent = `$${tax.toFixed(2)}`;
             document.getElementById('order-total').textContent = `$${total.toFixed(2)}`;
+            
+            // Update payment amounts
+            updatePaymentAmount();
         }
         
         // Update totals when shipping method changes
@@ -1011,46 +1076,48 @@
         // Payment method toggle
         function setupPaymentMethodToggle() {
             const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
-            const creditCardForm = document.getElementById('credit-card-form');
+            const bkashForm = document.getElementById('bkash-form');
+            const nagadForm = document.getElementById('nagad-form');
+            const codForm = document.getElementById('cod-form');
             
             paymentMethods.forEach(method => {
                 method.addEventListener('change', function() {
-                    if (this.value === 'credit_card') {
-                        creditCardForm.style.display = 'block';
-                    } else {
-                        creditCardForm.style.display = 'none';
+                    // Hide all payment forms
+                    bkashForm.style.display = 'none';
+                    nagadForm.style.display = 'none';
+                    codForm.style.display = 'none';
+                    
+                    // Show the selected payment form
+                    switch(this.value) {
+                        case 'bkash':
+                            bkashForm.style.display = 'block';
+                            updatePaymentAmount();
+                            break;
+                        case 'nagad':
+                            nagadForm.style.display = 'block';
+                            updatePaymentAmount();
+                            break;
+                        case 'cod':
+                            codForm.style.display = 'block';
+                            updatePaymentAmount();
+                            break;
                     }
                 });
             });
         }
         
-        // Card input formatting
-        function setupCardInputFormatting() {
-            const cardNumberInput = document.getElementById('card_number');
-            const expiryInput = document.getElementById('expiry_date');
+        // Update payment amount in forms
+        function updatePaymentAmount() {
+            const totalElement = document.getElementById('order-total');
+            const total = totalElement ? totalElement.textContent : '$0.00';
             
-            if (cardNumberInput) {
-                // Format card number
-                cardNumberInput.addEventListener('input', function(e) {
-                    let value = e.target.value.replace(/\s/g, '').replace(/[^0-9]/gi, '');
-                    let formattedValue = value.match(/.{1,4}/g)?.join(' ') ?? value;
-                    if (formattedValue.length > 19) {
-                        formattedValue = formattedValue.substring(0, 19);
-                    }
-                    e.target.value = formattedValue;
-                });
-            }
+            const bkashAmount = document.getElementById('bkash-amount');
+            const nagadAmount = document.getElementById('nagad-amount');
+            const codAmount = document.getElementById('cod-amount');
             
-            if (expiryInput) {
-                // Format expiry date
-                expiryInput.addEventListener('input', function(e) {
-                    let value = e.target.value.replace(/\D/g, '');
-                    if (value.length >= 2) {
-                        value = value.substring(0, 2) + '/' + value.substring(2, 4);
-                    }
-                    e.target.value = value;
-                });
-            }
+            if (bkashAmount) bkashAmount.textContent = total;
+            if (nagadAmount) nagadAmount.textContent = total;
+            if (codAmount) codAmount.textContent = total;
         }
         
         // Form validation
@@ -1071,8 +1138,7 @@
             
             // Required fields
             const requiredFields = [
-                'full_name', 'email', 'phone_number', 'address', 
-                'city', 'state', 'zip_code', 'country'
+                'phone_number'
             ];
             
             requiredFields.forEach(fieldName => {
@@ -1097,40 +1163,41 @@
                 isValid = false;
             }
             
-            // Credit card validation if selected
+            // Payment method validation
             const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
-            if (paymentMethod && paymentMethod.value === 'credit_card') {
-                const cardFields = ['card_number', 'expiry_date', 'cvv', 'cardholder_name'];
-                
-                cardFields.forEach(fieldName => {
-                    const field = document.getElementById(fieldName);
-                    if (field && !field.value.trim()) {
-                        field.style.borderColor = 'var(--danger-color)';
-                        isValid = false;
-                    } else if (field) {
-                        field.style.borderColor = 'var(--border-color)';
-                    }
-                });
-                
-                // Card number validation
-                const cardNumber = document.getElementById('card_number');
-                if (cardNumber && cardNumber.value.replace(/\s/g, '').length < 13) {
-                    cardNumber.style.borderColor = 'var(--danger-color)';
-                    isValid = false;
-                }
-                
-                // Expiry date validation
-                const expiryDate = document.getElementById('expiry_date');
-                if (expiryDate && expiryDate.value.length < 5) {
-                    expiryDate.style.borderColor = 'var(--danger-color)';
-                    isValid = false;
-                }
-                
-                // CVV validation
-                const cvv = document.getElementById('cvv');
-                if (cvv && (cvv.value.length < 3 || cvv.value.length > 4)) {
-                    cvv.style.borderColor = 'var(--danger-color)';
-                    isValid = false;
+            if (paymentMethod) {
+                switch(paymentMethod.value) {
+                    case 'bkash':
+                        const bkashFields = ['bkash_transaction_id', 'bkash_sender_number'];
+                        
+                        bkashFields.forEach(fieldName => {
+                            const field = document.getElementById(fieldName);
+                            if (field && !field.value.trim()) {
+                                field.style.borderColor = 'var(--danger-color)';
+                                isValid = false;
+                            } else if (field) {
+                                field.style.borderColor = 'var(--border-color)';
+                            }
+                        });
+                        break;
+                        
+                    case 'nagad':
+                        const nagadFields = ['nagad_transaction_id', 'nagad_sender_number'];
+                        
+                        nagadFields.forEach(fieldName => {
+                            const field = document.getElementById(fieldName);
+                            if (field && !field.value.trim()) {
+                                field.style.borderColor = 'var(--danger-color)';
+                                isValid = false;
+                            } else if (field) {
+                                field.style.borderColor = 'var(--border-color)';
+                            }
+                        });
+                        break;
+                        
+                    case 'cod':
+                        // No additional validation needed for COD
+                        break;
                 }
             }
             
@@ -1167,10 +1234,10 @@
                     company: formData.get('company') || '',
                     address_line_1: formData.get('address'),
                     address_line_2: formData.get('address_2') || '',
-                    city: formData.get('city'),
-                    state: formData.get('state'),
-                    postal_code: formData.get('zip_code'),
-                    country: formData.get('country'),
+                    city: formData.get('city') || '',
+                    state: formData.get('state') || '',
+                    postal_code: formData.get('zip_code') || '',
+                    country: formData.get('country') || '',
                     phone: formData.get('phone_number'),
                     email: formData.get('email'),
                     delivery_instructions: formData.get('order_instructions') || ''
