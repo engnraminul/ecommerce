@@ -91,13 +91,34 @@ class CartSerializer(serializers.ModelSerializer):
     total_items = serializers.ReadOnlyField()
     subtotal = serializers.ReadOnlyField()
     total_weight = serializers.ReadOnlyField()
+    shipping_summary = serializers.SerializerMethodField()
     
     class Meta:
         model = Cart
         fields = (
             'id', 'items', 'total_items', 'subtotal', 'total_weight',
-            'created_at', 'updated_at'
+            'shipping_summary', 'created_at', 'updated_at'
         )
+    
+    def get_shipping_summary(self, obj):
+        """Get shipping options for this cart"""
+        from .shipping import ShippingCalculator
+        
+        # Get location from request context (default to Dhaka)
+        request = self.context.get('request')
+        location = 'dhaka'
+        if request and hasattr(request, 'GET'):
+            location = request.GET.get('location', 'dhaka').lower()
+        
+        if location not in ['dhaka', 'outside']:
+            location = 'dhaka'
+        
+        cart_items = obj.items.select_related('product').all()
+        if not cart_items:
+            return None
+        
+        shipping_calculator = ShippingCalculator(cart_items, location)
+        return shipping_calculator.get_shipping_summary()
         read_only_fields = ('id', 'created_at', 'updated_at')
 
 

@@ -77,6 +77,49 @@ class Product(models.Model):
     weight = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     dimensions = models.CharField(max_length=100, blank=True, help_text="Length x Width x Height")
     
+    # Shipping options
+    SHIPPING_TYPE_CHOICES = [
+        ('free', 'Free Shipping'),
+        ('standard', 'Shipping with Charge (Dhaka: 70 Tk, Outside: 120 Tk)'),
+    ]
+    
+    # Main shipping option (Free OR Paid)
+    shipping_type = models.CharField(
+        max_length=20, 
+        choices=SHIPPING_TYPE_CHOICES, 
+        default='standard',
+        help_text="Select main shipping option: Free OR Shipping with Charge"
+    )
+    
+    # Express shipping checkbox (additional option)
+    has_express_shipping = models.BooleanField(
+        default=False,
+        help_text="Check to enable Express Shipping"
+    )
+    
+    # Custom shipping costs (optional overrides)
+    custom_shipping_dhaka = models.DecimalField(
+        max_digits=8, 
+        decimal_places=2, 
+        null=True, 
+        blank=True,
+        help_text="Custom shipping cost for Dhaka (leave blank to use default 70 Tk)"
+    )
+    custom_shipping_outside = models.DecimalField(
+        max_digits=8, 
+        decimal_places=2, 
+        null=True, 
+        blank=True,
+        help_text="Custom shipping cost outside Dhaka (leave blank to use default 120 Tk)"
+    )
+    custom_express_shipping = models.DecimalField(
+        max_digits=8, 
+        decimal_places=2, 
+        null=True, 
+        blank=True,
+        help_text="Custom express shipping cost for Dhaka (leave blank to use default 150 Tk)"
+    )
+    
     # SEO fields
     meta_title = models.CharField(max_length=200, blank=True)
     meta_description = models.TextField(max_length=300, blank=True)
@@ -141,6 +184,76 @@ class Product(models.Model):
     def review_count(self):
         """Count of approved reviews"""
         return self.reviews.filter(is_approved=True).count()
+    
+    def get_shipping_cost(self, location='dhaka', shipping_type=None):
+        """
+        Calculate shipping cost based on product shipping type and location
+        location: 'dhaka' or 'outside'
+        shipping_type: 'free', 'standard', or 'express' (if None, uses product default)
+        """
+        if shipping_type is None:
+            shipping_type = self.shipping_type
+            
+        if shipping_type == 'free':
+            return 0
+        
+        elif shipping_type == 'standard':
+            if location == 'dhaka':
+                return self.custom_shipping_dhaka or 70
+            else:  # outside dhaka
+                return self.custom_shipping_outside or 120
+        
+        elif shipping_type == 'express':
+            if location == 'dhaka':
+                return self.custom_express_shipping or 150
+            else:  # express only available in Dhaka
+                return None  # Express not available outside Dhaka
+        
+        return 0
+    
+    def is_express_available(self, location='dhaka'):
+        """Check if express shipping is available for this product and location"""
+        return self.has_express_shipping and location == 'dhaka'
+    
+    def get_available_shipping_options(self, location='dhaka'):
+        """Get all available shipping options for this product and location"""
+        options = []
+        
+        # Add main shipping option (free or standard)
+        if self.shipping_type == 'free':
+            estimated_days = '1-2 days' if location == 'dhaka' else '2-4 days'
+            options.append({
+                'type': 'free',
+                'name': 'Free Shipping',
+                'cost': 0,
+                'description': 'Free delivery',
+                'estimated_days': estimated_days
+            })
+        
+        elif self.shipping_type == 'standard':
+            cost = self.get_shipping_cost(location, 'standard')
+            location_name = 'Dhaka City' if location == 'dhaka' else 'Outside Dhaka'
+            estimated_days = '1-2 days' if location == 'dhaka' else '2-4 days'
+            options.append({
+                'type': 'standard',
+                'name': f'Standard Shipping ({location_name})',
+                'cost': cost,
+                'description': f'Regular delivery - {cost} ৳',
+                'estimated_days': estimated_days
+            })
+        
+        # Add express shipping option if enabled and location is Dhaka
+        if self.has_express_shipping and location == 'dhaka':
+            cost = self.get_shipping_cost(location, 'express')
+            options.append({
+                'type': 'express',
+                'name': 'Express Shipping (Same Day)',
+                'cost': cost,
+                'description': f'Same day delivery - {cost} ৳',
+                'estimated_days': 'Same day'
+            })
+        
+        return options
 
 
 class ProductImage(models.Model):

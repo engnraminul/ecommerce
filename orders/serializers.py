@@ -97,6 +97,8 @@ class CreateOrderSerializer(serializers.Serializer):
     shipping_address = ShippingAddressSerializer()
     customer_notes = serializers.CharField(required=False, allow_blank=True)
     coupon_code = serializers.CharField(required=False, allow_blank=True)
+    shipping_option = serializers.CharField(required=False, allow_blank=True)
+    shipping_location = serializers.CharField(required=False, allow_blank=True)
     
     def validate_coupon_code(self, value):
         if value:
@@ -114,6 +116,7 @@ class CreateOrderSerializer(serializers.Serializer):
     
     def create(self, validated_data):
         from cart.models import Cart, CouponUsage
+        from cart.shipping import ShippingCalculator
         from django.utils import timezone
         from decimal import Decimal
         import logging
@@ -121,9 +124,13 @@ class CreateOrderSerializer(serializers.Serializer):
         logger = logging.getLogger(__name__)
         user = self.context['request'].user
         shipping_data = validated_data.pop('shipping_address')
+        shipping_option = validated_data.get('shipping_option', '')
+        shipping_location = validated_data.get('shipping_location', 'dhaka')
         
         logger.info(f"Creating order for user: {user}")
         logger.info(f"Shipping data: {shipping_data}")
+        logger.info(f"Shipping option: {shipping_option}")
+        logger.info(f"Shipping location: {shipping_location}")
         
         # Get user's cart
         try:
@@ -137,9 +144,35 @@ class CreateOrderSerializer(serializers.Serializer):
             logger.error("Cart has no items")
             raise serializers.ValidationError("Cart is empty.")
         
+        # Get cart items
+        cart_items = cart.items.all()
+        
+        # Calculate shipping cost
+        shipping_cost = Decimal('0.00')
+        
+        if shipping_option and cart_items:
+            # Calculate shipping cost based on selected option
+            for cart_item in cart_items:
+                product = cart_item.product
+                item_shipping_options = product.get_available_shipping_options(shipping_location)
+                
+                # Find the selected shipping option
+                selected_option = None
+                for option in item_shipping_options:
+                    if option['type'] == shipping_option:
+                        selected_option = option
+                        break
+                
+                if selected_option:
+                    # Add shipping cost (only once for the entire order, not per item)
+                    if shipping_cost == 0:  # Only add shipping cost once
+                        shipping_cost = Decimal(str(selected_option['cost']))
+                    break
+        
+        logger.info(f"Calculated shipping cost: {shipping_cost}")
+        
         # Calculate totals
         subtotal = cart.subtotal
-        shipping_cost = Decimal('0.00')  # Implement shipping calculation logic
         tax_amount = Decimal('0.00')     # Implement tax calculation logic
         discount_amount = Decimal('0.00')
         coupon_discount = Decimal('0.00')

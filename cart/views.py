@@ -10,6 +10,7 @@ from .serializers import (
     UpdateCartItemSerializer, SavedItemSerializer, CouponSerializer,
     ApplyCouponSerializer, CouponValidationSerializer, CartSummarySerializer
 )
+from .shipping import ShippingCalculator
 from products.models import Product, ProductVariant
 
 
@@ -352,3 +353,89 @@ def cart_summary(request):
     }
     
     return Response(summary)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_shipping_options(request):
+    """Get available shipping options for user's cart"""
+    location = request.GET.get('location', 'dhaka').lower()
+    
+    if location not in ['dhaka', 'outside']:
+        return Response({
+            'error': 'Invalid location. Must be "dhaka" or "outside"'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Get user's cart
+    try:
+        cart = Cart.objects.get(user=request.user)
+        cart_items = cart.items.select_related('product').all()
+        
+        if not cart_items:
+            return Response({
+                'error': 'Cart is empty'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Calculate shipping options
+        shipping_calculator = ShippingCalculator(cart_items, location)
+        shipping_summary = shipping_calculator.get_shipping_summary()
+        
+        return Response(shipping_summary)
+        
+    except Cart.DoesNotExist:
+        return Response({
+            'error': 'Cart not found'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def calculate_shipping_cost(request):
+    """Calculate shipping cost for specific option and location"""
+    shipping_type = request.data.get('shipping_type')
+    location = request.data.get('location', 'dhaka').lower()
+    
+    if not shipping_type:
+        return Response({
+            'error': 'shipping_type is required'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    if location not in ['dhaka', 'outside']:
+        return Response({
+            'error': 'Invalid location. Must be "dhaka" or "outside"'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    if shipping_type not in ['free', 'standard', 'express']:
+        return Response({
+            'error': 'Invalid shipping_type. Must be "free", "standard", or "express"'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        cart = Cart.objects.get(user=request.user)
+        cart_items = cart.items.select_related('product').all()
+        
+        if not cart_items:
+            return Response({
+                'error': 'Cart is empty'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Calculate shipping cost
+        shipping_calculator = ShippingCalculator(cart_items, location)
+        cost = shipping_calculator.calculate_shipping_cost(shipping_type)
+        
+        if cost is None:
+            return Response({
+                'error': f'{shipping_type} shipping not available for {location}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response({
+            'shipping_type': shipping_type,
+            'location': location,
+            'cost': cost,
+            'currency': '৳'
+        })
+        
+    except Cart.DoesNotExist:
+        return Response({
+            'error': 'Cart not found'
+        }, status=status.HTTP_404_NOT_FOUND)

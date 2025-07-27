@@ -23,4 +23,8 @@ urlpatterns = [
     
     # Cart summary
     path('summary/', views.cart_summary, name='cart-summary'),
+    
+    # Shipping
+    path('shipping-options/', views.get_shipping_options, name='shipping-options'),
+    path('calculate-shipping/', views.calculate_shipping_cost, name='calculate-shipping'),
 ]

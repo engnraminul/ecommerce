@@ -65,11 +65,11 @@ class ProductAdmin(admin.ModelAdmin):
     """Product admin with enhanced features"""
     list_display = (
         'name', 'sku', 'category', 'price', 'stock_quantity', 
-        'is_active', 'is_featured', 'stock_status', 'created_at'
+        'is_active', 'is_featured', 'stock_status', 'shipping_info', 'created_at'
     )
     list_filter = (
         'is_active', 'is_featured', 'is_digital', 'category', 
-        'created_at', 'track_inventory'
+        'shipping_type', 'has_express_shipping', 'created_at', 'track_inventory'
     )
     search_fields = ('name', 'sku', 'description', 'short_description')
     prepopulated_fields = {'slug': ('name',)}
@@ -90,6 +90,15 @@ class ProductAdmin(admin.ModelAdmin):
         }),
         ('Inventory', {
             'fields': ('stock_quantity', 'low_stock_threshold', 'track_inventory')
+        }),
+        ('Shipping Options', {
+            'fields': (
+                'shipping_type', 
+                'has_express_shipping',
+                ('custom_shipping_dhaka', 'custom_shipping_outside'), 
+                'custom_express_shipping'
+            ),
+            'description': 'Configure shipping options for this product. Main option: Free OR Shipping with Charge. Express shipping is an additional checkbox option. Default costs: Standard (Dhaka: 70 ৳, Outside: 120 ৳), Express (Dhaka: 150 ৳)'
         }),
         ('Physical Attributes', {
             'fields': ('weight', 'dimensions', 'is_digital'),
@@ -124,6 +133,28 @@ class ProductAdmin(admin.ModelAdmin):
         else:
             return format_html('<span style="color: green;">In Stock</span>')
     stock_status.short_description = "Stock Status"
+    
+    def shipping_info(self, obj):
+        """Display shipping information in admin list"""
+        main_shipping = ''
+        express_shipping = ''
+        
+        # Main shipping option
+        if obj.shipping_type == 'free':
+            main_shipping = '<span style="color: green; font-weight: bold;">FREE</span>'
+        elif obj.shipping_type == 'standard':
+            dhaka_cost = obj.custom_shipping_dhaka or 70
+            outside_cost = obj.custom_shipping_outside or 120
+            main_shipping = f'<span style="color: blue;">Standard<br><small>Dhaka: {dhaka_cost}৳, Outside: {outside_cost}৳</small></span>'
+        
+        # Express shipping checkbox
+        if obj.has_express_shipping:
+            express_cost = obj.custom_express_shipping or 150
+            express_shipping = f'<br><span style="color: purple; font-weight: bold;">✓ Express<br><small>Dhaka: {express_cost}৳</small></span>'
+        
+        return format_html(main_shipping + express_shipping)
+    shipping_info.short_description = "Shipping"
+    shipping_info.allow_tags = True
     
     def mark_as_featured(self, request, queryset):
         queryset.update(is_featured=True)
