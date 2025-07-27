@@ -22,7 +22,7 @@ class ProductVariantInline(admin.TabularInline):
     """Inline for product variants"""
     model = ProductVariant
     extra = 0
-    fields = ('name', 'sku', 'size', 'color', 'price', 'stock_quantity', 'is_active', 'image')
+    fields = ('name', 'sku', 'size', 'color', 'price', 'stock_quantity', 'is_default', 'is_active', 'image')
     readonly_fields = ('sku',)
 
 
@@ -195,10 +195,27 @@ class ProductImageAdmin(admin.ModelAdmin):
 @admin.register(ProductVariant)
 class ProductVariantAdmin(admin.ModelAdmin):
     """Product Variant admin"""
-    list_display = ('product', 'name', 'sku', 'size', 'color', 'price', 'stock_quantity', 'is_active')
-    list_filter = ('is_active', 'size', 'color', 'material')
+    list_display = ('product', 'name', 'sku', 'size', 'color', 'price', 'stock_quantity', 'is_default', 'is_active')
+    list_filter = ('is_active', 'is_default', 'size', 'color', 'material')
     search_fields = ('product__name', 'name', 'sku')
     readonly_fields = ('sku', 'created_at', 'updated_at')
+    
+    actions = ['mark_as_default', 'mark_as_not_default']
+    
+    def mark_as_default(self, request, queryset):
+        """Mark selected variants as default (will unset others for the same product)"""
+        count = 0
+        for variant in queryset:
+            variant.is_default = True
+            variant.save()  # This will automatically unset others due to our save method
+            count += 1
+        self.message_user(request, f"{count} variants marked as default.")
+    mark_as_default.short_description = "Mark selected variants as default"
+    
+    def mark_as_not_default(self, request, queryset):
+        queryset.update(is_default=False)
+        self.message_user(request, f"{queryset.count()} variants marked as not default.")
+    mark_as_not_default.short_description = "Mark selected variants as not default"
 
 
 @admin.register(Review)

@@ -254,6 +254,21 @@ class Product(models.Model):
             })
         
         return options
+    
+    @property
+    def default_variant(self):
+        """Get the default variant for this product"""
+        try:
+            return self.variants.filter(is_default=True, is_active=True).first()
+        except:
+            return None
+    
+    def get_default_variant_or_first(self):
+        """Get default variant, or first active variant if no default is set"""
+        default = self.default_variant
+        if default:
+            return default
+        return self.variants.filter(is_active=True).first()
 
 
 class ProductImage(models.Model):
@@ -294,6 +309,9 @@ class ProductVariant(models.Model):
     # Variant image (for color swatches, size variations, etc.)
     image = models.ImageField(upload_to='variants/', blank=True, null=True)
     
+    # Default variant for this product
+    is_default = models.BooleanField(default=False, help_text="Mark this as the default variant for the product")
+    
     is_active = models.BooleanField(default=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
@@ -305,6 +323,15 @@ class ProductVariant(models.Model):
     def save(self, *args, **kwargs):
         if not self.sku:
             self.sku = f"{self.product.sku}-{uuid.uuid4().hex[:4].upper()}"
+        
+        # Ensure only one default variant per product
+        if self.is_default:
+            # Unset any existing default for this product
+            ProductVariant.objects.filter(
+                product=self.product, 
+                is_default=True
+            ).exclude(pk=self.pk).update(is_default=False)
+        
         super().save(*args, **kwargs)
     
     @property

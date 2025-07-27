@@ -113,8 +113,8 @@
                                         <!-- Product Variants -->
                     {% if product.variants.exists %}
                     <div class="product-variants">
-                        <h3>{{ product.variants.first.name|truncatewords:2 }} Options</h3>
-                        
+                        <h3>Product Variants</h3>
+
                         <!-- Color Selector -->
                         {% with available_colors=product.variants.all %}
                         {% regroup available_colors by color as color_groups %}
@@ -152,11 +152,11 @@
                         {% with available_sizes=product.variants.all %}
                         {% regroup available_sizes by size as size_groups %}
                         {% if size_groups %}
-                        <div class="variant-selector size-selector">
-                            <label>Size: <span id="selected-size-label">Please select color first</span></label>
+                        <div class="variant-selector size-selector"> 
                             <div class="size-grid">
                                 {% for size_group in size_groups %}
                                 {% if size_group.grouper %}
+                                <label>Size: <span id="selected-size-label">Please select color first</span></label>
                                 <button class="size-btn disabled" 
                                         data-size="{{ size_group.grouper }}" 
                                         title="{{ size_group.grouper }}"
@@ -898,13 +898,13 @@
     }
 
     .product-variants h3 {
-        margin-bottom: 1.5rem;
+        margin-bottom: 0.5rem;
         color: var(--dark-color);
         font-size: 1.5rem;
     }
 
     .variant-selector {
-        margin-bottom: 2rem;
+        margin-bottom: 0rem;
     }
 
     .variant-selector label {
