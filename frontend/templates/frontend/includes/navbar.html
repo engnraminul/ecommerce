@@ -1,0 +1,381 @@
+{% load static %}
+
+<!-- Professional Navbar -->
+<header class="navbar-wrapper">
+    <!-- Top Bar -->
+    <div class="navbar-top">
+        <div class="container">
+            <div class="top-bar-content">
+                <div class="top-bar-left">
+                    <span class="contact-info">
+                        <i class="fas fa-phone"></i> +1 (555) 123-4567
+                    </span>
+                    <span class="contact-info">
+                        <i class="fas fa-envelope"></i> support@ecommerce.com
+                    </span>
+                </div>
+                <div class="top-bar-right">
+                    <div class="language-selector">
+                        <i class="fas fa-globe"></i>
+                        <select>
+                            <option>English</option>
+                            <option>Spanish</option>
+                            <option>French</option>
+                        </select>
+                    </div>
+                    <div class="currency-selector">
+                        <i class="fas fa-dollar-sign"></i>
+                        <select>
+                            <option>USD</option>
+                            <option>EUR</option>
+                            <option>GBP</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Navigation -->
+    <nav class="navbar-main">
+        <div class="container">
+            <div class="navbar-content">
+                <!-- Logo -->
+                <div class="navbar-brand">
+                    <a href="{% url 'frontend:home' %}" class="brand-logo">
+                        <div class="logo-icon">
+                            <i class="fas fa-store"></i>
+                        </div>
+                        <div class="logo-text">
+                            <span class="brand-name">eCommerce</span>
+                            <span class="brand-tagline">Professional Store</span>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="navbar-search">
+                    <form class="search-form" method="get" action="{% url 'frontend:search' %}">
+                        <div class="search-input-wrapper">
+                            <div class="search-category">
+                                <select name="category" class="category-select">
+                                    <option value="">All Categories</option>
+                                    <option value="electronics">Electronics</option>
+                                    <option value="clothing">Clothing</option>
+                                    <option value="books">Books</option>
+                                    <option value="home">Home & Garden</option>
+                                </select>
+                            </div>
+                            <div class="search-divider"></div>
+                            <input type="text" name="q" class="search-input" placeholder="Search for products..." value="{{ request.GET.q }}">
+                            <button type="submit" class="search-button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- User Actions -->
+                <div class="navbar-actions">
+                    <!-- User Account -->
+                    <div class="action-item user-account">
+                        {% if user.is_authenticated %}
+                            <div class="user-dropdown">
+                                <button class="user-trigger">
+                                    <div class="user-avatar">
+                                        {% if user.profile.avatar %}
+                                            <img src="{{ user.profile.avatar.url }}" alt="Avatar">
+                                        {% else %}
+                                            <i class="fas fa-user"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="user-info">
+                                        <span class="user-name">{{ user.first_name|default:user.username }}</span>
+                                        <span class="user-role">My Account</span>
+                                    </div>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="user-menu">
+                                    <a href="{% url 'frontend:profile' %}" class="menu-item">
+                                        <i class="fas fa-user"></i> Profile
+                                    </a>
+                                    <a href="{% url 'frontend:orders' %}" class="menu-item">
+                                        <i class="fas fa-box"></i> Orders
+                                    </a>
+                                    <a href="{% url 'frontend:wishlist' %}" class="menu-item">
+                                        <i class="fas fa-heart"></i> Wishlist
+                                    </a>
+                                    <a href="#" class="menu-item">
+                                        <i class="fas fa-cog"></i> Settings
+                                    </a>
+                                    <div class="menu-divider"></div>
+                                    <a href="#" onclick="ecommerceApp.logout()" class="menu-item logout">
+                                        <i class="fas fa-sign-out-alt"></i> Logout
+                                    </a>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="auth-buttons">
+                                <a href="{% url 'frontend:login' %}" class="auth-btn login-btn">
+                                    <i class="fas fa-sign-in-alt"></i>
+                                    <span>Login</span>
+                                </a>
+                                <a href="{% url 'frontend:register' %}" class="auth-btn register-btn">
+                                    <i class="fas fa-user-plus"></i>
+                                    <span>Register</span>
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Wishlist -->
+                    <div class="action-item wishlist">
+                        <a href="{% url 'frontend:wishlist' %}" class="action-link">
+                            <div class="action-icon">
+                                <i class="fas fa-heart"></i>
+                                <span class="action-badge wishlist-count">0</span>
+                            </div>
+                            <div class="action-text">
+                                <span class="action-label">Wishlist</span>
+                                <span class="action-count">0 items</span>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Shopping Cart -->
+                    <div class="action-item cart">
+                        <a href="{% url 'frontend:cart' %}" class="action-link cart-link">
+                            <div class="action-icon">
+                                <i class="fas fa-shopping-cart"></i>
+                                <span class="action-badge cart-count">0</span>
+                            </div>
+                            <div class="action-text">
+                                <span class="action-label">Cart</span>
+                                <span class="action-count cart-total">$0.00</span>
+                            </div>
+                        </a>
+                        
+                        <!-- Cart Dropdown -->
+                        <div class="cart-dropdown">
+                            <div class="cart-dropdown-header">
+                                <h4>Shopping Cart</h4>
+                                <span class="cart-items-count">0 items</span>
+                            </div>
+                            <div class="cart-dropdown-body">
+                                <div class="empty-cart">
+                                    <i class="fas fa-shopping-cart"></i>
+                                    <p>Your cart is empty</p>
+                                    <a href="{% url 'frontend:products' %}" class="btn-shop-now">Shop Now</a>
+                                </div>
+                                <!-- Cart items will be loaded here via JavaScript -->
+                            </div>
+                            <div class="cart-dropdown-footer">
+                                <div class="cart-total-display">
+                                    <span>Total: <strong class="total-amount">$0.00</strong></span>
+                                </div>
+                                <div class="cart-actions">
+                                    <a href="{% url 'frontend:cart' %}" class="btn btn-outline">View Cart</a>
+                                    <a href="{% url 'frontend:checkout' %}" class="btn btn-primary">Checkout</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Menu Toggle -->
+                    <div class="mobile-menu-toggle">
+                        <button class="menu-toggle-btn">
+                            <span class="hamburger"></span>
+                            <span class="hamburger"></span>
+                            <span class="hamburger"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Navigation Menu -->
+    <div class="navbar-menu">
+        <div class="container">
+            <div class="menu-content">
+                <!-- Category Menu -->
+                <div class="category-menu">
+                    <button class="category-trigger">
+                        <i class="fas fa-bars"></i>
+                        <span>All Categories</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="category-dropdown">
+                        <div class="category-list">
+                            <a href="{% url 'frontend:category_products' 'electronics' %}" class="category-item">
+                                <i class="fas fa-laptop"></i>
+                                <span>Electronics</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                            <a href="{% url 'frontend:category_products' 'clothing' %}" class="category-item">
+                                <i class="fas fa-tshirt"></i>
+                                <span>Clothing</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                            <a href="{% url 'frontend:category_products' 'books' %}" class="category-item">
+                                <i class="fas fa-book"></i>
+                                <span>Books</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                            <a href="{% url 'frontend:category_products' 'home' %}" class="category-item">
+                                <i class="fas fa-home"></i>
+                                <span>Home & Garden</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                            <a href="{% url 'frontend:category_products' 'sports' %}" class="category-item">
+                                <i class="fas fa-dumbbell"></i>
+                                <span>Sports</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Navigation Links -->
+                <nav class="main-nav">
+                    <ul class="nav-links">
+                        <li class="nav-item">
+                            <a href="{% url 'frontend:home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                                Home
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a href="{% url 'frontend:products' %}" class="nav-link {% if request.resolver_match.url_name == 'products' %}active{% endif %}">
+                                Products
+                                <i class="fas fa-chevron-down"></i>
+                            </a>
+                            <div class="dropdown-menu">
+                                <div class="dropdown-content">
+                                    <div class="dropdown-section">
+                                        <h5>Featured</h5>
+                                        <a href="{% url 'frontend:products' %}?featured=true">Featured Products</a>
+                                        <a href="{% url 'frontend:products' %}?new=true">New Arrivals</a>
+                                        <a href="{% url 'frontend:products' %}?sale=true">Sale Items</a>
+                                    </div>
+                                    <div class="dropdown-section">
+                                        <h5>Categories</h5>
+                                        <a href="{% url 'frontend:category_products' 'electronics' %}">Electronics</a>
+                                        <a href="{% url 'frontend:category_products' 'clothing' %}">Clothing</a>
+                                        <a href="{% url 'frontend:category_products' 'books' %}">Books</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'frontend:categories' %}" class="nav-link {% if request.resolver_match.url_name == 'categories' %}active{% endif %}">
+                                Categories
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link">
+                                Deals
+                                <span class="nav-badge">HOT</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'frontend:about' %}" class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">
+                                About
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'frontend:contact' %}" class="nav-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}">
+                                Contact
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+
+                <!-- Promotional Banner -->
+                <div class="promo-banner">
+                    <div class="promo-content">
+                        <i class="fas fa-shipping-fast"></i>
+                        <span>FREE SHIPPING on orders over $50</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay">
+        <div class="mobile-menu">
+            <div class="mobile-menu-header">
+                <div class="brand-logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-store"></i>
+                    </div>
+                    <div class="logo-text">
+                        <span class="brand-name">StyleHub</span>
+                        <span class="brand-tagline">Fashion Forward</span>
+                    </div>
+                </div>
+                <button class="mobile-menu-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="mobile-menu-body">
+                <!-- Mobile Search -->
+                <form class="search-form" method="get" action="{% url 'frontend:search' %}">
+                    <div class="search-input-wrapper">
+                        <input type="text" class="search-input" name="q" placeholder="Search products..." value="{{ request.GET.q }}">
+                        <button type="submit" class="search-button">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Mobile Navigation -->
+                <nav class="mobile-nav">
+                    <a href="{% url 'frontend:home' %}" class="mobile-nav-link">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                    <a href="{% url 'frontend:products' %}" class="mobile-nav-link">
+                        <i class="fas fa-shopping-bag"></i> Products
+                    </a>
+                    <a href="{% url 'frontend:categories' %}" class="mobile-nav-link">
+                        <i class="fas fa-th-large"></i> Categories
+                    </a>
+                    <a href="#" class="mobile-nav-link">
+                        <i class="fas fa-fire"></i> Deals
+                    </a>
+                    <a href="{% url 'frontend:about' %}" class="mobile-nav-link">
+                        <i class="fas fa-info-circle"></i> About
+                    </a>
+                    <a href="{% url 'frontend:contact' %}" class="mobile-nav-link">
+                        <i class="fas fa-envelope"></i> Contact
+                    </a>
+                    
+                    {% if user.is_authenticated %}
+                        <div class="menu-divider"></div>
+                        <a href="{% url 'frontend:profile' %}" class="mobile-nav-link">
+                            <i class="fas fa-user"></i> Profile
+                        </a>
+                        <a href="{% url 'frontend:orders' %}" class="mobile-nav-link">
+                            <i class="fas fa-box"></i> Orders
+                        </a>
+                        <a href="{% url 'frontend:wishlist' %}" class="mobile-nav-link">
+                            <i class="fas fa-heart"></i> Wishlist
+                        </a>
+                        <a href="#" onclick="ecommerceApp.logout()" class="mobile-nav-link">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    {% else %}
+                        <div class="menu-divider"></div>
+                        <a href="{% url 'frontend:login' %}" class="mobile-nav-link">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                        <a href="{% url 'frontend:register' %}" class="mobile-nav-link">
+                            <i class="fas fa-user-plus"></i> Register
+                        </a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>

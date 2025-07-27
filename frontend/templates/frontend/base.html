@@ -11,6 +11,7 @@
     
     <!-- CSS -->
     <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'frontend/css/navbar.css' %}">
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{% static 'frontend/images/favicon.ico' %}">
@@ -47,69 +48,10 @@
     }
     </style>
     <!-- Header -->
-    <header class="header">
-        <nav class="navbar">
-            <!-- Logo -->
-            <a href="{% url 'frontend:home' %}" class="logo">
-                <i class="fas fa-store"></i> eCommerce
-            </a>
-            
-            <!-- Navigation Links -->
-            <ul class="nav-links">
-                <li><a href="{% url 'frontend:home' %}">Home</a></li>
-                <li><a href="{% url 'frontend:products' %}">Products</a></li>
-                <li><a href="{% url 'frontend:categories' %}">Categories</a></li>
-                <li><a href="{% url 'frontend:about' %}">About</a></li>
-                <li><a href="{% url 'frontend:contact' %}">Contact</a></li>
-            </ul>
-            
-            <!-- Search Bar -->
-            <form class="search-bar" method="get" action="{% url 'frontend:search' %}">
-                <input type="text" name="q" placeholder="Search products..." value="{{ request.GET.q }}">
-                <button type="submit">
-                    <i class="fas fa-search"></i>
-                </button>
-            </form>
-            
-            <!-- User Actions -->
-            <div class="user-actions">
-                {% if user.is_authenticated %}
-                    <div class="user-menu">
-                        <a href="{% url 'frontend:profile' %}" class="nav-link">
-                            <i class="fas fa-user"></i> {{ user.first_name|default:user.email }}
-                        </a>
-                        <a href="{% url 'frontend:orders' %}" class="nav-link">
-                            <i class="fas fa-box"></i> Orders
-                        </a>
-                        <a href="{% url 'frontend:wishlist' %}" class="nav-link">
-                            <i class="fas fa-heart"></i> Wishlist
-                        </a>
-                        <a href="#" onclick="ecommerceApp.logout()" class="nav-link logout-link">
-                            <i class="fas fa-sign-out-alt"></i> Logout
-                        </a>
-                    </div>
-                {% else %}
-                    <div class="auth-links">
-                        <a href="{% url 'frontend:login' %}" class="nav-link login-link">
-                            <i class="fas fa-sign-in-alt"></i> Login
-                        </a>
-                        <a href="{% url 'frontend:register' %}" class="nav-link login-link">
-                            <i class="fas fa-user-plus"></i> Register
-                        </a>
-                    </div>
-                {% endif %}
-                
-                <!-- Cart -->
-                <a href="{% url 'frontend:cart' %}" class="cart-icon">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span class="cart-count">0</span>
-                </a>
-            </div>
-        </nav>
-    </header>
+    {% include 'frontend/includes/navbar.html' %}
 
     <!-- Main Content -->
-    <main class="main-content">
+    <main class="main-content" style="padding-top: 140px;">
         {% block content %}{% endblock %}
     </main>
 
@@ -176,6 +118,7 @@
 
     <!-- JavaScript -->
     <script src="{% static 'frontend/js/app.js' %}"></script>
+    <script src="{% static 'frontend/js/navbar.js' %}"></script>
     {% block extra_js %}{% endblock %}
     
     <!-- CSRF Token for AJAX requests -->

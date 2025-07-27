@@ -41,7 +41,7 @@ class ProductVariantSerializer(serializers.ModelSerializer):
         model = ProductVariant
         fields = (
             'id', 'name', 'sku', 'size', 'color', 'material',
-            'price', 'effective_price', 'stock_quantity', 'is_active'
+            'price', 'effective_price', 'stock_quantity', 'is_default', 'is_active'
         )
         read_only_fields = ('id', 'sku', 'effective_price')
 
@@ -96,6 +96,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     images = ProductImageSerializer(many=True, read_only=True)
     variants = ProductVariantSerializer(many=True, read_only=True)
+    default_variant = ProductVariantSerializer(read_only=True)
     reviews = serializers.SerializerMethodField()
     average_rating = serializers.ReadOnlyField()
     review_count = serializers.ReadOnlyField()
@@ -111,7 +112,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'sku', 'category', 'price', 'compare_price', 'discount_percentage',
             'stock_quantity', 'is_in_stock', 'is_low_stock', 'track_inventory',
             'weight', 'dimensions', 'is_digital', 'is_featured',
-            'images', 'variants', 'reviews', 'average_rating', 'review_count',
+            'images', 'variants', 'default_variant', 'reviews', 'average_rating', 'review_count',
             'is_wishlisted', 'meta_title', 'meta_description', 'created_at', 'updated_at'
         )
         read_only_fields = ('id', 'sku', 'created_at', 'updated_at')

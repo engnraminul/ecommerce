@@ -114,21 +114,29 @@
                     {% if product.variants.exists %}
                     <div class="product-variants">
                         <h3>Product Variants</h3>
+                        
+                        <!-- Debug info for default variant (remove in production) -->
 
                         <!-- Color Selector -->
                         {% with available_colors=product.variants.all %}
                         {% regroup available_colors by color as color_groups %}
                         {% if color_groups %}
                         <div class="variant-selector color-selector">
-                            <label>Color: <span id="selected-color-label">Please select</span></label>
+                            <label>Color: <span id="selected-color-label">
+                                {% with default_variant=product.default_variant %}
+                                    {% if default_variant %}{{ default_variant.color_name|default:default_variant.name }}{% else %}Please select{% endif %}
+                                {% endwith %}
+                            </span></label>
                             <div class="color-grid">
                                 {% for color_group in color_groups %}
                                 {% if color_group.grouper %}
                                 {% with first_variant=color_group.list.0 %}
-                                <button class="color-btn" 
+                                {% with default_variant=product.default_variant %}
+                                <button class="color-btn{% if default_variant and default_variant.color == color_group.grouper %} selected{% endif %}" 
                                         data-color="{{ color_group.grouper }}" 
                                         data-color-name="{% for word in first_variant.name.split %}{% if forloop.first %}{{ word }}{% endif %}{% endfor %}"
                                         title="{% for word in first_variant.name.split %}{% if forloop.first %}{{ word }}{% endif %}{% endfor %}">
+                                {% endwith %}
                                     {% if first_variant.image %}
                                     <img src="{{ first_variant.image.url }}" 
                                          alt="{% for word in first_variant.name.split %}{% if forloop.first %}{{ word }}{% endif %}{% endfor %}" 
@@ -152,15 +160,21 @@
                         {% with available_sizes=product.variants.all %}
                         {% regroup available_sizes by size as size_groups %}
                         {% if size_groups %}
+                        <label>Size: <span id="selected-size-label">
+                            {% with default_variant=product.default_variant %}
+                                {% if default_variant and default_variant.size %}{{ default_variant.size }}{% else %}Please select color first{% endif %}
+                            {% endwith %}
+                        </span></label>
                         <div class="variant-selector size-selector"> 
                             <div class="size-grid">
                                 {% for size_group in size_groups %}
                                 {% if size_group.grouper %}
-                                <label>Size: <span id="selected-size-label">Please select color first</span></label>
-                                <button class="size-btn disabled" 
+                                {% with default_variant=product.default_variant %}
+                                <button class="size-btn{% if default_variant and default_variant.size == size_group.grouper %} selected{% else %} disabled{% endif %}" 
                                         data-size="{{ size_group.grouper }}" 
                                         title="{{ size_group.grouper }}"
-                                        disabled>
+                                        {% if not default_variant or default_variant.size != size_group.grouper %}disabled{% endif %}>
+                                {% endwith %}
                                     {{ size_group.grouper }}
                                 </button>
                                 {% endif %}
@@ -185,7 +199,8 @@
                                 "comparePrice": "{{ product.compare_price|default:0 }}",
                                 "stock": {{ variant.stock_quantity }},
                                 "sku": "{{ variant.sku|escapejs }}",
-                                "image": "{% if variant.image %}{{ variant.image.url }}{% else %}{{ MEDIA_URL }}default.webp{% endif %}"
+                                "image": "{% if variant.image %}{{ variant.image.url }}{% else %}{{ MEDIA_URL }}default.webp{% endif %}",
+                                "isDefault": {{ variant.is_default|yesno:"true,false" }}
                             }{% if not forloop.last %},{% endif %}
                             {% endif %}
                             {% endfor %}
@@ -1853,6 +1868,9 @@
             try {
                 variantsData = JSON.parse(variantsScript.textContent);
                 console.log('Parsed variants data:', variantsData); // Debug log
+                
+                // Auto-select default variant if exists
+                initializeDefaultVariant();
             } catch (e) {
                 console.error('Error parsing variants data:', e);
             }
@@ -1881,6 +1899,126 @@
             variantSavings: variantSavings,
             variantPriceNote: variantPriceNote
         });
+
+        // Initialize default variant selection
+        function initializeDefaultVariant() {
+            console.log('Initializing default variant...');
+            
+            // Find the default variant
+            const defaultVariant = variantsData.find(v => v.isDefault === true);
+            console.log('Default variant found:', defaultVariant);
+            
+            if (defaultVariant) {
+                // Set the selectedVariant globally first
+                selectedVariant = defaultVariant;
+                console.log('Set selectedVariant to:', selectedVariant);
+                
+                // Auto-select the default variant's color
+                if (defaultVariant.color) {
+                    selectedColor = defaultVariant.color;
+                    
+                    // Find and select the color button
+                    const colorBtn = document.querySelector(`[data-color="${defaultVariant.color}"]`);
+                    if (colorBtn) {
+                        colorBtn.classList.add('selected');
+                        
+                        // Update color label
+                        if (selectedColorLabel) {
+                            const colorName = colorBtn.dataset.colorName || defaultVariant.color;
+                            selectedColorLabel.textContent = colorName;
+                        }
+                        
+                        console.log('Auto-selected color:', defaultVariant.color);
+                    }
+                }
+                
+                // Auto-select the default variant's size if it has one
+                if (defaultVariant.size) {
+                    selectedSize = defaultVariant.size;
+                    
+                    // Find and select the size button
+                    const sizeBtn = document.querySelector(`[data-size="${defaultVariant.size}"]`);
+                    if (sizeBtn) {
+                        sizeBtn.classList.remove('disabled');
+                        sizeBtn.disabled = false;
+                        sizeBtn.classList.add('selected');
+                        
+                        // Update size label
+                        if (selectedSizeLabel) {
+                            selectedSizeLabel.textContent = defaultVariant.size;
+                        }
+                        
+                        console.log('Auto-selected size:', defaultVariant.size);
+                    }
+                } else {
+                    // For products without sizes, clear size selection
+                    selectedSize = null;
+                    if (selectedSizeLabel) {
+                        selectedSizeLabel.textContent = 'No size required';
+                    }
+                }
+                
+                // Update the main image with default variant image
+                updateMainImageForColor(defaultVariant.color);
+                
+                // Update size buttons availability
+                updateSizeButtons();
+                
+                // Update pricing and UI
+                updateMainPricing(defaultVariant);
+                
+                // Update add to cart button
+                updateAddToCartButton();
+                
+                console.log('Default variant initialization completed');
+                console.log('Final state - selectedColor:', selectedColor, 'selectedSize:', selectedSize, 'selectedVariant:', selectedVariant);
+            } else {
+                console.log('No default variant found');
+            }
+        }
+
+        // Update add to cart button based on current selection
+        function updateAddToCartButton() {
+            const addToCartBtn = document.querySelector('.add-to-cart-btn');
+            if (!addToCartBtn) return;
+            
+            console.log('Updating add to cart button. selectedVariant:', selectedVariant);
+            
+            if (selectedVariant) {
+                // Set variant ID
+                addToCartBtn.dataset.variantId = selectedVariant.id;
+                
+                // Enable/disable based on stock
+                if (selectedVariant.stock > 0) {
+                    addToCartBtn.disabled = false;
+                    addToCartBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
+                    addToCartBtn.style.backgroundColor = '';
+                    console.log('Enabled add to cart button for variant:', selectedVariant.name);
+                } else {
+                    addToCartBtn.disabled = true;
+                    addToCartBtn.innerHTML = '<i class="fas fa-times-circle"></i> Out of Stock';
+                }
+            } else {
+                // No variant selected
+                addToCartBtn.disabled = true;
+                if (variantsData.length > 0) {
+                    // Has variants but none selected
+                    const hasSizes = variantsData.some(v => v.size && v.size.trim() !== '');
+                    if (hasSizes && !selectedSize) {
+                        addToCartBtn.innerHTML = '<i class="fas fa-exclamation-circle"></i> Select Size';
+                    } else if (!selectedColor) {
+                        addToCartBtn.innerHTML = '<i class="fas fa-exclamation-circle"></i> Select Color';
+                    } else {
+                        addToCartBtn.innerHTML = '<i class="fas fa-exclamation-circle"></i> Select Options';
+                    }
+                } else {
+                    // No variants at all
+                    addToCartBtn.disabled = false;
+                    addToCartBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
+                }
+                console.log('Disabled add to cart button - no variant selected');
+            }
+        }
 
         // Color selection functionality
         colorButtons.forEach(button => {
@@ -2314,6 +2452,9 @@
                     selectedVariant = null;
                 }
             }
+            
+            // Always update the add to cart button at the end
+            updateAddToCartButton();
         }
 
         // Initialize size buttons state
@@ -2493,11 +2634,21 @@
             const productId = document.querySelector('.add-to-cart-btn').dataset.productId;
             const quantity = parseInt(document.getElementById('quantity').value) || 1;
             
+            console.log('addToCart called. selectedVariant:', selectedVariant);
+            console.log('variantsData.length:', variantsData.length);
+            
             // Check if variants exist and are selected
             if (variantsData.length > 0) {
                 if (!selectedVariant) {
-                    alert('Please select product options before adding to cart.');
-                    return;
+                    // Try to find and set default variant if none is selected
+                    const defaultVariant = variantsData.find(v => v.isDefault === true);
+                    if (defaultVariant) {
+                        console.log('Using default variant for add to cart:', defaultVariant);
+                        selectedVariant = defaultVariant;
+                    } else {
+                        alert('Please select product options before adding to cart.');
+                        return;
+                    }
                 }
             }
             
@@ -2564,11 +2715,20 @@
             const productId = document.querySelector('.buy-now-btn').dataset.productId;
             const quantity = parseInt(document.getElementById('quantity').value) || 1;
             
+            console.log('buyNow called. selectedVariant:', selectedVariant);
+            
             // Check if variants exist and are selected
             if (variantsData.length > 0) {
                 if (!selectedVariant) {
-                    alert('Please select product options before proceeding.');
-                    return;
+                    // Try to find and set default variant if none is selected
+                    const defaultVariant = variantsData.find(v => v.isDefault === true);
+                    if (defaultVariant) {
+                        console.log('Using default variant for buy now:', defaultVariant);
+                        selectedVariant = defaultVariant;
+                    } else {
+                        alert('Please select product options before proceeding.');
+                        return;
+                    }
                 }
             }
             
