@@ -116,17 +116,34 @@ def cancel_order(request, order_id):
 
 
 @api_view(['GET'])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def track_order(request, order_number):
-    """Track order by order number"""
-    order = get_object_or_404(
-        Order, 
-        order_number=order_number, 
-        user=request.user
-    )
-    
-    serializer = OrderTrackingSerializer(order)
-    return Response(serializer.data)
+    """Track order by order number - Public access"""
+    try:
+        order = Order.objects.select_related(
+            'user', 'shipping_address'
+        ).prefetch_related(
+            'items__product__images',
+            'items__variant',
+            'status_history'
+        ).get(order_number=order_number)
+        
+        serializer = OrderTrackingSerializer(order)
+        return Response(serializer.data)
+        
+    except Order.DoesNotExist:
+        return Response(
+            {'error': 'Order not found. Please verify your order number and try again.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error tracking order: {str(e)}", exc_info=True)
+        return Response(
+            {'error': 'Unable to retrieve order information. Please try again later.'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 class InvoiceView(generics.RetrieveAPIView):

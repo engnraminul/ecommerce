@@ -310,22 +310,41 @@ class RefundRequestSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
-class OrderTrackingSerializer(serializers.Serializer):
+class OrderTrackingSerializer(serializers.ModelSerializer):
     """Order tracking information serializer"""
-    order_number = serializers.CharField(read_only=True)
-    status = serializers.CharField(read_only=True)
-    tracking_info = serializers.SerializerMethodField()
-    estimated_delivery = serializers.DateTimeField(read_only=True, required=False)
+    items = serializers.SerializerMethodField()
+    status_history = serializers.SerializerMethodField()
+    can_cancel = serializers.BooleanField(read_only=True)
     
-    def get_tracking_info(self, obj):
-        latest_history = obj.status_history.filter(
-            tracking_number__isnull=False
-        ).order_by('-created_at').first()
-        
-        if latest_history:
-            return {
-                'tracking_number': latest_history.tracking_number,
-                'carrier': latest_history.carrier,
-                'updated_at': latest_history.created_at
-            }
-        return None
+    class Meta:
+        model = Order
+        fields = (
+            'id', 'order_number', 'created_at', 'status',
+            'items', 'status_history', 'can_cancel',
+            'subtotal', 'shipping_cost', 'tax_amount',
+            'total_amount'
+        )
+    
+    def get_items(self, obj):
+        return [{
+            'product': {
+                'name': item.product.name,
+                'image_url': item.product.images.first().image.url if item.product.images.exists() else None
+            },
+            'variant': {
+                'color': item.variant.color if item.variant else None,
+                'size': item.variant.size if item.variant else None
+            } if item.variant else None,
+            'quantity': item.quantity,
+            'total_price': float(item.total_price)
+        } for item in obj.items.all()]
+    
+    def get_status_history(self, obj):
+        return [{
+            'status': history.new_status,
+            'notes': history.notes,
+            'created_at': history.created_at,
+            'is_current': history == obj.status_history.first(),
+            'tracking_number': history.tracking_number,
+            'carrier': history.carrier
+        } for history in obj.status_history.all().order_by('-created_at')]

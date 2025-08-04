@@ -1,0 +1,686 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+
+{% block title %}Track Your Order - Professional eCommerce{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+        <a href="{% url 'frontend:home' %}">Home</a>
+        <span class="breadcrumb-separator">/</span>
+        <span class="current">Track Order</span>
+    </nav>
+
+    <div class="tracking-search-page">
+        <div class="tracking-search-container">
+            <h1>Track Your Order</h1>
+            <p class="subtitle">Enter your order details below to track your order status</p>
+
+            <form id="trackingForm" class="tracking-search-form">
+                {% csrf_token %}
+                
+                <div id="errorMessage" class="alert alert-error" style="display: none;"></div>
+                
+                <div class="form-group">
+                    <label for="order_number">Order Number</label>
+                    <input type="text" id="order_number" name="order_number" required
+                           placeholder="Enter your order number"
+                           class="input-lg"
+                           autocomplete="off"
+                           pattern="[A-Za-z0-9-]+"
+                           title="Please enter a valid order number">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-search"></i>
+                    <span>Track Order</span>
+                </button>
+            </form>
+
+            <!-- Order Tracking Results -->
+            <div id="trackingResults" class="tracking-results" style="display: none;">
+                <div class="order-status-header">
+                    <h2>Order Status</h2>
+                    <div class="order-info">
+                        <p>Order #<span id="displayOrderNumber"></span></p>
+                        <p>Ordered on <span id="orderDate"></span></p>
+                    </div>
+                    <div id="currentStatus" class="current-status"></div>
+                </div>
+
+                <div class="timeline-container">
+                    <div id="statusTimeline" class="status-timeline"></div>
+                </div>
+
+                <div id="orderDetails" class="order-details">
+                    <h3>Order Details</h3>
+                    <div id="orderItems" class="order-items"></div>
+                    <div id="orderTotals" class="order-totals"></div>
+                </div>
+
+                <div class="tracking-actions">
+                    <button onclick="clearTracking()" class="btn btn-secondary">
+                        <i class="fas fa-search"></i>
+                        Track Another Order
+                    </button>
+                    <a id="viewInvoiceBtn" href="#" class="btn btn-primary" style="display: none;">
+                        <i class="fas fa-file-invoice"></i>
+                        View Invoice
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('trackingForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const orderNumber = document.getElementById('order_number').value.trim();
+    const errorMessage = document.getElementById('errorMessage');
+    const trackingResults = document.getElementById('trackingResults');
+    
+    // Validate order number format
+    if (!orderNumber || !/^[A-Za-z0-9-]+$/.test(orderNumber)) {
+        errorMessage.textContent = 'Please enter a valid order number';
+        errorMessage.style.display = 'block';
+        return;
+    }
+    
+    // Show loading state
+    const submitButton = this.querySelector('button[type="submit"]');
+    const buttonText = submitButton.querySelector('span');
+    const originalText = buttonText.textContent;
+    buttonText.textContent = 'Searching...';
+    submitButton.disabled = true;
+    
+    // Hide any previous error
+    errorMessage.style.display = 'none';
+    
+    // Add loading animation to button
+    submitButton.classList.add('loading');
+    
+    fetch(`/api/v1/orders/${orderNumber}/track/`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || `Error: ${response.status}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.error) {
+            // Show error message
+            errorMessage.textContent = data.error;
+            errorMessage.style.display = 'block';
+            trackingResults.style.display = 'none';
+        } else {
+            // Display order tracking information
+            displayOrderTracking(data);
+            trackingResults.style.display = 'block';
+            this.style.display = 'none';
+        }
+    })
+    .catch(error => {
+        console.error('Tracking error:', error);
+        errorMessage.textContent = 'Unable to retrieve order information. Please verify your order number or try again later.';
+        errorMessage.style.display = 'block';
+        trackingResults.style.display = 'none';
+    })
+    .finally(() => {
+        // Reset button state
+        buttonText.textContent = originalText;
+        submitButton.disabled = false;
+        submitButton.classList.remove('loading');
+        
+        // Scroll error message into view if shown
+        if (errorMessage.style.display === 'block') {
+            errorMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    });
+});
+
+function displayOrderTracking(order) {
+    // Update order header information
+    document.getElementById('displayOrderNumber').textContent = order.order_number;
+    document.getElementById('orderDate').textContent = new Date(order.created_at).toLocaleDateString();
+    
+    // Update current status
+    const currentStatus = document.getElementById('currentStatus');
+    currentStatus.textContent = order.status;
+    currentStatus.className = `current-status status-${order.status.toLowerCase()}`;
+    
+    // Build timeline with detailed status history
+    const timeline = document.getElementById('statusTimeline');
+    timeline.innerHTML = order.status_history.map(status => {
+        const statusDate = new Date(status.created_at);
+        const formattedDate = new Intl.DateTimeFormat('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        }).format(statusDate);
+        const formattedTime = new Intl.DateTimeFormat('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        }).format(statusDate);
+
+        return `
+        <div class="timeline-item ${status.is_current ? 'current' : ''}">
+            <div class="timeline-icon">
+                <i class="fas ${getStatusIcon(status.status)}"></i>
+            </div>
+            <div class="timeline-content">
+                <h3 class="status-title">${status.status}</h3>
+                <div class="timeline-datetime">
+                    <p class="timeline-date"><i class="fas fa-calendar"></i> ${formattedDate}</p>
+                    <p class="timeline-time"><i class="fas fa-clock"></i> ${formattedTime}</p>
+                </div>
+                ${status.notes ? `<p class="timeline-notes"><i class="fas fa-info-circle"></i> ${status.notes}</p>` : ''}
+            </div>
+        </div>
+        `;
+    }).join('');
+    
+    // Build order items list
+    const orderItems = document.getElementById('orderItems');
+    orderItems.innerHTML = order.items.map(item => `
+        <div class="order-item">
+            <div class="item-image">
+                <img src="${item.product.image_url || '/media/default.webp'}" 
+                     alt="${item.product.name}"
+                     onerror="this.src='/media/default.webp'">
+            </div>
+            <div class="item-details">
+                <h4>${item.product.name}</h4>
+                ${item.variant ? `
+                    <div class="variant-info">
+                        ${item.variant.color ? `Color: ${item.variant.color}` : ''}
+                        ${item.variant.size ? `Size: ${item.variant.size}` : ''}
+                    </div>
+                ` : ''}
+                <div class="quantity">Quantity: ${item.quantity}</div>
+            </div>
+            <div class="item-price">$${item.total_price}</div>
+        </div>
+    `).join('');
+    
+    // Build order totals
+    const orderTotals = document.getElementById('orderTotals');
+    orderTotals.innerHTML = `
+        <div class="total-line">
+            <span>Subtotal:</span>
+            <span>$${order.subtotal}</span>
+        </div>
+        <div class="total-line">
+            <span>Shipping:</span>
+            <span>$${order.shipping_cost || '0.00'}</span>
+        </div>
+        <div class="total-line">
+            <span>Tax:</span>
+            <span>$${order.tax_amount || '0.00'}</span>
+        </div>
+        <div class="total-divider"></div>
+        <div class="total-line grand-total">
+            <span>Total:</span>
+            <span>$${order.total_amount}</span>
+        </div>
+    `;
+    
+    // Update invoice button with error handling
+    const viewInvoiceBtn = document.getElementById('viewInvoiceBtn');
+    try {
+        if (order.order_number) {
+            viewInvoiceBtn.href = `/api/v1/orders/${order.order_number}/invoice/`;
+            viewInvoiceBtn.onclick = function(e) {
+                e.preventDefault();
+                fetch(this.href, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Invoice not available');
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `invoice-${order.order_number}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                })
+                .catch(error => {
+                    console.error('Invoice error:', error);
+                    const errorMessage = document.getElementById('errorMessage');
+                    errorMessage.textContent = 'Unable to download invoice. Please try again later.';
+                    errorMessage.style.display = 'block';
+                    errorMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                });
+            };
+            viewInvoiceBtn.style.display = 'inline-flex';
+        } else {
+            viewInvoiceBtn.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Invoice button error:', error);
+        viewInvoiceBtn.style.display = 'none';
+    }
+}
+
+function getStatusIcon(status) {
+    const icons = {
+        'pending': 'fa-clock',
+        'confirmed': 'fa-check-circle',
+        'processing': 'fa-cog',
+        'shipped': 'fa-shipping-fast',
+        'delivered': 'fa-box-open',
+        'cancelled': 'fa-times-circle'
+    };
+    return icons[status.toLowerCase()] || 'fa-circle';
+}
+
+function clearTracking() {
+    document.getElementById('trackingForm').style.display = 'flex';
+    document.getElementById('trackingResults').style.display = 'none';
+    document.getElementById('order_number').value = '';
+    document.getElementById('errorMessage').style.display = 'none';
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tracking-search-page {
+        padding: 4rem 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 60vh;
+    }
+
+    .tracking-search-container {
+        max-width: 500px;
+        width: 100%;
+        padding: 2rem;
+        background: var(--white);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+    }
+
+    .tracking-search-container h1 {
+        text-align: center;
+        color: var(--dark-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+        text-align: center;
+        color: var(--secondary-color);
+        margin-bottom: 2rem;
+    }
+
+    .tracking-search-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .form-group label {
+        color: var(--dark-color);
+        font-weight: 500;
+    }
+
+    .form-group input {
+        padding: 1rem;
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius);
+        font-size: 1.2rem;
+        letter-spacing: 1px;
+        text-align: center;
+        transition: var(--transition);
+        text-transform: uppercase;
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1);
+    }
+
+    .input-lg {
+        height: 3.5rem;
+        font-size: 1.25rem;
+    }
+
+    .btn-lg {
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+    }
+
+    .btn {
+        padding: 0.75rem;
+        border: none;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: var(--transition);
+    }
+
+    .btn i {
+        font-size: 1rem;
+    }
+
+    .btn-primary {
+        background: var(--primary-color);
+        color: var(--white);
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .btn.loading {
+        position: relative;
+        pointer-events: none;
+        opacity: 0.8;
+    }
+
+    .btn.loading::after {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        top: 50%;
+        left: 50%;
+        margin: -10px 0 0 -10px;
+        border: 2px solid transparent;
+        border-top-color: currentColor;
+        border-right-color: currentColor;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .alert {
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .alert::before {
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+    }
+
+    .alert-error {
+        background: #fff5f5;
+        color: #c53030;
+        border: 1px solid #feb2b2;
+    }
+
+    .alert-error::before {
+        content: "\f071";
+    }
+
+    .alert-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    /* Tracking Results Styles */
+    .tracking-results {
+        margin-top: 2rem;
+        border-top: 1px solid var(--border-color);
+        padding-top: 2rem;
+    }
+
+    .order-status-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .order-info {
+        color: var(--secondary-color);
+        margin: 1rem 0;
+    }
+
+    .current-status {
+        display: inline-block;
+        padding: 0.5rem 1.5rem;
+        border-radius: 20px;
+        font-weight: 600;
+        margin-top: 1rem;
+    }
+
+    .status-timeline {
+        position: relative;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem 0;
+    }
+
+    .status-timeline::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        height: 100%;
+        width: 2px;
+        background: var(--border-color);
+    }
+
+    .timeline-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 2rem;
+        position: relative;
+    }
+
+    .timeline-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--white);
+        border: 2px solid var(--border-color);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1;
+    }
+
+    .timeline-content {
+        width: calc(50% - 50px);
+        padding: 1rem;
+        background: var(--white);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+    }
+
+    .timeline-item:nth-child(odd) .timeline-content {
+        margin-right: 50px;
+    }
+
+    .timeline-item:nth-child(even) .timeline-content {
+        margin-left: auto;
+        margin-right: 0;
+    }
+
+    .timeline-datetime {
+        margin: 0.75rem 0;
+        color: var(--secondary-color);
+    }
+
+    .timeline-date,
+    .timeline-time {
+        font-size: 0.9rem;
+        margin: 0.25rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .status-title {
+        color: var(--primary-color);
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .timeline-notes {
+        color: var(--dark-color);
+        margin-top: 0.75rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .timeline-notes i {
+        margin-top: 0.25rem;
+    }
+
+    .order-items {
+        margin: 2rem 0;
+    }
+
+    .order-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .item-image {
+        width: 80px;
+        height: 80px;
+        margin-right: 1rem;
+    }
+
+    .item-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: var(--border-radius);
+    }
+
+    .item-details {
+        flex: 1;
+    }
+
+    .item-price {
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+
+    .order-totals {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .total-line {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+
+    .total-divider {
+        height: 1px;
+        background: var(--border-color);
+        margin: 1rem 0;
+    }
+
+    .grand-total {
+        font-weight: 700;
+        font-size: 1.2rem;
+        color: var(--primary-color);
+    }
+
+    @media (max-width: 768px) {
+        .tracking-search-container {
+            margin: 0 1rem;
+        }
+
+        .status-timeline::before {
+            left: 20px;
+        }
+
+        .timeline-item {
+            flex-direction: column;
+            align-items: flex-start;
+            margin-left: 40px;
+        }
+
+        .timeline-icon {
+            left: -20px;
+            transform: none;
+        }
+
+        .timeline-content {
+            width: 100%;
+            margin: 0 !important;
+        }
+
+        .order-item {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .item-image {
+            margin: 0 auto 1rem;
+        }
+
+        .item-price {
+            margin-top: 1rem;
+        }
+    }
+</style>
+{% endblock %}

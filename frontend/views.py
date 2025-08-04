@@ -400,3 +400,59 @@ def contact(request):
         return redirect('frontend:contact')
     
     return render(request, 'frontend/contact.html')
+
+
+def track_order(request):
+    """Order tracking page with API endpoint."""
+    if request.method == 'GET' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # Handle AJAX request
+        order_number = request.GET.get('order_number')
+        
+        try:
+            order = Order.objects.select_related(
+                'user', 'shipping_address'
+            ).prefetch_related(
+                'items__product__images',
+                'items__variant',
+                'status_history'
+            ).get(order_number=order_number)
+            
+            # Prepare order data for JSON response
+            order_data = {
+                'id': order.id,
+                'order_number': order.order_number,
+                'created_at': order.created_at.isoformat(),
+                'status': order.status,
+                'subtotal': float(order.subtotal),
+                'shipping_cost': float(order.shipping_cost) if order.shipping_cost else 0.00,
+                'tax_amount': float(order.tax_amount) if order.tax_amount else 0.00,
+                'total_amount': float(order.total_amount),
+                'status_history': [{
+                    'status': status.new_status,
+                    'notes': status.notes,
+                    'created_at': status.created_at.isoformat(),
+                    'is_current': status == order.status_history.first()
+                } for status in order.status_history.all()],
+                'items': [{
+                    'product': {
+                        'name': item.product.name,
+                        'image_url': item.product.images.first().image.url if item.product.images.exists() else None
+                    },
+                    'variant': {
+                        'color': item.variant.color if item.variant else None,
+                        'size': item.variant.size if item.variant else None
+                    } if item.variant else None,
+                    'quantity': item.quantity,
+                    'total_price': float(item.total_price)
+                } for item in order.items.all()],
+                'can_cancel': order.can_cancel if hasattr(order, 'can_cancel') else False
+            }
+            
+            return JsonResponse(order_data)
+        except Order.DoesNotExist:
+            return JsonResponse({'error': 'Order not found. Please check your order number and try again.'})
+        except Exception as e:
+            return JsonResponse({'error': 'An error occurred while retrieving the order information.'})
+    
+    # Regular page load - show the tracking form
+    return render(request, 'frontend/order_tracking_form.html')
