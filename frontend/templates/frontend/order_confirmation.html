@@ -26,7 +26,7 @@
             <div class="order-details-section">
                 <div class="order-summary-card">
                     <div class="card-header">
-                        <h2>Order Summary</h2>
+                        <h2>Order Invoice</h2>
                         <div class="order-number">Order #{{ order.order_number }}</div>
                     </div>
 
@@ -137,6 +137,22 @@
                     </div>
                 </div>
 
+                <!-- Save Order Invoice Section -->
+                <div class="save-invoice-section">
+                    <h3>Save Order Invoice</h3>
+                    <p>Download your invoice for your records</p>
+                    <div class="save-options">
+                        <button onclick="saveAsPDF()" class="btn btn-save-pdf">
+                            <i class="fas fa-file-pdf"></i>
+                            Save as PDF
+                        </button>
+                        <button onclick="saveAsImage()" class="btn btn-save-image">
+                            <i class="fas fa-image"></i>
+                            Save as Image
+                        </button>
+                    </div>
+                </div>
+                
                 <!-- Action Buttons -->
                 <div class="action-buttons">
                     <a href="{% url 'frontend:home' %}" class="btn btn-primary">
@@ -521,6 +537,63 @@
         transform: translateY(-2px);
     }
 
+    /* Save Invoice Section */
+    .save-invoice-section {
+        background: var(--white);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        padding: 2rem;
+        margin: 2rem 0;
+        text-align: center;
+        border: 2px solid var(--primary-color);
+    }
+
+    .save-invoice-section h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .save-invoice-section p {
+        color: var(--secondary-color);
+        margin-bottom: 1.5rem;
+        font-size: 1rem;
+    }
+
+    .save-options {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-save-pdf {
+        background: #dc3545;
+        color: var(--white);
+        border: 2px solid #dc3545;
+    }
+
+    .btn-save-pdf:hover {
+        background: #c82333;
+        border-color: #c82333;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+    }
+
+    .btn-save-image {
+        background: #28a745;
+        color: var(--white);
+        border: 2px solid #28a745;
+    }
+
+    .btn-save-image:hover {
+        background: #218838;
+        border-color: #218838;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+    }
+
     /* What's Next Section */
     .whats-next-section {
         background: var(--white);
@@ -751,7 +824,6 @@
             color: #000 !important;
             position: absolute !important;
             top: 5px !important;
-            bottom: 5px !important;
             right: 0 !important;
             text-align: right !important;
         }
@@ -1220,6 +1292,96 @@
             // Restore original title
             document.title = originalTitle;
         }, 100);
+    }
+    
+    // Save as PDF function
+    function saveAsPDF() {
+        // Get primary color from CSS variables
+        const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color') || '#007bff';
+        
+        const printWindow = window.open('', '_blank', 'width=1024,height=768,scrollbars=yes,resizable=yes,toolbar=yes,menubar=yes');
+        if (printWindow) {
+            printWindow.document.write('<html><head><title>Invoice {{ order.order_number }} - www.manobbazar.com</title>');
+            printWindow.document.write('<style>@page { size: A4; margin: 0.5in; }');
+            printWindow.document.write('body { margin: 0; padding: 20px; font-family: Arial, sans-serif; font-size: 12px; background: white; }');
+            printWindow.document.write('.pdf-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px 20px; border-radius: 8px; background: linear-gradient(135deg, ' + primaryColor + ', #20c997); color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }');
+            printWindow.document.write('.pdf-header .company-url { font-size: 18px; font-weight: bold; color: white; }');
+            printWindow.document.write('.pdf-header .company-phone { font-size: 14px; font-weight: bold; color: white; background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 15px; }');
+            printWindow.document.write(document.querySelector('style').innerHTML);
+            printWindow.document.write('</style></head><body>');
+            printWindow.document.write('<div class="pdf-header"><div class="company-url">www.manobbazar.com</div><div class="company-phone">📞 📱 01777173040</div></div>');
+            printWindow.document.write(document.querySelector('.order-summary-card').outerHTML);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.focus();
+            // Trigger print after a short delay
+            setTimeout(function() {
+                printWindow.print();
+            }, 1000);
+        }
+    }
+    
+    // Save as Image function  
+    function saveAsImage() {
+        // Use html2canvas library for converting to image
+        if (typeof html2canvas === 'undefined') {
+            // Load html2canvas library if not already loaded
+            const script = document.createElement('script');
+            script.src = 'https://html2canvas.hertzen.com/dist/html2canvas.min.js';
+            script.onload = function() {
+                captureAsImage();
+            };
+            document.head.appendChild(script);
+        } else {
+            captureAsImage();
+        }
+    }
+    
+    function captureAsImage() {
+        const orderCard = document.querySelector('.order-summary-card');
+        if (orderCard) {
+            // Create a temporary container with proper styling
+            const tempContainer = document.createElement('div');
+            tempContainer.style.cssText = `
+                position: fixed;
+                top: -9999px;
+                left: -9999px;
+                width: 800px;
+                background: white;
+                padding: 20px;
+                font-family: Arial, sans-serif;
+            `;
+            
+            // Add header to the temp container
+            const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color') || '#007bff';
+            tempContainer.innerHTML = 
+                '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px 20px; border-radius: 8px; background: ' + primaryColor + '; color: white;">' +
+                    '<div style="font-size: 18px; font-weight: bold;">www.manobbazar.com</div>' +
+                    '<div style="font-size: 14px; font-weight: bold; background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 15px;">📞 📱 01777173040</div>' +
+                '</div>' +
+                orderCard.outerHTML;
+            
+            document.body.appendChild(tempContainer);
+            
+            html2canvas(tempContainer, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            }).then(canvas => {
+                // Create download link
+                const link = document.createElement('a');
+                link.download = 'invoice-{{ order.order_number }}.png';
+                link.href = canvas.toDataURL();
+                link.click();
+                
+                // Remove temporary container
+                document.body.removeChild(tempContainer);
+            }).catch(error => {
+                console.error('Error capturing image:', error);
+                alert('Error saving as image. Please try again.');
+                document.body.removeChild(tempContainer);
+            });
+        }
     }
 </script>
 {% endblock %}
