@@ -70,8 +70,8 @@
                                         <h4 class="item-name">{{ item.product.name }}</h4>
                                         {% if item.variant %}
                                             <div class="item-variant">
-                                                {% if item.variant.color %}Color: {{ item.variant.color }}{% endif %}
-                                                {% if item.variant.size %}{% if item.variant.color %}, {% endif %}Size: {{ item.variant.size }}{% endif %}
+                                                {% if item.variant.color_name %}Color: {{ item.variant.color_name }}{% endif %}
+                                                {% if item.variant.size %}{% if item.variant.color_name %}, {% endif %}Size: {{ item.variant.size }}{% endif %}
                                             </div>
                                         {% endif %}
                                         <div class="item-price">
@@ -143,7 +143,7 @@
                         <i class="fas fa-home"></i>
                         Continue Shopping
                     </a>
-                    <button onclick="window.print()" class="btn btn-secondary">
+                    <button onclick="printOrder()" class="btn btn-secondary">
                         <i class="fas fa-print"></i>
                         Print Order
                     </button>
@@ -630,21 +630,420 @@
         }
     }
 
-    /* Print Styles */
+    /* Print Styles - Professional Invoice Design */
     @media print {
+        @page {
+            size: A4;
+            margin: 0.5in;
+        }
+        
+        /* Hide everything except order details when printing */
+        body * {
+            visibility: hidden;
+        }
+        
+        /* Show only the order summary card and its contents */
+        .order-summary-card,
+        .order-summary-card *,
+        .container,
+        .order-confirmation-page,
+        .order-details-section {
+            visibility: visible !important;
+        }
+        
+        /* Hide navigation, buttons, and unnecessary sections */
+        .breadcrumb,
+        .success-header,
         .action-buttons,
-        .whats-next-section {
-            display: none;
+        .whats-next-section,
+        nav,
+        header,
+        footer {
+            display: none !important;
+            visibility: hidden !important;
         }
-
-        .success-header {
-            background: none !important;
-            color: var(--dark-color) !important;
+        
+        /* Reset positioning for print */
+        body, html {
+            background: white !important;
+            color: black !important;
+            font-size: 12px !important;
+            line-height: 1.4 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            height: auto !important;
         }
-
+        
+        .container {
+            margin: 0 !important;
+            padding: 0 !important;
+            max-width: none !important;
+            width: 100% !important;
+            height: auto !important;
+            display: block !important;
+        }
+        
+        .order-confirmation-page {
+            padding: 0 !important;
+            margin: 0 !important;
+            height: auto !important;
+            min-height: auto !important;
+            display: block !important;
+        }
+        
+        .order-details-section {
+            position: static !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            max-width: none !important;
+            height: auto !important;
+            display: block !important;
+        }
+        
+        /* Professional Invoice Layout */
         .order-summary-card {
-            box-shadow: none;
-            border: 1px solid var(--border-color);
+            position: static !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+            page-break-inside: avoid;
+            background: white !important;
+            width: 100% !important;
+            height: auto !important;
+            display: block !important;
+            transform: none !important;
+        }
+        
+        /* Invoice Header */
+        .card-header {
+            background: white !important;
+            color: black !important;
+            border-bottom: 3px solid #000 !important;
+            padding: 5px 0 !important;
+            margin-bottom: 5px !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            display: block !important;
+            position: relative !important;
+        }
+        
+        .card-header::before {
+            content: "Order Information" !important;
+            display: block !important;
+            font-size: 18px !important;
+            font-weight: bold !important;
+            color: #000 !important;
+            margin: 0 0 10px 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            text-align: left !important;
+            line-height: 1.2 !important;
+        }
+        
+        .card-header::after {
+            content: "INVOICE" !important;
+            display: block !important;
+            font-size: 28px !important;
+            font-weight: bold !important;
+            color: #000 !important;
+            position: absolute !important;
+            top: 5px !important;
+            bottom: 5px !important;
+            right: 0 !important;
+            text-align: right !important;
+        }
+        
+        /* Company Contact Info */
+        .card-header .company-info {
+            display: block !important;
+            position: absolute !important;
+            bottom: -25px !important;
+            left: 0 !important;
+            font-size: 12px !important;
+            color: #000 !important;
+            line-height: 1.4 !important;
+        }
+             
+        .card-header h2 {
+            display: none !important;
+        }
+        
+        .order-number {
+            background: #000 !important;
+            color: white !important;
+            padding: 8px 15px !important;
+            font-size: 14px !important;
+            font-weight: bold !important;
+            position: absolute !important;
+            top: 35px !important;
+            right: 0 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        /* Card Body */
+        .card-body {
+            padding: 0 !important;
+            margin-top: 30px !important;
+        }
+        
+        /* Order Info - Horizontal Layout */
+        .order-info-grid {
+            display: flex !important;
+            justify-content: space-between !important;
+            gap: 30px !important;
+            margin-bottom: 25px !important;
+            padding: 15px !important;
+            background: #f8f8f8 !important;
+            border: 1px solid #ddd !important;
+            flex-wrap: wrap !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .info-item {
+            display: block !important;
+            margin-bottom: 8px !important;
+            min-width: 150px !important;
+        }
+        
+        .info-item .label {
+            color: #333 !important;
+            font-size: 12px !important;
+            font-weight: bold !important;
+            text-transform: uppercase !important;
+            display: block !important;
+            margin-bottom: 3px !important;
+        }
+        
+        .info-item .value {
+            color: #000 !important;
+            font-weight: bold !important;
+            font-size: 14px !important;
+            display: block !important;
+        }
+        
+        .total-amount {
+            color: #000 !important;
+            font-weight: bold !important;
+            font-size: 16px !important;
+        }
+        
+        /* Items Table */
+        .order-items-section h3 {
+            font-size: 16px !important;
+            font-weight: bold !important;
+            color: #000 !important;
+            margin: 20px 0 10px 0 !important;
+            border-bottom: 2px solid #000 !important;
+            padding-bottom: 5px !important;
+        }
+        
+        .items-list {
+            display: table !important;
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin-bottom: 20px !important;
+        }
+        
+        .order-item {
+            display: table-row !important;
+            background: white !important;
+            border: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        
+        .order-item.table-header {
+            background: #f5f5f5 !important;
+            font-weight: bold !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .order-item.table-header .item-image,
+        .order-item.table-header .item-details,
+        .order-item.table-header .item-total {
+            background: #f5f5f5 !important;
+            font-weight: bold !important;
+            text-align: center !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .item-image {
+            display: table-cell !important;
+            width: 60px !important;
+            height: auto !important;
+            vertical-align: top !important;
+            padding: 10px 5px !important;
+            border-bottom: 1px solid #ddd !important;
+            text-align: center !important;
+        }
+        
+        .item-image img {
+            width: 50px !important;
+            height: 50px !important;
+            object-fit: cover !important;
+            border: 1px solid #ddd !important;
+        }
+        
+        .item-details {
+            display: table-cell !important;
+            vertical-align: top !important;
+            padding: 10px 10px !important;
+            border-bottom: 1px solid #ddd !important;
+        }
+        
+        .item-name {
+            font-size: 13px !important;
+            font-weight: bold !important;
+            color: #000 !important;
+            margin-bottom: 5px !important;
+        }
+        
+        .item-variant {
+            color: #666 !important;
+            font-size: 11px !important;
+            margin-bottom: 5px !important;
+        }
+        
+        .item-price {
+            display: block !important;
+            font-size: 11px !important;
+            color: #666 !important;
+        }
+        
+        .unit-price {
+            color: #666 !important;
+            margin-right: 10px !important;
+        }
+        
+        .quantity {
+            background: #000 !important;
+            color: white !important;
+            padding: 2px 8px !important;
+            font-size: 10px !important;
+            font-weight: bold !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .item-total {
+            display: table-cell !important;
+            vertical-align: top !important;
+            padding: 10px 10px !important;
+            border-bottom: 1px solid #ddd !important;
+            text-align: right !important;
+            font-size: 13px !important;
+            font-weight: bold !important;
+            color: #000 !important;
+            width: 100px !important;
+        }
+        
+        /* Order Totals - Right Aligned */
+        .order-totals {
+            background: white !important;
+            padding: 0 !important;
+            margin: 20px 0 30px auto !important;
+            width: 300px !important;
+            border: 2px solid #000 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .total-line {
+            display: flex !important;
+            justify-content: space-between !important;
+            padding: 8px 15px !important;
+            font-size: 12px !important;
+            border-bottom: 1px solid #ddd !important;
+        }
+        
+        .total-line:last-child {
+            border-bottom: none !important;
+        }
+        
+        .total-line.grand-total {
+            font-weight: bold !important;
+            font-size: 14px !important;
+            color: #000 !important;
+            background: #f5f5f5 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .total-divider {
+            display: none !important;
+        }
+        
+        /* Shipping Address - Bottom Left */
+        .shipping-address-section {
+            margin-top: 30px !important;
+            page-break-inside: avoid !important;
+        }
+        
+        .shipping-address-section h3 {
+            font-size: 14px !important;
+            font-weight: bold !important;
+            color: #000 !important;
+            margin-bottom: 10px !important;
+            border-bottom: 1px solid #000 !important;
+            padding-bottom: 5px !important;
+        }
+        
+        .address-card {
+            background: white !important;
+            padding: 15px !important;
+            border: 1px solid #000 !important;
+            max-width: 300px !important;
+        }
+        
+        .address-name {
+            font-weight: bold !important;
+            color: #000 !important;
+            margin-bottom: 5px !important;
+            font-size: 13px !important;
+        }
+        
+        .address-details {
+            color: #000 !important;
+            line-height: 1.4 !important;
+            margin-bottom: 5px !important;
+            font-size: 12px !important;
+        }
+        
+        .address-phone {
+            color: #000 !important;
+            font-weight: bold !important;
+            font-size: 12px !important;
+        }
+        
+        .address-phone i {
+            margin-right: 5px !important;
+        }
+        
+        /* Remove any gaps and ensure single page */
+        * {
+            page-break-inside: avoid !important;
+        }
+        
+        .order-items-section,
+        .order-totals,
+        .shipping-address-section {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+        
+        /* Ensure all colors are preserved */
+        .status-pending,
+        .status-processing,
+        .status-shipped {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
     }
 </style>
@@ -656,5 +1055,171 @@
         // Add any JavaScript functionality here if needed
         console.log('Order confirmation page loaded');
     });
+    
+    function printOrder() {
+        // Add company contact info to header
+        const cardHeader = document.querySelector('.card-header');
+        if (cardHeader && !cardHeader.querySelector('.company-info')) {
+            const companyInfo = document.createElement('div');
+            companyInfo.className = 'company-info';
+            cardHeader.appendChild(companyInfo);
+        }
+        
+        // Create table structure for better print layout
+        const itemsList = document.querySelector('.items-list');
+        let originalContent = '';
+        if (itemsList) {
+            // Store original content
+            originalContent = itemsList.innerHTML;
+            
+            // Create table header
+            const tableHeader = `
+                <div class="order-item table-header">
+                    <div class="item-image">Image</div>
+                    <div class="item-details">Product Details</div>
+                    <div class="item-total">Total</div>
+                </div>
+            `;
+            
+            // Add header before items
+            itemsList.innerHTML = tableHeader + originalContent;
+        }
+        
+        // Hide all elements that shouldn't be printed
+        const elementsToHide = [
+            '.breadcrumb',
+            '.success-header', 
+            '.action-buttons',
+            '.whats-next-section',
+            'nav',
+            'header',
+            'footer'
+        ];
+        
+        // Store original display values
+        const originalDisplays = {};
+        
+        elementsToHide.forEach(selector => {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach((element, index) => {
+                const key = `${selector}-${index}`;
+                originalDisplays[key] = element.style.display;
+                element.style.display = 'none';
+            });
+        });
+        
+        // Add print-specific title with company info
+        const originalTitle = document.title;
+        document.title = "Invoice - www.manobbazar.com";
+        
+        // Try to minimize browser print headers by opening in new window
+        const printWindow = window.open('', '_blank', 'width=1024,height=768,scrollbars=yes,resizable=yes,toolbar=yes,menubar=yes');
+        if (printWindow) {
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Invoice - www.manobbazar.com</title>
+                    <style>
+                        @page { 
+                            margin: 0.5in;
+                            @top-left { content: "www.manobbazar.com"; }
+                            @top-right { content: "📞 01777173040"; }
+                        }
+                        body { margin: 0; padding: 5px; font-family: Arial, sans-serif; font-size: 12px; background: white; }
+                        .pdf-header {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            margin-bottom: 5px;
+                            padding: 5px;
+                            border-bottom: 2px solid #000;
+                            background: #f8f8f8;
+                        }
+                        .pdf-header .company-url {
+                            font-size: 16px;
+                            font-weight: bold;
+                            color: #000;
+                        }
+                        .pdf-header .company-phone {
+                            font-size: 14px;
+                            font-weight: bold;
+                            color: #000;
+                        }
+                        ${document.querySelector('style').innerHTML}
+                    </style>
+                </head>
+                <body>
+                    <div class="pdf-header">
+                        <div class="company-url">www.manobbazar.com</div>
+                        <div class="company-phone">📞 📱 01777173040</div>
+                    </div>
+                    ${document.querySelector('.order-summary-card').outerHTML}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 500);
+            
+            // Restore original title
+            document.title = originalTitle;
+            return;
+        }
+        
+        // Set up the page for printing
+        const orderCard = document.querySelector('.order-summary-card');
+        if (orderCard) {
+            orderCard.style.pageBreakInside = 'avoid';
+            orderCard.style.position = 'static';
+            orderCard.style.transform = 'none';
+            orderCard.style.top = '0';
+            orderCard.style.margin = '0';
+        }
+        
+        // Ensure body positioning for print
+        document.body.style.position = 'static';
+        document.body.style.margin = '0';
+        document.body.style.padding = '0';
+        
+        // Set container positioning
+        const container = document.querySelector('.container');
+        if (container) {
+            container.style.position = 'static';
+            container.style.margin = '0';
+            container.style.padding = '0';
+            container.style.transform = 'none';
+        }
+        
+        // Trigger print dialog
+        window.print();
+        
+        // Restore original styles and content after printing
+        setTimeout(() => {
+            elementsToHide.forEach(selector => {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach((element, index) => {
+                    const key = `${selector}-${index}`;
+                    element.style.display = originalDisplays[key] || '';
+                });
+            });
+            
+            // Restore original content
+            if (itemsList && originalContent) {
+                itemsList.innerHTML = originalContent;
+            }
+            
+            // Remove company info
+            const companyInfo = document.querySelector('.company-info');
+            if (companyInfo) {
+                companyInfo.remove();
+            }
+            
+            // Restore original title
+            document.title = originalTitle;
+        }, 100);
+    }
 </script>
 {% endblock %}

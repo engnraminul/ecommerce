@@ -340,6 +340,17 @@ class ProductVariant(models.Model):
         return self.price or self.product.price
     
     @property
+    def color_name(self):
+        """Extract color name from variant name (first word) or return color code"""
+        if self.name:
+            # Try to extract color name from the first word of variant name
+            words = self.name.split()
+            if words:
+                return words[0]
+        # Fall back to color field if no name or name parsing fails
+        return self.color if self.color else None
+    
+    @property
     def is_in_stock(self):
         """Check if variant is in stock"""
         return self.stock_quantity > 0
