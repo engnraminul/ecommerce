@@ -41,8 +41,8 @@
                             
                             <div class="form-row">
                                 <div class="form-group half">
-                                    <label for="email">Email Address</label>
-                                    <input type="email" id="email" name="email">
+                                    <label for="email">Email Address *</label>
+                                    <input type="email" id="email" name="email" required>
                                     <div class="field-error" id="email_error"></div>
                                 </div>
                                 <div class="form-group half">
@@ -338,23 +338,7 @@
 
 {% block extra_css %}
 <style>
-    /* Custom Color Variables */
-    :root {
-        --primary-color: #930000;
-        --secondary-color: #334155;
-        --dark-color: #1e293b;
-        --light-color: #f8fafc;
-        --white: #ffffff;
-        --border-color: #e2e8f0;
-        --success-color: #059669;
-        --danger-color: #dc2626;
-        --warning-color: #d97706;
-        --info-color: #0284c7;
-        --border-radius: 8px;
-        --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.2);
-        --transition: all 0.3s ease;
-    }
+  
 
     /* Page Layout */
     .checkout-page {
@@ -1554,6 +1538,7 @@
             
             // Required fields
             const requiredFields = [
+                'email',
                 'phone_number'
             ];
             
@@ -1666,7 +1651,10 @@
                 customer_notes: formData.get('order_instruction') || '',
                 coupon_code: '',
                 shipping_option: selectedShippingMethod ? selectedShippingMethod.value : '',
-                shipping_location: selectedLocation || 'dhaka'
+                shipping_location: selectedLocation || 'dhaka',
+                // Include guest order fields
+                guest_email: formData.get('email') || '',
+                guest_phone: formData.get('phone_number') || ''
             };
             
             console.log('Order data being sent:', orderData);
@@ -1705,11 +1693,8 @@
                     
                     // Check if it's an authentication error
                     if (errorMessage.includes('Authentication required') || errorMessage.includes('unauthorized')) {
-                        showNotification('Please log in to place an order', 'error');
-                        setTimeout(() => {
-                            window.location.href = '/login/?next=/checkout/';
-                        }, 2000);
-                        return;
+                        // For guest orders, we don't redirect to login
+                        console.log('Guest order attempted, proceeding without authentication requirement');
                     }
                     
                     showNotification('Order failed: ' + errorMessage, 'error');

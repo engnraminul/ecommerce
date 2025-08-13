@@ -213,10 +213,21 @@ def search(request):
     return render(request, 'frontend/search.html', context)
 
 
-@login_required
 def cart(request):
-    """Shopping cart page."""
-    cart_obj, created = Cart.objects.get_or_create(user=request.user)
+    """Shopping cart page - supports both authenticated and guest users."""
+    if request.user.is_authenticated:
+        cart_obj, created = Cart.objects.get_or_create(user=request.user)
+    else:
+        # For guests, get cart by session
+        session_id = request.session.session_key
+        if not session_id:
+            request.session.create()
+            session_id = request.session.session_key
+        
+        cart_obj, created = Cart.objects.get_or_create(
+            session_id=session_id,
+            user=None
+        )
     
     context = {
         'cart': cart_obj,
@@ -224,10 +235,21 @@ def cart(request):
     return render(request, 'frontend/cart.html', context)
 
 
-@login_required
 def checkout(request):
-    """Checkout page."""
-    cart_obj, created = Cart.objects.get_or_create(user=request.user)
+    """Checkout page - supports both authenticated and guest users."""
+    if request.user.is_authenticated:
+        cart_obj, created = Cart.objects.get_or_create(user=request.user)
+    else:
+        # For guests, get cart by session
+        session_id = request.session.session_key
+        if not session_id:
+            request.session.create()
+            session_id = request.session.session_key
+        
+        cart_obj, created = Cart.objects.get_or_create(
+            session_id=session_id,
+            user=None
+        )
     
     # Redirect to cart if empty
     if not cart_obj.items.exists():
@@ -236,6 +258,7 @@ def checkout(request):
     
     context = {
         'cart': cart_obj,
+        'is_guest': not request.user.is_authenticated,
     }
     return render(request, 'frontend/checkout.html', context)
 

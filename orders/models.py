@@ -29,7 +29,12 @@ class Order(models.Model):
     
     # Order identification
     order_number = models.CharField(max_length=50, unique=True, blank=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders', null=True, blank=True)
+    
+    # Guest order information (for orders without user account)
+    is_guest_order = models.BooleanField(default=False)
+    guest_email = models.EmailField(blank=True)
+    session_id = models.CharField(max_length=100, blank=True, null=True)  # Track guest session
     
     # Order status
     status = models.CharField(max_length=20, choices=ORDER_STATUS_CHOICES, default='pending')
@@ -70,7 +75,9 @@ class Order(models.Model):
         ]
     
     def __str__(self):
-        return f"Order {self.order_number} - {self.user.username}"
+        if self.user:
+            return f"Order {self.order_number} - {self.user.username}"
+        return f"Guest Order {self.order_number} - {self.customer_email}"
     
     def save(self, *args, **kwargs):
         if not self.order_number:
@@ -264,7 +271,7 @@ class RefundRequest(models.Model):
     ]
     
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='refund_requests')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='refund_requests')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='refund_requests', null=True, blank=True)
     
     refund_amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     reason = models.CharField(max_length=20, choices=REFUND_REASON_CHOICES)

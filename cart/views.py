@@ -15,29 +15,52 @@ from products.models import Product, ProductVariant
 
 
 class CartView(generics.RetrieveAPIView):
-    """Get user's cart"""
+    """Get user's cart - supports both authenticated users and guests"""
     serializer_class = CartSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     
     def get_object(self):
-        cart, created = Cart.objects.get_or_create(user=self.request.user)
+        if self.request.user.is_authenticated:
+            cart, created = Cart.objects.get_or_create(user=self.request.user)
+        else:
+            # For guest users, use session-based cart
+            session_id = self.request.session.session_key
+            if not session_id:
+                self.request.session.create()
+                session_id = self.request.session.session_key
+            
+            cart, created = Cart.objects.get_or_create(
+                session_id=session_id,
+                user=None
+            )
         return cart
 
 
 @api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def add_to_cart(request):
-    """Add product to cart"""
+    """Add product to cart - supports both authenticated users and guests"""
     serializer = AddToCartSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     
-    user = request.user
     product_id = serializer.validated_data['product_id']
     variant_id = serializer.validated_data.get('variant_id')
     quantity = serializer.validated_data['quantity']
     
     # Get or create cart
-    cart, created = Cart.objects.get_or_create(user=user)
+    if request.user.is_authenticated:
+        cart, created = Cart.objects.get_or_create(user=request.user)
+    else:
+        # For guest users, use session-based cart
+        session_id = request.session.session_key
+        if not session_id:
+            request.session.create()
+            session_id = request.session.session_key
+        
+        cart, created = Cart.objects.get_or_create(
+            session_id=session_id,
+            user=None
+        )
     
     # Get product and variant
     product = get_object_or_404(Product, id=product_id, is_active=True)
@@ -146,19 +169,23 @@ def remove_from_cart(request, item_id):
 
 
 @api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def clear_cart(request):
-    """Clear all items from cart"""
+    """Clear all items from cart - supports both authenticated users and guests"""
     try:
-        cart = Cart.objects.get(user=request.user)
+        if request.user.is_authenticated:
+            cart = Cart.objects.get(user=request.user)
+        else:
+            session_id = request.session.session_key
+            if session_id:
+                cart = Cart.objects.get(session_id=session_id, user=None)
+            else:
+                return Response({'message': 'Cart is already empty'})
+        
         cart.clear()
-        return Response({
-            'message': 'Cart cleared successfully'
-        })
+        return Response({'message': 'Cart cleared successfully'})
     except Cart.DoesNotExist:
-        return Response({
-            'message': 'Cart is already empty'
-        })
+        return Response({'message': 'Cart is already empty'})
 
 
 @api_view(['POST'])
@@ -308,11 +335,27 @@ def remove_coupon(request):
 
 
 @api_view(['GET'])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def cart_summary(request):
-    """Get cart summary with totals"""
+    """Get cart summary with totals - supports both authenticated users and guests"""
     try:
-        cart = Cart.objects.get(user=request.user)
+        if request.user.is_authenticated:
+            cart = Cart.objects.get(user=request.user)
+        else:
+            session_id = request.session.session_key
+            if not session_id:
+                # Return empty cart summary for guests without session
+                return Response({
+                    'subtotal': '0.00',
+                    'shipping_cost': '0.00',
+                    'tax_amount': '0.00',
+                    'discount_amount': '0.00',
+                    'coupon_discount': '0.00',
+                    'total_amount': '0.00',
+                    'total_items': 0,
+                    'total_weight': '0.00'
+                })
+            cart = Cart.objects.get(session_id=session_id, user=None)
     except Cart.DoesNotExist:
         return Response({
             'subtotal': '0.00',
@@ -356,9 +399,9 @@ def cart_summary(request):
 
 
 @api_view(['GET'])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def get_shipping_options(request):
-    """Get available shipping options for user's cart"""
+    """Get available shipping options for cart - supports both authenticated users and guests"""
     location = request.GET.get('location', 'dhaka').lower()
     
     if location not in ['dhaka', 'outside']:
@@ -366,9 +409,18 @@ def get_shipping_options(request):
             'error': 'Invalid location. Must be "dhaka" or "outside"'
         }, status=status.HTTP_400_BAD_REQUEST)
     
-    # Get user's cart
+    # Get cart
     try:
-        cart = Cart.objects.get(user=request.user)
+        if request.user.is_authenticated:
+            cart = Cart.objects.get(user=request.user)
+        else:
+            session_id = request.session.session_key
+            if not session_id:
+                return Response({
+                    'error': 'Cart not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            cart = Cart.objects.get(session_id=session_id, user=None)
+        
         cart_items = cart.items.select_related('product').all()
         
         if not cart_items:

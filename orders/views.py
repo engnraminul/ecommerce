@@ -33,17 +33,11 @@ class OrderDetailView(generics.RetrieveAPIView):
 
 
 class CreateOrderView(generics.CreateAPIView):
-    """Create new order from cart"""
+    """Create new order from cart - supports both authenticated users and guests"""
     serializer_class = CreateOrderSerializer
-    permission_classes = [permissions.AllowAny]  # Allow guest users for now
+    permission_classes = [permissions.AllowAny]  # Allow guest users
     
     def create(self, request, *args, **kwargs):
-        # Check if user is authenticated
-        if not request.user.is_authenticated:
-            return Response({
-                'error': 'Authentication required to place orders'
-            }, status=status.HTTP_401_UNAUTHORIZED)
-            
         try:
             with transaction.atomic():
                 serializer = self.get_serializer(data=request.data)

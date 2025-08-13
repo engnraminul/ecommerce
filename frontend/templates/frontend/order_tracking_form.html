@@ -239,52 +239,10 @@ function displayOrderTracking(order) {
         </div>
     `;
     
-    // Update invoice button with error handling
+    // Update invoice button
     const viewInvoiceBtn = document.getElementById('viewInvoiceBtn');
-    try {
-        if (order.order_number) {
-            viewInvoiceBtn.href = `/api/v1/orders/${order.order_number}/invoice/`;
-            viewInvoiceBtn.onclick = function(e) {
-                e.preventDefault();
-                fetch(this.href, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Invoice not available');
-                    }
-                    return response.blob();
-                })
-                .then(blob => {
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `invoice-${order.order_number}.pdf`;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    document.body.removeChild(a);
-                })
-                .catch(error => {
-                    console.error('Invoice error:', error);
-                    const errorMessage = document.getElementById('errorMessage');
-                    errorMessage.textContent = 'Unable to download invoice. Please try again later.';
-                    errorMessage.style.display = 'block';
-                    errorMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                });
-            };
-            viewInvoiceBtn.style.display = 'inline-flex';
-        } else {
-            viewInvoiceBtn.style.display = 'none';
-        }
-    } catch (error) {
-        console.error('Invoice button error:', error);
-        viewInvoiceBtn.style.display = 'none';
-    }
+    viewInvoiceBtn.href = `/orders/${order.id}/invoice/`;
+    viewInvoiceBtn.style.display = 'inline-flex';
 }
 
 function getStatusIcon(status) {

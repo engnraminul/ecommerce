@@ -93,12 +93,16 @@ class OrderDetailSerializer(serializers.ModelSerializer):
 
 
 class CreateOrderSerializer(serializers.Serializer):
-    """Create order serializer"""
+    """Create order serializer - supports both authenticated users and guests"""
     shipping_address = ShippingAddressSerializer()
     customer_notes = serializers.CharField(required=False, allow_blank=True)
     coupon_code = serializers.CharField(required=False, allow_blank=True)
     shipping_option = serializers.CharField(required=False, allow_blank=True)
     shipping_location = serializers.CharField(required=False, allow_blank=True)
+    
+    # Guest order fields
+    guest_email = serializers.EmailField(required=False, allow_blank=True)
+    guest_phone = serializers.CharField(required=False, allow_blank=True)
     
     def validate_coupon_code(self, value):
         if value:
@@ -122,23 +126,40 @@ class CreateOrderSerializer(serializers.Serializer):
         import logging
         
         logger = logging.getLogger(__name__)
-        user = self.context['request'].user
+        request = self.context['request']
+        user = request.user if request.user.is_authenticated else None
         shipping_data = validated_data.pop('shipping_address')
         shipping_option = validated_data.get('shipping_option', '')
         shipping_location = validated_data.get('shipping_location', 'dhaka')
+        guest_email = validated_data.get('guest_email', '')
+        guest_phone = validated_data.get('guest_phone', '')
         
-        logger.info(f"Creating order for user: {user}")
+        logger.info(f"Creating order for user: {user} (guest: {not bool(user)})")
         logger.info(f"Shipping data: {shipping_data}")
         logger.info(f"Shipping option: {shipping_option}")
         logger.info(f"Shipping location: {shipping_location}")
         
-        # Get user's cart
-        try:
-            cart = Cart.objects.get(user=user)
-            logger.info(f"Found cart with {cart.items.count()} items")
-        except Cart.DoesNotExist:
-            logger.error("Cart not found for user")
-            raise serializers.ValidationError("Cart is empty.")
+        # Get cart - either user's cart or session cart for guests
+        if user:
+            try:
+                cart = Cart.objects.get(user=user)
+                logger.info(f"Found user cart with {cart.items.count()} items")
+            except Cart.DoesNotExist:
+                logger.error("Cart not found for authenticated user")
+                raise serializers.ValidationError("Cart is empty.")
+        else:
+            # For guest users, get cart by session
+            session_id = request.session.session_key
+            if not session_id:
+                request.session.create()
+                session_id = request.session.session_key
+            
+            try:
+                cart = Cart.objects.get(session_id=session_id, user=None)
+                logger.info(f"Found guest cart with {cart.items.count()} items")
+            except Cart.DoesNotExist:
+                logger.error("Cart not found for guest user")
+                raise serializers.ValidationError("Cart is empty. Please add items to your cart first.")
         
         if not cart.items.exists():
             logger.error("Cart has no items")
@@ -188,9 +209,25 @@ class CreateOrderSerializer(serializers.Serializer):
         
         total_amount = subtotal + shipping_cost + tax_amount - discount_amount - coupon_discount
         
+        # Determine customer email and phone
+        if user:
+            customer_email = user.email
+            customer_phone = getattr(user, 'phone', '') or guest_phone
+        else:
+            # For guest orders, use provided email/phone or extract from shipping address
+            customer_email = guest_email or shipping_data.get('email', '')
+            customer_phone = guest_phone or shipping_data.get('phone', '')
+        
+        # Validate guest order requirements
+        if not user and not customer_email:
+            raise serializers.ValidationError("Email is required for guest orders.")
+        
         # Create order
         order = Order.objects.create(
             user=user,
+            is_guest_order=not bool(user),
+            guest_email=customer_email if not user else '',
+            session_id=request.session.session_key if not user else '',
             status='pending',
             payment_status='pending',  # Will be set to 'cod_confirmed' for COD
             subtotal=subtotal,
@@ -200,8 +237,8 @@ class CreateOrderSerializer(serializers.Serializer):
             coupon_code=coupon.code if coupon else '',
             coupon_discount=coupon_discount,
             total_amount=total_amount,
-            customer_email=user.email,
-            customer_phone=user.phone,
+            customer_email=customer_email,
+            customer_phone=customer_phone,
             customer_notes=validated_data.get('customer_notes', '')
         )
         
@@ -238,7 +275,7 @@ class CreateOrderSerializer(serializers.Serializer):
         
         # For COD orders, mark as confirmed
         order.payment_status = 'cod_confirmed'
-        order.status = 'confirmed'
+        order.status = 'Pending'
         order.confirmed_at = timezone.now()
         order.save()
         
@@ -246,7 +283,7 @@ class CreateOrderSerializer(serializers.Serializer):
         OrderStatusHistory.objects.create(
             order=order,
             old_status='pending',
-            new_status='confirmed',
+            new_status='Processing',
             notes='COD order confirmed automatically'
         )
         

@@ -103,11 +103,6 @@ function updateCartUI() {
 }
 
 function addToCart(productId, variantId = null, quantity = 1) {
-    if (!authToken) {
-        showNotification('Please log in to add items to cart', 'warning');
-        return;
-    }
-
     const existingItem = cart.find(item => 
         item.product_id === productId && item.variant_id === variantId
     );
@@ -126,7 +121,7 @@ function addToCart(productId, variantId = null, quantity = 1) {
     updateCartUI();
     showNotification('Item added to cart!', 'success');
 
-    // Sync with backend
+    // Sync with backend (works for both authenticated and guest users)
     syncCartWithBackend();
 }
 
@@ -160,10 +155,8 @@ function updateCartQuantity(productId, variantId, quantity) {
 }
 
 async function syncCartWithBackend() {
-    if (!authToken) return;
-
     try {
-        // Add each cart item to backend
+        // Add each cart item to backend (works for both authenticated and guest users)
         for (const item of cart) {
             await apiRequest('/cart/add/', {
                 method: 'POST',
@@ -372,11 +365,6 @@ async function addToWishlist(productId) {
 
 // Order Functions
 async function createOrder(orderData) {
-    if (!authToken) {
-        showNotification('Please log in to place an order', 'warning');
-        return;
-    }
-
     try {
         const data = await apiRequest('/orders/create/', {
             method: 'POST',

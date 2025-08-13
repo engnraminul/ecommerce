@@ -814,6 +814,7 @@
 
 .mobile-menu-body {
     padding: 1rem;
+    background-color: white;
 }
 
 .mobile-nav {
@@ -1120,7 +1121,7 @@
     }
     
     .navbar-content {
-        grid-template-columns: 1fr auto;
+        grid-template-columns: 0fr auto;
     }
     
     .navbar-search {
