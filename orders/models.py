@@ -81,7 +81,24 @@ class Order(models.Model):
     
     def save(self, *args, **kwargs):
         if not self.order_number:
-            self.order_number = f"ORD-{uuid.uuid4().hex[:8].upper()}"
+            # Get the last order number to generate sequential number
+            last_order = Order.objects.filter(
+                order_number__startswith='MB'
+            ).order_by('-id').first()
+            
+            if last_order and last_order.order_number.startswith('MB'):
+                try:
+                    # Extract number from last order (e.g., MB1002 -> 1002)
+                    last_number = int(last_order.order_number[2:])
+                    next_number = last_number + 1
+                except (ValueError, IndexError):
+                    # If there's an issue parsing, start from 1000
+                    next_number = 1000
+            else:
+                # First order starts at 1000
+                next_number = 1000
+            
+            self.order_number = f"MB{next_number}"
         super().save(*args, **kwargs)
     
     @property

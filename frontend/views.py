@@ -492,3 +492,52 @@ def track_order(request):
 def order_tracking(request):
     """Enhanced order tracking page with professional design."""
     return render(request, 'frontend/order_tracking.html')
+
+
+def find_orders_by_phone(request):
+    """API endpoint to find orders by phone number."""
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        try:
+            import json
+            data = json.loads(request.body)
+            phone_number = data.get('phone_number', '').strip()
+            
+            if not phone_number:
+                return JsonResponse({'error': 'Phone number is required'}, status=400)
+            
+            # Search in both customer_phone and guest phone fields
+            orders = Order.objects.filter(
+                Q(customer_phone=phone_number) | 
+                Q(shipping_address__phone=phone_number)
+            ).select_related(
+                'shipping_address'
+            ).prefetch_related(
+                'items__product__images'
+            ).order_by('-created_at')
+            
+            # Prepare orders data for JSON response
+            orders_data = []
+            for order in orders:
+                orders_data.append({
+                    'id': order.id,
+                    'order_number': order.order_number,
+                    'created_at': order.created_at.isoformat(),
+                    'status': order.status,
+                    'total_amount': float(order.total_amount),
+                    'items': [{
+                        'product': {
+                            'name': item.product.name,
+                            'image_url': item.product.images.first().image.url if item.product.images.exists() else None
+                        },
+                        'quantity': item.quantity,
+                    } for item in order.items.all()]
+                })
+            
+            return JsonResponse({'orders': orders_data})
+            
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': 'An error occurred while searching for orders'}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)

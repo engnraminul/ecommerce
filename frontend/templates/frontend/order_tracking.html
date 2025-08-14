@@ -24,34 +24,86 @@
                     <p class="subtitle">Enter your order number to get real-time updates on your order status</p>
                 </div>
 
+                <!-- Search Method Tabs -->
+                <div class="search-tabs">
+                    <button type="button" class="tab-btn active" data-tab="order-number">
+                        <i class="fas fa-receipt"></i>
+                        Order Number
+                    </button>
+                    <button type="button" class="tab-btn" data-tab="phone-number">
+                        <i class="fas fa-phone"></i>
+                        Phone Number
+                    </button>
+                </div>
+
                 <form id="trackingForm" class="tracking-form">
                     {% csrf_token %}
                     
                     <div id="errorMessage" class="alert alert-error" style="display: none;"></div>
                     
-                    <div class="input-group">
-                        <div class="input-wrapper">
-                            <input type="text" 
-                                   id="order_number" 
-                                   name="order_number" 
-                                   required
-                                   placeholder="Enter Order Number (e.g. ORD-12345678)"
-                                   class="tracking-input"
-                                   autocomplete="off"
-                                   pattern="[A-Za-z0-9-]+"
-                                   title="Please enter a valid order number">
-                            <label for="order_number" class="floating-label">Order Number</label>
+                    <!-- Order Number Tab -->
+                    <div id="orderNumberTab" class="tab-content active">
+                        <div class="input-group">
+                            <div class="input-wrapper">
+                                <input type="text" 
+                                       id="order_number" 
+                                       name="order_number" 
+                                       placeholder="MB####"
+                                       class="tracking-input"
+                                       autocomplete="off"
+                                       pattern="[A-Za-z0-9-]+"
+                                       title="Please enter a valid order number">
+                                <label for="order_number" class="floating-label">Order Number</label>
+                            </div>
+                            <button type="submit" class="track-btn">
+                                <span class="btn-text">Track Order</span>
+                                <span class="btn-icon"><i class="fas fa-arrow-right"></i></span>
+                            </button>
                         </div>
-                        <button type="submit" class="track-btn">
-                            <span class="btn-text">Track Order</span>
-                            <span class="btn-icon"><i class="fas fa-arrow-right"></i></span>
-                        </button>
+
+                        <div class="help-text">
+                            <p><i class="fas fa-info-circle"></i> You can find your order number in the confirmation email we sent you.</p>
+                        </div>
                     </div>
 
-                    <div class="help-text">
-                        <p><i class="fas fa-info-circle"></i> You can find your order number in the confirmation email we sent you.</p>
+                    <!-- Phone Number Tab -->
+                    <div id="phoneNumberTab" class="tab-content">
+                        <div class="input-group">
+                            <div class="input-wrapper">
+                                <input type="tel" 
+                                       id="phone_number" 
+                                       name="phone_number" 
+                                       placeholder="01777173040"
+                                       class="tracking-input"
+                                       autocomplete="tel">
+                                <label for="phone_number" class="floating-label">Phone Number</label>
+                            </div>
+                            <button type="submit" class="track-btn">
+                                <span class="btn-text">Find Orders</span>
+                                <span class="btn-icon"><i class="fas fa-search"></i></span>
+                            </button>
+                        </div>
+
+                        <div class="help-text">
+                            <p><i class="fas fa-info-circle"></i> Enter the phone number you used when placing your order.</p>
+                        </div>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <!-- Order List Results (for phone number search) -->
+        <div id="orderListResults" class="order-list-results" style="display: none;">
+            <div class="order-list-header">
+                <h2>Your Orders</h2>
+                <p>Select an order to view tracking information</p>
+            </div>
+            <div id="orderList" class="order-list"></div>
+            <div class="back-to-search">
+                <button onclick="clearTracking()" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Search
+                </button>
             </div>
         </div>
 
@@ -178,12 +230,44 @@
 // Enhanced tracking functionality
 document.getElementById('trackingForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    trackOrder();
+    
+    const activeTab = document.querySelector('.tab-btn.active').dataset.tab;
+    
+    if (activeTab === 'order-number') {
+        trackOrder();
+    } else if (activeTab === 'phone-number') {
+        findOrdersByPhone();
+    }
+});
+
+// Tab switching functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const tabId = this.dataset.tab;
+            
+            // Update active tab button
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Update active tab content
+            tabContents.forEach(content => content.classList.remove('active'));
+            document.getElementById(tabId === 'order-number' ? 'orderNumberTab' : 'phoneNumberTab').classList.add('active');
+            
+            // Clear any errors
+            hideError();
+        });
+    });
+    
+    // Auto-focus on input when page loads
+    document.getElementById('order_number').focus();
 });
 
 function trackOrder() {
     const orderNumber = document.getElementById('order_number').value.trim();
-    const errorMessage = document.getElementById('errorMessage');
     
     // Validate order number
     if (!orderNumber || !/^[A-Za-z0-9-]+$/.test(orderNumber)) {
@@ -220,6 +304,177 @@ function trackOrder() {
     .finally(() => {
         showLoading(false);
     });
+}
+
+function findOrdersByPhone() {
+    const phoneNumber = document.getElementById('phone_number').value.trim();
+    
+    // Validate phone number
+    if (!phoneNumber) {
+        showError('Please enter a phone number');
+        return;
+    }
+    
+    // Show loading
+    showLoading(true);
+    hideError();
+    
+    fetch('/api/v1/orders/find-by-phone/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            phone_number: phoneNumber
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || `Error: ${response.status}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        displayOrderList(data.orders);
+    })
+    .catch(error => {
+        console.error('Phone search error:', error);
+        showError('Unable to find orders with this phone number. Please verify and try again.');
+    })
+    .finally(() => {
+        showLoading(false);
+    });
+}
+
+function displayOrderList(orders) {
+    // Hide search form and show order list
+    document.getElementById('trackingSearchSection').style.display = 'none';
+    document.getElementById('orderListResults').style.display = 'block';
+    
+    const orderList = document.getElementById('orderList');
+    
+    if (orders.length === 0) {
+        orderList.innerHTML = `
+            <div class="no-orders">
+                <div class="no-orders-icon">
+                    <i class="fas fa-shopping-bag"></i>
+                </div>
+                <h3>No Orders Found</h3>
+                <p>We couldn't find any orders associated with this phone number.</p>
+                <button onclick="clearTracking()" class="btn btn-primary">
+                    <i class="fas fa-search"></i>
+                    Try Again
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    orderList.innerHTML = orders.map(order => `
+        <div class="order-card" onclick="trackOrderById('${order.order_number}')">
+            <div class="order-card-header">
+                <div class="order-info">
+                    <h3 class="order-number">Order ${order.order_number}</h3>
+                    <span class="order-date">
+                        <i class="fas fa-calendar-alt"></i>
+                        ${formatDate(order.created_at)}
+                    </span>
+                </div>
+                <div class="order-status">
+                    <span class="status-badge status-${order.status}">
+                        ${getStatusDisplayText(order.status)}
+                    </span>
+                </div>
+            </div>
+            <div class="order-card-body">
+                <div class="order-items-preview">
+                    ${order.items.slice(0, 2).map(item => `
+                        <div class="item-preview">
+                            <img src="${item.product.image_url || '/media/default.webp'}" 
+                                 alt="${item.product.name}"
+                                 onerror="this.src='/media/default.webp'">
+                            <span class="item-name">${item.product.name}</span>
+                            <span class="item-qty">×${item.quantity}</span>
+                        </div>
+                    `).join('')}
+                    ${order.items.length > 2 ? `
+                        <div class="more-items">
+                            +${order.items.length - 2} more item${order.items.length - 2 > 1 ? 's' : ''}
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="order-total">
+                    <span class="total-label">Total:</span>
+                    <span class="total-amount">$${parseFloat(order.total_amount).toFixed(2)}</span>
+                </div>
+            </div>
+            <div class="order-card-footer">
+                <span class="track-text">
+                    <i class="fas fa-arrow-right"></i>
+                    Click to track this order
+                </span>
+            </div>
+        </div>
+    `).join('');
+    
+    // Scroll to results
+    document.getElementById('orderListResults').scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+    });
+}
+
+function trackOrderById(orderNumber) {
+    // Show loading
+    showLoading(true);
+    
+    fetch(`/api/v1/orders/${orderNumber}/track/`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || `Error: ${response.status}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Hide order list and show tracking details
+        document.getElementById('orderListResults').style.display = 'none';
+        displayOrderTracking(data);
+    })
+    .catch(error => {
+        console.error('Tracking error:', error);
+        showError('Unable to load order tracking. Please try again.');
+    })
+    .finally(() => {
+        showLoading(false);
+    });
+}
+
+function getStatusDisplayText(status) {
+    const statusText = {
+        'pending': 'Pending',
+        'confirmed': 'Confirmed',
+        'processing': 'Processing',
+        'packed': 'Packed',
+        'shipped': 'Shipped',
+        'out_for_delivery': 'Out for Delivery',
+        'delivered': 'Delivered',
+        'cancelled': 'Cancelled',
+        'refunded': 'Refunded'
+    };
+    return statusText[status] || status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
 function displayOrderTracking(order) {
@@ -468,9 +723,19 @@ function hideError() {
 
 function clearTracking() {
     document.getElementById('trackingSearchSection').style.display = 'block';
+    document.getElementById('orderListResults').style.display = 'none';
     document.getElementById('trackingResults').style.display = 'none';
     document.getElementById('order_number').value = '';
+    document.getElementById('phone_number').value = '';
     hideError();
+    
+    // Focus on the active tab's input
+    const activeTab = document.querySelector('.tab-btn.active').dataset.tab;
+    if (activeTab === 'order-number') {
+        document.getElementById('order_number').focus();
+    } else {
+        document.getElementById('phone_number').focus();
+    }
 }
 
 // Enhanced input interactions
@@ -478,9 +743,10 @@ document.getElementById('order_number').addEventListener('input', function() {
     this.value = this.value.toUpperCase();
 });
 
-// Auto-focus on input when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('order_number').focus();
+// Phone number formatting
+document.getElementById('phone_number').addEventListener('input', function() {
+    // Remove non-numeric characters except + and -
+    this.value = this.value.replace(/[^\d+\-\s()]/g, '');
 });
 </script>
 {% endblock %}
@@ -551,6 +817,56 @@ document.addEventListener('DOMContentLoaded', function() {
         color: var(--secondary-color);
         font-size: 1.1rem;
         line-height: 1.6;
+    }
+
+    /* Search Tabs */
+    .search-tabs {
+        display: flex;
+        margin-bottom: 2rem;
+        background: var(--light-color);
+        border-radius: 12px;
+        padding: 0.5rem;
+        gap: 0.5rem;
+    }
+
+    .tab-btn {
+        flex: 1;
+        padding: 1rem 1.5rem;
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        font-weight: 500;
+        color: var(--secondary-color);
+        transition: all 0.3s ease;
+    }
+
+    .tab-btn.active {
+        background: var(--white);
+        color: var(--primary-color);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab-btn:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.5);
+        color: var(--dark-color);
+    }
+
+    .tab-btn i {
+        font-size: 1.1rem;
+    }
+
+    /* Tab Content */
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
     }
 
     /* Enhanced Input Group */
@@ -683,6 +999,217 @@ document.addEventListener('DOMContentLoaded', function() {
         padding: 2rem;
     }
 
+    /* Order List Results */
+    .order-list-results {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .order-list-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .order-list-header h2 {
+        font-size: 2rem;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .order-list-header p {
+        color: var(--secondary-color);
+        font-size: 1.1rem;
+    }
+
+    .order-list {
+        display: grid;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .order-card {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: var(--card-shadow);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .order-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--card-shadow-hover);
+        border-color: var(--primary-color);
+    }
+
+    .order-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .order-number {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin: 0 0 0.5rem 0;
+    }
+
+    .order-date {
+        color: var(--secondary-color);
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .order-status .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+
+    .status-badge.status-pending { background: #f59e0b; }
+    .status-badge.status-confirmed { background: #10b981; }
+    .status-badge.status-processing { background: #3b82f6; }
+    .status-badge.status-packed { background: #8b5cf6; }
+    .status-badge.status-shipped { background: #06b6d4; }
+    .status-badge.status-out_for_delivery { background: #f97316; }
+    .status-badge.status-delivered { background: #22c55e; }
+    .status-badge.status-cancelled { background: #ef4444; }
+    .status-badge.status-refunded { background: #6b7280; }
+
+    .order-card-body {
+        margin-bottom: 1.5rem;
+    }
+
+    .order-items-preview {
+        margin-bottom: 1rem;
+    }
+
+    .item-preview {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
+        padding: 0.75rem;
+        background: var(--light-color);
+        border-radius: 8px;
+    }
+
+    .item-preview img {
+        width: 50px;
+        height: 50px;
+        border-radius: 6px;
+        object-fit: cover;
+    }
+
+    .item-name {
+        flex: 1;
+        font-weight: 500;
+        color: var(--dark-color);
+    }
+
+    .item-qty {
+        color: var(--secondary-color);
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .more-items {
+        color: var(--secondary-color);
+        font-style: italic;
+        text-align: center;
+        padding: 0.5rem;
+        background: var(--light-color);
+        border-radius: 6px;
+        font-size: 0.9rem;
+    }
+
+    .order-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: var(--light-color);
+        border-radius: 8px;
+    }
+
+    .total-label {
+        font-weight: 500;
+        color: var(--secondary-color);
+    }
+
+    .total-amount {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+
+    .order-card-footer {
+        text-align: center;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .track-text {
+        color: var(--primary-color);
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .back-to-search {
+        text-align: center;
+    }
+
+    .no-orders {
+        text-align: center;
+        padding: 3rem 2rem;
+        background: var(--white);
+        border-radius: 16px;
+        box-shadow: var(--card-shadow);
+    }
+
+    .no-orders-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        background: var(--light-color);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .no-orders-icon i {
+        font-size: 2rem;
+        color: var(--secondary-color);
+    }
+
+    .no-orders h3 {
+        font-size: 1.5rem;
+        color: var(--dark-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .no-orders p {
+        color: var(--secondary-color);
+        margin-bottom: 2rem;
+        line-height: 1.6;
+    }
+
     /* Order Header */
     .order-header {
         background: var(--white);
@@ -726,7 +1253,7 @@ document.addEventListener('DOMContentLoaded', function() {
         border-radius: 12px;
         font-weight: 600;
         font-size: 1.1rem;
-        color: var(--white);
+        color: var(--primary-color);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
@@ -1301,6 +1828,80 @@ document.addEventListener('DOMContentLoaded', function() {
             padding: 1.2rem 2rem;
             font-size: 1.1rem;
         }
+
+        /* Search Tabs Mobile */
+        .search-tabs {
+            margin-bottom: 1.5rem;
+        }
+
+        .tab-btn {
+            padding: 0.8rem 1rem;
+            font-size: 0.9rem;
+            gap: 0.5rem;
+        }
+
+        .tab-btn i {
+            font-size: 1rem;
+        }
+
+        /* Order List Mobile */
+        .order-list-results {
+            padding: 1rem;
+        }
+
+        .order-list-header h2 {
+            font-size: 1.5rem;
+        }
+
+        .order-list-header p {
+            font-size: 1rem;
+        }
+
+        .order-card {
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .order-card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+            text-align: left;
+        }
+
+        .order-number {
+            font-size: 1.2rem;
+        }
+
+        .order-date {
+            font-size: 0.85rem;
+        }
+
+        .item-preview {
+            gap: 0.75rem;
+            padding: 0.5rem;
+        }
+
+        .item-preview img {
+            width: 40px;
+            height: 40px;
+        }
+
+        .item-name {
+            font-size: 0.9rem;
+        }
+
+        .item-qty {
+            font-size: 0.8rem;
+        }
+
+        .order-total {
+            padding: 0.8rem;
+        }
+
+        .total-amount {
+            font-size: 1.1rem;
+        }
         
         /* Results Section Mobile */
         .tracking-results {
@@ -1732,7 +2333,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .tracking-input {
             background: #e9ecef;
             border-color: #4a5568;
-            color: #e2e8f0;
+            color: var(--primary-gradient);
         }
         
         .floating-label {

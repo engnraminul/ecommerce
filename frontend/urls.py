@@ -33,4 +33,7 @@ urlpatterns = [
     
     # Order tracking
     path('order-tracking/', views.order_tracking, name='order_tracking'),
+    
+    # API endpoints
+    path('api/v1/orders/find-by-phone/', views.find_orders_by_phone, name='find_orders_by_phone'),
 ]
