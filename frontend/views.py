@@ -451,11 +451,19 @@ def track_order(request):
                 'tax_amount': float(order.tax_amount) if order.tax_amount else 0.00,
                 'total_amount': float(order.total_amount),
                 'status_history': [{
-                    'status': status.new_status,
-                    'notes': status.notes,
+                    'status': status.status or status.new_status,
+                    'title': status.get_display_title(),
+                    'description': status.get_display_description(),
+                    'tracking_number': status.tracking_number,
+                    'carrier': status.carrier,
+                    'carrier_url': status.carrier_url,
+                    'location': status.location,
+                    'estimated_delivery': status.estimated_delivery.isoformat() if status.estimated_delivery else None,
+                    'is_milestone': status.is_milestone,
+                    'is_customer_visible': status.is_customer_visible,
                     'created_at': status.created_at.isoformat(),
                     'is_current': status == order.status_history.first()
-                } for status in order.status_history.all()],
+                } for status in order.status_history.filter(is_customer_visible=True)],
                 'items': [{
                     'product': {
                         'name': item.product.name,
@@ -479,3 +487,8 @@ def track_order(request):
     
     # Regular page load - show the tracking form
     return render(request, 'frontend/order_tracking_form.html')
+
+
+def order_tracking(request):
+    """Enhanced order tracking page with professional design."""
+    return render(request, 'frontend/order_tracking.html')

@@ -32,5 +32,5 @@ urlpatterns = [
     path('contact/', views.contact, name='contact'),
     
     # Order tracking
-    path('track-order/', views.track_order, name='track-order'),
+    path('order-tracking/', views.order_tracking, name='order_tracking'),
 ]

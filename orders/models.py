@@ -197,18 +197,42 @@ class ShippingAddress(models.Model):
 
 class OrderStatusHistory(models.Model):
     """Track order status changes"""
+    STATUS_CHOICES = [
+        ('pending', 'Order Placed'),
+        ('confirmed', 'Order Confirmed'),
+        ('processing', 'Processing'),
+        ('packed', 'Packed'),
+        ('shipped', 'Shipped'),
+        ('out_for_delivery', 'Out for Delivery'),
+        ('delivered', 'Delivered'),
+        ('cancelled', 'Cancelled'),
+        ('refunded', 'Refunded'),
+    ]
+    
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='status_history')
     
+    # Original fields (keep for backward compatibility)
     old_status = models.CharField(max_length=20, blank=True)
     new_status = models.CharField(max_length=20)
-    
-    # Who made the change
-    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     notes = models.TextField(blank=True)
-    
-    # Tracking information for shipped status
     tracking_number = models.CharField(max_length=100, blank=True)
     carrier = models.CharField(max_length=100, blank=True)
+    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    # New enhanced fields
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, blank=True)
+    title = models.CharField(max_length=100, blank=True)
+    description = models.TextField(blank=True)
+    is_system_generated = models.BooleanField(default=False)
+    
+    # Additional tracking information
+    carrier_url = models.URLField(blank=True)
+    location = models.CharField(max_length=200, blank=True)
+    estimated_delivery = models.DateTimeField(null=True, blank=True)
+    
+    # Status metadata
+    is_milestone = models.BooleanField(default=True)
+    is_customer_visible = models.BooleanField(default=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -217,7 +241,37 @@ class OrderStatusHistory(models.Model):
         verbose_name_plural = "Order Status Histories"
     
     def __str__(self):
+        if self.status:
+            return f"Order {self.order.order_number}: {self.get_status_display()}"
         return f"Order {self.order.order_number}: {self.old_status} → {self.new_status}"
+    
+    def get_display_status(self):
+        """Get the display status - use new status field if available, fallback to old"""
+        if self.status:
+            return self.get_status_display()
+        return self.new_status.replace('_', ' ').title()
+        
+    def get_display_title(self):
+        """Get display title"""
+        if self.title:
+            return self.title
+        return self.get_display_status()
+        
+    def get_display_description(self):
+        """Get display description"""
+        if self.description:
+            return self.description
+        return self.notes
+        
+    def save(self, *args, **kwargs):
+        # Auto-populate new fields from old ones for backward compatibility
+        if not self.status and self.new_status:
+            self.status = self.new_status
+        if not self.title and self.status:
+            self.title = self.get_status_display()
+        if not self.description and self.notes:
+            self.description = self.notes
+        super().save(*args, **kwargs)
 
 
 class Invoice(models.Model):

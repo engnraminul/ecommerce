@@ -56,7 +56,7 @@
                         {% for image in product.images.all %}
                         <img src="{{ image.image.url }}" 
                              alt="{{ product.name }}" 
-                             class="thumbnail {% if forloop.first %}active{% endif %}"
+                             class="gallery-thumbnail {% if forloop.first %}active{% endif %}"
                              onclick="changeMainImage(this.src)"
                              onerror="this.onerror=null; this.src='{{ MEDIA_URL }}default.webp';">
                         {% endfor %}
@@ -140,7 +140,7 @@
                                     {% if first_variant.image %}
                                     <img src="{{ first_variant.image.url }}" 
                                          alt="{% for word in first_variant.name.split %}{% if forloop.first %}{{ word }}{% endif %}{% endfor %}" 
-                                         class="color-thumbnail"
+                                         class="variant-thumbnail"
                                          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                                     <span class="color-display" style="background-color: {{ color_group.grouper }}; display: none;"></span>
                                     {% else %}
@@ -157,31 +157,34 @@
                         {% endwith %}
                         
                         <!-- Size Selector -->
-                        {% with available_sizes=product.variants.all %}
-                        {% regroup available_sizes by size as size_groups %}
-                        {% if size_groups %}
-                        <label>Size: <span id="selected-size-label">
-                            {% with default_variant=product.default_variant %}
-                                {% if default_variant and default_variant.size %}{{ default_variant.size }}{% else %}Please select color first{% endif %}
-                            {% endwith %}
-                        </span></label>
-                        <div class="variant-selector size-selector"> 
-                            <div class="size-grid">
-                                {% for size_group in size_groups %}
-                                {% if size_group.grouper %}
-                                {% with default_variant=product.default_variant %}
-                                <button class="size-btn{% if default_variant and default_variant.size == size_group.grouper %} selected{% else %} disabled{% endif %}" 
-                                        data-size="{{ size_group.grouper }}" 
-                                        title="{{ size_group.grouper }}"
-                                        {% if not default_variant or default_variant.size != size_group.grouper %}disabled{% endif %}>
-                                {% endwith %}
-                                    {{ size_group.grouper }}
-                                </button>
-                                {% endif %}
-                                {% endfor %}
-                            </div>
-                        </div>
-                        {% endif %}
+                        {% comment %}Get all sizes and make them unique{% endcomment %}
+                        {% with all_sizes=product.variants.all|dictsort:"size" %}
+                            {% regroup all_sizes by size as size_groups %}
+                            {% comment %}Check if we have any sizes{% endcomment %}
+                            {% if size_groups.0.grouper %}
+                                <label>Size: <span id="selected-size-label">
+                                    {% with default_variant=product.default_variant %}
+                                        {% if default_variant and default_variant.size %}{{ default_variant.size }}{% else %}Please select{% endif %}
+                                    {% endwith %}
+                                </span></label>
+                                <div class="variant-selector size-selector"> 
+                                    <div class="size-grid">
+                                        {% comment %}Iterate through unique size groups only{% endcomment %}
+                                        {% for size_group in size_groups %}
+                                            {% if size_group.grouper %}
+                                                {% with default_variant=product.default_variant %}
+                                                <button class="size-btn{% if default_variant and default_variant.size == size_group.grouper %} selected{% else %} disabled{% endif %}" 
+                                                        data-size="{{ size_group.grouper }}" 
+                                                        title="{{ size_group.grouper }}"
+                                                        {% if not default_variant or default_variant.size != size_group.grouper %}disabled{% endif %}>
+                                                {% endwith %}
+                                                    {{ size_group.grouper }}
+                                                </button>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
                         {% endwith %}
                         
                         <!-- Hidden variants data for JavaScript -->
@@ -632,9 +635,9 @@
         padding: 0.5rem 0;
     }
 
-    .thumbnail {
-        width: 80px;
-        height: 80px;
+    .gallery-thumbnail {
+        width: 60px;
+        height: 60px;
         object-fit: cover;
         border-radius: var(--border-radius);
         cursor: pointer;
@@ -643,8 +646,8 @@
         flex-shrink: 0;
     }
 
-    .thumbnail:hover,
-    .thumbnail.active {
+    .gallery-thumbnail:hover,
+    .gallery-thumbnail.active {
         border-color: var(--primary-color);
         transform: scale(1.05);
     }
@@ -750,7 +753,7 @@
 
     /* Product Actions */
     .product-actions {
-        margin-bottom: 3rem;
+        margin-bottom: 1rem;
         display: flex;
         flex-direction: column;
     }
@@ -1004,7 +1007,7 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
-    .color-thumbnail {
+    .variant-thumbnail {
         width: 50px;
         height: 50px;
         border-radius: 50%;
@@ -1745,12 +1748,12 @@
         .main-image {
             height: 350px;
         }
-
+        
         .thumbnail-gallery {
             gap: 0.5rem;
         }
 
-        .thumbnail {
+        .gallery-thumbnail {
             width: 60px;
             height: 60px;
         }
@@ -1804,7 +1807,7 @@
             min-height: 45px;
         }
 
-        .color-display, .color-thumbnail {
+        .color-display, .variant-thumbnail {
             width: 50px;
             height: 50px;
         }
@@ -1988,9 +1991,9 @@
             height: 400px;
         }
 
-        .thumbnail {
-            width: 50px;
-            height: 50px;
+        .gallery-thumbnail {
+            width: 60px;
+            height: 60px;
         }
 
         .product-pricing {
@@ -2046,15 +2049,15 @@
         }
 
         .quantity_order_btn {
-            flex-direction: column;
+            flex-direction: column-reverse;
             gap: 1rem;
             align-items: stretch;
         }
 
         .quantity-selector {
             display: flex;
-            flex-direction: column;
             align-items: center;
+            justify-content: center;
             gap: 0.5rem;
         }
 
@@ -2296,8 +2299,8 @@
             transform: none;
         }
 
-        .thumbnail:hover,
-        .thumbnail.active {
+        .gallery-thumbnail:hover,
+        .gallery-thumbnail.active {
             transform: none;
             border-width: 3px;
         }
@@ -2322,7 +2325,7 @@
     .wishlist-btn,
     .buy-now-btn,
     .tab-btn,
-    .thumbnail {
+    .gallery-thumbnail {
         touch-action: manipulation;
     }
 
@@ -2343,7 +2346,7 @@
         // Image gallery functionality
         window.changeMainImage = function(src) {
             const mainImage = document.getElementById('main-product-image');
-            const thumbnails = document.querySelectorAll('.thumbnail');
+            const thumbnails = document.querySelectorAll('.gallery-thumbnail');
             
             mainImage.src = src;
             
@@ -2688,14 +2691,14 @@
             }
 
             // Show price note
-            if (variantPriceNote) {
-                variantPriceNote.style.display = 'block';
-                if (minPrice !== maxPrice) {
-                    variantPriceNote.innerHTML = '<small>Price varies by size selection</small>';
-                } else {
-                    variantPriceNote.innerHTML = '<small>Select size to continue</small>';
-                }
-            }
+            // if (variantPriceNote) {
+            //     variantPriceNote.style.display = 'block';
+            //     if (minPrice !== maxPrice) {
+            //         variantPriceNote.innerHTML = '<small>Price varies by size selection</small>';
+            //     } else {
+            //         variantPriceNote.innerHTML = '<small>Select size to continue</small>';
+            //     }
+            // }
         }
 
         // Update size buttons availability based on selected color

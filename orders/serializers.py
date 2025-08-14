@@ -43,12 +43,15 @@ class OrderItemSerializer(serializers.ModelSerializer):
 class OrderStatusHistorySerializer(serializers.ModelSerializer):
     """Order status history serializer"""
     changed_by = serializers.StringRelatedField(read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
     
     class Meta:
         model = OrderStatusHistory
         fields = (
-            'id', 'old_status', 'new_status', 'changed_by', 'notes',
-            'tracking_number', 'carrier', 'created_at'
+            'id', 'status', 'status_display', 'title', 'description',
+            'changed_by', 'is_system_generated', 'tracking_number', 
+            'carrier', 'carrier_url', 'location', 'estimated_delivery',
+            'is_milestone', 'is_customer_visible', 'created_at'
         )
         read_only_fields = ('id', 'created_at')
 
@@ -377,11 +380,22 @@ class OrderTrackingSerializer(serializers.ModelSerializer):
         } for item in obj.items.all()]
     
     def get_status_history(self, obj):
+        # Get all visible status history entries
+        history_entries = obj.status_history.filter(is_customer_visible=True).order_by('-created_at')
+        
         return [{
-            'status': history.new_status,
-            'notes': history.notes,
-            'created_at': history.created_at,
-            'is_current': history == obj.status_history.first(),
-            'tracking_number': history.tracking_number,
-            'carrier': history.carrier
-        } for history in obj.status_history.all().order_by('-created_at')]
+            'status': entry.status,
+            'status_display': entry.get_status_display(),
+            'title': entry.title,
+            'description': entry.description,
+            'tracking_number': entry.tracking_number,
+            'carrier': entry.carrier,
+            'carrier_url': entry.carrier_url,
+            'location': entry.location,
+            'estimated_delivery': entry.estimated_delivery,
+            'is_milestone': entry.is_milestone,
+            'is_system_generated': entry.is_system_generated,
+            'changed_by': str(entry.changed_by) if entry.changed_by else 'System',
+            'created_at': entry.created_at,
+            'is_current': entry == history_entries.first(),
+        } for entry in history_entries]

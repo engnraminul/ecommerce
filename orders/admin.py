@@ -33,7 +33,7 @@ class OrderStatusHistoryInline(admin.TabularInline):
     """Inline for order status history"""
     model = OrderStatusHistory
     extra = 0
-    fields = ('old_status', 'new_status', 'changed_by', 'notes', 'tracking_number', 'carrier', 'created_at')
+    fields = ('status', 'title', 'description', 'changed_by', 'tracking_number', 'carrier', 'created_at')
     readonly_fields = ('created_at',)
 
 
@@ -103,14 +103,7 @@ class OrderAdmin(admin.ModelAdmin):
             order.status = 'confirmed'
             order.confirmed_at = timezone.now()
             order.save()
-            # Create status history
-            OrderStatusHistory.objects.create(
-                order=order,
-                old_status='pending',
-                new_status='confirmed',
-                changed_by=request.user,
-                notes=f"Confirmed by {request.user.username} via admin"
-            )
+            # Status history will be created automatically by signals
             count += 1
         self.message_user(request, f"{count} orders marked as confirmed.")
     mark_as_confirmed.short_description = "Mark selected orders as confirmed"
@@ -194,10 +187,29 @@ class ShippingAddressAdmin(admin.ModelAdmin):
 @admin.register(OrderStatusHistory)
 class OrderStatusHistoryAdmin(admin.ModelAdmin):
     """Order Status History admin"""
-    list_display = ('order', 'old_status', 'new_status', 'changed_by', 'tracking_number', 'created_at')
-    list_filter = ('old_status', 'new_status', 'created_at', 'carrier')
-    search_fields = ('order__order_number', 'notes', 'tracking_number')
+    list_display = ('order', 'status', 'title', 'changed_by', 'tracking_number', 'created_at')
+    list_filter = ('status', 'created_at', 'carrier', 'is_milestone', 'is_customer_visible')
+    search_fields = ('order__order_number', 'description', 'tracking_number', 'title')
     readonly_fields = ('created_at',)
+    
+    fieldsets = (
+        ('Order & Status', {
+            'fields': ('order', 'status', 'title', 'description')
+        }),
+        ('Change Info', {
+            'fields': ('changed_by', 'is_system_generated')
+        }),
+        ('Tracking Details', {
+            'fields': ('tracking_number', 'carrier', 'carrier_url', 'location', 'estimated_delivery')
+        }),
+        ('Visibility', {
+            'fields': ('is_milestone', 'is_customer_visible')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        }),
+    )
 
 
 @admin.register(Invoice)
