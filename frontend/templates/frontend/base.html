@@ -46,12 +46,25 @@
         --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.2);
         --transition: all 0.3s ease;
     }
+
+    .main-content {
+        padding-top: 140px;
+    }  
+
+    @media screen and (max-width: 768px) {
+        .main-content {
+            padding-top: 80px;
+        }
+    }
+
+
+    
     </style>
     <!-- Header -->
     {% include 'frontend/includes/navbar.html' %}
 
     <!-- Main Content -->
-    <main class="main-content" style="padding-top: 140px;">
+    <main class="main-content">
         {% block content %}{% endblock %}
     </main>
 

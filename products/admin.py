@@ -65,7 +65,7 @@ class ProductAdmin(admin.ModelAdmin):
     """Product admin with enhanced features"""
     list_display = (
         'name', 'sku', 'category', 'price', 'stock_quantity', 
-        'is_active', 'is_featured', 'stock_status', 'shipping_info', 'created_at'
+        'is_active', 'is_featured', 'has_video', 'stock_status', 'shipping_info', 'created_at'
     )
     list_filter = (
         'is_active', 'is_featured', 'is_digital', 'category', 
@@ -111,6 +111,10 @@ class ProductAdmin(admin.ModelAdmin):
             'fields': ('meta_title', 'meta_description'),
             'classes': ('collapse',)
         }),
+        ('Media', {
+            'fields': ('youtube_video_url',),
+            'classes': ('collapse',)
+        }),
         ('Statistics', {
             'fields': ('average_rating', 'review_count'),
             'classes': ('collapse',)
@@ -122,6 +126,13 @@ class ProductAdmin(admin.ModelAdmin):
     )
     
     actions = ['mark_as_featured', 'mark_as_not_featured', 'mark_as_active', 'mark_as_inactive']
+    
+    def has_video(self, obj):
+        if obj.youtube_video_url:
+            return format_html('<span style="color: green;">✓ Video</span>')
+        else:
+            return format_html('<span style="color: #999;">No Video</span>')
+    has_video.short_description = "Video"
     
     def stock_status(self, obj):
         if not obj.track_inventory:

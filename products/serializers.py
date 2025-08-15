@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.db.models import Avg
-from .models import Category, Product, ProductImage, ProductVariant, Review, Wishlist
+from .models import Category, Product, ProductImage, ProductVariant, Review, ReviewImage, Wishlist
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -46,22 +46,86 @@ class ProductVariantSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'sku', 'effective_price')
 
 
+class ReviewImageSerializer(serializers.ModelSerializer):
+    """Review image serializer"""
+    class Meta:
+        model = ReviewImage
+        fields = ('id', 'image', 'caption', 'created_at')
+        read_only_fields = ('id', 'created_at')
+
+
 class ReviewSerializer(serializers.ModelSerializer):
-    """Review serializer"""
-    user = serializers.StringRelatedField(read_only=True)
-    user_name = serializers.CharField(source='user.first_name', read_only=True)
+    """Review serializer with image support for both authenticated and guest users"""
+    reviewer_name = serializers.ReadOnlyField()
+    images = ReviewImageSerializer(many=True, read_only=True)
+    uploaded_images = serializers.ListField(
+        child=serializers.ImageField(),
+        write_only=True,
+        required=False,
+        allow_empty=True,
+        help_text="Upload multiple images for the review"
+    )
     
     class Meta:
         model = Review
         fields = (
-            'id', 'user', 'user_name', 'rating', 'title', 'comment',
+            'id', 'rating', 'title', 'comment', 'reviewer_name',
+            'guest_name', 'guest_email', 'images', 'uploaded_images',
             'is_verified_purchase', 'created_at', 'updated_at'
         )
-        read_only_fields = ('id', 'user', 'user_name', 'is_verified_purchase', 'created_at', 'updated_at')
+        read_only_fields = ('id', 'reviewer_name', 'is_verified_purchase', 'created_at', 'updated_at')
+        extra_kwargs = {
+            'guest_name': {'required': False, 'allow_blank': True},
+            'guest_email': {'required': False, 'allow_blank': True},
+            'title': {'required': False, 'allow_blank': True},
+        }
+    
+    def validate(self, attrs):
+        """Validate review data"""
+        request = self.context.get('request')
+        
+        # If user is not authenticated, require guest_name
+        if not (request and request.user.is_authenticated):
+            if not attrs.get('guest_name'):
+                raise serializers.ValidationError({
+                    'guest_name': 'Name is required for guest reviews.'
+                })
+        
+        # Validate rating
+        rating = attrs.get('rating')
+        if not rating or rating < 1 or rating > 5:
+            raise serializers.ValidationError({
+                'rating': 'Rating must be between 1 and 5.'
+            })
+        
+        # Validate comment
+        comment = attrs.get('comment', '').strip()
+        if not comment:
+            raise serializers.ValidationError({
+                'comment': 'Comment is required.'
+            })
+        
+        return attrs
     
     def create(self, validated_data):
-        validated_data['user'] = self.context['request'].user
-        return super().create(validated_data)
+        """Create review with images"""
+        uploaded_images = validated_data.pop('uploaded_images', [])
+        
+        # Set user if authenticated
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            validated_data['user'] = request.user
+            # Clear guest fields for authenticated users
+            validated_data.pop('guest_name', None)
+            validated_data.pop('guest_email', None)
+        
+        review = super().create(validated_data)
+        
+        # Create review images
+        for image in uploaded_images:
+            ReviewImage.objects.create(review=review, image=image)
+        
+        return review
 
 
 class ProductListSerializer(serializers.ModelSerializer):
@@ -118,7 +182,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'sku', 'created_at', 'updated_at')
     
     def get_reviews(self, obj):
-        # Return only approved reviews, latest first
+        # Return only approved reviews with images, latest first
         reviews = obj.reviews.filter(is_approved=True).order_by('-created_at')[:10]
         return ReviewSerializer(reviews, many=True, context=self.context).data
     

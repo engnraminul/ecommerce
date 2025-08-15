@@ -62,6 +62,16 @@
                         {% endfor %}
                     </div>
                     {% endif %}
+                    
+                    <!-- Video Button -->
+                    {% if product.youtube_video_url %}
+                    <div class="video-button-container">
+                        <button class="video-btn" onclick="openVideoModal('{{ product.youtube_video_url }}')">
+                            <i class="fas fa-play"></i>
+                            <span>Watch Product Video</span>
+                        </button>
+                    </div>
+                    {% endif %}
                 </div>
 
                 <!-- Product Information -->
@@ -345,43 +355,169 @@
                             </div>
                         </div>
                         
-                        {% if user.is_authenticated %}
                         <div class="add-review">
                             <h4>Write a Review</h4>
-                            <form class="review-form">
-                                <div class="rating-input">
-                                    <label>Your Rating:</label>
-                                    <div class="star-rating">
-                                        {% for i in "12345" %}
-                                        <i class="far fa-star" data-rating="{{ i }}"></i>
-                                        {% endfor %}
+                            <form class="review-form" id="reviewForm" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <input type="hidden" id="productId" value="{{ product.id }}">
+                                
+                                <!-- Guest user fields (shown only when not logged in) -->
+                                {% if not user.is_authenticated %}
+                                <div class="guest-fields">
+                                    <div class="form-group">
+                                        <label for="guestName">Your Name <span class="required">*</span></label>
+                                        <input type="text" id="guestName" name="guest_name" required 
+                                               placeholder="Enter your name" class="form-control">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="guestEmail">Email (optional)</label>
+                                        <input type="email" id="guestEmail" name="guest_email" 
+                                               placeholder="Enter your email" class="form-control">
                                     </div>
                                 </div>
-                                <textarea placeholder="Write your review here..." rows="4"></textarea>
-                                <button type="submit" class="submit-review-btn">Submit Review</button>
+                                {% endif %}
+                                
+                                <!-- Rating input -->
+                                <div class="rating-input">
+                                    <label>Your Rating <span class="required">*</span></label>
+                                    <div class="star-rating-input">
+                                        {% for i in "12345" %}
+                                        <i class="far fa-star rating-star" data-rating="{{ i }}" title="{{ i }} star{{ i|pluralize }}"></i>
+                                        {% endfor %}
+                                    </div>
+                                    <input type="hidden" id="ratingValue" name="rating" required>
+                                    <small class="rating-text">Click to rate this product</small>
+                                </div>
+                                
+                                <!-- Review title -->
+                                <div class="form-group">
+                                    <label for="reviewTitle">Review Title (optional)</label>
+                                    <input type="text" id="reviewTitle" name="title" 
+                                           placeholder="Give your review a title" class="form-control">
+                                </div>
+                                
+                                <!-- Review comment -->
+                                <div class="form-group">
+                                    <label for="reviewComment">Your Review <span class="required">*</span></label>
+                                    <textarea id="reviewComment" name="comment" rows="3" required 
+                                              placeholder="Share your experience with this product..." class="form-control"></textarea>
+                                </div>
+                                
+                                <!-- Image upload -->
+                                <div class="form-group">
+                                    <label for="reviewImages">Add Photos (optional)</label>
+                                    <div class="image-upload-area">
+                                        <input type="file" id="reviewImages" name="uploaded_images" 
+                                               multiple accept="image/*" class="file-input">
+                                        <div class="upload-placeholder">
+                                            <i class="fas fa-cloud-upload-alt"></i>
+                                            <p>Click to upload photos or drag & drop</p>
+                                            <small>You can upload up to 5 images (Max 5MB each)</small>
+                                        </div>
+                                        <div class="image-preview-container"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Submit button -->
+                                <div class="form-actions">
+                                    <button type="submit" class="submit-review-btn">
+                                        <i class="fas fa-paper-plane"></i>
+                                        Submit Review
+                                    </button>
+                                    <div class="loading-spinner" style="display: none;">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        Submitting...
+                                    </div>
+                                </div>
+                                
+                                <!-- Error/Success messages -->
+                                <div class="form-messages"></div>
                             </form>
                         </div>
-                        {% endif %}
                         
-                        <div class="reviews-list">
+                        <div class="reviews-list" id="reviewsList">
                             {% for review in product.reviews.all|slice:":5" %}
                             <div class="review-item">
                                 <div class="review-header">
                                     <div class="reviewer-info">
-                                        <strong>{{ review.user.get_full_name|default:review.user.username }}</strong>
-                                        <div class="review-rating">
-                                            {% for i in "12345" %}
-                                                <i class="fas fa-star {% if i|add:0 <= review.rating %}filled{% endif %}"></i>
-                                            {% endfor %}
+                                        <div class="reviewer-details">
+                                            <strong class="reviewer-name">
+                                                {% if review.user %}
+                                                    {{ review.user.get_full_name|default:review.user.username }}
+                                                {% else %}
+                                                    {{ review.guest_name|default:"Anonymous" }}
+                                                {% endif %}
+                                                {% if review.is_verified_purchase %}
+                                                    <span class="verified-badge">
+                                                        <i class="fas fa-check-circle"></i>
+                                                        Verified Purchase
+                                                    </span>
+                                                {% endif %}
+                                            </strong>
+                                            <div class="review-rating">
+                                                {% for i in "12345" %}
+                                                    <i class="fas fa-star {% if i|add:0 <= review.rating %}filled{% endif %}"></i>
+                                                {% endfor %}
+                                                <span class="rating-number">({{ review.rating }}/5)</span>
+                                            </div>
                                         </div>
                                     </div>
                                     <span class="review-date">{{ review.created_at|date:"M d, Y" }}</span>
                                 </div>
-                                <p class="review-text">{{ review.comment }}</p>
+                                
+                                {% if review.title %}
+                                <h5 class="review-title">{{ review.title }}</h5>
+                                {% endif %}
+                                
+                                <p class="review-text">{{ review.comment|linebreaks }}</p>
+                                
+                                <!-- Review Images -->
+                                {% if review.images.exists %}
+                                <div class="review-images">
+                                    {% for image in review.images.all %}
+                                    <div class="review-image-item">
+                                        <img src="{{ image.image.url }}" 
+                                             alt="Review image" 
+                                             class="review-image"
+                                             onclick="openReviewImageModal('{{ image.image.url }}', '{{ image.caption|default:"Review image"|escapejs }}')"
+                                             loading="lazy">
+                                        {% if image.caption %}
+                                        <small class="image-caption">{{ image.caption }}</small>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Review Actions -->
+                                <div class="review-actions">
+                                    <button class="review-action-btn helpful-btn" data-review-id="{{ review.id }}">
+                                        <i class="far fa-thumbs-up"></i>
+                                        Helpful
+                                    </button>
+                                    <button class="review-action-btn report-btn" data-review-id="{{ review.id }}">
+                                        <i class="far fa-flag"></i>
+                                        Report
+                                    </button>
+                                </div>
                             </div>
                             {% empty %}
-                            <p class="no-reviews">No reviews yet. Be the first to review this product!</p>
+                            <div class="no-reviews">
+                                <i class="fas fa-comment-dots"></i>
+                                <h4>No reviews yet</h4>
+                                <p>Be the first to review this product and help others make informed decisions!</p>
+                            </div>
                             {% endfor %}
+                            
+                            <!-- Load More Reviews -->
+                            {% if product.reviews.count > 5 %}
+                            <div class="load-more-reviews">
+                                <button class="load-more-btn" onclick="loadMoreReviews()">
+                                    <i class="fas fa-chevron-down"></i>
+                                    Load More Reviews ({{ product.reviews.count|add:"-5" }} remaining)
+                                </button>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -513,6 +649,30 @@
         <div class="modal-content">
             <span class="close-modal" onclick="closeImageModal()">&times;</span>
             <img id="modalImage" src="" alt="Product Image">
+        </div>
+    </div>
+
+    <!-- Video Modal -->
+    <div id="videoModal" class="video-modal">
+        <div class="video-modal-content">
+            <span class="close-video-modal" onclick="closeVideoModal()" title="Close Video">&times;</span>
+            <div class="video-header">
+                <button class="close-video-btn-inner" onclick="closeVideoModal()" title="Close Video">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="video-container">
+                <iframe id="videoFrame" src="" frameborder="0" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Image Modal -->
+    <div id="reviewImageModal" class="review-image-modal">
+        <div class="review-modal-content">
+            <button class="close-review-modal" onclick="closeReviewImageModal()">&times;</button>
+            <img id="reviewModalImage" src="" alt="Review Image">
+            <div class="modal-caption" id="reviewModalCaption"></div>
         </div>
     </div>
 {% endblock %}
@@ -1310,65 +1470,290 @@
         display: block;
     }
 
+    /* Enhanced Review Form - Compact Version */
     .add-review {
-        margin-bottom: 3rem;
-        padding: 2rem;
-        background: var(--light-color);
-        border-radius: var(--border-radius);
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        border: 1px solid var(--border-color);
     }
 
     .add-review h4 {
         margin-bottom: 1.5rem;
-    }
-
-    .rating-input {
-        margin-bottom: 1rem;
-    }
-
-    .star-rating {
+        color: var(--dark-color);
+        font-size: 1.3rem;
         display: flex;
-        gap: 0.25rem;
+        align-items: center;
+        gap: 0.5rem;
     }
 
-    .star-rating i {
-        font-size: 1.5rem;
-        color: var(--border-color);
-        cursor: pointer;
-        transition: var(--transition);
+    .add-review h4::before {
+        content: '✍️';
+        font-size: 1.2rem;
     }
 
-    .star-rating i:hover,
-    .star-rating i.active {
-        color: var(--warning-color);
-    }
-
-    .review-form textarea {
-        width: 100%;
+    /* Guest Fields - Compact */
+    .guest-fields {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
         padding: 1rem;
-        border: 1px solid var(--border-color);
+        background: rgba(var(--primary-color-rgb), 0.05);
         border-radius: var(--border-radius);
-        resize: vertical;
+        border-left: 3px solid var(--primary-color);
+    }
+
+    .form-group {
         margin-bottom: 1rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.4rem;
+        font-weight: 600;
+        color: var(--dark-color);
+        font-size: 0.9rem;
+    }
+
+    .required {
+        color: var(--danger-color);
+        font-weight: bold;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.6rem 0.8rem;
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius);
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        background: var(--white);
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1);
+    }
+
+    /* Enhanced Rating Input - Compact */
+    .rating-input {
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background: var(--white);
+        border-radius: var(--border-radius);
+        border: 2px solid var(--border-color);
+        text-align: center;
+    }
+
+    .rating-input label {
+        display: block;
+        margin-bottom: 0.8rem;
+        font-weight: 600;
+        color: var(--dark-color);
+        font-size: 1rem;
+    }
+
+    .star-rating-input {
+        display: flex;
+        justify-content: center;
+        gap: 0.3rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .rating-star {
+        font-size: 1.6rem;
+        color: #e0e0e0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        transform: scale(1);
+    }
+
+    .rating-star:hover,
+    .rating-star.active {
+        color: #ffc107;
+        transform: scale(1.1);
+        text-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+    }
+
+    .rating-text {
+        color: var(--secondary-color);
+        font-style: italic;
+        font-size: 0.9rem;
+    }
+
+    /* Image Upload Area */
+    .image-upload-area {
+        position: relative;
+        margin-top: 1rem;
+    }
+
+    .file-input {
+        position: absolute;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+        z-index: 2;
+    }
+
+    .upload-placeholder {
+        border: 2px dashed var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 1.2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        background: var(--light-color);
+        cursor: pointer;
+    }
+
+    .upload-placeholder:hover {
+        border-color: var(--primary-color);
+        background: rgba(var(--primary-color-rgb), 0.05);
+    }
+
+    .upload-placeholder i {
+        font-size: 1.6rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+        display: block;
+    }
+
+    .upload-placeholder p {
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .upload-placeholder small {
+        color: var(--secondary-color);
+    }
+
+    /* Image Preview - Compact */
+    .image-preview-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 0.8rem;
+        margin-top: 1rem;
+    }
+
+    .image-preview {
+        position: relative;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .image-preview img {
+        width: 100%;
+        height: 100px;
+        object-fit: cover;
+    }
+
+    .remove-image {
+        position: absolute;
+        top: 3px;
+        right: 3px;
+        background: var(--danger-color);
+        color: var(--white);
+        border: none;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        z-index: 10;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .remove-image:hover {
+        background: #dc2626;
+        transform: scale(1.1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Form Actions - Compact */
+    .form-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 1.5rem;
     }
 
     .submit-review-btn {
-        padding: 0.75rem 2rem;
-        background: var(--primary-color);
+        padding: 0.8rem 1.5rem;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
         color: var(--white);
         border: none;
         border-radius: var(--border-radius);
         cursor: pointer;
         font-weight: 600;
-        transition: var(--transition);
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 150px;
+        justify-content: center;
     }
 
     .submit-review-btn:hover {
-        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(var(--primary-color-rgb), 0.4);
     }
 
+    .submit-review-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .loading-spinner {
+        color: var(--primary-color);
+        font-size: 0.9rem;
+    }
+
+    /* Form Messages */
+    .form-messages {
+        margin-top: 1rem;
+    }
+
+    .success-message {
+        padding: 1rem;
+        background: var(--success-color);
+        color: var(--white);
+        border-radius: var(--border-radius);
+        margin-bottom: 1rem;
+    }
+
+    .error-message {
+        padding: 1rem;
+        background: var(--danger-color);
+        color: var(--white);
+        border-radius: var(--border-radius);
+        margin-bottom: 1rem;
+    }
+
+    /* Enhanced Review Items */
     .review-item {
-        padding: 2rem 0;
+        padding: 2.5rem 0;
         border-bottom: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+
+    .review-item:hover {
+        background: rgba(var(--primary-color-rgb), 0.02);
+        padding: 2.5rem 1rem;
+        margin: 0 -1rem;
+        border-radius: var(--border-radius);
     }
 
     .review-item:last-child {
@@ -1382,9 +1767,260 @@
         margin-bottom: 1rem;
     }
 
-    .reviewer-info strong {
+    .reviewer-info {
+        flex: 1;
+    }
+
+    .reviewer-details {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .reviewer-name {
+        color: var(--dark-color);
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .verified-badge {
+        background: var(--success-color);
+        color: var(--white);
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .review-rating {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .review-rating i {
+        font-size: 1rem;
+        color: var(--border-color);
+    }
+
+    .review-rating i.filled {
+        color: var(--warning-color);
+    }
+
+    .rating-number {
+        font-size: 0.9rem;
+        color: var(--secondary-color);
+        font-weight: 600;
+    }
+
+    .review-date {
+        color: var(--secondary-color);
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+
+    .review-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 0.75rem;
+    }
+
+    .review-text {
+        line-height: 1.7;
+        color: var(--secondary-color);
+        margin-bottom: 1rem;
+        font-size: 1rem;
+    }
+
+    /* Review Images */
+    .review-images {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .review-image-item {
+        position: relative;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .review-image-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .review-image {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .review-image:hover {
+        transform: scale(1.05);
+    }
+
+    .image-caption {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.7);
+        color: var(--white);
+        padding: 0.5rem;
+        font-size: 0.8rem;
+        text-align: center;
+    }
+
+    /* Review Actions */
+    .review-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .review-action-btn {
+        background: none;
+        border: 1px solid var(--border-color);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: var(--secondary-color);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .review-action-btn:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        background: rgba(var(--primary-color-rgb), 0.05);
+    }
+
+    /* No Reviews State */
+    .no-reviews {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--secondary-color);
+        background: var(--light-color);
+        border-radius: var(--border-radius);
+        border: 2px dashed var(--border-color);
+    }
+
+    .no-reviews i {
+        font-size: 3rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
         display: block;
+    }
+
+    .no-reviews h4 {
+        color: var(--dark-color);
         margin-bottom: 0.5rem;
+        font-size: 1.3rem;
+    }
+
+    .no-reviews p {
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    /* Load More Reviews */
+    .load-more-reviews {
+        text-align: center;
+        margin-top: 2rem;
+    }
+
+    .load-more-btn {
+        background: var(--light-color);
+        color: var(--primary-color);
+        border: 2px solid var(--primary-color);
+        padding: 0.75rem 2rem;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .load-more-btn:hover {
+        background: var(--primary-color);
+        color: var(--white);
+        transform: translateY(-2px);
+    }
+
+    /* Review Image Modal */
+    .review-image-modal {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.9);
+        animation: fadeIn 0.3s ease;
+    }
+
+    .review-image-modal.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .review-modal-content {
+        position: relative;
+        max-width: 90%;
+        max-height: 90%;
+        background: var(--white);
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .review-modal-content img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    .close-review-modal {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.7);
+        color: var(--white);
+        border: none;
+        font-size: 2rem;
+        cursor: pointer;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .close-review-modal:hover {
+        background: rgba(0, 0, 0, 0.9);
+        transform: scale(1.1);
+    }
         color: var(--dark-color);
     }
 
@@ -1668,6 +2304,190 @@
         background: rgba(0, 0, 0, 0.8);
     }
 
+    /* Video Button */
+    .video-button-container {
+        margin-top: 1rem;
+        text-align: center;
+    }
+
+    .video-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 1.5rem;
+        background: var(--primary-color);
+        color: var(--white);
+        border: none;
+        border-radius: var(--border-radius);
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .video-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .video-btn:hover::before {
+        left: 100%;
+    }
+
+    .video-btn:hover {
+        background: linear-gradient(135deg, #ff3742, #ff2d3a);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 71, 87, 0.4);
+    }
+
+    .video-btn:active {
+        transform: translateY(0);
+    }
+
+    .video-btn i {
+        font-size: 1.2rem;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.5rem;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Video Modal */
+    .video-modal {
+        display: none;
+        position: fixed;
+        z-index: 1001;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.95);
+        animation: fadeIn 0.3s ease;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .video-modal.show {
+        display: flex;
+    }
+
+    .video-modal-content {
+        position: relative;
+        width: 90%;
+        max-width: 900px;
+        background: var(--white);
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        margin: auto;
+        /* Ensure perfect centering */
+        display: flex;
+        flex-direction: column;
+    }
+
+    .video-container {
+        position: relative;
+        width: 100%;
+        height: 0;
+        padding-bottom: 56.25%; /* 16:9 aspect ratio */
+        background: #000;
+    }
+
+    .video-container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+
+    .close-video-modal {
+        position: absolute;
+        top: -50px;
+        right: 0;
+        color: var(--white);
+        font-size: 2.5rem;
+        font-weight: bold;
+        cursor: pointer;
+        background: rgba(255, 71, 87, 0.9);
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        z-index: 1002;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        line-height: 1;
+    }
+
+    .close-video-modal:hover {
+        background: rgba(255, 71, 87, 1);
+        transform: scale(1.1);
+        border-color: rgba(255, 255, 255, 0.6);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .close-video-modal:active {
+        transform: scale(0.95);
+    }
+
+    /* Video Header with Inner Close Button */
+    .video-header {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 1003;
+    }
+
+    .close-video-btn-inner {
+        background: rgba(0, 0, 0, 0.7);
+        color: var(--white);
+        border: none;
+        border-radius: 50%;
+        width: 35px;
+        height: 35px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .close-video-btn-inner:hover {
+        background: rgba(255, 71, 87, 0.9);
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    }
+
+    .close-video-btn-inner:active {
+        transform: scale(0.9);
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
     /* Notification animations */
     @keyframes slideIn {
         from {
@@ -1689,6 +2509,27 @@
             transform: translateX(100%);
             opacity: 0;
         }
+    }
+
+    /* Enhanced Notification Styles */
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 18px 24px;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 600;
+        font-size: 15px;
+        min-width: 320px;
+        max-width: 450px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
     }
 
     /* Responsive Design */
@@ -1960,6 +2801,47 @@
         .section-header h2 {
             font-size: 2rem;
         }
+
+        /* Video Button Mobile */
+        .video-btn {
+            padding: 0.875rem 1.25rem;
+            font-size: 0.9rem;
+            gap: 0.5rem;
+        }
+
+        .video-btn i {
+            width: 28px;
+            height: 28px;
+            font-size: 1rem;
+        }
+
+        /* Video Modal Mobile */
+        .video-modal-content {
+            width: 95%;
+            max-width: none;
+            margin: 0;
+            max-height: 90vh;
+        }
+
+        .video-container {
+            padding-bottom: 56.25%; /* Maintain 16:9 aspect ratio */
+        }
+
+        .close-video-modal {
+            top: -45px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            font-size: 2rem;
+        }
+
+        .close-video-btn-inner {
+            width: 30px;
+            height: 30px;
+            font-size: 1rem;
+            top: 8px;
+            right: 8px;
+        }
     }
 
     @media (max-width: 480px) {
@@ -2177,11 +3059,31 @@
 
         .add-review {
             padding: 1rem;
+            margin-bottom: 1.5rem;
         }
 
-        .review-form textarea {
-            padding: 0.75rem;
+        .guest-fields {
+            grid-template-columns: 1fr;
+            gap: 0.8rem;
+            padding: 0.8rem;
+        }
+
+        .rating-input {
+            padding: 0.8rem;
+        }
+
+        .rating-star {
+            font-size: 1.4rem;
+        }
+
+        .form-actions {
+            margin-top: 1rem;
+        }
+
+        .submit-review-btn {
+            padding: 0.7rem 1.2rem;
             font-size: 0.9rem;
+            min-width: 130px;
         }
 
         .review-item {
@@ -2261,6 +3163,51 @@
 
         .related-products-section {
             margin-top: 2rem;
+        }
+
+        /* Video Button Mobile Small */
+        .video-btn {
+            padding: 0.75rem 1rem;
+            font-size: 0.85rem;
+            gap: 0.5rem;
+        }
+
+        .video-btn i {
+            width: 24px;
+            height: 24px;
+            font-size: 0.9rem;
+        }
+
+        .video-btn span {
+            font-size: 0.85rem;
+        }
+
+        /* Video Modal Mobile Small */
+        .video-modal-content {
+            width: 98%;
+            max-width: none;
+            margin: 0;
+            max-height: 95vh;
+        }
+
+        .video-container {
+            padding-bottom: 56.25%; /* Maintain 16:9 aspect ratio */
+        }
+
+        .close-video-modal {
+            top: -40px;
+            right: 5px;
+            width: 35px;
+            height: 35px;
+            font-size: 1.5rem;
+        }
+
+        .close-video-btn-inner {
+            width: 28px;
+            height: 28px;
+            font-size: 0.9rem;
+            top: 6px;
+            right: 6px;
         }
     }
 
@@ -2372,6 +3319,78 @@
             const modal = document.getElementById('imageModal');
             modal.style.display = 'none';
         };
+
+        // Video modal functionality
+        window.openVideoModal = function(videoUrl) {
+            const modal = document.getElementById('videoModal');
+            const videoFrame = document.getElementById('videoFrame');
+            
+            // Convert YouTube URL to embed format
+            let embedUrl = '';
+            let videoId = '';
+            
+            // Handle different YouTube URL formats
+            if (videoUrl.includes('youtube.com/watch?v=')) {
+                videoId = videoUrl.split('v=')[1].split('&')[0];
+            } else if (videoUrl.includes('youtu.be/')) {
+                videoId = videoUrl.split('youtu.be/')[1].split('?')[0];
+            } else if (videoUrl.includes('youtube.com/embed/')) {
+                videoId = videoUrl.split('embed/')[1].split('?')[0];
+            } else if (videoUrl.includes('youtube.com/shorts/')) {
+                // YouTube Shorts - extract video ID and convert to regular format
+                videoId = videoUrl.split('shorts/')[1].split('?')[0];
+            } else if (videoUrl.includes('youtube.com/v/')) {
+                videoId = videoUrl.split('v/')[1].split('?')[0];
+            } else {
+                // If it's already an embed URL or unknown format, use as is
+                embedUrl = videoUrl;
+            }
+            
+            // Create embed URL if we extracted a video ID
+            if (videoId && !embedUrl) {
+                embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3`;
+            }
+            
+            // Fallback: if no valid URL, show error
+            if (!embedUrl) {
+                alert('Invalid video URL format. Please use a valid YouTube video URL.');
+                return;
+            }
+            
+            modal.classList.add('show');
+            videoFrame.src = embedUrl;
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        };
+
+        window.closeVideoModal = function() {
+            const modal = document.getElementById('videoModal');
+            const videoFrame = document.getElementById('videoFrame');
+            
+            modal.classList.remove('show');
+            videoFrame.src = ''; // Stop video playback
+            document.body.style.overflow = 'auto'; // Restore scrolling
+        };
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            const videoModal = document.getElementById('videoModal');
+            const imageModal = document.getElementById('imageModal');
+            
+            if (event.target === videoModal) {
+                closeVideoModal();
+            }
+            if (event.target === imageModal) {
+                closeImageModal();
+            }
+        });
+
+        // Close modal with Escape key
+        window.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeVideoModal();
+                closeImageModal();
+            }
+        });
 
         // Quantity controls
         window.changeQuantity = function(change) {
@@ -3329,48 +4348,407 @@
             // Create notification element
             const notification = document.createElement('div');
             notification.className = `notification ${type}`;
-            notification.innerHTML = `
-                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
-                <span>${message}</span>
-            `;
             
-            // Add styles
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: ${type === 'success' ? '#28a745' : '#dc3545'};
-                color: white;
-                padding: 15px 20px;
-                border-radius: 5px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                z-index: 10000;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                font-weight: 600;
-                animation: slideIn 0.3s ease;
+            // Choose icon based on type
+            let icon = 'check-circle';
+            if (type === 'error') icon = 'exclamation-circle';
+            if (type === 'warning') icon = 'exclamation-triangle';
+            
+            notification.innerHTML = `
+                <i class="fas fa-${icon}"></i>
+                <span>${message}</span>
             `;
             
             document.body.appendChild(notification);
             
-            // Remove after 3 seconds
+            // Remove after 4 seconds for success, 5 seconds for errors
+            const duration = type === 'success' ? 4000 : 5000;
             setTimeout(() => {
-                notification.style.animation = 'slideOut 0.3s ease';
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, 300);
-            }, 3000);
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, duration);
         }
-        
         // Add event listeners
         document.querySelector('.add-to-cart-btn').addEventListener('click', addToCart);
         document.querySelector('.buy-now-btn').addEventListener('click', buyNow);
         
         // Update cart count on page load
         updateCartCount();
+        
+        // Initialize review functionality
+        initializeReviewSystem();
     });
+
+    // Review System JavaScript
+    function initializeReviewSystem() {
+        // Star rating functionality
+        const ratingStars = document.querySelectorAll('.rating-star');
+        const ratingValue = document.getElementById('ratingValue');
+        const ratingText = document.querySelector('.rating-text');
+        
+        ratingStars.forEach((star, index) => {
+            star.addEventListener('click', () => {
+                const rating = index + 1;
+                ratingValue.value = rating;
+                
+                // Update star display
+                ratingStars.forEach((s, i) => {
+                    if (i < rating) {
+                        s.classList.remove('far');
+                        s.classList.add('fas', 'active');
+                    } else {
+                        s.classList.remove('fas', 'active');
+                        s.classList.add('far');
+                    }
+                });
+                
+                // Update rating text
+                const ratingTexts = ['Terrible', 'Poor', 'Average', 'Good', 'Excellent'];
+                ratingText.textContent = `You rated: ${rating}/5 - ${ratingTexts[rating - 1]}`;
+            });
+            
+            star.addEventListener('mouseenter', () => {
+                const rating = index + 1;
+                ratingStars.forEach((s, i) => {
+                    if (i < rating) {
+                        s.style.color = '#ffc107';
+                    } else {
+                        s.style.color = '#e0e0e0';
+                    }
+                });
+            });
+        });
+        
+        // Reset on mouse leave
+        document.querySelector('.star-rating-input').addEventListener('mouseleave', () => {
+            const currentRating = parseInt(ratingValue.value) || 0;
+            ratingStars.forEach((s, i) => {
+                if (i < currentRating) {
+                    s.style.color = '#ffc107';
+                } else {
+                    s.style.color = '#e0e0e0';
+                }
+            });
+        });
+        
+        // Image upload functionality
+        const fileInput = document.getElementById('reviewImages');
+        const imagePreviewContainer = document.querySelector('.image-preview-container');
+        const uploadPlaceholder = document.querySelector('.upload-placeholder');
+        let selectedFiles = [];
+        
+        fileInput.addEventListener('change', handleImageSelection);
+        
+        // Drag and drop functionality
+        uploadPlaceholder.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadPlaceholder.style.borderColor = 'var(--primary-color)';
+            uploadPlaceholder.style.background = 'rgba(var(--primary-color-rgb), 0.05)';
+        });
+        
+        uploadPlaceholder.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadPlaceholder.style.borderColor = 'var(--border-color)';
+            uploadPlaceholder.style.background = 'var(--light-color)';
+        });
+        
+        uploadPlaceholder.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadPlaceholder.style.borderColor = 'var(--border-color)';
+            uploadPlaceholder.style.background = 'var(--light-color)';
+            
+            const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+            handleFiles(files);
+        });
+        
+        function handleImageSelection(e) {
+            const files = Array.from(e.target.files);
+            handleFiles(files);
+        }
+        
+        function handleFiles(files) {
+            // Limit to 5 images
+            const remainingSlots = 5 - selectedFiles.length;
+            const filesToAdd = files.slice(0, remainingSlots);
+            
+            filesToAdd.forEach((file, index) => {
+                if (file.size > 5 * 1024 * 1024) {
+                    showNotification(`Image "${file.name}" is too large. Maximum size is 5MB.`, 'error');
+                    return;
+                }
+                
+                selectedFiles.push(file);
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    createImagePreview(e.target.result, selectedFiles.length - 1);
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            if (files.length > remainingSlots) {
+                showNotification(`Only ${remainingSlots} more images can be added. Limit is 5 images total.`, 'warning');
+            }
+            
+            updateUploadPlaceholder();
+        }
+        
+        function createImagePreview(src, index) {
+            const preview = document.createElement('div');
+            preview.className = 'image-preview';
+            preview.setAttribute('data-index', index);
+            preview.innerHTML = `
+                <img src="${src}" alt="Preview">
+                <button type="button" class="remove-image" data-index="${index}">×</button>
+            `;
+            imagePreviewContainer.appendChild(preview);
+        }
+        
+        // Add event delegation for remove buttons
+        imagePreviewContainer.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-image')) {
+                e.preventDefault();
+                e.stopPropagation();
+                const index = parseInt(e.target.getAttribute('data-index'));
+                console.log('Remove button clicked, index:', index);
+                removeImage(index);
+            }
+        });
+        
+        function updateUploadPlaceholder() {
+            if (selectedFiles.length >= 5) {
+                uploadPlaceholder.style.display = 'none';
+            } else {
+                uploadPlaceholder.style.display = 'block';
+                uploadPlaceholder.querySelector('small').textContent = 
+                    `You can upload ${5 - selectedFiles.length} more images (Max 5MB each)`;
+            }
+        }
+        
+        // Make removeImage function global
+        window.removeImage = function(index) {
+            try {
+                console.log('Removing image at index:', index);
+                console.log('Before removal - selectedFiles length:', selectedFiles.length);
+                console.log('selectedFiles array:', selectedFiles);
+                
+                // Validate index
+                if (index < 0 || index >= selectedFiles.length) {
+                    console.error('Invalid index:', index);
+                    return;
+                }
+                
+                // Remove the file from the array
+                selectedFiles.splice(index, 1);
+                console.log('After removal - selectedFiles length:', selectedFiles.length);
+                
+                // Clear and rebuild all previews with correct indices
+                imagePreviewContainer.innerHTML = '';
+                selectedFiles.forEach((file, newIndex) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        createImagePreview(e.target.result, newIndex);
+                    };
+                    reader.readAsDataURL(file);
+                });
+                
+                // Update the file input
+                updateFileInput();
+                
+                // Update upload placeholder
+                updateUploadPlaceholder();
+                
+                // Show notification
+                showNotification('Image removed successfully', 'success');
+                
+            } catch (error) {
+                console.error('Error removing image:', error);
+                showNotification('Failed to remove image', 'error');
+            }
+        };
+        
+        // Function to update the file input with current selectedFiles
+        function updateFileInput() {
+            try {
+                // Create a new FileList from selectedFiles
+                const dt = new DataTransfer();
+                selectedFiles.forEach(file => {
+                    dt.items.add(file);
+                });
+                fileInput.files = dt.files;
+                console.log('File input updated successfully');
+            } catch (error) {
+                console.warn('Could not update file input:', error);
+                // Clear the file input as fallback
+                fileInput.value = '';
+            }
+        }
+        
+        // Form submission
+        const reviewForm = document.getElementById('reviewForm');
+        reviewForm.addEventListener('submit', handleReviewSubmission);
+        
+        async function handleReviewSubmission(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.querySelector('.submit-review-btn');
+            const loadingSpinner = document.querySelector('.loading-spinner');
+            const formMessages = document.querySelector('.form-messages');
+            
+            // Validate form
+            const rating = document.getElementById('ratingValue').value;
+            const comment = document.getElementById('reviewComment').value;
+            const guestName = document.getElementById('guestName');
+            
+            if (!rating) {
+                showNotification('Please select a rating', 'error');
+                return;
+            }
+            
+            if (!comment.trim()) {
+                showNotification('Please write a review comment', 'error');
+                return;
+            }
+            
+            if (guestName && !guestName.value.trim()) {
+                showNotification('Please enter your name', 'error');
+                return;
+            }
+            
+            // Show loading state
+            submitBtn.style.display = 'none';
+            loadingSpinner.style.display = 'flex';
+            
+            try {
+                const formData = new FormData();
+                formData.append('rating', rating);
+                formData.append('comment', comment);
+                
+                const title = document.getElementById('reviewTitle').value;
+                if (title) formData.append('title', title);
+                
+                if (guestName) {
+                    formData.append('guest_name', guestName.value);
+                    const guestEmail = document.getElementById('guestEmail').value;
+                    if (guestEmail) formData.append('guest_email', guestEmail);
+                }
+                
+                // Add images
+                selectedFiles.forEach((file, index) => {
+                    formData.append('uploaded_images', file);
+                });
+                
+                const productId = document.getElementById('productId').value;
+                console.log('Submitting form data for product:', productId);
+                
+                const response = await fetch(`/frontend/submit-review/${productId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Accept': 'application/json',
+                    },
+                    body: formData
+                });
+                
+                const result = await response.json();
+                console.log('Response status:', response.status);
+                console.log('Response data:', result);
+                
+                if (result.success) {
+                    // Success message for review submission
+                    const successMessage = result.message || 'Review submitted successfully!';
+                    showNotification(successMessage, 'success');
+                    
+                    // Reset form
+                    reviewForm.reset();
+                    ratingValue.value = '';
+                    selectedFiles = [];
+                    imagePreviewContainer.innerHTML = '';
+                    updateUploadPlaceholder();
+                    
+                    // Reset star rating
+                    ratingStars.forEach(star => {
+                        star.classList.remove('fas', 'active');
+                        star.classList.add('far');
+                        star.style.color = '#e0e0e0';
+                    });
+                    
+                    ratingText.textContent = 'Click to rate this product';
+                    
+                    // Reload reviews after a short delay
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    // Handle validation errors
+                    if (result.errors) {
+                        let errorMessage = 'Please fix the following errors:\n';
+                        for (const [field, error] of Object.entries(result.errors)) {
+                            errorMessage += `• ${error}\n`;
+                        }
+                        showNotification(errorMessage, 'error');
+                    } else {
+                        showNotification(result.message || 'Failed to submit review', 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('Error submitting review:', error);
+                showNotification('Failed to submit review. Please try again.', 'error');
+            } finally {
+                submitBtn.style.display = 'flex';
+                loadingSpinner.style.display = 'none';
+            }
+        }
+    }
+
+    // Review image modal functionality
+    window.openReviewImageModal = function(imageSrc, caption) {
+        let modal = document.getElementById('reviewImageModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'reviewImageModal';
+            modal.className = 'review-image-modal';
+            modal.innerHTML = `
+                <div class="review-modal-content">
+                    <button class="close-review-modal" onclick="closeReviewImageModal()">&times;</button>
+                    <img id="reviewModalImage" src="" alt="">
+                    <div class="modal-caption" id="reviewModalCaption"></div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        document.getElementById('reviewModalImage').src = imageSrc;
+        document.getElementById('reviewModalCaption').textContent = caption;
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closeReviewImageModal = function() {
+        const modal = document.getElementById('reviewImageModal');
+        if (modal) {
+            modal.classList.remove('show');
+            document.body.style.overflow = 'auto';
+        }
+    };
+
+    // Load more reviews functionality
+    let currentReviewPage = 1;
+    window.loadMoreReviews = async function() {
+        try {
+            currentReviewPage++;
+            const productId = document.getElementById('productId').value;
+            const response = await fetch(`/api/v1/products/${productId}/reviews/?page=${currentReviewPage}`);
+            
+            if (response.ok) {
+                const data = await response.json();
+                // Implementation for appending more reviews would go here
+                console.log('More reviews loaded:', data);
+            }
+        } catch (error) {
+            console.error('Error loading more reviews:', error);
+        }
+    };
 </script>
 {% endblock %}

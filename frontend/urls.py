@@ -36,4 +36,5 @@ urlpatterns = [
     
     # API endpoints
     path('api/v1/orders/find-by-phone/', views.find_orders_by_phone, name='find_orders_by_phone'),
+    path('frontend/submit-review/<int:product_id>/', views.submit_review, name='submit_review'),
 ]

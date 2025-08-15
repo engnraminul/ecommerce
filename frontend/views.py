@@ -6,8 +6,10 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Avg
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+import json
 
-from products.models import Product, Category, Review
+from products.models import Product, Category, Review, ReviewImage
 from users.models import User
 from cart.models import Cart, CartItem
 from orders.models import Order
@@ -541,3 +543,114 @@ def find_orders_by_phone(request):
             return JsonResponse({'error': 'An error occurred while searching for orders'}, status=500)
     
     return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@require_http_methods(["POST"])
+def submit_review(request, product_id):
+    """Submit a product review - supports both authenticated and guest users."""
+    try:
+        # Debug logging
+        print(f"Received review submission for product {product_id}")
+        print(f"User authenticated: {request.user.is_authenticated}")
+        print(f"POST data: {request.POST}")
+        print(f"FILES: {request.FILES}")
+        
+        product = get_object_or_404(Product, id=product_id, is_active=True)
+        
+        # Get form data
+        rating = request.POST.get('rating')
+        comment = request.POST.get('comment', '').strip()
+        title = request.POST.get('title', '').strip()
+        guest_name = request.POST.get('guest_name', '').strip()
+        guest_email = request.POST.get('guest_email', '').strip()
+        
+        # Validation
+        errors = {}
+        
+        # Validate rating
+        try:
+            rating = int(rating)
+            if rating < 1 or rating > 5:
+                errors['rating'] = 'Rating must be between 1 and 5.'
+        except (ValueError, TypeError):
+            errors['rating'] = 'Rating is required.'
+        
+        # Validate comment
+        if not comment:
+            errors['comment'] = 'Comment is required.'
+        
+        # For non-authenticated users, validate guest name
+        if not request.user.is_authenticated:
+            if not guest_name:
+                errors['guest_name'] = 'Name is required for guest reviews.'
+        
+        if errors:
+            print(f"Validation errors: {errors}")
+            return JsonResponse({'success': False, 'errors': errors})
+        
+        # Check if authenticated user already reviewed this product
+        if request.user.is_authenticated:
+            if Review.objects.filter(user=request.user, product=product).exists():
+                print("User already reviewed this product")
+                return JsonResponse({
+                    'success': False, 
+                    'message': 'You have already reviewed this product.'
+                })
+        
+        # Create review
+        review_data = {
+            'product': product,
+            'rating': rating,
+            'comment': comment,
+        }
+        
+        # Only add title if it's not empty
+        if title:
+            review_data['title'] = title
+        
+        if request.user.is_authenticated:
+            review_data['user'] = request.user
+            
+            # Check if user has purchased this product (optional verification)
+            try:
+                from orders.models import OrderItem
+                has_purchased = OrderItem.objects.filter(
+                    order__user=request.user,
+                    product=product,
+                    order__status='delivered'
+                ).exists()
+                review_data['is_verified_purchase'] = has_purchased
+            except:
+                pass
+        else:
+            review_data['guest_name'] = guest_name
+            if guest_email:
+                review_data['guest_email'] = guest_email
+        
+        print(f"Creating review with data: {review_data}")
+        review = Review.objects.create(**review_data)
+        print(f"Review created successfully with ID: {review.id}")
+        
+        # Handle image uploads
+        uploaded_images = request.FILES.getlist('uploaded_images')
+        print(f"Processing {len(uploaded_images)} images")
+        
+        for image in uploaded_images[:5]:  # Limit to 5 images
+            review_image = ReviewImage.objects.create(review=review, image=image)
+            print(f"Review image created with ID: {review_image.id}")
+        
+        print("Review submission successful")
+        return JsonResponse({
+            'success': True,
+            'message': 'Review submitted successfully!',
+            'review_id': review.id
+        })
+        
+    except Exception as e:
+        print(f"Error submitting review: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'message': f'An error occurred: {str(e)}'
+        })

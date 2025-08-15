@@ -124,6 +124,12 @@ class Product(models.Model):
     meta_title = models.CharField(max_length=200, blank=True)
     meta_description = models.TextField(max_length=300, blank=True)
     
+    # Media fields
+    youtube_video_url = models.URLField(
+        blank=True, 
+        help_text="YouTube video URL (e.g., https://www.youtube.com/watch?v=VIDEO_ID)"
+    )
+    
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -357,9 +363,13 @@ class ProductVariant(models.Model):
 
 
 class Review(models.Model):
-    """Product review model"""
+    """Product review model supporting both authenticated and guest reviews"""
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews', null=True, blank=True)
+    
+    # Guest user fields (for non-authenticated users)
+    guest_name = models.CharField(max_length=100, blank=True, help_text="Name for guest reviews")
+    guest_email = models.EmailField(blank=True, help_text="Email for guest reviews")
     
     rating = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)]
@@ -367,18 +377,50 @@ class Review(models.Model):
     title = models.CharField(max_length=200, blank=True)
     comment = models.TextField()
     
-    is_approved = models.BooleanField(default=False)
+    is_approved = models.BooleanField(default=True)  # Auto-approve reviews for better UX
     is_verified_purchase = models.BooleanField(default=False)
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        unique_together = ['product', 'user']  # One review per user per product
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['product', 'is_approved']),
+            models.Index(fields=['created_at']),
+        ]
     
     def __str__(self):
-        return f"{self.user.username} - {self.product.name} ({self.rating}/5)"
+        reviewer_name = self.user.username if self.user else self.guest_name
+        return f"{reviewer_name} - {self.product.name} ({self.rating}/5)"
+    
+    @property
+    def reviewer_name(self):
+        """Get the display name for the reviewer"""
+        if self.user:
+            return self.user.get_full_name() or self.user.username
+        return self.guest_name or "Anonymous"
+    
+    def clean(self):
+        """Validate that either user or guest_name is provided"""
+        from django.core.exceptions import ValidationError
+        if not self.user and not self.guest_name:
+            raise ValidationError("Either user or guest_name must be provided")
+
+
+class ReviewImage(models.Model):
+    """Review image model for multiple images per review"""
+    review = models.ForeignKey(Review, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='reviews/')
+    caption = models.CharField(max_length=200, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['created_at']
+    
+    def __str__(self):
+        return f"Image for review by {self.review.reviewer_name}"
 
 
 class Wishlist(models.Model):
