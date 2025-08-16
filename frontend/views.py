@@ -583,7 +583,6 @@ def load_more_reviews(request, product_slug):
                         'id': review.id,
                         'user_name': review.user.get_full_name() if review.user else review.guest_name,
                         'rating': review.rating,
-                        'title': review.title or '',
                         'comment': review.comment,
                         'created_at': review.created_at.strftime('%B %d, %Y'),
                         'image_url': image_url,
@@ -599,7 +598,8 @@ def load_more_reviews(request, product_slug):
                 'success': True,
                 'reviews': reviews_data,
                 'has_more': has_more,
-                'total_loaded': offset + len(reviews_data)
+                'total_loaded': offset + len(reviews_data),
+                'total_reviews': total_reviews
             })
             
         except ValueError as e:
@@ -610,3 +610,85 @@ def load_more_reviews(request, product_slug):
             return JsonResponse({'error': 'An error occurred while loading reviews'}, status=500)
     
     return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@require_http_methods(["POST"])
+def submit_review(request, product_id):
+    """Submit a review for a product (supports both authenticated and guest users)."""
+    try:
+        # Get the product
+        product = get_object_or_404(Product, id=product_id, is_active=True)
+        
+        # Get form data
+        rating = request.POST.get('rating')
+        comment = request.POST.get('comment', '').strip()
+        guest_name = request.POST.get('guest_name', '').strip()
+        guest_email = request.POST.get('guest_email', '').strip()
+        
+        # Validate required fields
+        if not rating:
+            return JsonResponse({'success': False, 'errors': {'rating': 'Rating is required'}}, status=400)
+        
+        if not comment:
+            return JsonResponse({'success': False, 'errors': {'comment': 'Comment is required'}}, status=400)
+        
+        try:
+            rating = int(rating)
+            if rating < 1 or rating > 5:
+                return JsonResponse({'success': False, 'errors': {'rating': 'Rating must be between 1 and 5'}}, status=400)
+        except ValueError:
+            return JsonResponse({'success': False, 'errors': {'rating': 'Invalid rating value'}}, status=400)
+        
+        # For guest users, require name
+        if not request.user.is_authenticated and not guest_name:
+            return JsonResponse({'success': False, 'errors': {'guest_name': 'Name is required for guest reviews'}}, status=400)
+        
+        # Check if authenticated user has already reviewed this product
+        if request.user.is_authenticated:
+            if Review.objects.filter(user=request.user, product=product).exists():
+                return JsonResponse({'success': False, 'errors': {'general': 'You have already reviewed this product'}}, status=400)
+        
+        # Create the review
+        review_data = {
+            'product': product,
+            'rating': rating,
+            'comment': comment,
+            'is_approved': True,  # Auto-approve for now
+        }
+        
+        if request.user.is_authenticated:
+            review_data['user'] = request.user
+            # Check if this is a verified purchase
+            from orders.models import OrderItem
+            has_purchased = OrderItem.objects.filter(
+                order__user=request.user,
+                product=product,
+                order__status='delivered'
+            ).exists()
+            review_data['is_verified_purchase'] = has_purchased
+        else:
+            review_data['guest_name'] = guest_name
+            review_data['guest_email'] = guest_email
+        
+        review = Review.objects.create(**review_data)
+        
+        # Handle image uploads if any
+        uploaded_images = request.FILES.getlist('uploaded_images')
+        if uploaded_images:
+            from products.models import ReviewImage  # Import here to avoid circular imports
+            for image_file in uploaded_images[:5]:  # Limit to 5 images
+                if image_file.size <= 5 * 1024 * 1024:  # 5MB limit
+                    ReviewImage.objects.create(review=review, image=image_file)
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Review submitted successfully! Thank you for your feedback.',
+            'review_id': review.id
+        })
+        
+    except Exception as e:
+        print(f"Error submitting review: {e}")
+        return JsonResponse({
+            'success': False, 
+            'errors': {'general': 'An error occurred while submitting your review. Please try again.'}
+        }, status=500)

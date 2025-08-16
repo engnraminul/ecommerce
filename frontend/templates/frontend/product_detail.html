@@ -389,13 +389,6 @@
                                     <small class="rating-text">Click to rate this product</small>
                                 </div>
                                 
-                                <!-- Review title -->
-                                <div class="form-group">
-                                    <label for="reviewTitle">Review Title (optional)</label>
-                                    <input type="text" id="reviewTitle" name="title" 
-                                           placeholder="Give your review a title" class="form-control">
-                                </div>
-                                
                                 <!-- Review comment -->
                                 <div class="form-group">
                                     <label for="reviewComment">Your Review <span class="required">*</span></label>
@@ -464,10 +457,6 @@
                                     </div>
                                     <span class="review-date">{{ review.created_at|date:"M d, Y" }}</span>
                                 </div>
-                                
-                                {% if review.title %}
-                                <h5 class="review-title">{{ review.title }}</h5>
-                                {% endif %}
                                 
                                 <p class="review-text">{{ review.comment|linebreaks }}</p>
                                 
@@ -1803,14 +1792,6 @@
         gap: 0.3rem;
     }
 
-    .review-title {
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--text-color);
-        margin: 0 0 0.5rem 0;
-        line-height: 1.3;
-    }
-
     .review-meta {
         display: flex;
         align-items: center;
@@ -1845,14 +1826,6 @@
         font-size: 0.85rem;
         white-space: nowrap;
         flex-shrink: 0;
-    }
-
-    .review-title {
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--dark-color);
-        margin-bottom: 0.5rem;
-        line-height: 1.4;
     }
 
     .review-text {
@@ -4753,9 +4726,6 @@
                 formData.append('rating', rating);
                 formData.append('comment', comment);
                 
-                const title = document.getElementById('reviewTitle').value;
-                if (title) formData.append('title', title);
-                
                 if (guestName) {
                     formData.append('guest_name', guestName.value);
                     const guestEmail = document.getElementById('guestEmail').value;
@@ -4864,7 +4834,7 @@
     // Load more reviews functionality
     // Placeholder functions for review actions
     function toggleReviewHelpful(reviewId) {
-        console.log('Toggle helpful for review:', reviewId);
+        console.log('Toggle helpful for review:', reviewId); 
         // Implementation for helpful functionality
     }
 
@@ -4950,7 +4920,6 @@
                                             </div>
                                             <span class="review-date">${review.created_at}</span>
                                         </div>
-                                        ${review.title ? `<h5 class="review-title">${review.title}</h5>` : ''}
                                         <p class="review-text">${review.comment}</p>
                                         ${review.image_url ? `
                                             <div class="review-images">
@@ -4982,6 +4951,15 @@
                         // Update offset for next load
                         loadMoreBtn.dataset.offset = data.total_loaded;
                         console.log('Updated offset to:', data.total_loaded);
+                        console.log('Total reviews:', data.total_reviews);
+                        console.log('Total loaded:', data.total_loaded);
+                        
+                        // Update button text with correct remaining count
+                        if (data.has_more) {
+                            const remaining = data.total_reviews - data.total_loaded;
+                            console.log('Remaining reviews:', remaining);
+                            loadMoreBtn.innerHTML = `<i class="fas fa-chevron-down"></i> Load More Reviews (${remaining} remaining)`;
+                        }
                         
                         // Hide button if no more reviews
                         if (!data.has_more) {
@@ -4991,6 +4969,7 @@
                     } else {
                         console.log('API returned success: false, hiding button');
                         // API returned success: false
+                        loadMoreBtn.innerHTML = originalText;
                         loadMoreBtn.style.display = 'none';
                         showNotification('Failed to load more reviews.', 'error');
                     }
@@ -4999,11 +4978,12 @@
                     console.error('Error loading reviews:', error);
                     console.log('Fetch failed, showing button again');
                     showNotification('Failed to load more reviews. Please try again.', 'error');
+                    // Reset button text only on error
+                    loadMoreBtn.innerHTML = originalText;
                 })
                 .finally(() => {
-                    console.log('Finally block: resetting button state');
-                    // Reset button state
-                    loadMoreBtn.innerHTML = originalText;
+                    console.log('Finally block: resetting button disabled state');
+                    // Only reset the disabled state, not the text
                     loadMoreBtn.disabled = false;
                 });
         };
