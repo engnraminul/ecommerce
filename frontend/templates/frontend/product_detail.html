@@ -340,7 +340,7 @@
                 
                 <!-- Reviews Tab -->
                 <div class="tab-panel" id="reviews">
-                    <div class="reviews-content">
+                    <div class="reviews-content" id="reviews-section">
                         <div class="reviews-summary">
                             <div class="rating-overview">
                                 <div class="average-rating">
@@ -512,7 +512,7 @@
                             <!-- Load More Reviews -->
                             {% if product.reviews.count > 5 %}
                             <div class="load-more-reviews">
-                                <button class="load-more-btn" onclick="loadMoreReviews()">
+                                <button id="loadMoreBtn" class="load-more-btn" data-offset="5" onclick="loadMoreReviews()">
                                     <i class="fas fa-chevron-down"></i>
                                     Load More Reviews ({{ product.reviews.count|add:"-5" }} remaining)
                                 </button>
@@ -1742,22 +1742,24 @@
         margin-bottom: 1rem;
     }
 
-    /* Enhanced Review Items */
+    /* Enhanced Review Items - Compact & Responsive Design */
     .review-item {
-        padding: 2.5rem 0;
-        border-bottom: 1px solid var(--border-color);
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        background: var(--white);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         transition: all 0.3s ease;
     }
 
     .review-item:hover {
-        background: rgba(var(--primary-color-rgb), 0.02);
-        padding: 2.5rem 1rem;
-        margin: 0 -1rem;
-        border-radius: var(--border-radius);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
     }
 
     .review-item:last-child {
-        border-bottom: none;
+        margin-bottom: 0;
     }
 
     .review-header {
@@ -1765,10 +1767,12 @@
         justify-content: space-between;
         align-items: flex-start;
         margin-bottom: 1rem;
+        gap: 1rem;
     }
 
     .reviewer-info {
         flex: 1;
+        min-width: 0; /* Allow flex item to shrink */
     }
 
     .reviewer-details {
@@ -1779,22 +1783,40 @@
 
     .reviewer-name {
         color: var(--dark-color);
-        font-size: 1.1rem;
+        font-size: 1rem;
+        font-weight: 600;
         display: flex;
         align-items: center;
-        gap: 0.75rem;
+        gap: 0.5rem;
+        flex-wrap: wrap;
     }
 
     .verified-badge {
         background: var(--success-color);
         color: var(--white);
-        padding: 0.25rem 0.75rem;
-        border-radius: 15px;
-        font-size: 0.75rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 12px;
+        font-size: 0.7rem;
         font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .review-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin: 0 0 0.5rem 0;
+        line-height: 1.3;
+    }
+
+    .review-meta {
         display: flex;
         align-items: center;
-        gap: 0.25rem;
+        gap: 0.5rem;
+        color: var(--secondary-color);
+        font-size: 0.85rem;
     }
 
     .review-rating {
@@ -1804,7 +1826,7 @@
     }
 
     .review-rating i {
-        font-size: 1rem;
+        font-size: 0.9rem;
         color: var(--border-color);
     }
 
@@ -1813,55 +1835,59 @@
     }
 
     .rating-number {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         color: var(--secondary-color);
-        font-weight: 600;
+        font-weight: 500;
     }
 
     .review-date {
         color: var(--secondary-color);
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         white-space: nowrap;
+        flex-shrink: 0;
     }
 
     .review-title {
-        font-size: 1.1rem;
+        font-size: 1rem;
         font-weight: 600;
         color: var(--dark-color);
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.5rem;
+        line-height: 1.4;
     }
 
     .review-text {
-        line-height: 1.7;
+        line-height: 1.6;
         color: var(--secondary-color);
         margin-bottom: 1rem;
-        font-size: 1rem;
+        font-size: 0.95rem;
     }
 
-    /* Review Images */
+    /* Review Images - Compact Design */
     .review-images {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.5rem;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        max-width: 400px;
     }
 
     .review-image-item {
         position: relative;
-        border-radius: var(--border-radius);
+        border-radius: 8px;
         overflow: hidden;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         transition: all 0.3s ease;
+        aspect-ratio: 1;
     }
 
     .review-image-item:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     .review-image {
         width: 100%;
-        height: 150px;
+        height: 100%;
         object-fit: cover;
         cursor: pointer;
         transition: all 0.3s ease;
@@ -1876,38 +1902,43 @@
         bottom: 0;
         left: 0;
         right: 0;
-        background: rgba(0, 0, 0, 0.7);
+        background: rgba(0, 0, 0, 0.8);
         color: var(--white);
-        padding: 0.5rem;
-        font-size: 0.8rem;
+        padding: 0.25rem;
+        font-size: 0.7rem;
         text-align: center;
+        line-height: 1.2;
     }
 
-    /* Review Actions */
+    /* Review Actions - Compact */
     .review-actions {
         display: flex;
-        gap: 1rem;
+        gap: 0.75rem;
         margin-top: 1rem;
     }
 
     .review-action-btn {
         background: none;
         border: 1px solid var(--border-color);
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
+        padding: 0.4rem 0.8rem;
+        border-radius: 16px;
         cursor: pointer;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         color: var(--secondary-color);
         transition: all 0.3s ease;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.4rem;
     }
 
     .review-action-btn:hover {
         border-color: var(--primary-color);
         color: var(--primary-color);
         background: rgba(var(--primary-color-rgb), 0.05);
+    }
+
+    .review-action-btn i {
+        font-size: 0.85rem;
     }
 
     /* No Reviews State */
@@ -1944,14 +1975,24 @@
         margin-top: 2rem;
     }
 
+    /* Load More Button Styles */
+    .load-more-reviews {
+        display: flex;
+        justify-content: center;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+
     .load-more-btn {
-        background: var(--light-color);
+        background: transparent;
         color: var(--primary-color);
         border: 2px solid var(--primary-color);
-        padding: 0.75rem 2rem;
-        border-radius: var(--border-radius);
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
         cursor: pointer;
-        font-weight: 600;
+        font-weight: 500;
+        font-size: 0.9rem;
         transition: all 0.3s ease;
         display: inline-flex;
         align-items: center;
@@ -1961,10 +2002,99 @@
     .load-more-btn:hover {
         background: var(--primary-color);
         color: var(--white);
-        transform: translateY(-2px);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(var(--primary-color-rgb), 0.3);
     }
 
-    /* Review Image Modal */
+    .load-more-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .load-more-btn i {
+        transition: transform 0.3s ease;
+    }
+
+    .load-more-btn:hover i {
+        transform: translateY(2px);
+    }
+
+    /* Responsive Design for Reviews */
+    @media (max-width: 768px) {
+        .review-item {
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .review-header {
+            flex-direction: column;
+            gap: 0.75rem;
+            align-items: flex-start;
+        }
+
+        .review-user {
+            gap: 0.75rem;
+        }
+
+        .user-avatar {
+            width: 2.5rem;
+            height: 2.5rem;
+            font-size: 1rem;
+        }
+
+        .user-name {
+            font-size: 0.9rem;
+        }
+
+        .review-date {
+            font-size: 0.75rem;
+        }
+
+        .review-rating {
+            font-size: 0.85rem;
+        }
+
+        .review-images {
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .review-actions {
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .review-action-btn {
+            padding: 0.35rem 0.7rem;
+            font-size: 0.75rem;
+        }
+
+        .load-more-btn {
+            padding: 0.75rem 1rem;
+            font-size: 0.85rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .review-item {
+            padding: 0.75rem;
+        }
+
+        .review-images {
+            grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+        }
+
+        .review-actions {
+            justify-content: center;
+        }
+
+        .review-action-btn {
+            flex: 1;
+            min-width: 0;
+            justify-content: center;
+        }
+    }
     .review-image-modal {
         display: none;
         position: fixed;
@@ -2020,8 +2150,6 @@
     .close-review-modal:hover {
         background: rgba(0, 0, 0, 0.9);
         transform: scale(1.1);
-    }
-        color: var(--dark-color);
     }
 
     .review-rating {
@@ -4734,21 +4862,164 @@
     };
 
     // Load more reviews functionality
-    let currentReviewPage = 1;
-    window.loadMoreReviews = async function() {
-        try {
-            currentReviewPage++;
-            const productId = document.getElementById('productId').value;
-            const response = await fetch(`/api/v1/products/${productId}/reviews/?page=${currentReviewPage}`);
-            
-            if (response.ok) {
-                const data = await response.json();
-                // Implementation for appending more reviews would go here
-                console.log('More reviews loaded:', data);
-            }
-        } catch (error) {
-            console.error('Error loading more reviews:', error);
+    // Placeholder functions for review actions
+    function toggleReviewHelpful(reviewId) {
+        console.log('Toggle helpful for review:', reviewId);
+        // Implementation for helpful functionality
+    }
+
+    function reportReview(reviewId) {
+        console.log('Report review:', reviewId);
+        // Implementation for report functionality
+    }
+
+    // Smooth scroll to reviews section when pagination is clicked
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('reviews_page')) {
+            setTimeout(() => {
+                const reviewsSection = document.getElementById('reviews-section');
+                if (reviewsSection) {
+                    reviewsSection.scrollIntoView({ 
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            }, 100);
         }
-    };
+        
+        // Make loadMoreReviews globally accessible
+        window.loadMoreReviews = function() {
+            const loadMoreBtn = document.getElementById('loadMoreBtn');
+            const reviewsList = document.querySelector('.reviews-list');
+            
+            console.log('Load more reviews clicked');
+            console.log('Button found:', !!loadMoreBtn);
+            console.log('Reviews list found:', !!reviewsList);
+            
+            if (!loadMoreBtn || !reviewsList) {
+                console.error('Required elements not found');
+                return;
+            }
+            
+            // Get current state
+            const currentOffset = parseInt(loadMoreBtn.dataset.offset || '5');
+            const productSlug = '{{ product.slug }}';
+            const apiUrl = `/api/v1/reviews/load-more/${productSlug}/?offset=${currentOffset}&limit=5`;
+            
+            console.log('Current offset:', currentOffset);
+            console.log('Product slug:', productSlug);
+            console.log('API URL:', apiUrl);
+            
+            // Show loading state
+            const originalText = loadMoreBtn.innerHTML;
+            loadMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading...';
+            loadMoreBtn.disabled = true;
+            
+            // Make AJAX request
+            fetch(apiUrl)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    console.log('Response ok:', response.ok);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Response data:', data);
+                    if (data.success) {
+                        if (data.reviews.length > 0) {
+                            console.log('Loading', data.reviews.length, 'new reviews');
+                            
+                            // Get the load more reviews container to move it later
+                            const loadMoreContainer = document.querySelector('.load-more-reviews');
+                            
+                            // Create and append new review items before the load more button
+                            data.reviews.forEach(review => {
+                                const reviewHTML = `
+                                    <div class="review-item">
+                                        <div class="review-header">
+                                            <div class="reviewer-info">
+                                                <div class="reviewer-details">
+                                                    <strong class="reviewer-name">
+                                                        ${review.user_name}
+                                                    </strong>
+                                                    <div class="review-rating">
+                                                        ${generateStars(review.rating)}
+                                                        <span class="rating-number">(${review.rating}/5)</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <span class="review-date">${review.created_at}</span>
+                                        </div>
+                                        ${review.title ? `<h5 class="review-title">${review.title}</h5>` : ''}
+                                        <p class="review-text">${review.comment}</p>
+                                        ${review.image_url ? `
+                                            <div class="review-images">
+                                                <div class="review-image-item">
+                                                    <img src="${review.image_url}" alt="Review image" class="review-image" loading="lazy">
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                        <div class="review-actions">
+                                            <button class="review-action-btn helpful-btn" data-review-id="${review.id}">
+                                                <i class="far fa-thumbs-up"></i>
+                                                Helpful
+                                            </button>
+                                            <button class="review-action-btn report-btn" data-review-id="${review.id}">
+                                                <i class="far fa-flag"></i>
+                                                Report
+                                            </button>
+                                        </div>
+                                    </div>
+                                `;
+                                // Insert before the load more button container
+                                loadMoreContainer.insertAdjacentHTML('beforebegin', reviewHTML);
+                            });
+                            
+                            // Move the load more button to the end of the reviews list
+                            reviewsList.appendChild(loadMoreContainer);
+                        }
+                        
+                        // Update offset for next load
+                        loadMoreBtn.dataset.offset = data.total_loaded;
+                        console.log('Updated offset to:', data.total_loaded);
+                        
+                        // Hide button if no more reviews
+                        if (!data.has_more) {
+                            console.log('No more reviews, hiding button');
+                            loadMoreBtn.style.display = 'none';
+                        }
+                    } else {
+                        console.log('API returned success: false, hiding button');
+                        // API returned success: false
+                        loadMoreBtn.style.display = 'none';
+                        showNotification('Failed to load more reviews.', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading reviews:', error);
+                    console.log('Fetch failed, showing button again');
+                    showNotification('Failed to load more reviews. Please try again.', 'error');
+                })
+                .finally(() => {
+                    console.log('Finally block: resetting button state');
+                    // Reset button state
+                    loadMoreBtn.innerHTML = originalText;
+                    loadMoreBtn.disabled = false;
+                });
+        };
+        
+        // Helper function to generate star ratings
+        function generateStars(rating) {
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= rating) {
+                    stars += '<i class="fas fa-star filled" style="color: #d97706;"></i>';
+                } else {
+                    stars += '<i class="fas fa-star" style="color: #e2e8f0;"></i>';
+                }
+            }
+            return stars;
+        }
+    });
 </script>
 {% endblock %}

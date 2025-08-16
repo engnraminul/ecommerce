@@ -6,10 +6,8 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Avg
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
-import json
 
-from products.models import Product, Category, Review, ReviewImage
+from products.models import Product, Category, Review
 from users.models import User
 from cart.models import Cart, CartItem
 from orders.models import Order
@@ -545,112 +543,70 @@ def find_orders_by_phone(request):
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
-@require_http_methods(["POST"])
-def submit_review(request, product_id):
-    """Submit a product review - supports both authenticated and guest users."""
-    try:
-        # Debug logging
-        print(f"Received review submission for product {product_id}")
-        print(f"User authenticated: {request.user.is_authenticated}")
-        print(f"POST data: {request.POST}")
-        print(f"FILES: {request.FILES}")
-        
-        product = get_object_or_404(Product, id=product_id, is_active=True)
-        
-        # Get form data
-        rating = request.POST.get('rating')
-        comment = request.POST.get('comment', '').strip()
-        title = request.POST.get('title', '').strip()
-        guest_name = request.POST.get('guest_name', '').strip()
-        guest_email = request.POST.get('guest_email', '').strip()
-        
-        # Validation
-        errors = {}
-        
-        # Validate rating
+def load_more_reviews(request, product_slug):
+    """API endpoint to load more reviews for a product."""
+    if request.method == 'GET':
         try:
-            rating = int(rating)
-            if rating < 1 or rating > 5:
-                errors['rating'] = 'Rating must be between 1 and 5.'
-        except (ValueError, TypeError):
-            errors['rating'] = 'Rating is required.'
-        
-        # Validate comment
-        if not comment:
-            errors['comment'] = 'Comment is required.'
-        
-        # For non-authenticated users, validate guest name
-        if not request.user.is_authenticated:
-            if not guest_name:
-                errors['guest_name'] = 'Name is required for guest reviews.'
-        
-        if errors:
-            print(f"Validation errors: {errors}")
-            return JsonResponse({'success': False, 'errors': errors})
-        
-        # Check if authenticated user already reviewed this product
-        if request.user.is_authenticated:
-            if Review.objects.filter(user=request.user, product=product).exists():
-                print("User already reviewed this product")
-                return JsonResponse({
-                    'success': False, 
-                    'message': 'You have already reviewed this product.'
-                })
-        
-        # Create review
-        review_data = {
-            'product': product,
-            'rating': rating,
-            'comment': comment,
-        }
-        
-        # Only add title if it's not empty
-        if title:
-            review_data['title'] = title
-        
-        if request.user.is_authenticated:
-            review_data['user'] = request.user
+            print(f"Loading reviews for product: {product_slug}")
+            product = get_object_or_404(Product, slug=product_slug, is_active=True)
+            print(f"Product found: {product.name}")
             
-            # Check if user has purchased this product (optional verification)
-            try:
-                from orders.models import OrderItem
-                has_purchased = OrderItem.objects.filter(
-                    order__user=request.user,
-                    product=product,
-                    order__status='delivered'
-                ).exists()
-                review_data['is_verified_purchase'] = has_purchased
-            except:
-                pass
-        else:
-            review_data['guest_name'] = guest_name
-            if guest_email:
-                review_data['guest_email'] = guest_email
-        
-        print(f"Creating review with data: {review_data}")
-        review = Review.objects.create(**review_data)
-        print(f"Review created successfully with ID: {review.id}")
-        
-        # Handle image uploads
-        uploaded_images = request.FILES.getlist('uploaded_images')
-        print(f"Processing {len(uploaded_images)} images")
-        
-        for image in uploaded_images[:5]:  # Limit to 5 images
-            review_image = ReviewImage.objects.create(review=review, image=image)
-            print(f"Review image created with ID: {review_image.id}")
-        
-        print("Review submission successful")
-        return JsonResponse({
-            'success': True,
-            'message': 'Review submitted successfully!',
-            'review_id': review.id
-        })
-        
-    except Exception as e:
-        print(f"Error submitting review: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return JsonResponse({
-            'success': False,
-            'message': f'An error occurred: {str(e)}'
-        })
+            # Get pagination parameters
+            offset = int(request.GET.get('offset', 5))  # Default to skip first 5
+            limit = int(request.GET.get('limit', 5))    # Default to load 5 more
+            print(f"Offset: {offset}, Limit: {limit}")
+            
+            # Get reviews with offset and limit
+            reviews = Review.objects.filter(
+                product=product, 
+                is_approved=True
+            ).select_related('user').prefetch_related('images').order_by('-created_at')[offset:offset+limit]
+            print(f"Found {reviews.count()} reviews")
+            
+            # Check if there are more reviews after this batch
+            total_reviews = Review.objects.filter(product=product, is_approved=True).count()
+            has_more = (offset + limit) < total_reviews
+            print(f"Total reviews: {total_reviews}, Has more: {has_more}")
+            
+            # Prepare reviews data
+            reviews_data = []
+            for review in reviews:
+                try:
+                    # Get first image URL if review has images
+                    image_url = None
+                    if hasattr(review, 'images') and review.images.exists():
+                        first_image = review.images.first()
+                        if hasattr(first_image, 'image'):
+                            image_url = first_image.image.url
+                    
+                    review_data = {
+                        'id': review.id,
+                        'user_name': review.user.get_full_name() if review.user else review.guest_name,
+                        'rating': review.rating,
+                        'title': review.title or '',
+                        'comment': review.comment,
+                        'created_at': review.created_at.strftime('%B %d, %Y'),
+                        'image_url': image_url,
+                    }
+                    reviews_data.append(review_data)
+                    print(f"Added review {review.id}")
+                except Exception as e:
+                    print(f"Error processing review {review.id}: {e}")
+                    continue
+            
+            print(f"Returning {len(reviews_data)} reviews")
+            return JsonResponse({
+                'success': True,
+                'reviews': reviews_data,
+                'has_more': has_more,
+                'total_loaded': offset + len(reviews_data)
+            })
+            
+        except ValueError as e:
+            print(f"ValueError: {e}")
+            return JsonResponse({'error': 'Invalid offset or limit parameter'}, status=400)
+        except Exception as e:
+            print(f"Exception: {e}")
+            return JsonResponse({'error': 'An error occurred while loading reviews'}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
