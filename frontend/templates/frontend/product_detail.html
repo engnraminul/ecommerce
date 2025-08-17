@@ -512,9 +512,9 @@
                             <!-- Load More Reviews -->
                             {% if product.reviews.count > 5 %}
                             <div class="load-more-reviews">
-                                <button class="load-more-btn" onclick="loadMoreReviews()">
+                                <button class="load-more-btn" id="loadMoreReviewsBtn" onclick="loadMoreReviews()">
                                     <i class="fas fa-chevron-down"></i>
-                                    Load More Reviews ({{ product.reviews.count|add:"-5" }} remaining)
+                                    Show More Reviews ({{ product.reviews.count|add:"-5" }} remaining)
                                 </button>
                             </div>
                             {% endif %}
@@ -4737,17 +4737,71 @@
     let currentReviewPage = 1;
     window.loadMoreReviews = async function() {
         try {
+            const loadMoreBtn = document.getElementById('loadMoreReviewsBtn');
+            const loadingText = "Loading...";
+            const originalText = loadMoreBtn.innerHTML;
+            
+            // Update button to show loading state
+            loadMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + loadingText;
+            loadMoreBtn.disabled = true;
+            
             currentReviewPage++;
             const productId = document.getElementById('productId').value;
-            const response = await fetch(`/api/v1/products/${productId}/reviews/?page=${currentReviewPage}`);
+            
+            // Directly load reviews from the server instead of using API
+            // This simplifies the implementation and avoids API versioning issues
+            const response = await fetch(`/load-more-reviews/${productId}/?page=${currentReviewPage}`);
             
             if (response.ok) {
-                const data = await response.json();
-                // Implementation for appending more reviews would go here
-                console.log('More reviews loaded:', data);
+                const htmlContent = await response.text();
+                
+                if (htmlContent.trim() !== '') {
+                    // Insert the HTML content before the load more button
+                    const reviewsList = document.getElementById('reviewsList');
+                    const loadMoreContainer = document.querySelector('.load-more-reviews');
+                    
+                    // Create a temporary container to hold the HTML
+                    const tempContainer = document.createElement('div');
+                    tempContainer.innerHTML = htmlContent;
+                    
+                    // Extract review items from the HTML response
+                    const newReviews = tempContainer.querySelectorAll('.review-item');
+                    const reviewsCount = newReviews.length;
+                    
+                    // Add each review to the list
+                    newReviews.forEach(review => {
+                        reviewsList.insertBefore(review, loadMoreContainer);
+                    });
+                    
+                    // Check if there are more reviews to load
+                    const hasMoreReviews = tempContainer.querySelector('#has-more-reviews');
+                    const totalReviews = parseInt(tempContainer.querySelector('#total-reviews')?.value || '0');
+                    const loadedReviews = 5 * currentReviewPage; // Initial 5 + 5 per page
+                    const remaining = totalReviews - loadedReviews;
+                    
+                    if (hasMoreReviews && remaining > 0) {
+                        loadMoreBtn.innerHTML = `<i class="fas fa-chevron-down"></i> Show More Reviews (${remaining} remaining)`;
+                        loadMoreBtn.disabled = false;
+                    } else {
+                        // No more reviews to load, hide the button
+                        loadMoreContainer.style.display = 'none';
+                    }
+                } else {
+                    // No more reviews, hide the button
+                    document.querySelector('.load-more-reviews').style.display = 'none';
+                }
+            } else {
+                // Restore original button state on error
+                loadMoreBtn.innerHTML = originalText;
+                loadMoreBtn.disabled = false;
+                console.error('Failed to load more reviews');
             }
         } catch (error) {
             console.error('Error loading more reviews:', error);
+            // Restore button state
+            const loadMoreBtn = document.getElementById('loadMoreReviewsBtn');
+            loadMoreBtn.innerHTML = '<i class="fas fa-chevron-down"></i> Show More Reviews';
+            loadMoreBtn.disabled = false;
         }
     };
 </script>

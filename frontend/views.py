@@ -496,6 +496,40 @@ def order_tracking(request):
     return render(request, 'frontend/order_tracking.html')
 
 
+def load_more_reviews(request, product_id):
+    """Load more reviews for a product - used by AJAX for pagination."""
+    product = get_object_or_404(
+        Product.objects.prefetch_related('reviews__user', 'reviews__images'), 
+        id=product_id,
+        is_active=True
+    )
+    
+    # Get all approved reviews for the product
+    reviews_list = product.reviews.filter(is_approved=True).select_related('user').prefetch_related('images').order_by('-created_at')
+    
+    # Paginate the reviews - 5 per page
+    paginator = Paginator(reviews_list, 5)
+    page_number = request.GET.get('page', 2)  # Default to page 2 since page 1 is already shown
+    
+    try:
+        page_obj = paginator.get_page(page_number)
+    except Exception:
+        # Return empty response on error
+        return render(request, 'frontend/partials/review_items.html', {
+            'reviews': [],
+            'has_next': False,
+            'total_reviews': reviews_list.count()
+        })
+    
+    context = {
+        'reviews': page_obj,
+        'has_next': page_obj.has_next(),
+        'total_reviews': reviews_list.count()
+    }
+    
+    return render(request, 'frontend/partials/review_items.html', context)
+
+
 def find_orders_by_phone(request):
     """API endpoint to find orders by phone number."""
     if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
