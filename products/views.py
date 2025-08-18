@@ -5,11 +5,16 @@ from rest_framework import serializers as drf_serializers
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q, Avg, Count
 from django.shortcuts import get_object_or_404
-from .models import Category, Product, ProductImage, Review, ReviewImage, Wishlist
+from .models import Category, Product, ProductImage, Review, Wishlist
 from .serializers import (
-    CategorySerializer, ProductListSerializer, ProductDetailSerializer,
-    ProductCreateUpdateSerializer, ReviewSerializer, ReviewImageSerializer, WishlistSerializer,
-    ProductImageSerializer, ProductSearchSerializer
+    CategorySerializer, 
+    ProductListSerializer, 
+    ProductDetailSerializer,
+    ProductCreateUpdateSerializer, 
+    ReviewSerializer, 
+    WishlistSerializer,
+    ProductImageSerializer, 
+    ProductSearchSerializer
 )
 from .filters import ProductFilter
 
@@ -120,38 +125,32 @@ class RelatedProductsView(generics.ListAPIView):
 
 
 class ReviewListCreateView(generics.ListCreateAPIView):
-    """List and create product reviews for both authenticated and guest users"""
+    """List and create product reviews"""
     serializer_class = ReviewSerializer
-    permission_classes = [permissions.AllowAny]  # Allow guest reviews
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     
     def get_queryset(self):
         product_id = self.kwargs['product_pk']
         return Review.objects.filter(
             product_id=product_id,
             is_approved=True
-        ).select_related('user').prefetch_related('images').order_by('-created_at')
+        ).select_related('user').order_by('-created_at')
     
     def perform_create(self, serializer):
         product_id = self.kwargs['product_pk']
         product = get_object_or_404(Product, id=product_id, is_active=True)
         
-        # For authenticated users, check if they have already reviewed
-        if self.request.user.is_authenticated:
-            if Review.objects.filter(user=self.request.user, product=product).exists():
-                raise drf_serializers.ValidationError("You have already reviewed this product.")
-            
-            # Check if user has purchased this product (optional verification)
-            try:
-                from orders.models import OrderItem
-                has_purchased = OrderItem.objects.filter(
-                    order__user=self.request.user,
-                    product=product,
-                    order__status='delivered'
-                ).exists()
-            except:
-                has_purchased = False
-        else:
-            has_purchased = False
+        # Check if user has already reviewed this product
+        if Review.objects.filter(user=self.request.user, product=product).exists():
+            raise drf_serializers.ValidationError("You have already reviewed this product.")
+        
+        # Check if user has purchased this product (optional verification)
+        from orders.models import OrderItem
+        has_purchased = OrderItem.objects.filter(
+            order__user=self.request.user,
+            product=product,
+            order__status='delivered'
+        ).exists()
         
         serializer.save(product=product, is_verified_purchase=has_purchased)
 

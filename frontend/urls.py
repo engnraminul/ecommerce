@@ -38,4 +38,5 @@ urlpatterns = [
     path('api/v1/orders/find-by-phone/', views.find_orders_by_phone, name='find_orders_by_phone'),
     path('frontend/submit-review/<int:product_id>/', views.submit_review, name='submit_review'),
     path('load-more-reviews/<int:product_id>/', views.load_more_reviews, name='load_more_reviews'),
+    path('api/v1/reviews/load-more/<slug:product_slug>/', views.load_more_reviews_api, name='load_more_reviews_api'),
 ]
