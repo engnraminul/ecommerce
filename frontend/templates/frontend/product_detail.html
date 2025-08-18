@@ -117,6 +117,7 @@
                             <div class="price-note" id="variant-price-note" style="display: none;">
                                 <small>Price varies by variant selection</small>
                             </div>
+                            
                         </div>
                     </div>
 
@@ -157,6 +158,15 @@
                                     <span class="color-display" style="background-color: {{ color_group.grouper }};"></span>
                                     {% endif %}
                                     <span class="color-name">{% for word in first_variant.name.split %}{% if forloop.first %}{{ word }}{% endif %}{% endfor %}</span>
+                                    
+                                    <!-- Stock Status Badge -->
+                                    {% if first_variant.in_stock and first_variant.stock_quantity > 0 %}
+                                    <span class="variant-stock-badge in-stock">In Stock</span>
+                                    {% elif not first_variant.in_stock %}
+                                    <span class="variant-stock-badge stock-out">Stock Out</span>
+                                    {% else %}
+                                    <span class="variant-stock-badge out-of-stock">Out of Stock</span>
+                                    {% endif %}
                                 </button>
                                 {% endwith %}
                                 {% endif %}
@@ -211,6 +221,7 @@
                                 "price": "{{ variant.effective_price }}",
                                 "comparePrice": "{{ product.compare_price|default:0 }}",
                                 "stock": {{ variant.stock_quantity }},
+                                "inStock": {{ variant.in_stock|yesno:"true,false" }},
                                 "sku": "{{ variant.sku|escapejs }}",
                                 "image": "{% if variant.image %}{{ variant.image.url }}{% else %}{{ MEDIA_URL }}default.webp{% endif %}",
                                 "isDefault": {{ variant.is_default|yesno:"true,false" }}
@@ -726,6 +737,38 @@
 
 {% block extra_css %}
 <style>
+    /* Variant Stock Badge Styling */
+    .variant-stock-badge {
+        position: absolute;
+        top: -10px;
+        left: 5px;
+        font-size: 0.7rem;
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-weight: bold;
+        z-index: 2;
+    }
+    
+    .variant-stock-badge.in-stock {
+        background-color: var(--success-color);
+        color: white;
+    }
+    
+    .variant-stock-badge.out-of-stock {
+        background-color: var(--danger-color);
+        color: white;
+    }
+    
+    .variant-stock-badge.stock-out {
+        background-color: #ff5252;
+        color: white;
+    }
+    
+    /* Position the button as relative to host the badge */
+    .color-btn {
+        position: relative;
+    }
+    
     /* Review styling */
     .review-date {
         font-weight: normal;
@@ -1091,6 +1134,37 @@
 
     .price-note small {
         font-size: 0.9rem;
+    }
+    
+    /* Stock Status Indicator */
+    .stock-status {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius);
+        background-color: #f8f9fa;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+    
+    .stock-status-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+    
+    .stock-status-dot.in-stock {
+        background-color: var(--success-color);
+    }
+    
+    .stock-status-dot.out-of-stock {
+        background-color: var(--danger-color);
+    }
+    
+    .stock-status-dot.stock-out {
+        background-color: #ff5252;
     }
 
     /* Product Actions */
@@ -3913,6 +3987,15 @@
                 // Update pricing and UI
                 updateMainPricing(defaultVariant);
                 
+                // Update stock status indicator for the default variant
+                if (defaultVariant.inStock && defaultVariant.stock > 0) {
+                    updateStockStatusIndicator('in-stock', 'In Stock');
+                } else if (!defaultVariant.inStock) {
+                    updateStockStatusIndicator('stock-out', 'Stock Out');
+                } else {
+                    updateStockStatusIndicator('out-of-stock', 'Out of Stock');
+                }
+                
                 // Update add to cart button
                 updateAddToCartButton();
                 
@@ -3920,49 +4003,109 @@
                 console.log('Final state - selectedColor:', selectedColor, 'selectedSize:', selectedSize, 'selectedVariant:', selectedVariant);
             } else {
                 console.log('No default variant found');
+                
+                // If no default variant, set default stock status based on product stock
+                const productStockQty = {{ product.stock_quantity }};
+                if (productStockQty > 0) {
+                    updateStockStatusIndicator('in-stock', 'In Stock');
+                } else {
+                    updateStockStatusIndicator('out-of-stock', 'Out of Stock');
+                }
             }
         }
 
-        // Update add to cart button based on current selection
+        // Update add to cart and buy now buttons based on current selection
         function updateAddToCartButton() {
             const addToCartBtn = document.querySelector('.add-to-cart-btn');
+            const buyNowBtn = document.querySelector('.buy-now-btn');
             if (!addToCartBtn) return;
             
-            console.log('Updating add to cart button. selectedVariant:', selectedVariant);
+            console.log('Updating add to cart and buy now buttons. selectedVariant:', selectedVariant);
             
             if (selectedVariant) {
                 // Set variant ID
                 addToCartBtn.dataset.variantId = selectedVariant.id;
+                if (buyNowBtn) buyNowBtn.dataset.variantId = selectedVariant.id;
                 
-                // Enable/disable based on stock
-                if (selectedVariant.stock > 0) {
+                // Enable/disable based on stock quantity and in_stock flag
+                if (selectedVariant.inStock && selectedVariant.stock > 0) {
+                    // In stock
                     addToCartBtn.disabled = false;
                     addToCartBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
                     addToCartBtn.style.backgroundColor = '';
-                    console.log('Enabled add to cart button for variant:', selectedVariant.name);
+                    
+                    // Also update buy now button
+                    if (buyNowBtn) {
+                        buyNowBtn.disabled = false;
+                        buyNowBtn.innerHTML = '<i class="fas fa-bolt"></i> Buy Now';
+                        buyNowBtn.style.backgroundColor = '';
+                    }
+                    
+                    console.log('Enabled add to cart and buy now buttons for variant:', selectedVariant.name);
+                    
+                    // Update stock status indicator
+                    updateStockStatusIndicator('in-stock', 'In Stock');
+                } else if (!selectedVariant.inStock) {
+                    // Stock out (manually flagged as out of stock)
+                    addToCartBtn.disabled = true;
+                    addToCartBtn.innerHTML = '<i class="fas fa-times-circle"></i> Stock Out';
+                    addToCartBtn.style.backgroundColor = '#ff5252';
+                    
+                    // Also update buy now button
+                    if (buyNowBtn) {
+                        buyNowBtn.disabled = true;
+                        buyNowBtn.innerHTML = '<i class="fas fa-times-circle"></i> Stock Out';
+                        buyNowBtn.style.backgroundColor = '#ff5252';
+                    }
+                    
+                    // Update stock status indicator
+                    updateStockStatusIndicator('stock-out', 'Stock Out');
                 } else {
+                    // Out of stock (zero quantity)
                     addToCartBtn.disabled = true;
                     addToCartBtn.innerHTML = '<i class="fas fa-times-circle"></i> Out of Stock';
+                    
+                    // Also update buy now button
+                    if (buyNowBtn) {
+                        buyNowBtn.disabled = true;
+                        buyNowBtn.innerHTML = '<i class="fas fa-times-circle"></i> Out of Stock';
+                        buyNowBtn.style.backgroundColor = '';
+                    }
+                    
+                    // Update stock status indicator
+                    updateStockStatusIndicator('out-of-stock', 'Out of Stock');
                 }
             } else {
                 // No variant selected
                 addToCartBtn.disabled = true;
+                if (buyNowBtn) buyNowBtn.disabled = true;
+                
                 if (variantsData.length > 0) {
                     // Has variants but none selected
                     const hasSizes = variantsData.some(v => v.size && v.size.trim() !== '');
+                    let buttonMessage = '';
+                    
                     if (hasSizes && !selectedSize) {
-                        addToCartBtn.innerHTML = '<i class="fas fa-exclamation-circle"></i> Select Size';
+                        buttonMessage = '<i class="fas fa-exclamation-circle"></i> Select Size';
                     } else if (!selectedColor) {
-                        addToCartBtn.innerHTML = '<i class="fas fa-exclamation-circle"></i> Select Color';
+                        buttonMessage = '<i class="fas fa-exclamation-circle"></i> Select Color';
                     } else {
-                        addToCartBtn.innerHTML = '<i class="fas fa-exclamation-circle"></i> Select Options';
+                        buttonMessage = '<i class="fas fa-exclamation-circle"></i> Select Options';
                     }
+                    
+                    addToCartBtn.innerHTML = buttonMessage;
+                    if (buyNowBtn) buyNowBtn.innerHTML = buttonMessage;
                 } else {
                     // No variants at all
                     addToCartBtn.disabled = false;
                     addToCartBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
+                    
+                    if (buyNowBtn) {
+                        buyNowBtn.disabled = false;
+                        buyNowBtn.innerHTML = '<i class="fas fa-bolt"></i> Buy Now';
+                    }
                 }
-                console.log('Disabled add to cart button - no variant selected');
+                console.log('Disabled add to cart and buy now buttons - no variant selected');
             }
         }
 
@@ -4119,6 +4262,23 @@
             // }
         }
 
+        // Function to update stock status indicator
+        function updateStockStatusIndicator(statusClass, statusText) {
+            const stockStatusDot = document.getElementById('stock-status-dot');
+            const stockStatusText = document.getElementById('stock-status-text');
+            
+            if (!stockStatusDot || !stockStatusText) return;
+            
+            // Remove all status classes
+            stockStatusDot.classList.remove('in-stock', 'out-of-stock', 'stock-out');
+            
+            // Add the appropriate class
+            stockStatusDot.classList.add(statusClass);
+            
+            // Update the text
+            stockStatusText.textContent = statusText;
+        }
+        
         // Update size buttons availability based on selected color
         function updateSizeButtons() {
             if (!selectedColor) {
@@ -4296,18 +4456,58 @@
                         mainImage.alt = variant.name;
                     }
                     
-                    // Update add to cart button
+                    // Update add to cart and buy now buttons
                     const addToCartBtn = document.querySelector('.add-to-cart-btn');
+                    const buyNowBtn = document.querySelector('.buy-now-btn');
                     if (addToCartBtn) {
                         addToCartBtn.dataset.variantId = variant.id;
+                        if (buyNowBtn) buyNowBtn.dataset.variantId = variant.id;
                         
-                        // Enable/disable based on stock
-                        if (variant.stock > 0) {
+                        // Enable/disable based on stock quantity and in_stock flag
+                        if (variant.inStock && variant.stock > 0) {
+                            // In stock
                             addToCartBtn.disabled = false;
-                            addToCartBtn.textContent = 'Add to Cart';
-                        } else {
+                            addToCartBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
+                            addToCartBtn.style.backgroundColor = '';
+                            
+                            // Also update buy now button
+                            if (buyNowBtn) {
+                                buyNowBtn.disabled = false;
+                                buyNowBtn.innerHTML = '<i class="fas fa-bolt"></i> Buy Now';
+                                buyNowBtn.style.backgroundColor = '';
+                            }
+                            
+                            // Update stock status indicator
+                            updateStockStatusIndicator('in-stock', 'In Stock');
+                        } else if (!variant.inStock) {
+                            // Stock out (manually flagged as out of stock)
                             addToCartBtn.disabled = true;
-                            addToCartBtn.textContent = 'Out of Stock';
+                            addToCartBtn.innerHTML = '<i class="fas fa-times-circle"></i> Stock Out';
+                            addToCartBtn.style.backgroundColor = '#ff5252';
+                            
+                            // Also update buy now button
+                            if (buyNowBtn) {
+                                buyNowBtn.disabled = true;
+                                buyNowBtn.innerHTML = '<i class="fas fa-times-circle"></i> Stock Out';
+                                buyNowBtn.style.backgroundColor = '#ff5252';
+                            }
+                            
+                            // Update stock status indicator
+                            updateStockStatusIndicator('stock-out', 'Stock Out');
+                        } else {
+                            // Out of stock (zero quantity)
+                            addToCartBtn.disabled = true;
+                            addToCartBtn.innerHTML = '<i class="fas fa-times-circle"></i> Out of Stock';
+                            
+                            // Also update buy now button
+                            if (buyNowBtn) {
+                                buyNowBtn.disabled = true;
+                                buyNowBtn.innerHTML = '<i class="fas fa-times-circle"></i> Out of Stock';
+                                buyNowBtn.style.backgroundColor = '';
+                            }
+                            
+                            // Update stock status indicator
+                            updateStockStatusIndicator('out-of-stock', 'Out of Stock');
                         }
                     }
                     
@@ -4779,6 +4979,7 @@
             const quantity = parseInt(document.getElementById('quantity').value) || 1;
             
             console.log('buyNow called. selectedVariant:', selectedVariant);
+            console.log('variantsData.length:', variantsData.length);
             
             // Check if variants exist and are selected
             if (variantsData.length > 0) {
@@ -4793,6 +4994,18 @@
                         return;
                     }
                 }
+                
+                // Check if selected variant is in stock
+                if (!selectedVariant.inStock) {
+                    alert('This product variant is currently out of stock.');
+                    return;
+                }
+                
+                // Check if quantity is available
+                if (selectedVariant.stock < quantity) {
+                    alert(`Only ${selectedVariant.stock} items available for ${selectedVariant.name}`);
+                    return;
+                }
             }
             
             const data = {
@@ -4803,6 +5016,12 @@
             if (selectedVariant) {
                 data.variant_id = selectedVariant.id;
             }
+            
+            // Show loading state
+            const buyNowBtn = document.querySelector('.buy-now-btn');
+            const originalText = buyNowBtn.innerHTML;
+            buyNowBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            buyNowBtn.disabled = true;
             
             // Add to cart first, then redirect to checkout
             fetch('/api/v1/cart/add/', {
@@ -4817,6 +5036,8 @@
             .then(data => {
                 if (data.error) {
                     alert(data.error);
+                    buyNowBtn.innerHTML = originalText;
+                    buyNowBtn.disabled = false;
                 } else {
                     // Redirect to checkout
                     window.location.href = '/checkout/';
@@ -4825,6 +5046,8 @@
             .catch(error => {
                 console.error('Error:', error);
                 alert('Error processing your request. Please try again.');
+                buyNowBtn.innerHTML = originalText;
+                buyNowBtn.disabled = false;
             });
         }
         

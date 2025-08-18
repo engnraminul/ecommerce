@@ -22,7 +22,7 @@ class ProductVariantInline(admin.TabularInline):
     """Inline for product variants"""
     model = ProductVariant
     extra = 0
-    fields = ('name', 'sku', 'size', 'color', 'price', 'stock_quantity', 'is_default', 'is_active', 'image')
+    fields = ('name', 'sku', 'size', 'color', 'price', 'stock_quantity', 'in_stock', 'is_default', 'is_active', 'image')
     readonly_fields = ('sku',)
 
 
@@ -206,12 +206,12 @@ class ProductImageAdmin(admin.ModelAdmin):
 @admin.register(ProductVariant)
 class ProductVariantAdmin(admin.ModelAdmin):
     """Product Variant admin"""
-    list_display = ('product', 'name', 'sku', 'size', 'color', 'price', 'stock_quantity', 'is_default', 'is_active')
-    list_filter = ('is_active', 'is_default', 'size', 'color', 'material')
+    list_display = ('product', 'name', 'sku', 'size', 'color', 'price', 'stock_quantity', 'in_stock', 'is_default', 'is_active')
+    list_filter = ('is_active', 'is_default', 'in_stock', 'size', 'color', 'material')
     search_fields = ('product__name', 'name', 'sku')
     readonly_fields = ('sku', 'created_at', 'updated_at')
     
-    actions = ['mark_as_default', 'mark_as_not_default']
+    actions = ['mark_as_default', 'mark_as_not_default', 'mark_as_in_stock', 'mark_as_out_of_stock']
     
     def mark_as_default(self, request, queryset):
         """Mark selected variants as default (will unset others for the same product)"""
@@ -227,6 +227,16 @@ class ProductVariantAdmin(admin.ModelAdmin):
         queryset.update(is_default=False)
         self.message_user(request, f"{queryset.count()} variants marked as not default.")
     mark_as_not_default.short_description = "Mark selected variants as not default"
+    
+    def mark_as_in_stock(self, request, queryset):
+        queryset.update(in_stock=True)
+        self.message_user(request, f"{queryset.count()} variants marked as in stock.")
+    mark_as_in_stock.short_description = "Mark selected variants as in stock"
+    
+    def mark_as_out_of_stock(self, request, queryset):
+        queryset.update(in_stock=False)
+        self.message_user(request, f"{queryset.count()} variants marked as out of stock.")
+    mark_as_out_of_stock.short_description = "Mark selected variants as out of stock"
 
 
 @admin.register(Review)

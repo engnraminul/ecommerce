@@ -306,6 +306,7 @@ class ProductVariant(models.Model):
     
     # Inventory for this variant
     stock_quantity = models.PositiveIntegerField(default=0)
+    in_stock = models.BooleanField(default=True, help_text="Indicates if this variant is currently in stock and available for ordering")
     
     # Variant attributes
     size = models.CharField(max_length=50, blank=True)
@@ -359,7 +360,8 @@ class ProductVariant(models.Model):
     @property
     def is_in_stock(self):
         """Check if variant is in stock"""
-        return self.stock_quantity > 0
+        # Now considers both the in_stock boolean flag and the stock_quantity
+        return self.in_stock and self.stock_quantity > 0
 
 
 class Review(models.Model):
