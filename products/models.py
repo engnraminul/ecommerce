@@ -377,7 +377,7 @@ class Review(models.Model):
     title = models.CharField(max_length=200, blank=True)
     comment = models.TextField()
     
-    is_approved = models.BooleanField(default=True)  # Auto-approve reviews for better UX
+    is_approved = models.BooleanField(default=False)  # Reviews require approval before displaying
     is_verified_purchase = models.BooleanField(default=False)
     
     created_at = models.DateTimeField(auto_now_add=True)

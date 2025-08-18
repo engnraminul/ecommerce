@@ -9,6 +9,7 @@
                     {% else %}
                         {{ review.guest_name|default:"Anonymous" }}
                     {% endif %}
+                    <span class="review-date">({{ review.created_at|date:"M d, Y" }})</span>
                     {% if review.is_verified_purchase %}
                         <span class="verified-badge">
                             <i class="fas fa-check-circle"></i>
@@ -24,12 +25,7 @@
                 </div>
             </div>
         </div>
-        <span class="review-date">{{ review.created_at|date:"M d, Y" }}</span>
     </div>
-    
-    {% if review.title %}
-    <h5 class="review-title">{{ review.title }}</h5>
-    {% endif %}
     
     <p class="review-text">{{ review.comment|linebreaks }}</p>
     

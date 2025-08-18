@@ -117,9 +117,48 @@ def product_detail(request, slug):
         is_active=True
     ).exclude(id=product.id)[:4]
     
+    # Get all approved reviews for the product
+    all_approved_reviews = product.reviews.filter(is_approved=True).select_related('user').prefetch_related('images').order_by('-created_at')
+    
+    # Get total count of approved reviews
+    total_approved_reviews = all_approved_reviews.count()
+    
+    # Get first 5 reviews for initial display
+    initial_reviews = all_approved_reviews[:5]
+    
+    # Calculate rating distribution
+    one_star_count = all_approved_reviews.filter(rating=1).count()
+    two_star_count = all_approved_reviews.filter(rating=2).count()
+    three_star_count = all_approved_reviews.filter(rating=3).count()
+    four_star_count = all_approved_reviews.filter(rating=4).count()
+    five_star_count = all_approved_reviews.filter(rating=5).count()
+    
+    # Calculate percentages for the progress bars
+    if total_approved_reviews > 0:
+        one_star_percentage = (one_star_count / total_approved_reviews) * 100
+        two_star_percentage = (two_star_count / total_approved_reviews) * 100
+        three_star_percentage = (three_star_count / total_approved_reviews) * 100
+        four_star_percentage = (four_star_count / total_approved_reviews) * 100
+        five_star_percentage = (five_star_count / total_approved_reviews) * 100
+    else:
+        one_star_percentage = two_star_percentage = three_star_percentage = four_star_percentage = five_star_percentage = 0
+    
     context = {
         'product': product,
         'related_products': related_products,
+        'reviews': initial_reviews,
+        'total_approved_reviews': total_approved_reviews,
+        # Add rating distribution data
+        'one_star_count': one_star_count,
+        'two_star_count': two_star_count,
+        'three_star_count': three_star_count,
+        'four_star_count': four_star_count,
+        'five_star_count': five_star_count,
+        'one_star_percentage': one_star_percentage,
+        'two_star_percentage': two_star_percentage,
+        'three_star_percentage': three_star_percentage,
+        'four_star_percentage': four_star_percentage,
+        'five_star_percentage': five_star_percentage,
     }
     return render(request, 'frontend/product_detail.html', context)
 
@@ -507,6 +546,9 @@ def load_more_reviews(request, product_id):
     # Get all approved reviews for the product
     reviews_list = product.reviews.filter(is_approved=True).select_related('user').prefetch_related('images').order_by('-created_at')
     
+    # Get total count for accurate display
+    total_reviews_count = reviews_list.count()
+    
     # Paginate the reviews - 5 per page
     paginator = Paginator(reviews_list, 5)
     page_number = request.GET.get('page', 2)  # Default to page 2 since page 1 is already shown
@@ -518,13 +560,13 @@ def load_more_reviews(request, product_id):
         return render(request, 'frontend/partials/review_items.html', {
             'reviews': [],
             'has_next': False,
-            'total_reviews': reviews_list.count()
+            'total_reviews': total_reviews_count
         })
     
     context = {
         'reviews': page_obj,
         'has_next': page_obj.has_next(),
-        'total_reviews': reviews_list.count()
+        'total_reviews': total_reviews_count
     }
     
     return render(request, 'frontend/partials/review_items.html', context)
@@ -594,7 +636,6 @@ def submit_review(request, product_id):
         # Get form data
         rating = request.POST.get('rating')
         comment = request.POST.get('comment', '').strip()
-        title = request.POST.get('title', '').strip()
         guest_name = request.POST.get('guest_name', '').strip()
         guest_email = request.POST.get('guest_email', '').strip()
         
@@ -638,10 +679,6 @@ def submit_review(request, product_id):
             'comment': comment,
         }
         
-        # Only add title if it's not empty
-        if title:
-            review_data['title'] = title
-        
         if request.user.is_authenticated:
             review_data['user'] = request.user
             
@@ -662,6 +699,8 @@ def submit_review(request, product_id):
                 review_data['guest_email'] = guest_email
         
         print(f"Creating review with data: {review_data}")
+        # Set is_approved to False by default
+        review_data['is_approved'] = False
         review = Review.objects.create(**review_data)
         print(f"Review created successfully with ID: {review.id}")
         
