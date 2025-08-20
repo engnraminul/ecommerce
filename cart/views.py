@@ -168,7 +168,7 @@ def remove_from_cart(request, item_id):
     })
 
 
-@api_view(['POST'])
+@api_view(['DELETE'])
 @permission_classes([permissions.AllowAny])
 def clear_cart(request):
     """Clear all items from cart - supports both authenticated users and guests"""
