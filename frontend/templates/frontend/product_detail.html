@@ -117,7 +117,6 @@
                             <div class="price-note" id="variant-price-note" style="display: none;">
                                 <small>Price varies by variant selection</small>
                             </div>
-                            
                         </div>
                     </div>
 
@@ -158,15 +157,6 @@
                                     <span class="color-display" style="background-color: {{ color_group.grouper }};"></span>
                                     {% endif %}
                                     <span class="color-name">{% for word in first_variant.name.split %}{% if forloop.first %}{{ word }}{% endif %}{% endfor %}</span>
-                                    
-                                    <!-- Stock Status Badge -->
-                                    {% if first_variant.in_stock and first_variant.stock_quantity > 0 %}
-                                    <span class="variant-stock-badge in-stock">In Stock</span>
-                                    {% elif not first_variant.in_stock %}
-                                    <span class="variant-stock-badge stock-out">Stock Out</span>
-                                    {% else %}
-                                    <span class="variant-stock-badge out-of-stock">Out of Stock</span>
-                                    {% endif %}
                                 </button>
                                 {% endwith %}
                                 {% endif %}
@@ -221,7 +211,6 @@
                                 "price": "{{ variant.effective_price }}",
                                 "comparePrice": "{{ product.compare_price|default:0 }}",
                                 "stock": {{ variant.stock_quantity }},
-                                "inStock": {{ variant.in_stock|yesno:"true,false" }},
                                 "sku": "{{ variant.sku|escapejs }}",
                                 "image": "{% if variant.image %}{{ variant.image.url }}{% else %}{{ MEDIA_URL }}default.webp{% endif %}",
                                 "isDefault": {{ variant.is_default|yesno:"true,false" }}
@@ -364,7 +353,7 @@
                 
                 <!-- Reviews Tab -->
                 <div class="tab-panel" id="reviews">
-                    <div class="reviews-content" id="reviews-section">
+                    <div class="reviews-content">
                         <div class="reviews-summary">
                             <div class="rating-overview">
                                 <div class="average-rating">
@@ -448,14 +437,10 @@
                                         {% endfor %}
                                     </div>
                                     <input type="hidden" id="ratingValue" name="rating" required>
-                                    <small class="rating-text">Click to rate this product</small>
-                                </div>
-                                
-                                <!-- Review title -->
-                                <div class="form-group">
-                                    <label for="reviewTitle">Review Title (optional)</label>
-                                    <input type="text" id="reviewTitle" name="title" 
-                                           placeholder="Give your review a title" class="form-control">
+                                    <div class="rating-selection">
+                                        <span class="rating-text">Click to rate this product</span>
+                                        <span class="selected-rating" id="selectedRatingText"></span>
+                                    </div>
                                 </div>
                                 
                                 <!-- Review comment -->
@@ -570,7 +555,7 @@
                             <!-- Load More Reviews -->
                             {% if total_approved_reviews > 5 %}
                             <div class="load-more-reviews">
-                                <button class="load-more-btn" onclick="loadMoreReviews()">
+                                <button class="load-more-btn" id="loadMoreReviewsBtn" onclick="loadMoreReviews()">
                                     <i class="fas fa-chevron-down"></i>
                                     Show More Reviews ({{ total_approved_reviews|add:"-5" }} remaining)
                                 </button>
@@ -737,38 +722,6 @@
 
 {% block extra_css %}
 <style>
-    /* Variant Stock Badge Styling */
-    .variant-stock-badge {
-        position: absolute;
-        top: -10px;
-        left: 5px;
-        font-size: 0.7rem;
-        padding: 2px 6px;
-        border-radius: 10px;
-        font-weight: bold;
-        z-index: 2;
-    }
-    
-    .variant-stock-badge.in-stock {
-        background-color: var(--success-color);
-        color: white;
-    }
-    
-    .variant-stock-badge.out-of-stock {
-        background-color: var(--danger-color);
-        color: white;
-    }
-    
-    .variant-stock-badge.stock-out {
-        background-color: #ff5252;
-        color: white;
-    }
-    
-    /* Position the button as relative to host the badge */
-    .color-btn {
-        position: relative;
-    }
-    
     /* Review styling */
     .review-date {
         font-weight: normal;
@@ -1134,37 +1087,6 @@
 
     .price-note small {
         font-size: 0.9rem;
-    }
-    
-    /* Stock Status Indicator */
-    .stock-status {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-top: 1rem;
-        padding: 0.5rem 1rem;
-        border-radius: var(--border-radius);
-        background-color: #f8f9fa;
-        font-weight: 500;
-        font-size: 0.9rem;
-    }
-    
-    .stock-status-dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-    }
-    
-    .stock-status-dot.in-stock {
-        background-color: var(--success-color);
-    }
-    
-    .stock-status-dot.out-of-stock {
-        background-color: var(--danger-color);
-    }
-    
-    .stock-status-dot.stock-out {
-        background-color: #ff5252;
     }
 
     /* Product Actions */
@@ -2043,36 +1965,33 @@
         margin-bottom: 1rem;
     }
 
-    /* Enhanced Review Items - Compact & Responsive Design */
+    /* Enhanced Review Items */
     .review-item {
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-        background: var(--white);
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        padding: 2.5rem 0;
+        border-bottom: 1px solid var(--border-color);
         transition: all 0.3s ease;
     }
 
     .review-item:hover {
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-        transform: translateY(-2px);
+        background: rgba(var(--primary-color-rgb), 0.02);
+        padding: 2.5rem 1rem;
+        margin: 0 -1rem;
+        border-radius: var(--border-radius);
     }
 
     .review-item:last-child {
-        margin-bottom: 0;
+        border-bottom: none;
     }
 
     .review-header {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: 1rem;
+        margin-bottom: 0.5rem;
     }
 
     .reviewer-info {
         flex: 1;
-        min-width: 0; /* Allow flex item to shrink */
     }
 
     .reviewer-details {
@@ -2083,32 +2002,22 @@
 
     .reviewer-name {
         color: var(--dark-color);
-        font-size: 1rem;
-        font-weight: 600;
+        font-size: 1.1rem;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        flex-wrap: wrap;
+        gap: 0.75rem;
     }
 
     .verified-badge {
         background: var(--success-color);
         color: var(--white);
-        padding: 0.2rem 0.6rem;
-        border-radius: 12px;
-        font-size: 0.7rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.75rem;
         font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.3rem;
-    }
-
-    .review-meta {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        color: var(--secondary-color);
-        font-size: 0.85rem;
+        gap: 0.25rem;
     }
 
     .review-rating {
@@ -2118,7 +2027,7 @@
     }
 
     .review-rating i {
-        font-size: 0.9rem;
+        font-size: 1rem;
         color: var(--border-color);
     }
 
@@ -2127,50 +2036,54 @@
     }
 
     .rating-number {
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         color: var(--secondary-color);
-        font-weight: 500;
+        font-weight: 600;
     }
 
     .review-date {
         color: var(--secondary-color);
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         white-space: nowrap;
-        flex-shrink: 0;
+    }
+
+    .review-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 0.75rem;
     }
 
     .review-text {
-        line-height: 1.6;
+        line-height: 1.7;
         color: var(--secondary-color);
         margin-bottom: 1rem;
-        font-size: 0.95rem;
+        font-size: 1rem;
     }
 
-    /* Review Images - Compact Design */
+    /* Review Images */
     .review-images {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        display: flex;
         gap: 1rem;
         margin-bottom: 1.5rem;
     }
 
     .review-image-item {
         position: relative;
-        border-radius: 8px;
+        border-radius: var(--border-radius);
         overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         transition: all 0.3s ease;
-        aspect-ratio: 1;
     }
 
     .review-image-item:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
     }
 
     .review-image {
-        width: 100%;
-        height: 150px;
+        width: 80px;
+        height: 80px;
         object-fit: cover;
         cursor: pointer;
         transition: all 0.3s ease;
@@ -2185,43 +2098,38 @@
         bottom: 0;
         left: 0;
         right: 0;
-        background: rgba(0, 0, 0, 0.8);
+        background: rgba(0, 0, 0, 0.7);
         color: var(--white);
-        padding: 0.25rem;
-        font-size: 0.7rem;
+        padding: 0.5rem;
+        font-size: 0.8rem;
         text-align: center;
-        line-height: 1.2;
     }
 
-    /* Review Actions - Compact */
+    /* Review Actions */
     .review-actions {
         display: flex;
-        gap: 0.75rem;
+        gap: 1rem;
         margin-top: 1rem;
     }
 
     .review-action-btn {
         background: none;
         border: 1px solid var(--border-color);
-        padding: 0.4rem 0.8rem;
-        border-radius: 16px;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
         cursor: pointer;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         color: var(--secondary-color);
         transition: all 0.3s ease;
         display: flex;
         align-items: center;
-        gap: 0.4rem;
+        gap: 0.5rem;
     }
 
     .review-action-btn:hover {
         border-color: var(--primary-color);
         color: var(--primary-color);
         background: rgba(var(--primary-color-rgb), 0.05);
-    }
-
-    .review-action-btn i {
-        font-size: 0.85rem;
     }
 
     /* No Reviews State */
@@ -2258,24 +2166,14 @@
         margin-top: 2rem;
     }
 
-    /* Load More Button Styles */
-    .load-more-reviews {
-        display: flex;
-        justify-content: center;
-        margin-top: 2rem;
-        padding-top: 1.5rem;
-        border-top: 1px solid var(--border-color);
-    }
-
     .load-more-btn {
-        background: transparent;
+        background: var(--light-color);
         color: var(--primary-color);
         border: 2px solid var(--primary-color);
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
+        padding: 0.75rem 2rem;
+        border-radius: var(--border-radius);
         cursor: pointer;
-        font-weight: 500;
-        font-size: 0.9rem;
+        font-weight: 600;
         transition: all 0.3s ease;
         display: inline-flex;
         align-items: center;
@@ -2285,99 +2183,10 @@
     .load-more-btn:hover {
         background: var(--primary-color);
         color: var(--white);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(var(--primary-color-rgb), 0.3);
+        transform: translateY(-2px);
     }
 
-    .load-more-btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        transform: none;
-    }
-
-    .load-more-btn i {
-        transition: transform 0.3s ease;
-    }
-
-    .load-more-btn:hover i {
-        transform: translateY(2px);
-    }
-
-    /* Responsive Design for Reviews */
-    @media (max-width: 768px) {
-        .review-item {
-            padding: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .review-header {
-            flex-direction: column;
-            gap: 0.75rem;
-            align-items: flex-start;
-        }
-
-        .review-user {
-            gap: 0.75rem;
-        }
-
-        .user-avatar {
-            width: 2.5rem;
-            height: 2.5rem;
-            font-size: 1rem;
-        }
-
-        .user-name {
-            font-size: 0.9rem;
-        }
-
-        .review-date {
-            font-size: 0.75rem;
-        }
-
-        .review-rating {
-            font-size: 0.85rem;
-        }
-
-        .review-images {
-            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-            gap: 0.5rem;
-        }
-
-        .review-actions {
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-
-        .review-action-btn {
-            padding: 0.35rem 0.7rem;
-            font-size: 0.75rem;
-        }
-
-        .load-more-btn {
-            padding: 0.75rem 1rem;
-            font-size: 0.85rem;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .review-item {
-            padding: 0.75rem;
-        }
-
-        .review-images {
-            grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
-        }
-
-        .review-actions {
-            justify-content: center;
-        }
-
-        .review-action-btn {
-            flex: 1;
-            min-width: 0;
-            justify-content: center;
-        }
-    }
+    /* Review Image Modal */
     .review-image-modal {
         display: none;
         position: fixed;
@@ -2433,6 +2242,8 @@
     .close-review-modal:hover {
         background: rgba(0, 0, 0, 0.9);
         transform: scale(1.1);
+    }
+        color: var(--dark-color);
     }
 
     .review-rating {
@@ -3987,15 +3798,6 @@
                 // Update pricing and UI
                 updateMainPricing(defaultVariant);
                 
-                // Update stock status indicator for the default variant
-                if (defaultVariant.inStock && defaultVariant.stock > 0) {
-                    updateStockStatusIndicator('in-stock', 'In Stock');
-                } else if (!defaultVariant.inStock) {
-                    updateStockStatusIndicator('stock-out', 'Stock Out');
-                } else {
-                    updateStockStatusIndicator('out-of-stock', 'Out of Stock');
-                }
-                
                 // Update add to cart button
                 updateAddToCartButton();
                 
@@ -4003,109 +3805,49 @@
                 console.log('Final state - selectedColor:', selectedColor, 'selectedSize:', selectedSize, 'selectedVariant:', selectedVariant);
             } else {
                 console.log('No default variant found');
-                
-                // If no default variant, set default stock status based on product stock
-                const productStockQty = {{ product.stock_quantity }};
-                if (productStockQty > 0) {
-                    updateStockStatusIndicator('in-stock', 'In Stock');
-                } else {
-                    updateStockStatusIndicator('out-of-stock', 'Out of Stock');
-                }
             }
         }
 
-        // Update add to cart and buy now buttons based on current selection
+        // Update add to cart button based on current selection
         function updateAddToCartButton() {
             const addToCartBtn = document.querySelector('.add-to-cart-btn');
-            const buyNowBtn = document.querySelector('.buy-now-btn');
             if (!addToCartBtn) return;
             
-            console.log('Updating add to cart and buy now buttons. selectedVariant:', selectedVariant);
+            console.log('Updating add to cart button. selectedVariant:', selectedVariant);
             
             if (selectedVariant) {
                 // Set variant ID
                 addToCartBtn.dataset.variantId = selectedVariant.id;
-                if (buyNowBtn) buyNowBtn.dataset.variantId = selectedVariant.id;
                 
-                // Enable/disable based on stock quantity and in_stock flag
-                if (selectedVariant.inStock && selectedVariant.stock > 0) {
-                    // In stock
+                // Enable/disable based on stock
+                if (selectedVariant.stock > 0) {
                     addToCartBtn.disabled = false;
                     addToCartBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
                     addToCartBtn.style.backgroundColor = '';
-                    
-                    // Also update buy now button
-                    if (buyNowBtn) {
-                        buyNowBtn.disabled = false;
-                        buyNowBtn.innerHTML = '<i class="fas fa-bolt"></i> Buy Now';
-                        buyNowBtn.style.backgroundColor = '';
-                    }
-                    
-                    console.log('Enabled add to cart and buy now buttons for variant:', selectedVariant.name);
-                    
-                    // Update stock status indicator
-                    updateStockStatusIndicator('in-stock', 'In Stock');
-                } else if (!selectedVariant.inStock) {
-                    // Stock out (manually flagged as out of stock)
-                    addToCartBtn.disabled = true;
-                    addToCartBtn.innerHTML = '<i class="fas fa-times-circle"></i> Stock Out';
-                    addToCartBtn.style.backgroundColor = '#ff5252';
-                    
-                    // Also update buy now button
-                    if (buyNowBtn) {
-                        buyNowBtn.disabled = true;
-                        buyNowBtn.innerHTML = '<i class="fas fa-times-circle"></i> Stock Out';
-                        buyNowBtn.style.backgroundColor = '#ff5252';
-                    }
-                    
-                    // Update stock status indicator
-                    updateStockStatusIndicator('stock-out', 'Stock Out');
+                    console.log('Enabled add to cart button for variant:', selectedVariant.name);
                 } else {
-                    // Out of stock (zero quantity)
                     addToCartBtn.disabled = true;
                     addToCartBtn.innerHTML = '<i class="fas fa-times-circle"></i> Out of Stock';
-                    
-                    // Also update buy now button
-                    if (buyNowBtn) {
-                        buyNowBtn.disabled = true;
-                        buyNowBtn.innerHTML = '<i class="fas fa-times-circle"></i> Out of Stock';
-                        buyNowBtn.style.backgroundColor = '';
-                    }
-                    
-                    // Update stock status indicator
-                    updateStockStatusIndicator('out-of-stock', 'Out of Stock');
                 }
             } else {
                 // No variant selected
                 addToCartBtn.disabled = true;
-                if (buyNowBtn) buyNowBtn.disabled = true;
-                
                 if (variantsData.length > 0) {
                     // Has variants but none selected
                     const hasSizes = variantsData.some(v => v.size && v.size.trim() !== '');
-                    let buttonMessage = '';
-                    
                     if (hasSizes && !selectedSize) {
-                        buttonMessage = '<i class="fas fa-exclamation-circle"></i> Select Size';
+                        addToCartBtn.innerHTML = '<i class="fas fa-exclamation-circle"></i> Select Size';
                     } else if (!selectedColor) {
-                        buttonMessage = '<i class="fas fa-exclamation-circle"></i> Select Color';
+                        addToCartBtn.innerHTML = '<i class="fas fa-exclamation-circle"></i> Select Color';
                     } else {
-                        buttonMessage = '<i class="fas fa-exclamation-circle"></i> Select Options';
+                        addToCartBtn.innerHTML = '<i class="fas fa-exclamation-circle"></i> Select Options';
                     }
-                    
-                    addToCartBtn.innerHTML = buttonMessage;
-                    if (buyNowBtn) buyNowBtn.innerHTML = buttonMessage;
                 } else {
                     // No variants at all
                     addToCartBtn.disabled = false;
                     addToCartBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
-                    
-                    if (buyNowBtn) {
-                        buyNowBtn.disabled = false;
-                        buyNowBtn.innerHTML = '<i class="fas fa-bolt"></i> Buy Now';
-                    }
                 }
-                console.log('Disabled add to cart and buy now buttons - no variant selected');
+                console.log('Disabled add to cart button - no variant selected');
             }
         }
 
@@ -4262,23 +4004,6 @@
             // }
         }
 
-        // Function to update stock status indicator
-        function updateStockStatusIndicator(statusClass, statusText) {
-            const stockStatusDot = document.getElementById('stock-status-dot');
-            const stockStatusText = document.getElementById('stock-status-text');
-            
-            if (!stockStatusDot || !stockStatusText) return;
-            
-            // Remove all status classes
-            stockStatusDot.classList.remove('in-stock', 'out-of-stock', 'stock-out');
-            
-            // Add the appropriate class
-            stockStatusDot.classList.add(statusClass);
-            
-            // Update the text
-            stockStatusText.textContent = statusText;
-        }
-        
         // Update size buttons availability based on selected color
         function updateSizeButtons() {
             if (!selectedColor) {
@@ -4456,58 +4181,18 @@
                         mainImage.alt = variant.name;
                     }
                     
-                    // Update add to cart and buy now buttons
+                    // Update add to cart button
                     const addToCartBtn = document.querySelector('.add-to-cart-btn');
-                    const buyNowBtn = document.querySelector('.buy-now-btn');
                     if (addToCartBtn) {
                         addToCartBtn.dataset.variantId = variant.id;
-                        if (buyNowBtn) buyNowBtn.dataset.variantId = variant.id;
                         
-                        // Enable/disable based on stock quantity and in_stock flag
-                        if (variant.inStock && variant.stock > 0) {
-                            // In stock
+                        // Enable/disable based on stock
+                        if (variant.stock > 0) {
                             addToCartBtn.disabled = false;
-                            addToCartBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
-                            addToCartBtn.style.backgroundColor = '';
-                            
-                            // Also update buy now button
-                            if (buyNowBtn) {
-                                buyNowBtn.disabled = false;
-                                buyNowBtn.innerHTML = '<i class="fas fa-bolt"></i> Buy Now';
-                                buyNowBtn.style.backgroundColor = '';
-                            }
-                            
-                            // Update stock status indicator
-                            updateStockStatusIndicator('in-stock', 'In Stock');
-                        } else if (!variant.inStock) {
-                            // Stock out (manually flagged as out of stock)
-                            addToCartBtn.disabled = true;
-                            addToCartBtn.innerHTML = '<i class="fas fa-times-circle"></i> Stock Out';
-                            addToCartBtn.style.backgroundColor = '#ff5252';
-                            
-                            // Also update buy now button
-                            if (buyNowBtn) {
-                                buyNowBtn.disabled = true;
-                                buyNowBtn.innerHTML = '<i class="fas fa-times-circle"></i> Stock Out';
-                                buyNowBtn.style.backgroundColor = '#ff5252';
-                            }
-                            
-                            // Update stock status indicator
-                            updateStockStatusIndicator('stock-out', 'Stock Out');
+                            addToCartBtn.textContent = 'Add to Cart';
                         } else {
-                            // Out of stock (zero quantity)
                             addToCartBtn.disabled = true;
-                            addToCartBtn.innerHTML = '<i class="fas fa-times-circle"></i> Out of Stock';
-                            
-                            // Also update buy now button
-                            if (buyNowBtn) {
-                                buyNowBtn.disabled = true;
-                                buyNowBtn.innerHTML = '<i class="fas fa-times-circle"></i> Out of Stock';
-                                buyNowBtn.style.backgroundColor = '';
-                            }
-                            
-                            // Update stock status indicator
-                            updateStockStatusIndicator('out-of-stock', 'Out of Stock');
+                            addToCartBtn.textContent = 'Out of Stock';
                         }
                     }
                     
@@ -4979,7 +4664,6 @@
             const quantity = parseInt(document.getElementById('quantity').value) || 1;
             
             console.log('buyNow called. selectedVariant:', selectedVariant);
-            console.log('variantsData.length:', variantsData.length);
             
             // Check if variants exist and are selected
             if (variantsData.length > 0) {
@@ -4994,18 +4678,6 @@
                         return;
                     }
                 }
-                
-                // Check if selected variant is in stock
-                if (!selectedVariant.inStock) {
-                    alert('This product variant is currently out of stock.');
-                    return;
-                }
-                
-                // Check if quantity is available
-                if (selectedVariant.stock < quantity) {
-                    alert(`Only ${selectedVariant.stock} items available for ${selectedVariant.name}`);
-                    return;
-                }
             }
             
             const data = {
@@ -5016,12 +4688,6 @@
             if (selectedVariant) {
                 data.variant_id = selectedVariant.id;
             }
-            
-            // Show loading state
-            const buyNowBtn = document.querySelector('.buy-now-btn');
-            const originalText = buyNowBtn.innerHTML;
-            buyNowBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-            buyNowBtn.disabled = true;
             
             // Add to cart first, then redirect to checkout
             fetch('/api/v1/cart/add/', {
@@ -5036,8 +4702,6 @@
             .then(data => {
                 if (data.error) {
                     alert(data.error);
-                    buyNowBtn.innerHTML = originalText;
-                    buyNowBtn.disabled = false;
                 } else {
                     // Redirect to checkout
                     window.location.href = '/checkout/';
@@ -5046,8 +4710,6 @@
             .catch(error => {
                 console.error('Error:', error);
                 alert('Error processing your request. Please try again.');
-                buyNowBtn.innerHTML = originalText;
-                buyNowBtn.disabled = false;
             });
         }
         
@@ -5473,17 +5135,71 @@
     let currentReviewPage = 1;
     window.loadMoreReviews = async function() {
         try {
+            const loadMoreBtn = document.getElementById('loadMoreReviewsBtn');
+            const loadingText = "Loading...";
+            const originalText = loadMoreBtn.innerHTML;
+            
+            // Update button to show loading state
+            loadMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + loadingText;
+            loadMoreBtn.disabled = true;
+            
             currentReviewPage++;
             const productId = document.getElementById('productId').value;
-            const response = await fetch(`/api/v1/products/${productId}/reviews/?page=${currentReviewPage}`);
+            
+            // Directly load reviews from the server instead of using API
+            // This simplifies the implementation and avoids API versioning issues
+            const response = await fetch(`/load-more-reviews/${productId}/?page=${currentReviewPage}`);
             
             if (response.ok) {
-                const data = await response.json();
-                // Implementation for appending more reviews would go here
-                console.log('More reviews loaded:', data);
+                const htmlContent = await response.text();
+                
+                if (htmlContent.trim() !== '') {
+                    // Insert the HTML content before the load more button
+                    const reviewsList = document.getElementById('reviewsList');
+                    const loadMoreContainer = document.querySelector('.load-more-reviews');
+                    
+                    // Create a temporary container to hold the HTML
+                    const tempContainer = document.createElement('div');
+                    tempContainer.innerHTML = htmlContent;
+                    
+                    // Extract review items from the HTML response
+                    const newReviews = tempContainer.querySelectorAll('.review-item');
+                    const reviewsCount = newReviews.length;
+                    
+                    // Add each review to the list
+                    newReviews.forEach(review => {
+                        reviewsList.insertBefore(review, loadMoreContainer);
+                    });
+                    
+                    // Check if there are more reviews to load
+                    const hasMoreReviews = tempContainer.querySelector('#has-more-reviews');
+                    const totalReviews = parseInt(tempContainer.querySelector('#total-reviews')?.value || '0');
+                    const loadedReviews = 5 * currentReviewPage; // Initial 5 + 5 per page
+                    const remaining = totalReviews - loadedReviews;
+                    
+                    if (hasMoreReviews && remaining > 0) {
+                        loadMoreBtn.innerHTML = `<i class="fas fa-chevron-down"></i> Show More Reviews (${remaining} remaining)`;
+                        loadMoreBtn.disabled = false;
+                    } else {
+                        // No more reviews to load, hide the button
+                        loadMoreContainer.style.display = 'none';
+                    }
+                } else {
+                    // No more reviews, hide the button
+                    document.querySelector('.load-more-reviews').style.display = 'none';
+                }
+            } else {
+                // Restore original button state on error
+                loadMoreBtn.innerHTML = originalText;
+                loadMoreBtn.disabled = false;
+                console.error('Failed to load more reviews');
             }
         } catch (error) {
             console.error('Error loading more reviews:', error);
+            // Restore button state
+            const loadMoreBtn = document.getElementById('loadMoreReviewsBtn');
+            loadMoreBtn.innerHTML = '<i class="fas fa-chevron-down"></i> Show More Reviews';
+            loadMoreBtn.disabled = false;
         }
     };
 </script>
