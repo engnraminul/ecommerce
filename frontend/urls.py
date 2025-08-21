@@ -19,6 +19,7 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(next_page='frontend:home'), name='logout'),
     
     # User dashboard
+    path('dashboard/', views.dashboard, name='dashboard'),
     path('profile/', views.profile, name='profile'),
     path('orders/', views.orders, name='orders'),
     path('orders/<int:order_id>/', views.order_detail, name='order_detail'),

@@ -244,16 +244,14 @@
         grid-template-columns: 100px 1fr auto auto;
         gap: 1.5rem;
         align-items: center;
-        padding: 1.5rem 0;
+        padding: 1.5rem 1rem;
         border-bottom: 1px solid var(--border-color);
         transition: var(--transition);
     }
 
     .cart-item:hover {
-        background: var(--light-color);
-        margin: 0 -1rem;
-        padding: 1.5rem 1rem;
-        border-radius: var(--border-radius);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
     }
 
     .cart-item:last-child {

@@ -1,0 +1,523 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+
+{% block title %}My Dashboard - Professional eCommerce{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb">
+            <a href="{% url 'frontend:home' %}">Home</a>
+            <span class="breadcrumb-separator">/</span>
+            <span class="current">Dashboard</span>
+        </nav>
+
+        <div class="dashboard-page">
+            <div class="page-header">
+                <h1 class="page-title">My Dashboard</h1>
+                <p class="page-subtitle">Welcome back, {{ request.user.first_name|default:request.user.username }}</p>
+            </div>
+
+            <div class="dashboard-content">
+                <!-- Dashboard summary cards -->
+                <div class="dashboard-summary">
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="fas fa-shopping-bag"></i>
+                        </div>
+                        <div class="summary-details">
+                            <h3>{{ order_count }}</h3>
+                            <p>Total Orders</p>
+                        </div>
+                        <a href="{% url 'frontend:orders' %}" class="summary-link">
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <div class="summary-details">
+                            <h3>{{ wishlist_count }}</h3>
+                            <p>Wishlist Items</p>
+                        </div>
+                        <a href="{% url 'frontend:wishlist' %}" class="summary-link">
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="summary-details">
+                            <h3 class="cart-count">0</h3>
+                            <p>Cart Items</p>
+                        </div>
+                        <a href="{% url 'frontend:cart' %}" class="summary-link">
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Quick actions -->
+                <div class="dashboard-actions">
+                    <h2 class="section-title">Quick Actions</h2>
+                    <div class="action-buttons">
+                        <a href="{% url 'frontend:profile' %}" class="action-button">
+                            <i class="fas fa-user"></i>
+                            Edit Profile
+                        </a>
+                        <a href="{% url 'frontend:orders' %}" class="action-button">
+                            <i class="fas fa-list"></i>
+                            View All Orders
+                        </a>
+                        <a href="{% url 'frontend:wishlist' %}" class="action-button">
+                            <i class="fas fa-heart"></i>
+                            View Wishlist
+                        </a>
+                        <a href="{% url 'frontend:products' %}" class="action-button">
+                            <i class="fas fa-shopping-cart"></i>
+                            Continue Shopping
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Recent orders -->
+                <div class="recent-orders">
+                    <h2 class="section-title">Recent Orders</h2>
+                    {% if recent_orders %}
+                        <div class="table-responsive">
+                            <table class="orders-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order #</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Total</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in recent_orders %}
+                                        <tr>
+                                            <td>{{ order.order_number }}</td>
+                                            <td>{{ order.created_at|date:"M d, Y" }}</td>
+                                            <td>
+                                                <span class="status-badge status-{{ order.status|lower }}">
+                                                    {{ order.get_status_display }}
+                                                </span>
+                                            </td>
+                                            <td>${{ order.total_amount }}</td>
+                                            <td>
+                                                <a href="{% url 'frontend:order_detail' order.id %}" class="btn-sm btn-outline">
+                                                    View Details
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-shopping-bag"></i>
+                            <h3>No Orders Yet</h3>
+                            <p>You haven't placed any orders yet. Start shopping to see your orders here.</p>
+                            <a href="{% url 'frontend:products' %}" class="btn-primary">
+                                <i class="fas fa-shopping-cart"></i>
+                                Start Shopping
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Recent activities -->
+                <div class="recent-activities">
+                    <h2 class="section-title">Recent Activities</h2>
+                    {% if recent_activities %}
+                        <ul class="activities-list">
+                            {% for activity in recent_activities %}
+                                <li class="activity-item">
+                                    <div class="activity-icon">
+                                        {% if activity.type == 'order' %}
+                                            <i class="fas fa-shopping-bag"></i>
+                                        {% else %}
+                                            <i class="fas fa-bell"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="activity-details">
+                                        <p class="activity-message">{{ activity.message }}</p>
+                                        <p class="activity-date">{{ activity.date|date:"M d, Y" }}</p>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-bell"></i>
+                            <h3>No Recent Activities</h3>
+                            <p>You don't have any recent activities.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Dashboard Layout */
+    .dashboard-page {
+        padding: 2rem 0;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        color: var(--dark-color);
+    }
+
+    .page-subtitle {
+        color: var(--secondary-color);
+        font-size: 1.1rem;
+    }
+
+    .dashboard-content {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    /* Summary Cards */
+    .dashboard-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .summary-card {
+        background: var(--white);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        display: flex;
+        align-items: center;
+        position: relative;
+        transition: var(--transition);
+    }
+
+    .summary-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-4px);
+    }
+
+    .summary-icon {
+        width: 50px;
+        height: 50px;
+        background: var(--light-color);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        color: var(--primary-color);
+        font-size: 1.25rem;
+    }
+
+    .summary-details h3 {
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+        color: var(--dark-color);
+    }
+
+    .summary-details p {
+        margin: 0;
+        color: var(--secondary-color);
+        font-size: 0.875rem;
+    }
+
+    .summary-link {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        color: var(--dark-color);
+        opacity: 0.5;
+        transition: var(--transition);
+    }
+
+    .summary-card:hover .summary-link {
+        opacity: 1;
+        color: var(--primary-color);
+    }
+
+    /* Action Buttons */
+    .dashboard-actions {
+        background: var(--white);
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+        color: var(--dark-color);
+        font-weight: 600;
+    }
+
+    .action-buttons {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .action-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        background: var(--light-color);
+        border-radius: var(--border-radius);
+        text-decoration: none;
+        color: var(--dark-color);
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    .action-button i {
+        margin-right: 0.5rem;
+        color: var(--primary-color);
+    }
+
+    .action-button:hover {
+        background: var(--primary-color);
+        color: var(--white);
+    }
+
+    .action-button:hover i {
+        color: var(--white);
+    }
+
+    /* Recent Orders Table */
+    .recent-orders, .recent-activities {
+        background: var(--white);
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .orders-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .orders-table th,
+    .orders-table td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+    }
+
+    .orders-table thead tr {
+        background: var(--light-color);
+    }
+
+    .orders-table th {
+        color: var(--dark-color);
+        font-weight: 600;
+    }
+
+    .orders-table tr {
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .orders-table tbody tr:hover {
+        background: var(--light-color);
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-processing {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .status-shipped {
+        background: #cce5ff;
+        color: #004085;
+    }
+
+    .status-delivered {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-cancelled {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        border-radius: var(--border-radius);
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-outline {
+        border: 1px solid var(--border-color);
+        color: var(--dark-color);
+    }
+
+    .btn-outline:hover {
+        background: var(--primary-color);
+        color: var(--white);
+        border-color: var(--primary-color);
+    }
+
+    /* Recent Activities */
+    .activities-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-icon {
+        width: 36px;
+        height: 36px;
+        background: var(--light-color);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        color: var(--primary-color);
+    }
+
+    .activity-details {
+        flex: 1;
+    }
+
+    .activity-message {
+        margin: 0 0 0.25rem 0;
+        color: var(--dark-color);
+    }
+
+    .activity-date {
+        margin: 0;
+        color: var(--secondary-color);
+        font-size: 0.75rem;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        color: var(--border-color);
+        margin-bottom: 1rem;
+    }
+
+    .empty-state h3 {
+        color: var(--dark-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        color: var(--secondary-color);
+        margin-bottom: 1.5rem;
+    }
+
+    .btn-primary {
+        background: var(--primary-color);
+        color: var(--white);
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius);
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .dashboard-summary {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-buttons {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .action-buttons {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Update cart count from cart manager
+        function updateCartCount() {
+            const cartCountElement = document.querySelector('.cart-count');
+            if (cartCountElement && window.cartManager) {
+                cartManager.getCartData()
+                    .then(cartData => {
+                        const itemCount = cartData.total_items || 0;
+                        cartCountElement.textContent = itemCount;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching cart data:', error);
+                    });
+            }
+        }
+        
+        // Initial cart count update
+        updateCartCount();
+        
+        // Listen for cart updated events
+        document.addEventListener('cartUpdated', function() {
+            updateCartCount();
+        });
+    });
+</script>
+{% endblock %}

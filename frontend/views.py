@@ -357,6 +357,36 @@ def user_register(request):
 
 
 @login_required
+def dashboard(request):
+    """User dashboard page."""
+    if not request.user.is_authenticated:
+        return redirect('frontend:login')
+    
+    # Get recent orders
+    recent_orders = Order.objects.filter(user=request.user).order_by('-created_at')[:5]
+    
+    # Get stats
+    order_count = Order.objects.filter(user=request.user).count()
+    wishlist_count = request.user.wishlist.count() if hasattr(request.user, 'wishlist') else 0
+    
+    # Get recent activities (could be order status changes, etc.)
+    recent_activities = []
+    for order in recent_orders:
+        recent_activities.append({
+            'type': 'order',
+            'date': order.created_at,
+            'message': f'You placed order #{order.order_number}'
+        })
+    
+    context = {
+        'recent_orders': recent_orders,
+        'order_count': order_count,
+        'wishlist_count': wishlist_count,
+        'recent_activities': sorted(recent_activities, key=lambda x: x['date'], reverse=True)[:5]
+    }
+    
+    return render(request, 'frontend/dashboard.html', context)
+
 def profile(request):
     """User profile page."""
     if request.method == 'POST':

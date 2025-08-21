@@ -466,6 +466,7 @@
 .cart-dropdown-body {
     max-height: 300px;
     overflow-y: auto;
+    padding: 1rem!important;
 }
 
 .empty-cart {
@@ -887,6 +888,12 @@
     padding: 1rem;
     border-bottom: 1px solid var(--light-color);
     position: relative;
+    transition: var(--transition);
+}
+
+.cart-item:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
 }
 
 .cart-item:last-child {
