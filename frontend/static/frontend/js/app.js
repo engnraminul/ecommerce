@@ -4,6 +4,12 @@
 let cart = JSON.parse(localStorage.getItem('cart')) || [];
 let authToken = localStorage.getItem('authToken') || null;
 
+// Compatibility function for older code still calling renderCartItems
+function renderCartItems() {
+    console.log("Legacy renderCartItems called, using CartManager instead");
+    document.dispatchEvent(new CustomEvent('cartUpdated'));
+}
+
 // API Base URL
 const API_BASE_URL = '/api/v1';
 
@@ -52,14 +58,50 @@ async function apiRequest(url, options = {}) {
         const response = await fetch(`${API_BASE_URL}${url}`, finalOptions);
         
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            // Try to parse error response as JSON
+            let errorData = {};
+            try {
+                errorData = await response.json();
+            } catch (e) {
+                // If not JSON, just use an empty object
+                errorData = {};
+            }
+            
+            // Extract error message from various formats
+            let errorMessage = '';
+            if (errorData.message) {
+                errorMessage = errorData.message;
+            } else if (errorData.error) {
+                errorMessage = errorData.error;
+            } else if (errorData.detail) {
+                errorMessage = errorData.detail;
+            } else if (errorData.non_field_errors) {
+                errorMessage = errorData.non_field_errors.join(', ');
+            } else {
+                // For validation errors that are field-specific
+                const fieldErrors = [];
+                for (const field in errorData) {
+                    if (typeof errorData[field] === 'string' || Array.isArray(errorData[field])) {
+                        const errorText = Array.isArray(errorData[field]) ? 
+                            errorData[field].join(', ') : errorData[field];
+                        fieldErrors.push(`${field}: ${errorText}`);
+                    }
+                }
+                
+                if (fieldErrors.length > 0) {
+                    errorMessage = fieldErrors.join('; ');
+                } else {
+                    errorMessage = `HTTP error! status: ${response.status}`;
+                }
+            }
+            
+            throw new Error(errorMessage);
         }
         
         return await response.json();
     } catch (error) {
         console.error('API Request Error:', error);
-        showNotification('An error occurred. Please try again.', 'error');
+        // Don't show notification here - let the calling function handle specific error notifications
         throw error;
     }
 }
@@ -88,18 +130,56 @@ function showNotification(message, type = 'info', duration = 5000) {
     }, duration);
 }
 
+// Helper function to safely update cart UI with CartManager
+function safelyUpdateCart() {
+    // If CartManager is available, let it handle the update
+    if (window.cartManager && typeof window.cartManager.updateCartDisplay === 'function') {
+        window.cartManager.updateCartDisplay();
+        return;
+    }
+
+    // Fallback to basic UI updates if CartManager isn't available
+    try {
+        // Basic cart count update from local storage
+        const cartCount = document.querySelector('.cart-count');
+        if (cartCount) {
+            const cartItems = JSON.parse(localStorage.getItem('cart') || '[]');
+            const totalItems = cartItems.reduce((total, item) => total + (item.quantity || 0), 0);
+            cartCount.textContent = totalItems || '0';
+        }
+    } catch (error) {
+        console.error('Error in cart fallback:', error);
+    }
+}
+
 // Cart Functions
 function updateCartUI() {
-    const cartCount = document.querySelector('.cart-count');
-    if (cartCount) {
-        cartCount.textContent = cart.reduce((total, item) => total + item.quantity, 0);
-    }
-    
-    // Update cart page if we're on it
-    const cartContainer = document.querySelector('.cart-items');
-    if (cartContainer) {
-        // Update cart items display if we're on the cart page
-        window.cartManager?.updateCartDisplay();
+    try {
+        // Update cart count
+        const cartCount = document.querySelector('.cart-count');
+        if (cartCount) {
+            const totalItems = cart.reduce((total, item) => total + (item.quantity || 0), 0);
+            cartCount.textContent = totalItems;
+        }
+        
+        // Update cart total display
+        const cartTotal = document.querySelector('.cart-total');
+        if (cartTotal) {
+            const total = cart.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 0)), 0);
+            cartTotal.textContent = `$${total.toFixed(2)}`;
+        }
+        
+        // Update cart items count display
+        const cartItemsCount = document.querySelector('.cart-items-count');
+        if (cartItemsCount) {
+            const totalItems = cart.reduce((total, item) => total + (item.quantity || 0), 0);
+            cartItemsCount.textContent = `${totalItems} items`;
+        }
+        
+        // Trigger cart updated event to refresh navbar
+        document.dispatchEvent(new CustomEvent('cartUpdated'));
+    } catch (error) {
+        console.error('Error updating cart UI:', error);
     }
 }
 
@@ -157,15 +237,47 @@ function updateCartQuantity(productId, variantId, quantity) {
 
 async function syncCartWithBackend() {
     try {
-        // Add each cart item to backend (works for both authenticated and guest users)
+        // First verify cart items have the correct format
         for (const item of cart) {
+            // Make sure all required fields are present
+            if (!item.product_id || isNaN(parseInt(item.product_id))) {
+                console.error('Invalid cart item:', item);
+                continue; // Skip invalid items
+            }
+
+            // Create a properly formatted payload for the API
+            const payload = {
+                product_id: parseInt(item.product_id),
+                quantity: item.quantity || 1
+            };
+            
+            // Only include variant_id if it exists and is not null
+            if (item.variant_id) {
+                payload.variant_id = parseInt(item.variant_id);
+            }
+            
+            // Send the request to add the item
+            console.log('Syncing cart item:', payload);
             await apiRequest('/cart/add/', {
                 method: 'POST',
-                body: JSON.stringify(item)
+                body: JSON.stringify(payload)
             });
         }
+        
+        // After successful sync, trigger cart UI update
+        document.dispatchEvent(new CustomEvent('cartUpdated'));
     } catch (error) {
         console.error('Cart sync error:', error);
+        
+        // Check for specific error messages from the server
+        let errorMsg = 'Failed to sync cart with server. Please try again.';
+        if (error.message && error.message.includes('Product not found')) {
+            errorMsg = 'One or more products in your cart are no longer available.';
+        } else if (error.message && error.message.includes('out of stock')) {
+            errorMsg = 'Some items in your cart are out of stock.';
+        }
+        
+        showNotification(errorMsg, 'error');
     }
 }
 
@@ -400,8 +512,8 @@ function hideLoading() {
 
 // Initialize on DOM load
 document.addEventListener('DOMContentLoaded', function() {
-    // Update cart UI on page load
-    updateCartUI();
+    // Update cart UI on page load - use safe version
+    safelyUpdateCart();
     
     // Setup event listeners
     setupSearch();
@@ -482,5 +594,10 @@ window.ecommerceApp = {
     login,
     logout,
     createOrder,
-    showNotification
+    showNotification,
+    renderCartItems, // Add the compatibility function
+    // Add reference to cart manager functions
+    getCartManager: function() {
+        return window.cartManager;
+    }
 };

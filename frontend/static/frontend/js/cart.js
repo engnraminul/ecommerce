@@ -1,12 +1,19 @@
 // Cart Management
 class CartManager {
     constructor() {
-        this.initializeCart();
+        // We'll initialize manually to have better control
     }
 
     async initializeCart() {
-        await this.updateCartDisplay();
-        this.setupEventListeners();
+        try {
+            await this.updateCartDisplay();
+            this.setupEventListeners();
+            console.log('Cart manager initialized successfully');
+        } catch (error) {
+            console.error('Error initializing cart manager:', error);
+            // Still set up event listeners even if initial display fails
+            this.setupEventListeners();
+        }
     }
 
     setupEventListeners() {
@@ -18,22 +25,79 @@ class CartManager {
 
     async updateCartDisplay() {
         try {
-            // Get cart data
-            const response = await fetch('/api/v1/cart/');
-            if (!response.ok) throw new Error('Failed to fetch cart data');
+            console.log('Updating cart display...');
+            // Prepare headers with CSRF token
+            const headers = {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            };
             
-            const cartData = await response.json();
+            // Get cart data - handle both API endpoints for compatibility
+            let cartData;
+            try {
+                // Try the new API endpoint first
+                const response = await fetch('/api/v1/cart/', { 
+                    headers,
+                    // Add cache busting parameter
+                    cache: 'no-store'
+                });
+                if (!response.ok) throw new Error(`Failed to fetch cart data: ${response.status}`);
+                cartData = await response.json();
+                console.log('Cart data from v1 API:', cartData);
+            } catch (error) {
+                console.warn('Failed to fetch from primary API, trying fallback:', error);
+                // Try the old API endpoint as fallback
+                try {
+                    const fallbackResponse = await fetch('/api/cart/preview/', { 
+                        headers,
+                        cache: 'no-store'
+                    });
+                    if (!fallbackResponse.ok) throw error; // Re-throw original error if fallback fails
+                    cartData = await fallbackResponse.json();
+                    console.log('Cart data from fallback API:', cartData);
+                } catch (fallbackError) {
+                    console.error('All API attempts failed:', fallbackError);
+                    // Default empty cart if both attempts fail
+                    cartData = { items: [] };
+                }
+            }
             
-            // Get cart summary
-            const summaryResponse = await fetch('/api/v1/cart/summary/');
-            if (!summaryResponse.ok) throw new Error('Failed to fetch cart summary');
-            
-            const summaryData = await summaryResponse.json();
+            // Get cart summary - handle both endpoints for compatibility
+            let summaryData;
+            try {
+                const summaryResponse = await fetch('/api/v1/cart/summary/', { 
+                    headers,
+                    cache: 'no-store'
+                });
+                if (!summaryResponse.ok) throw new Error(`Failed to fetch cart summary: ${summaryResponse.status}`);
+                summaryData = await summaryResponse.json();
+                console.log('Summary data:', summaryData);
+            } catch (error) {
+                console.warn('Failed to fetch summary, using fallback:', error);
+                // Calculate summary from cart data as fallback
+                summaryData = {
+                    total_items: cartData.items ? cartData.items.reduce((total, item) => total + (item.quantity || 0), 0) : 0,
+                    total_amount: cartData.items ? cartData.items.reduce((sum, item) => 
+                        sum + ((item.price || item.unit_price || 0) * (item.quantity || 0)), 0).toFixed(2) : '0.00'
+                };
+            }
             
             // Update the UI with both cart data and summary
             this.updateUI(cartData, summaryData);
+            
+            // Notify app.js that cart data is updated
+            window.cart = cartData.items || [];
+            localStorage.setItem('cart', JSON.stringify(window.cart));
+            
         } catch (error) {
-            console.error('Error updating cart display:', error);
+            console.error('Critical error updating cart display:', error);
+            // Show empty cart as fallback
+            this.updateUI({ items: [] }, { total_items: 0, total_amount: '0.00' });
+            
+            // Show user-friendly error if notification function exists
+            if (typeof showNotification === 'function') {
+                showNotification('Failed to load cart data. Please try again.', 'error');
+            }
         }
     }
 
@@ -112,11 +176,11 @@ class CartManager {
 
     async removeFromCart(itemId) {
         try {
-            const response = await fetch(`/api/v1/cart/items/${itemId}/`, {
+            const response = await fetch(`/api/v1/cart/items/${itemId}/remove/`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                    'X-CSRFToken': getCSRFToken()
                 }
             });
 
@@ -147,10 +211,48 @@ class CartManager {
     }
 }
 
-// Initialize cart manager when the DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    CartManager.getInstance();
-});
+// CSRF token extraction helper
+function getCSRFToken() {
+    // First try to get from cookie
+    const cookieValue = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('csrftoken='))
+        ?.split('=')[1];
+    
+    // Then try from meta tag
+    if (!cookieValue) {
+        const metaTag = document.querySelector('meta[name="csrf-token"]');
+        if (metaTag) return metaTag.getAttribute('content');
+    }
+    
+    // Then try from hidden input
+    if (!cookieValue) {
+        const inputTag = document.querySelector('input[name="csrfmiddlewaretoken"]');
+        if (inputTag) return inputTag.value;
+    }
+    
+    // Finally try from window variable
+    return cookieValue || window.csrfToken || '';
+}
 
-// Export for global access
-window.cartManager = CartManager.getInstance();
+// Make sure cart manager is initialized as soon as possible
+(function() {
+    // Create and initialize cart manager immediately
+    try {
+        console.log('Initializing CartManager...');
+        const cartManager = CartManager.getInstance();
+        window.cartManager = cartManager;
+        
+        // When DOM is ready, set up event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            cartManager.initializeCart().catch(error => {
+                console.error('Error during cart initialization:', error);
+            });
+            
+            // Dispatch a custom event that cart system is ready
+            document.dispatchEvent(new CustomEvent('cartManagerReady'));
+        });
+    } catch (error) {
+        console.error('Critical error setting up CartManager:', error);
+    }
+})();

@@ -115,20 +115,36 @@ def add_to_cart(request):
 
 
 @api_view(['PUT'])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def update_cart_item(request, item_id):
-    """Update cart item quantity"""
+    """Update cart item quantity - supports both authenticated users and guests"""
     serializer = UpdateCartItemSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     
     quantity = serializer.validated_data['quantity']
     
-    # Get cart item
-    cart_item = get_object_or_404(
-        CartItem, 
-        id=item_id, 
-        cart__user=request.user
-    )
+    # Get cart item - handle both authenticated and guest users
+    if request.user.is_authenticated:
+        cart_item = get_object_or_404(
+            CartItem, 
+            id=item_id, 
+            cart__user=request.user
+        )
+    else:
+        # For guest users, use session
+        session_id = request.session.session_key
+        if not session_id:
+            return Response(
+                {'error': 'No active session found. Please refresh the page.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        cart_item = get_object_or_404(
+            CartItem,
+            id=item_id,
+            cart__session_id=session_id,
+            cart__user=None
+        )
     
     # Check stock availability
     if cart_item.variant:
@@ -152,14 +168,31 @@ def update_cart_item(request, item_id):
 
 
 @api_view(['DELETE'])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def remove_from_cart(request, item_id):
-    """Remove item from cart"""
-    cart_item = get_object_or_404(
-        CartItem, 
-        id=item_id, 
-        cart__user=request.user
-    )
+    """Remove item from cart - supports both authenticated users and guests"""
+    # Handle both authenticated and guest users
+    if request.user.is_authenticated:
+        cart_item = get_object_or_404(
+            CartItem, 
+            id=item_id, 
+            cart__user=request.user
+        )
+    else:
+        # For guest users, use session
+        session_id = request.session.session_key
+        if not session_id:
+            return Response(
+                {'error': 'No active session found. Please refresh the page.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        cart_item = get_object_or_404(
+            CartItem,
+            id=item_id,
+            cart__session_id=session_id,
+            cart__user=None
+        )
     
     cart_item.delete()
     

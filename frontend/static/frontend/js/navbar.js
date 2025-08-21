@@ -289,79 +289,30 @@ class NavbarManager {
 
     // Cart Preview Management
     setupCartPreview() {
-        this.updateCartDisplay();
-        
-        // Listen for cart updates
-        document.addEventListener('cartUpdated', () => {
-            this.updateCartDisplay();
-        });
-    }
-
-    async updateCartDisplay() {
-        try {
-            const response = await fetch('/api/v1/cart/summary/');
-            if (response.ok) {
-                const cartData = await response.json();
-                this.renderCartPreview(cartData);
-            }
-        } catch (error) {
-            console.error('Error updating cart display:', error);
-        }
-    }
-
-    renderCartPreview(cartData) {
-        // Update cart count
-        const cartCount = document.querySelector('.cart .action-count');
-        const cartBadge = document.querySelector('.cart .action-badge');
-        
-        if (cartCount) {
-            cartCount.textContent = `${cartData.total_items || 0} items`;
-        }
-        
-        if (cartBadge) {
-            cartBadge.textContent = cartData.total_items || 0;
-            cartBadge.style.display = (cartData.total_items > 0) ? 'flex' : 'none';
-        }
-
-        // Update cart dropdown
-        const cartBody = document.querySelector('.cart-dropdown-body');
-        const cartTotal = document.querySelector('.cart-total-display');
-        
-        if (cartBody) {
-            if (cartData.items && cartData.items.length > 0) {
-                cartBody.innerHTML = cartData.items.map(item => `
-                    <div class="cart-item" data-item-id="${item.id}">
-                        <div class="cart-item-image">
-                            <img src="${item.image}" alt="${item.name}">
-                        </div>
-                        <div class="cart-item-details">
-                            <h6>${item.name}</h6>
-                            <p class="cart-item-variant">${item.variant}</p>
-                            <div class="cart-item-price">
-                                <span class="quantity">${item.quantity}x</span>
-                                <span class="price">$${item.price}</span>
-                            </div>
-                        </div>
-                        <button class="cart-item-remove" onclick="removeFromCart(${item.id})">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                `).join('');
-            } else {
-                cartBody.innerHTML = `
-                    <div class="empty-cart">
-                        <i class="fas fa-shopping-bag"></i>
-                        <p>Your cart is empty</p>
-                        <a href="/products/" class="btn-shop-now">Shop Now</a>
-                    </div>
-                `;
-            }
-        }
-        
-        if (cartTotal) {
-            cartTotal.innerHTML = `
-                <span>Total: <strong>$${cartData.total}</strong></span>
-            `;
+        // Try to use CartManager if available
+        if (window.cartManager) {
+            console.log('CartManager found, using it for cart functionality');
+            // Call initial cart update with slight delay to ensure everything is ready
+            setTimeout(() => {
+                if (window.cartManager && typeof window.cartManager.updateCartDisplay === 'function') {
+                    window.cartManager.updateCartDisplay();
+                }
+            }, 300);
+            
+            // Listen for future cart updates
+            document.addEventListener('cartUpdated', () => {
+                if (window.cartManager && typeof window.cartManager.updateCartDisplay === 'function') {
+                    window.cartManager.updateCartDisplay();
+                }
+            });
+        } else {
+            console.warn('CartManager not available yet, will wait for it');
+            // Wait for cart manager to be ready
+            document.addEventListener('cartManagerReady', () => {
+                if (window.cartManager && typeof window.cartManager.updateCartDisplay === 'function') {
+                    window.cartManager.updateCartDisplay();
+                }
+            });
         }
     }
 
@@ -414,29 +365,7 @@ class NavbarManager {
     }
 }
 
-// Global cart functions
-window.removeFromCart = async function(itemId) {
-    try {
-        const response = await fetch(`/api/cart/remove/${itemId}/`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
-                'Content-Type': 'application/json',
-            },
-        });
-        
-        if (response.ok) {
-            // Trigger cart update event
-            document.dispatchEvent(new CustomEvent('cartUpdated'));
-            
-            // Show success message
-            showNotification('Item removed from cart', 'success');
-        }
-    } catch (error) {
-        console.error('Error removing item from cart:', error);
-        showNotification('Error removing item from cart', 'error');
-    }
-};
+// Cart functions are handled by CartManager class in cart.js
 
 // Notification system
 window.showNotification = function(message, type = 'info') {

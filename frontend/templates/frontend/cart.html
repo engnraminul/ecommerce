@@ -617,20 +617,57 @@
             const cartContent = document.getElementById('cart-content');
             cartContent.style.display = 'block';
             
+            // First, try to sync local cart with server (if window.syncCartWithBackend exists)
+            if (window.syncCartWithBackend && typeof window.syncCartWithBackend === 'function') {
+                try {
+                    window.syncCartWithBackend().catch(error => {
+                        console.error('Error syncing cart:', error);
+                    });
+                } catch (error) {
+                    console.error('Error calling syncCartWithBackend:', error);
+                }
+            }
+            
+            // Add cache busting parameter to prevent stale responses
+            const cacheBust = `?_=${new Date().getTime()}`;
+            
+            // Set up fetch options with proper headers
+            const fetchOptions = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Cache-Control': 'no-cache, no-store'
+                },
+                credentials: 'same-origin',
+                cache: 'no-store'
+            };
+            
             // Load both cart items and summary
             Promise.all([
-                fetch('/api/v1/cart/', {
-                    headers: {
-                        'X-CSRFToken': getCookie('csrftoken')
-                    }
-                }),
-                fetch('/api/v1/cart/summary/', {
-                    headers: {
-                        'X-CSRFToken': getCookie('csrftoken')
-                    }
-                })
+                fetch(`/api/v1/cart/${cacheBust}`, fetchOptions),
+                fetch(`/api/v1/cart/summary/${cacheBust}`, fetchOptions)
             ])
-            .then(responses => Promise.all(responses.map(r => r.json())))
+            .then(responses => {
+                // Check if both responses are successful
+                if (!responses.every(r => r.ok)) {
+                    const errorResponse = responses.find(r => !r.ok);
+                    if (errorResponse) {
+                        if (errorResponse.status === 401) {
+                            showNotification('You need to be logged in to view your cart', 'error');
+                            setTimeout(() => {
+                                window.location.href = '/login/?next=/cart/';
+                            }, 2000);
+                        } else {
+                            showNotification('Failed to load cart data from server', 'error');
+                        }
+                        throw new Error(`Error fetching cart data: ${errorResponse.status}`);
+                    }
+                }
+                
+                // Parse both responses as JSON
+                return Promise.all(responses.map(r => r.json()));
+            })
             .then(([cartData, summaryData]) => {
                 // Combine cart data with summary
                 const combinedData = {
@@ -645,6 +682,17 @@
             })
             .catch(error => {
                 console.error('Error loading cart:', error);
+                
+                // Determine the appropriate error message
+                let errorMessage = 'Failed to load cart data. Please try again.';
+                
+                if (error.status === 401 || error.name === 'TypeError') {
+                    errorMessage = 'You may need to be logged in to view your cart';
+                } else if (error.message && error.message.includes('Failed to sync cart')) {
+                    errorMessage = 'Failed to sync cart with server. Please try again.';
+                }
+                
+                showNotification(errorMessage, 'error');
                 displayError();
             });
         }
@@ -672,9 +720,23 @@
             cartContent.innerHTML = `
                 <div style="text-align: center; padding: 2rem; color: var(--danger-color);">
                     <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
-                    <p>Error loading cart. Please refresh the page.</p>
+                    <p>Error loading cart. Please try again.</p>
+                    <button id="retry-cart-btn" style="margin-top: 1rem; padding: 0.75rem 1.5rem; background: var(--primary-color); color: white; border: none; border-radius: var(--border-radius); cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-sync-alt"></i> Retry
+                    </button>
                 </div>
             `;
+            
+            // Add event listener to retry button
+            setTimeout(() => {
+                const retryBtn = document.getElementById('retry-cart-btn');
+                if (retryBtn) {
+                    retryBtn.addEventListener('click', function() {
+                        showNotification('Retrying...', 'info');
+                        loadCart();
+                    });
+                }
+            }, 100);
         }
         
         function renderCartItems(items) {
@@ -755,22 +817,35 @@
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: JSON.stringify({ quantity: newQuantity })
+                body: JSON.stringify({ quantity: newQuantity }),
+                credentials: 'same-origin'
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert(data.error);
+            .then(response => {
+                if (response.ok) {
+                    return response.json().then(data => {
+                        loadCart(); // Reload cart to update all values
+                        showNotification('Cart updated successfully!');
+                    });
+                } else if (response.status === 401) {
+                    showNotification('You need to be logged in to update your cart', 'error');
+                    // Redirect to login page after a short delay
+                    setTimeout(() => {
+                        window.location.href = '/login/?next=/cart/';
+                    }, 2000);
                 } else {
-                    loadCart(); // Reload cart to update all values
-                    showNotification('Cart updated successfully!');
+                    return response.json().then(data => {
+                        showNotification(data.error || 'Error updating cart', 'error');
+                    }).catch(err => {
+                        showNotification('An error occurred while updating the cart', 'error');
+                    });
                 }
             })
             .catch(error => {
                 console.error('Error updating quantity:', error);
-                alert('Error updating cart. Please try again.');
+                showNotification('Error updating cart. Please try again.', 'error');
             });
         };
         
@@ -779,21 +854,35 @@
                 fetch(`/api/v1/cart/items/${itemId}/remove/`, {
                     method: 'DELETE',
                     headers: {
-                        'X-CSRFToken': getCookie('csrftoken')
-                    }
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        alert(data.error);
+                .then(response => {
+                    if (response.ok) {
+                        return response.json().then(data => {
+                            loadCart(); // Reload cart
+                            showNotification('Item removed from cart');
+                        });
+                    } else if (response.status === 401) {
+                        showNotification('You need to be logged in to modify your cart', 'error');
+                        // Redirect to login page after a short delay
+                        setTimeout(() => {
+                            window.location.href = '/login/?next=/cart/';
+                        }, 2000);
                     } else {
-                        loadCart(); // Reload cart
-                        showNotification('Item removed from cart');
+                        return response.json().then(data => {
+                            showNotification(data.error || 'Error removing item', 'error');
+                        }).catch(err => {
+                            showNotification('An error occurred while removing the item', 'error');
+                        });
                     }
                 })
                 .catch(error => {
                     console.error('Error removing item:', error);
-                    alert('Error removing item. Please try again.');
+                    showNotification('Error removing item. Please try again.', 'error');
                 });
             }
         };
@@ -804,21 +893,35 @@
                 fetch('/api/v1/cart/clear/', {
                     method: 'DELETE',
                     headers: {
-                        'X-CSRFToken': getCookie('csrftoken')
-                    }
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        alert(data.error);
+                .then(response => {
+                    if (response.ok) {
+                        return response.json().then(data => {
+                            loadCart(); // Reload cart
+                            showNotification('Cart cleared successfully');
+                        });
+                    } else if (response.status === 401) {
+                        showNotification('You need to be logged in to clear your cart', 'error');
+                        // Redirect to login page after a short delay
+                        setTimeout(() => {
+                            window.location.href = '/login/?next=/cart/';
+                        }, 2000);
                     } else {
-                        loadCart(); // Reload cart
-                        showNotification('Cart cleared successfully');
+                        return response.json().then(data => {
+                            showNotification(data.error || 'Error clearing cart', 'error');
+                        }).catch(err => {
+                            showNotification('An error occurred while clearing the cart', 'error');
+                        });
                     }
                 })
                 .catch(error => {
                     console.error('Error clearing cart:', error);
-                    alert('Error clearing cart. Please try again.');
+                    showNotification('Error clearing cart. Please try again.', 'error');
                 });
             }
         });
@@ -842,6 +945,12 @@
                     }
                 }
             }
+            
+            // If cookie not found, try window.csrfToken as fallback
+            if (!cookieValue && window.csrfToken) {
+                cookieValue = window.csrfToken;
+            }
+            
             return cookieValue;
         }
         
