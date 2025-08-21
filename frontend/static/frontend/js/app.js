@@ -98,7 +98,8 @@ function updateCartUI() {
     // Update cart page if we're on it
     const cartContainer = document.querySelector('.cart-items');
     if (cartContainer) {
-        renderCartItems();
+        // Update cart items display if we're on the cart page
+        window.cartManager?.updateCartDisplay();
     }
 }
 

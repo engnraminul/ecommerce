@@ -299,7 +299,7 @@ class NavbarManager {
 
     async updateCartDisplay() {
         try {
-            const response = await fetch('/api/cart/preview/');
+            const response = await fetch('/api/v1/cart/summary/');
             if (response.ok) {
                 const cartData = await response.json();
                 this.renderCartPreview(cartData);
@@ -315,12 +315,12 @@ class NavbarManager {
         const cartBadge = document.querySelector('.cart .action-badge');
         
         if (cartCount) {
-            cartCount.textContent = `${cartData.item_count} items`;
+            cartCount.textContent = `${cartData.total_items || 0} items`;
         }
         
         if (cartBadge) {
-            cartBadge.textContent = cartData.item_count;
-            cartBadge.style.display = cartData.item_count > 0 ? 'flex' : 'none';
+            cartBadge.textContent = cartData.total_items || 0;
+            cartBadge.style.display = (cartData.total_items > 0) ? 'flex' : 'none';
         }
 
         // Update cart dropdown
