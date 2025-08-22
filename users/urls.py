@@ -18,6 +18,12 @@ urlpatterns = [
     path('addresses/', views.AddressListCreateView.as_view(), name='address-list'),
     path('addresses/<int:pk>/', views.AddressDetailView.as_view(), name='address-detail'),
     
+    # API endpoints
+    path('api/v1/addresses/', views.address_api_list_create, name='address-api-list-create'),
+    path('api/v1/addresses/<int:address_id>/', views.address_api_detail, name='address-api-detail'),
+    path('api/v1/addresses/<int:address_id>/set_default/', views.set_default_address, name='set-default-address'),
+    path('api/v1/profile-picture/', views.update_profile_picture, name='update-profile-picture'),
+    
     # Statistics
     path('stats/', views.user_stats_view, name='user-stats'),
 ]

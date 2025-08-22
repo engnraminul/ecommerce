@@ -425,29 +425,172 @@ def dashboard(request):
     
     return render(request, 'frontend/dashboard.html', context)
 
+@login_required
 def profile(request):
-    """User profile page."""
+    """User profile page with personal info, addresses, security and preferences."""
+    from users.models import Address
+    from django.contrib.auth import update_session_auth_hash
+    from django.contrib.auth.forms import PasswordChangeForm
+    from orders.models import Order
+    from products.models import Review
+    
+    # Get counts for statistics
+    order_count = Order.objects.filter(user=request.user).count()
+    address_count = Address.objects.filter(user=request.user).count()
+    reviews_count = Review.objects.filter(user=request.user).count()
+    
+    # Get addresses
+    addresses = Address.objects.filter(user=request.user)
+    
     if request.method == 'POST':
-        # Update user info
-        request.user.first_name = request.POST.get('first_name', '')
-        request.user.last_name = request.POST.get('last_name', '')
-        request.user.phone = request.POST.get('phone', '')
-        request.user.save()
+        form_type = request.POST.get('form_type')
         
-        # Update profile info
-        profile = request.user.profile
-        profile.date_of_birth = request.POST.get('date_of_birth') or None
-        profile.gender = request.POST.get('gender', '')
-        profile.bio = request.POST.get('bio', '')
-        profile.save()
+        # Handle personal information form
+        if form_type == 'personal':
+            # Update user info
+            request.user.first_name = request.POST.get('first_name', '')
+            request.user.last_name = request.POST.get('last_name', '')
+            request.user.phone = request.POST.get('phone', '')
+            
+            # Handle profile picture upload
+            if 'profile_picture' in request.FILES:
+                request.user.profile_picture = request.FILES['profile_picture']
+                
+            # Update date of birth if provided
+            date_of_birth = request.POST.get('date_of_birth')
+            if date_of_birth:
+                request.user.date_of_birth = date_of_birth
+                
+            request.user.save()
+            
+            messages.success(request, 'Personal information updated successfully!')
+            
+        # Handle password change form
+        elif form_type == 'password':
+            current_password = request.POST.get('current_password')
+            new_password = request.POST.get('new_password')
+            confirm_password = request.POST.get('confirm_new_password')
+            
+            # Check if current password is correct
+            if not request.user.check_password(current_password):
+                messages.error(request, 'Current password is incorrect.')
+                return redirect('frontend:profile')
+            
+            # Check if new passwords match
+            if new_password != confirm_password:
+                messages.error(request, 'New passwords do not match.')
+                return redirect('frontend:profile')
+                
+            # Validate password complexity
+            if (len(new_password) < 8 or
+                not any(c.isupper() for c in new_password) or
+                not any(c.islower() for c in new_password) or
+                not any(c.isdigit() for c in new_password) or
+                not any(c in '!@#$%^&*(),.?":{}|<>' for c in new_password)):
+                messages.error(request, 'Password does not meet complexity requirements.')
+                return redirect('frontend:profile')
+                
+            # Update password
+            request.user.set_password(new_password)
+            request.user.save()
+            
+            # Update session to prevent logout
+            update_session_auth_hash(request, request.user)
+            
+            messages.success(request, 'Password updated successfully!')
+            
+        # Handle address form
+        elif form_type == 'address':
+            address_id = request.POST.get('address_id')
+            address_type = request.POST.get('address_type')
+            is_default = request.POST.get('is_default') == 'on'
+            
+            address_data = {
+                'address_type': address_type,
+                'address_line_1': request.POST.get('address_line_1'),
+                'address_line_2': request.POST.get('address_line_2', ''),
+                'city': request.POST.get('city'),
+                'state': request.POST.get('state'),
+                'postal_code': request.POST.get('postal_code'),
+                'country': request.POST.get('country'),
+                'is_default': is_default,
+            }
+            
+            # If it's default, reset other addresses of same type
+            if is_default:
+                Address.objects.filter(
+                    user=request.user, 
+                    address_type=address_type, 
+                    is_default=True
+                ).update(is_default=False)
+            
+            # Update existing or create new address
+            if address_id:
+                address = Address.objects.get(id=address_id, user=request.user)
+                for key, value in address_data.items():
+                    setattr(address, key, value)
+                address.save()
+                messages.success(request, 'Address updated successfully!')
+            else:
+                address_data['user'] = request.user
+                Address.objects.create(**address_data)
+                messages.success(request, 'Address added successfully!')
+                
+        # Handle set default address form
+        elif form_type == 'set_default_address':
+            address_id = request.POST.get('address_id')
+            if address_id:
+                address = Address.objects.get(id=address_id, user=request.user)
+                
+                # Reset default for other addresses of same type
+                Address.objects.filter(
+                    user=request.user, 
+                    address_type=address.address_type, 
+                    is_default=True
+                ).update(is_default=False)
+                
+                # Set this address as default
+                address.is_default = True
+                address.save()
+                
+                messages.success(request, f'Default {address.get_address_type_display()} address updated!')
         
-        messages.success(request, 'Profile updated successfully!')
+        # Handle delete address form
+        elif form_type == 'delete_address':
+            address_id = request.POST.get('address_id')
+            if address_id:
+                address = Address.objects.get(id=address_id, user=request.user)
+                
+                # Don't allow deletion of default address
+                if address.is_default:
+                    messages.error(request, 'Cannot delete default address.')
+                else:
+                    address_type = address.get_address_type_display()
+                    address.delete()
+                    messages.success(request, f'{address_type} address deleted successfully!')
+        
+        # Handle preferences form
+        elif form_type == 'preferences':
+            profile = request.user.profile
+            profile.newsletter_subscription = request.POST.get('newsletter_subscription') == 'on'
+            profile.email_notifications = request.POST.get('email_notifications') == 'on'
+            profile.sms_notifications = request.POST.get('sms_notifications') == 'on'
+            profile.preferred_currency = request.POST.get('preferred_currency', 'USD')
+            profile.preferred_language = request.POST.get('preferred_language', 'en')
+            profile.save()
+            
+            messages.success(request, 'Preferences updated successfully!')
+        
         return redirect('frontend:profile')
     
     context = {
         'user': request.user,
-        'profile': request.user.profile,
+        'addresses': addresses,
+        'order_count': order_count,
+        'address_count': address_count,
+        'reviews_count': reviews_count
     }
+    
     return render(request, 'frontend/profile.html', context)
 
 

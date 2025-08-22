@@ -4,6 +4,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import login
 from django.db import transaction
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.contrib.auth.decorators import login_required
 from .models import User, UserProfile, Address
 from .serializers import (
     UserRegistrationSerializer, UserLoginSerializer, UserSerializer,
@@ -174,8 +177,186 @@ def user_stats_view(request):
         'completed_orders': Order.objects.filter(user=user, status='delivered').count(),
         'pending_orders': Order.objects.filter(user=user, status__in=['pending', 'confirmed', 'processing', 'shipped']).count(),
         'total_reviews': Review.objects.filter(user=user, is_approved=True).count(),
-        'wishlist_items': user.wishlist_items.count(),
+        'wishlist_items': user.wishlist_items.count() if hasattr(user, 'wishlist_items') else 0,
         'addresses_count': user.addresses.count(),
     }
     
     return Response(stats)
+
+
+# API endpoints for profile page
+@login_required
+@require_http_methods(['POST'])
+def update_profile_picture(request):
+    """API endpoint to update user profile picture"""
+    if 'profile_picture' not in request.FILES:
+        return JsonResponse({'success': False, 'error': 'No image provided'})
+    
+    try:
+        # Get the uploaded image
+        image = request.FILES['profile_picture']
+        
+        # Update user profile picture
+        request.user.profile_picture = image
+        request.user.save()
+        
+        # Return success response with new image URL
+        return JsonResponse({
+            'success': True,
+            'image_url': request.user.profile_picture.url
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def address_api_list_create(request):
+    """API endpoint to list and create addresses"""
+    if request.method == 'GET':
+        addresses = Address.objects.filter(user=request.user)
+        addresses_data = []
+        
+        for address in addresses:
+            addresses_data.append({
+                'id': address.id,
+                'type': address.address_type,
+                'line1': address.address_line_1,
+                'line2': address.address_line_2,
+                'city': address.city,
+                'state': address.state,
+                'postal_code': address.postal_code,
+                'country': address.country,
+                'is_default': address.is_default
+            })
+            
+        return JsonResponse({'success': True, 'addresses': addresses_data})
+    
+    elif request.method == 'POST':
+        try:
+            # Extract address data
+            address_type = request.POST.get('address_type')
+            is_default = request.POST.get('is_default') == 'on'
+            
+            # Create new address
+            address = Address(
+                user=request.user,
+                address_type=address_type,
+                address_line_1=request.POST.get('address_line_1'),
+                address_line_2=request.POST.get('address_line_2', ''),
+                city=request.POST.get('city'),
+                state=request.POST.get('state'),
+                postal_code=request.POST.get('postal_code'),
+                country=request.POST.get('country'),
+                is_default=is_default
+            )
+            
+            # If it's default, reset other addresses of same type
+            if is_default:
+                Address.objects.filter(
+                    user=request.user, 
+                    address_type=address_type, 
+                    is_default=True
+                ).update(is_default=False)
+                
+            address.save()
+            
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+
+@login_required
+@require_http_methods(['GET', 'PUT', 'DELETE'])
+def address_api_detail(request, address_id):
+    """API endpoint to get, update, or delete an address"""
+    try:
+        address = Address.objects.get(id=address_id, user=request.user)
+    except Address.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Address not found'}, status=404)
+    
+    if request.method == 'GET':
+        # Return address details
+        address_data = {
+            'id': address.id,
+            'type': address.address_type,
+            'line1': address.address_line_1,
+            'line2': address.address_line_2,
+            'city': address.city,
+            'state': address.state,
+            'postal_code': address.postal_code,
+            'country': address.country,
+            'is_default': address.is_default
+        }
+        return JsonResponse(address_data)
+    
+    elif request.method == 'PUT':
+        try:
+            # Extract address data
+            address_type = request.POST.get('address_type')
+            is_default = request.POST.get('is_default') == 'on'
+            
+            # Update address fields
+            address.address_type = address_type
+            address.address_line_1 = request.POST.get('address_line_1')
+            address.address_line_2 = request.POST.get('address_line_2', '')
+            address.city = request.POST.get('city')
+            address.state = request.POST.get('state')
+            address.postal_code = request.POST.get('postal_code')
+            address.country = request.POST.get('country')
+            
+            # Handle default address
+            if is_default and not address.is_default:
+                # Reset other default addresses
+                Address.objects.filter(
+                    user=request.user, 
+                    address_type=address_type, 
+                    is_default=True
+                ).update(is_default=False)
+                address.is_default = True
+            elif not is_default and address.is_default:
+                # Don't allow removing default status if it's the only address
+                if Address.objects.filter(user=request.user, address_type=address_type).count() == 1:
+                    address.is_default = True
+                else:
+                    address.is_default = False
+            
+            address.save()
+            
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    elif request.method == 'DELETE':
+        # Don't allow deletion if it's the only address of this type
+        if address.is_default:
+            return JsonResponse({
+                'success': False, 
+                'error': 'Cannot delete default address. Set another address as default first.'
+            }, status=400)
+        
+        address.delete()
+        return JsonResponse({'success': True})
+
+
+@login_required
+@require_http_methods(['POST'])
+def set_default_address(request, address_id):
+    """API endpoint to set an address as default"""
+    try:
+        address = Address.objects.get(id=address_id, user=request.user)
+    except Address.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Address not found'}, status=404)
+    
+    # Reset default for other addresses of same type
+    Address.objects.filter(
+        user=request.user, 
+        address_type=address.address_type, 
+        is_default=True
+    ).update(is_default=False)
+    
+    # Set as default
+    address.is_default = True
+    address.save()
+    
+    return JsonResponse({'success': True})

@@ -1,0 +1,1283 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+
+{% block title %}My Profile - Professional eCommerce{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'frontend/css/profile.css' %}">
+<style>
+    /* Additional Profile Page Styles */
+    .profile-page {
+        padding: 2.5rem 0;
+        background-color: #f5f7fa;
+        min-height: 80vh;
+    }
+
+    .profile-header {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        position: relative;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background-color: var(--light-color);
+        overflow: hidden;
+        border: 4px solid var(--white);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        margin-right: 2rem;
+        flex-shrink: 0;
+        position: relative;
+    }
+
+    .profile-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .avatar-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: var(--secondary-color);
+    }
+
+    .change-avatar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        color: white;
+        text-align: center;
+        padding: 0.25rem 0;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        opacity: 0;
+    }
+
+    .profile-avatar:hover .change-avatar {
+        opacity: 1;
+    }
+
+    .profile-info {
+        flex: 1;
+    }
+
+    .profile-name {
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+        color: var(--dark-color);
+        font-weight: 700;
+    }
+
+    .profile-email {
+        color: var(--secondary-color);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .profile-email i {
+        margin-right: 0.5rem;
+        color: var(--primary-color);
+    }
+
+    .profile-stats {
+        display: flex;
+        gap: 2rem;
+        margin-top: 1rem;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--dark-color);
+    }
+
+    .stat-label {
+        color: var(--secondary-color);
+        font-size: 0.875rem;
+    }
+
+    .profile-tabs {
+        margin-bottom: 2rem;
+        background: var(--white);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .tab-nav {
+        display: flex;
+        border-bottom: 1px solid var(--border-color);
+        overflow-x: auto;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* Internet Explorer/Edge */
+    }
+
+    .tab-nav::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, Opera */
+    }
+
+    .tab-button {
+        padding: 1rem 1.5rem;
+        color: var(--secondary-color);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        position: relative;
+        border: none;
+        background: transparent;
+    }
+
+    .tab-button:hover {
+        color: var(--primary-color);
+    }
+
+    .tab-button.active {
+        color: var(--primary-color);
+    }
+
+    .tab-button.active::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background-color: var(--primary-color);
+        border-radius: 3px 3px 0 0;
+    }
+
+    .tab-content {
+        padding: 2rem;
+        min-height: 400px;
+    }
+
+    .tab-pane {
+        display: none;
+        animation: fadeIn 0.3s;
+    }
+
+    .tab-pane.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    /* Form Styles */
+    .form-section {
+        margin-bottom: 2rem;
+    }
+
+    .form-section-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-section-title i {
+        color: var(--primary-color);
+    }
+
+    .form-row {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .form-group {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--dark-color);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 1rem;
+        color: var(--dark-color);
+        transition: all 0.3s;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(147, 0, 0, 0.1);
+        outline: none;
+    }
+
+    .form-control[readonly] {
+        background-color: #f8f9fa;
+        cursor: not-allowed;
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        justify-content: flex-end;
+    }
+
+    .btn-secondary {
+        background: var(--light-color);
+        color: var(--dark-color);
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        border: 1px solid var(--border-color);
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .btn-secondary:hover {
+        background: #e9ecef;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-color), #7e0000);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 4px 10px rgba(147, 0, 0, 0.15);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(147, 0, 0, 0.2);
+    }
+
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 24px;
+        margin-right: 10px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 24px;
+    }
+
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    input:checked + .toggle-slider {
+        background-color: var(--primary-color);
+    }
+
+    input:focus + .toggle-slider {
+        box-shadow: 0 0 1px var(--primary-color);
+    }
+
+    input:checked + .toggle-slider:before {
+        transform: translateX(24px);
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .checkbox-label {
+        font-weight: 500;
+        color: var(--dark-color);
+    }
+
+    .address-card {
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+        transition: all 0.3s;
+    }
+
+    .address-card:hover {
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        border-color: var(--primary-color);
+    }
+
+    .address-card.default {
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .address-type {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: var(--light-color);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .address-type.shipping {
+        background-color: rgba(209, 236, 241, 0.5);
+        color: #0c5460;
+    }
+
+    .address-type.billing {
+        background-color: rgba(255, 243, 205, 0.5);
+        color: #856404;
+    }
+
+    .address-default-badge {
+        background: var(--primary-color);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
+        margin-top: 0.5rem;
+    }
+
+    .address-card h4 {
+        font-size: 1.1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .address-details {
+        color: var(--secondary-color);
+        margin-bottom: 1rem;
+        line-height: 1.6;
+    }
+
+    .address-actions {
+        margin-top: 1rem;
+        display: flex;
+        gap: 1rem;
+    }
+
+    .address-actions button {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+
+    .btn-add-address {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px dashed var(--border-color);
+        border-radius: 8px;
+        padding: 2rem;
+        width: 100%;
+        background: transparent;
+        color: var(--secondary-color);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .btn-add-address:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+
+    .btn-add-address i {
+        font-size: 1.5rem;
+        margin-right: 0.75rem;
+    }
+
+    .password-requirements {
+        margin-top: 0.75rem;
+        font-size: 0.875rem;
+        color: var(--secondary-color);
+    }
+
+    .password-requirement {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.25rem;
+    }
+
+    .password-requirement i {
+        margin-right: 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .requirement-met {
+        color: var(--success-color);
+    }
+
+    .requirement-not-met {
+        color: var(--secondary-color);
+    }
+
+    /* Form Validations */
+    .form-control.is-invalid {
+        border-color: var(--danger-color);
+    }
+
+    .invalid-feedback {
+        color: var(--danger-color);
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    /* Modal styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+        background-color: var(--white);
+        margin: 10% auto;
+        padding: 2rem;
+        border-radius: 16px;
+        width: 90%;
+        max-width: 600px;
+        animation: slideIn 0.3s ease-out;
+        position: relative;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 1rem;
+    }
+
+    .modal-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--dark-color);
+    }
+
+    .close-modal {
+        font-size: 1.5rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--secondary-color);
+        transition: color 0.3s;
+    }
+
+    .close-modal:hover {
+        color: var(--primary-color);
+    }
+
+    .modal-body {
+        margin-bottom: 2rem;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        border-top: 1px solid var(--border-color);
+        padding-top: 1rem;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateY(-50px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+        .profile-header {
+            padding: 1.5rem;
+        }
+        
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            margin-right: 1.5rem;
+        }
+        
+        .profile-name {
+            font-size: 1.5rem;
+        }
+        
+        .tab-button {
+            padding: 0.75rem 1.25rem;
+        }
+        
+        .tab-content {
+            padding: 1.5rem;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .profile-stats {
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .stat-item {
+            flex: 0 0 calc(50% - 0.5rem);
+        }
+        
+        .profile-avatar {
+            margin-bottom: 1rem;
+        }
+        
+        .form-row {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .form-group {
+            width: 100%;
+        }
+        
+        .btn-group {
+            flex-direction: column;
+        }
+        
+        .modal-content {
+            margin: 20% auto;
+            padding: 1.5rem;
+            width: 95%;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .profile-header {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .profile-avatar {
+            margin-right: 0;
+            margin-bottom: 1.5rem;
+        }
+        
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .profile-stats {
+            justify-content: center;
+        }
+        
+        .tab-button {
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .tab-content {
+            padding: 1.25rem;
+        }
+        
+        .form-section-title {
+            font-size: 1.1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="breadcrumb-container">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'frontend:home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'frontend:dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">My Profile</li>
+        </ol>
+    </nav>
+
+    <div class="profile-page">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="profile-avatar">
+                {% if user.profile_picture %}
+                    <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}">
+                {% else %}
+                    <div class="avatar-placeholder">
+                        <i class="fas fa-user"></i>
+                    </div>
+                {% endif %}
+                <label for="avatar-upload" class="change-avatar">Change Photo</label>
+            </div>
+            <div class="profile-info">
+                <h1 class="profile-name">{{ user.get_full_name|default:user.username }}</h1>
+                <div class="profile-email"><i class="fas fa-envelope"></i> {{ user.email }}</div>
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">{{ order_count|default:"0" }}</div>
+                        <div class="stat-label">Orders</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ address_count|default:"0" }}</div>
+                        <div class="stat-label">Addresses</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ reviews_count|default:"0" }}</div>
+                        <div class="stat-label">Reviews</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Content -->
+        <div class="profile-tabs">
+            <div class="tab-nav">
+                <button class="tab-button active" data-tab="personal">
+                    <i class="fas fa-user"></i> Personal Information
+                </button>
+                <button class="tab-button" data-tab="addresses">
+                    <i class="fas fa-map-marker-alt"></i> My Addresses
+                </button>
+                <button class="tab-button" data-tab="security">
+                    <i class="fas fa-lock"></i> Security
+                </button>
+                <button class="tab-button" data-tab="preferences">
+                    <i class="fas fa-cog"></i> Preferences
+                </button>
+            </div>
+
+            <div class="tab-content">
+                <!-- Personal Information Tab -->
+                <div class="tab-pane active" id="personal-tab">
+                    <form action="{% url 'frontend:profile' %}" method="post" enctype="multipart/form-data" id="personal-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="personal">
+                        <input type="file" id="avatar-upload" name="profile_picture" style="display: none;">
+
+                        <div class="form-section">
+                            <h3 class="form-section-title">
+                                <i class="fas fa-user-circle"></i> Basic Information
+                            </h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="first_name" class="form-label">First Name</label>
+                                    <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="last_name" class="form-label">Last Name</label>
+                                    <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="email" class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" id="email" value="{{ user.email }}" readonly>
+                                    <small class="text-muted">Contact support to change your email</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="phone" class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone" value="{{ user.phone }}">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="date_of_birth" class="form-label">Date of Birth</label>
+                                    <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" value="{{ user.date_of_birth|date:'Y-m-d' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="btn-group">
+                            <button type="reset" class="btn-secondary">Cancel</button>
+                            <button type="submit" class="btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Addresses Tab -->
+                <div class="tab-pane" id="addresses-tab">
+                    <div class="form-section">
+                        <h3 class="form-section-title">
+                            <i class="fas fa-home"></i> My Addresses
+                        </h3>
+                        
+                        {% if addresses %}
+                            {% for address in addresses %}
+                                <div class="address-card {% if address.is_default %}default{% endif %}">
+                                    <div class="address-type {{ address.address_type }}">
+                                        {{ address.get_address_type_display }}
+                                    </div>
+                                    <h4>{{ address.address_line_1 }}</h4>
+                                    <div class="address-details">
+                                        {% if address.address_line_2 %}
+                                            {{ address.address_line_2 }}<br>
+                                        {% endif %}
+                                        {{ address.city }}, {{ address.state }} {{ address.postal_code }}<br>
+                                        {{ address.country }}
+                                    </div>
+                                    {% if address.is_default %}
+                                        <span class="address-default-badge">Default</span>
+                                    {% endif %}
+                                    <div class="address-actions">
+                                        <button class="btn-secondary edit-address-btn" 
+                                                data-address-id="{{ address.id }}"
+                                                data-address-line1="{{ address.address_line_1 }}"
+                                                data-address-line2="{{ address.address_line_2 }}"
+                                                data-city="{{ address.city }}"
+                                                data-state="{{ address.state }}"
+                                                data-postal-code="{{ address.postal_code }}"
+                                                data-country="{{ address.country }}"
+                                                data-type="{{ address.address_type }}"
+                                                data-is-default="{{ address.is_default|lower }}">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        {% if not address.is_default %}
+                                            <form action="{% url 'frontend:profile' %}" method="post" style="display: inline;">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="form_type" value="set_default_address">
+                                                <input type="hidden" name="address_id" value="{{ address.id }}">
+                                                <button type="submit" class="btn-secondary">
+                                                    <i class="fas fa-check"></i> Set as Default
+                                                </button>
+                                            </form>
+                                            <form action="{% url 'frontend:profile' %}" method="post" style="display: inline;">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="form_type" value="delete_address">
+                                                <input type="hidden" name="address_id" value="{{ address.id }}">
+                                                <button type="submit" class="btn-secondary">
+                                                    <i class="fas fa-trash-alt"></i> Delete
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="alert alert-info">You haven't added any addresses yet.</div>
+                        {% endif %}
+                        
+                        <button id="add-address-btn" class="btn-add-address">
+                            <i class="fas fa-plus-circle"></i> Add New Address
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Security Tab -->
+                <div class="tab-pane" id="security-tab">
+                    <div class="form-section">
+                        <h3 class="form-section-title">
+                            <i class="fas fa-key"></i> Change Password
+                        </h3>
+                        <form action="{% url 'frontend:profile' %}" method="post" id="password-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_type" value="password">
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="current_password" class="form-label">Current Password</label>
+                                    <input type="password" class="form-control" id="current_password" name="current_password" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="new_password" class="form-label">New Password</label>
+                                    <input type="password" class="form-control" id="new_password" name="new_password" required>
+                                    <div class="password-requirements">
+                                        <div class="password-requirement" id="length-requirement">
+                                            <i class="fas fa-circle requirement-not-met"></i>
+                                            At least 8 characters long
+                                        </div>
+                                        <div class="password-requirement" id="uppercase-requirement">
+                                            <i class="fas fa-circle requirement-not-met"></i>
+                                            Contains uppercase letter
+                                        </div>
+                                        <div class="password-requirement" id="lowercase-requirement">
+                                            <i class="fas fa-circle requirement-not-met"></i>
+                                            Contains lowercase letter
+                                        </div>
+                                        <div class="password-requirement" id="number-requirement">
+                                            <i class="fas fa-circle requirement-not-met"></i>
+                                            Contains number
+                                        </div>
+                                        <div class="password-requirement" id="special-requirement">
+                                            <i class="fas fa-circle requirement-not-met"></i>
+                                            Contains special character
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="confirm_new_password" class="form-label">Confirm New Password</label>
+                                    <input type="password" class="form-control" id="confirm_new_password" name="confirm_new_password" required>
+                                </div>
+                            </div>
+                            
+                            <div class="btn-group">
+                                <button type="reset" class="btn-secondary">Cancel</button>
+                                <button type="submit" class="btn-primary" id="change-password-btn" disabled>Update Password</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">
+                            <i class="fas fa-shield-alt"></i> Account Security
+                        </h3>
+                        <div class="checkbox-group">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="enable_2fa" name="enable_2fa" {% if user.profile.two_factor_enabled %}checked{% endif %}>
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span class="checkbox-label">Enable Two-Factor Authentication</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preferences Tab -->
+                <div class="tab-pane" id="preferences-tab">
+                    <form action="{% url 'frontend:profile' %}" method="post" id="preferences-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="preferences">
+                        
+                        <div class="form-section">
+                            <h3 class="form-section-title">
+                                <i class="fas fa-bell"></i> Notification Settings
+                            </h3>
+                            
+                            <div class="checkbox-group">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="newsletter_subscription" name="newsletter_subscription" {% if user.profile.newsletter_subscription %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span class="checkbox-label">Subscribe to newsletter</span>
+                            </div>
+                            
+                            <div class="checkbox-group">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="email_notifications" name="email_notifications" {% if user.profile.email_notifications %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span class="checkbox-label">Email notifications for orders and promotions</span>
+                            </div>
+                            
+                            <div class="checkbox-group">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="sms_notifications" name="sms_notifications" {% if user.profile.sms_notifications %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span class="checkbox-label">SMS notifications</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h3 class="form-section-title">
+                                <i class="fas fa-globe"></i> Regional Preferences
+                            </h3>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="preferred_currency" class="form-label">Preferred Currency</label>
+                                    <select class="form-control" id="preferred_currency" name="preferred_currency">
+                                        <option value="USD" {% if user.profile.preferred_currency == 'USD' %}selected{% endif %}>US Dollar (USD)</option>
+                                        <option value="EUR" {% if user.profile.preferred_currency == 'EUR' %}selected{% endif %}>Euro (EUR)</option>
+                                        <option value="GBP" {% if user.profile.preferred_currency == 'GBP' %}selected{% endif %}>British Pound (GBP)</option>
+                                        <option value="CAD" {% if user.profile.preferred_currency == 'CAD' %}selected{% endif %}>Canadian Dollar (CAD)</option>
+                                        <option value="AUD" {% if user.profile.preferred_currency == 'AUD' %}selected{% endif %}>Australian Dollar (AUD)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="preferred_language" class="form-label">Preferred Language</label>
+                                    <select class="form-control" id="preferred_language" name="preferred_language">
+                                        <option value="en" {% if user.profile.preferred_language == 'en' %}selected{% endif %}>English</option>
+                                        <option value="es" {% if user.profile.preferred_language == 'es' %}selected{% endif %}>Spanish</option>
+                                        <option value="fr" {% if user.profile.preferred_language == 'fr' %}selected{% endif %}>French</option>
+                                        <option value="de" {% if user.profile.preferred_language == 'de' %}selected{% endif %}>German</option>
+                                        <option value="zh" {% if user.profile.preferred_language == 'zh' %}selected{% endif %}>Chinese</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button type="reset" class="btn-secondary">Reset</button>
+                            <button type="submit" class="btn-primary">Save Preferences</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Address Modal -->
+<div id="address-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title" id="address-modal-title">Add New Address</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form action="{% url 'frontend:profile' %}" method="post" id="address-form">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="address">
+                <input type="hidden" name="address_id" id="address_id" value="">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="address_type" class="form-label">Address Type</label>
+                        <select class="form-control" id="address_type" name="address_type" required>
+                            <option value="shipping">Shipping</option>
+                            <option value="billing">Billing</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="address_line_1" class="form-label">Address Line 1</label>
+                        <input type="text" class="form-control" id="address_line_1" name="address_line_1" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="address_line_2" class="form-label">Address Line 2 (Optional)</label>
+                        <input type="text" class="form-control" id="address_line_2" name="address_line_2">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="city" class="form-label">City</label>
+                        <input type="text" class="form-control" id="city" name="city" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="state" class="form-label">State/Province</label>
+                        <input type="text" class="form-control" id="state" name="state" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="postal_code" class="form-label">Postal/ZIP Code</label>
+                        <input type="text" class="form-control" id="postal_code" name="postal_code" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="country" class="form-label">Country</label>
+                        <input type="text" class="form-control" id="country" name="country" required>
+                    </div>
+                </div>
+                
+                <div class="checkbox-group">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="is_default" name="is_default">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="checkbox-label">Set as default address</span>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary close-modal-btn">Cancel</button>
+            <button type="button" class="btn-primary" id="save-address-btn">Save Address</button>
+        </div>
+    </div>
+</div>
+
+{% if messages %}
+<div class="message-container">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'frontend/js/profile.js' %}"></script>
+<script>
+    // Additional profile page JavaScript
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tab navigation
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+        
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons and panes
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabPanes.forEach(pane => pane.classList.remove('active'));
+                
+                // Add active class to clicked button
+                button.classList.add('active');
+                
+                // Show corresponding tab pane
+                const tabId = button.getAttribute('data-tab');
+                document.getElementById(tabId + '-tab').classList.add('active');
+            });
+        });
+        
+        // Profile picture upload
+        const avatarUpload = document.getElementById('avatar-upload');
+        const avatarPreview = document.querySelector('.profile-avatar img') || document.querySelector('.avatar-placeholder');
+        
+        if (avatarUpload) {
+            avatarUpload.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        if (avatarPreview.tagName === 'IMG') {
+                            avatarPreview.src = e.target.result;
+                        } else {
+                            // Replace placeholder with image
+                            const avatarContainer = document.querySelector('.profile-avatar');
+                            avatarContainer.innerHTML = `<img src="${e.target.result}" alt="Profile Picture">
+                                                        <label for="avatar-upload" class="change-avatar">Change Photo</label>`;
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+        
+        // Address modal
+        const modal = document.getElementById('address-modal');
+        const addAddressBtn = document.getElementById('add-address-btn');
+        const closeModalBtns = document.querySelectorAll('.close-modal, .close-modal-btn');
+        const saveAddressBtn = document.getElementById('save-address-btn');
+        const addressForm = document.getElementById('address-form');
+        
+        // Open modal for adding new address
+        if (addAddressBtn) {
+            addAddressBtn.addEventListener('click', () => {
+                document.getElementById('address-modal-title').textContent = 'Add New Address';
+                addressForm.reset();
+                document.getElementById('address_id').value = '';
+                modal.style.display = 'block';
+            });
+        }
+        
+        // Close modal
+        closeModalBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+        });
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+        
+        // Save address
+        if (saveAddressBtn) {
+            saveAddressBtn.addEventListener('click', () => {
+                if (addressForm.checkValidity()) {
+                    addressForm.submit();
+                } else {
+                    addressForm.reportValidity();
+                }
+            });
+        }
+        
+        // Edit address
+        const editAddressBtns = document.querySelectorAll('.edit-address-btn');
+        editAddressBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id = this.getAttribute('data-address-id');
+                const line1 = this.getAttribute('data-address-line1');
+                const line2 = this.getAttribute('data-address-line2');
+                const city = this.getAttribute('data-city');
+                const state = this.getAttribute('data-state');
+                const postalCode = this.getAttribute('data-postal-code');
+                const country = this.getAttribute('data-country');
+                const type = this.getAttribute('data-type');
+                const isDefault = this.getAttribute('data-is-default') === 'true';
+                
+                document.getElementById('address-modal-title').textContent = 'Edit Address';
+                document.getElementById('address_id').value = id;
+                document.getElementById('address_line_1').value = line1;
+                document.getElementById('address_line_2').value = line2;
+                document.getElementById('city').value = city;
+                document.getElementById('state').value = state;
+                document.getElementById('postal_code').value = postalCode;
+                document.getElementById('country').value = country;
+                document.getElementById('address_type').value = type;
+                document.getElementById('is_default').checked = isDefault;
+                
+                modal.style.display = 'block';
+            });
+        });
+        
+        // Password validation
+        const newPasswordInput = document.getElementById('new_password');
+        const confirmPasswordInput = document.getElementById('confirm_new_password');
+        const changePasswordBtn = document.getElementById('change-password-btn');
+        
+        if (newPasswordInput && confirmPasswordInput) {
+            const checkPasswordRequirements = function() {
+                const password = newPasswordInput.value;
+                
+                // Check length
+                const lengthRequirement = document.getElementById('length-requirement');
+                if (password.length >= 8) {
+                    lengthRequirement.querySelector('i').className = 'fas fa-check-circle requirement-met';
+                } else {
+                    lengthRequirement.querySelector('i').className = 'fas fa-circle requirement-not-met';
+                }
+                
+                // Check uppercase
+                const uppercaseRequirement = document.getElementById('uppercase-requirement');
+                if (/[A-Z]/.test(password)) {
+                    uppercaseRequirement.querySelector('i').className = 'fas fa-check-circle requirement-met';
+                } else {
+                    uppercaseRequirement.querySelector('i').className = 'fas fa-circle requirement-not-met';
+                }
+                
+                // Check lowercase
+                const lowercaseRequirement = document.getElementById('lowercase-requirement');
+                if (/[a-z]/.test(password)) {
+                    lowercaseRequirement.querySelector('i').className = 'fas fa-check-circle requirement-met';
+                } else {
+                    lowercaseRequirement.querySelector('i').className = 'fas fa-circle requirement-not-met';
+                }
+                
+                // Check number
+                const numberRequirement = document.getElementById('number-requirement');
+                if (/\d/.test(password)) {
+                    numberRequirement.querySelector('i').className = 'fas fa-check-circle requirement-met';
+                } else {
+                    numberRequirement.querySelector('i').className = 'fas fa-circle requirement-not-met';
+                }
+                
+                // Check special character
+                const specialRequirement = document.getElementById('special-requirement');
+                if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+                    specialRequirement.querySelector('i').className = 'fas fa-check-circle requirement-met';
+                } else {
+                    specialRequirement.querySelector('i').className = 'fas fa-circle requirement-not-met';
+                }
+                
+                // Check if all requirements are met and passwords match
+                const allRequirementsMet = 
+                    password.length >= 8 && 
+                    /[A-Z]/.test(password) && 
+                    /[a-z]/.test(password) && 
+                    /\d/.test(password) && 
+                    /[!@#$%^&*(),.?":{}|<>]/.test(password);
+                
+                const passwordsMatch = password === confirmPasswordInput.value;
+                
+                // Enable/disable submit button
+                if (allRequirementsMet && passwordsMatch && password.length > 0) {
+                    changePasswordBtn.disabled = false;
+                } else {
+                    changePasswordBtn.disabled = true;
+                }
+                
+                // Add visual indication for matching
+                if (confirmPasswordInput.value.length > 0) {
+                    if (passwordsMatch) {
+                        confirmPasswordInput.classList.remove('is-invalid');
+                        confirmPasswordInput.classList.add('is-valid');
+                    } else {
+                        confirmPasswordInput.classList.remove('is-valid');
+                        confirmPasswordInput.classList.add('is-invalid');
+                    }
+                }
+            };
+            
+            newPasswordInput.addEventListener('input', checkPasswordRequirements);
+            confirmPasswordInput.addEventListener('input', checkPasswordRequirements);
+        }
+        
+        // Auto-hide messages after 5 seconds
+        const messages = document.querySelectorAll('.alert');
+        messages.forEach(message => {
+            setTimeout(() => {
+                message.style.opacity = '0';
+                setTimeout(() => {
+                    message.remove();
+                }, 500);
+            }, 5000);
+        });
+    });
+</script>
+{% endblock %}
