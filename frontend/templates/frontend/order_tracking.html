@@ -245,6 +245,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
     
+    // Check for order_number parameter in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderNumberParam = urlParams.get('order_number');
+    
+    if (orderNumberParam) {
+        // If we have an order number in the URL, auto-fill and submit
+        document.getElementById('order_number').value = orderNumberParam;
+        // Wait a bit to make sure everything is loaded
+        setTimeout(() => {
+            trackOrder();
+        }, 500);
+    }
+    
     tabButtons.forEach(button => {
         button.addEventListener('click', function() {
             const tabId = this.dataset.tab;
@@ -262,8 +275,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Auto-focus on input when page loads
-    document.getElementById('order_number').focus();
+    // Auto-focus on input when page loads (if no auto-submit)
+    if (!orderNumberParam) {
+        document.getElementById('order_number').focus();
+    }
 });
 
 function trackOrder() {
