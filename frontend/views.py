@@ -394,12 +394,17 @@ def dashboard(request):
     if not request.user.is_authenticated:
         return redirect('frontend:login')
     
-    # Get recent orders
-    recent_orders = Order.objects.filter(user=request.user).order_by('-created_at')[:5]
+    # Get recent orders with select_related to optimize queries
+    recent_orders = Order.objects.filter(user=request.user).select_related('shipping_address').order_by('-created_at')[:5]
     
     # Get stats
     order_count = Order.objects.filter(user=request.user).count()
-    wishlist_count = request.user.wishlist.count() if hasattr(request.user, 'wishlist') else 0
+    wishlist_count = request.user.wishlist_items.all().count() if hasattr(request.user, 'wishlist_items') else 0
+    
+    # Get cart items count
+    from cart.models import Cart
+    cart_obj, created = Cart.objects.get_or_create(user=request.user)
+    cart_items_count = cart_obj.items.count()
     
     # Get recent activities (could be order status changes, etc.)
     recent_activities = []
@@ -414,6 +419,7 @@ def dashboard(request):
         'recent_orders': recent_orders,
         'order_count': order_count,
         'wishlist_count': wishlist_count,
+        'cart_items_count': cart_items_count,
         'recent_activities': sorted(recent_activities, key=lambda x: x['date'], reverse=True)[:5]
     }
     

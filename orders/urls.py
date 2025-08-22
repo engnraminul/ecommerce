@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import api
 
 app_name = 'orders'
 
@@ -23,4 +24,8 @@ urlpatterns = [
     # Refunds
     path('refund-requests/', views.RefundRequestListView.as_view(), name='refund-request-list'),
     path('refund-requests/<int:pk>/', views.RefundRequestDetailView.as_view(), name='refund-request-detail'),
+    
+    # API endpoints
+    path('api/recent/', api.recent_orders, name='api-recent-orders'),
+    path('api/orders/<int:order_id>/', api.order_detail_api, name='api-order-detail'),
 ]
