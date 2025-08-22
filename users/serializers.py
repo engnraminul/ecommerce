@@ -79,7 +79,7 @@ class UserLoginSerializer(serializers.Serializer):
         if email and password:
             user = authenticate(username=email, password=password)
             if not user:
-                raise serializers.ValidationError('Invalid credentials.')
+                raise serializers.ValidationError('Invalid email or password. Please login with valid information.')
             if not user.is_active:
                 raise serializers.ValidationError('User account is disabled.')
             attrs['user'] = user

@@ -29,11 +29,18 @@ function getCookie(name) {
     return cookieValue;
 }
 
-// CSRF token
-const csrftoken = getCookie('csrftoken');
+// Initialize CSRF token
+let csrftoken = getCookie('csrftoken') || document.querySelector('[name=csrfmiddlewaretoken]')?.value || window.csrfToken || '';
+console.log('Initial CSRF token:', csrftoken ? 'Found' : 'Not found');
 
 // API Helper Functions
 async function apiRequest(url, options = {}) {
+    // Get CSRF token from cookie if not already defined
+    if (!csrftoken) {
+        csrftoken = getCookie('csrftoken') || document.querySelector('[name=csrfmiddlewaretoken]')?.value || window.csrfToken || '';
+        console.log('Retrieved CSRF token:', csrftoken ? 'Found' : 'Not found');
+    }
+    
     const defaultOptions = {
         headers: {
             'Content-Type': 'application/json',
@@ -43,6 +50,7 @@ async function apiRequest(url, options = {}) {
 
     if (authToken) {
         defaultOptions.headers['Authorization'] = `Bearer ${authToken}`;
+        console.log('Using existing auth token for request');
     }
 
     const finalOptions = {
@@ -53,6 +61,12 @@ async function apiRequest(url, options = {}) {
             ...options.headers,
         },
     };
+    
+    // For login requests, ensure we're sending the right content type
+    if (url.includes('login') || url.includes('token')) {
+        console.log('Auth request detected, ensuring Content-Type is set');
+        finalOptions.headers['Content-Type'] = 'application/json';
+    }
 
     try {
         // Debug log for request details
@@ -63,28 +77,75 @@ async function apiRequest(url, options = {}) {
             body: finalOptions.body ? '(data present)' : '(no data)'
         }));
         
+        // Special handling for auth endpoints - log full body for debugging
+        if (url.includes('/auth/') || url.includes('/login')) {
+            try {
+                const bodyData = JSON.parse(finalOptions.body);
+                console.log('Auth request data:', {
+                    ...bodyData,
+                    password: bodyData.password ? '********' : undefined // Mask password
+                });
+            } catch (e) {
+                console.log('Could not parse request body for logging:', finalOptions.body);
+            }
+        }
+        
+        console.log(`Sending ${finalOptions.method} request to ${API_BASE_URL}${url}`);
         const response = await fetch(`${API_BASE_URL}${url}`, finalOptions);
+        console.log('Response status:', response.status, response.statusText);
+        
+        // Check for redirects (this could happen if CSRF protection kicks in)
+        if (response.redirected) {
+            console.log('Request was redirected to:', response.url);
+            if (url.includes('/auth/') || url.includes('/login')) {
+                throw new Error('Authentication request was redirected. Possible CSRF or session issue.');
+            }
+        }
         
         if (!response.ok) {
             // Try to parse error response as JSON
             let errorData = {};
-            try {
-                errorData = await response.json();
-                // Debug log for error response
-                console.log('Error response full data:', errorData);
-            } catch (e) {
-                // If not JSON, try to get text
+            let responseErrorMessage = '';
+            
+            const contentType = response.headers.get('content-type');
+            console.log('Error response content type:', contentType);
+            
+            if (contentType && contentType.includes('application/json')) {
+                try {
+                    errorData = await response.json();
+                    console.log('Error response JSON data:', errorData);
+                } catch (e) {
+                    console.log('Failed to parse JSON error response:', e);
+                }
+            } else {
                 try {
                     const textResponse = await response.text();
                     console.log('Error response text:', textResponse);
+                    responseErrorMessage = `Server error: ${response.status} ${response.statusText}`;
                 } catch (textErr) {
-                    console.log('Could not get error response text');
+                    console.log('Could not get error response text:', textErr);
+                    responseErrorMessage = `Request failed with status: ${response.status}`;
                 }
-                errorData = {};
+            }
+            
+            // Special handling for auth errors
+            if (response.status === 401 || response.status === 403) {
+                console.log('Authentication error detected');
+                // Clear token if auth error
+                if (url.includes('/auth/') || url.includes('/login')) {
+                    localStorage.removeItem('authToken');
+                    authToken = null;
+                    
+                    // Show a more specific error for auth failures
+                    responseErrorMessage = 'Invalid email or password';
+                    
+                    // Show notification directly for login failures
+                    showNotification('Invalid email or password. Please login with valid information.', 'error');
+                }
             }
             
             // Extract error message from various formats
-            let errorMessage = '';
+            let errorMessage = responseErrorMessage || '';  // Start with any error message we already have
             console.log('Error response data:', errorData);
             
             if (errorData.message) {
@@ -113,12 +174,17 @@ async function apiRequest(url, options = {}) {
                     errorMessage = pwError;
                 } else if (fieldErrors.length > 0) {
                     errorMessage = fieldErrors.join('; ');
-                } else {
+                } else if (!errorMessage) {
                     errorMessage = `HTTP error! status: ${response.status}`;
                 }
             }
             
-            throw new Error(errorMessage);
+                // For login failures, make sure we have a user-friendly error message
+                if (url.includes('/auth/token/') || url.includes('/login')) {
+                    // Log the specific error but show a specific message to the user
+                    console.error(`Login error details: ${errorMessage}`);
+                    errorMessage = 'Invalid email or password. Please login with valid information.';
+                }            throw new Error(errorMessage);
         }
         
         return await response.json();
@@ -129,8 +195,8 @@ async function apiRequest(url, options = {}) {
     }
 }
 
-// Notification System
-function showNotification(message, type = 'info', duration = 5000) {
+// Notification System - expose globally
+window.showNotification = function(message, type = 'info', duration = 5000) {
     const notification = document.createElement('div');
     notification.className = `alert alert-${type} notification fade-in`;
     notification.style.position = 'fixed';
@@ -389,21 +455,86 @@ function setupSearch() {
 }
 
 // Authentication Functions
-async function login(email, password) {
+// Make login function available globally
+window.login = async function(email, password) {
     try {
-        const data = await apiRequest('/auth/token/', {
+        console.log('Login attempt with email:', email);
+        showNotification('Logging in...', 'info', 2000);
+        
+        // First try the JWT token endpoint
+        try {
+            console.log('Attempting JWT token login...');
+            const tokenData = await apiRequest('/auth/token/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    username: email, // Django Simple JWT expects username field
+                    password: password
+                })
+            });
+            
+            console.log('JWT login response:', tokenData);
+            
+            if (!tokenData || !tokenData.access) {
+                console.error('JWT login succeeded but no access token received');
+                throw new Error('No access token received');
+            }
+            
+            // Store the JWT token
+            authToken = tokenData.access;
+            localStorage.setItem('authToken', authToken);
+            console.log('Token stored successfully:', authToken.substring(0, 10) + '...');
+            
+            showNotification('Login successful!', 'success');
+            
+            // Redirect to dashboard or home page
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1000);
+            return true;
+        } catch (tokenError) {
+            console.error('JWT token login failed, error details:', tokenError);
+            // Fall back to traditional login if token auth fails
+        }
+        
+        // Try traditional login endpoint as fallback
+        console.log('Attempting traditional login...');
+        const loginData = await apiRequest('/users/login/', {
             method: 'POST',
-            body: JSON.stringify({ email, password })
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                email: email, 
+                password: password 
+            })
         });
         
-        authToken = data.access;
-        localStorage.setItem('authToken', authToken);
+        console.log('Traditional login response:', loginData);
+        
+        // If we reach here, traditional login succeeded
+        if (loginData.tokens && loginData.tokens.access) {
+            authToken = loginData.tokens.access;
+            localStorage.setItem('authToken', authToken);
+            console.log('Token stored from traditional login');
+        } else {
+            console.log('No token in traditional login response');
+        }
+        
         showNotification('Login successful!', 'success');
         
-        // Redirect to dashboard or previous page
-        window.location.href = '/dashboard/';
+        // Redirect to dashboard or home page
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 1000);
+        
+        return true;
     } catch (error) {
-        showNotification('Login failed. Please check your credentials.', 'error');
+        console.error('Login error:', error);
+        showNotification('Invalid email or password. Please login with valid information.', 'error');
+        throw error; // Re-throw to allow the calling code to handle it
     }
 }
 
@@ -456,15 +587,44 @@ function logout() {
 
 // Form Handlers
 function setupForms() {
-    // Login form
+    // Login form - this is a fallback handler
+    // The login.html file has its own handler which tries to use the global login function
     const loginForm = document.getElementById('loginForm');
-    if (loginForm) {
+    if (loginForm && !loginForm.getAttribute('data-handler-initialized')) {
+        loginForm.setAttribute('data-handler-initialized', 'true');
+        console.log('Initializing app.js login form handler');
+        
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            console.log('Login form submitted via app.js handler');
+            
+            // Get form data
             const formData = new FormData(loginForm);
             const email = formData.get('email');
             const password = formData.get('password');
-            await login(email, password);
+            
+            // Basic validation
+            if (!email || !password) {
+                window.showNotification('Please enter both email and password', 'error');
+                return;
+            }
+            
+            // Show loading indicator
+            const submitBtn = loginForm.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+            submitBtn.disabled = true;
+            
+            try {
+                await window.login(email, password);
+            } catch (error) {
+                console.error('Login submission error:', error);
+                window.showNotification('Invalid email or password. Please login with valid information.', 'error');
+            } finally {
+                // Restore button state
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+            }
         });
     }
 
