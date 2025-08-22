@@ -310,15 +310,25 @@ def user_login(request):
     if request.method == 'POST':
         email = request.POST.get('email')
         password = request.POST.get('password')
+        remember_me = request.POST.get('remember_me') == 'on'
         
         user = authenticate(request, username=email, password=password)
         if user:
             login(request, user)
-            messages.success(request, 'Login successful!')
-            next_url = request.GET.get('next', 'frontend:home')
+            
+            # Set session expiry based on remember_me
+            if not remember_me:
+                # Session expires when browser closes
+                request.session.set_expiry(0)
+            else:
+                # Session expires in 30 days (in seconds)
+                request.session.set_expiry(30 * 24 * 60 * 60)
+                
+            messages.success(request, f'Welcome back, {user.first_name}!')
+            next_url = request.GET.get('next', 'frontend:dashboard')
             return redirect(next_url)
         else:
-            messages.error(request, 'Invalid email or password.')
+            messages.error(request, 'Invalid email or password. Please try again.')
     
     return render(request, 'frontend/auth/login.html')
 
@@ -335,23 +345,45 @@ def user_register(request):
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
         phone = request.POST.get('phone')
+        newsletter_subscription = request.POST.get('newsletter_subscription') == 'on'
+        terms_accepted = request.POST.get('terms_accepted') == 'on'
         
         # Validation
-        if password != confirm_password:
+        if not terms_accepted:
+            messages.error(request, 'You must accept the Terms of Service and Privacy Policy.')
+        elif password != confirm_password:
             messages.error(request, 'Passwords do not match.')
+        elif len(password) < 8:
+            messages.error(request, 'Password must be at least 8 characters long.')
         elif User.objects.filter(email=email).exists():
-            messages.error(request, 'Email already exists.')
+            messages.error(request, 'This email is already registered. Please log in instead.')
         else:
-            # Create user
-            user = User.objects.create_user(
-                email=email,
-                password=password,
-                first_name=first_name,
-                last_name=last_name,
-                phone=phone
-            )
-            messages.success(request, 'Registration successful! Please log in.')
-            return redirect('frontend:login')
+            try:
+                # Create user
+                user = User.objects.create_user(
+                    email=email,
+                    password=password,
+                    first_name=first_name,
+                    last_name=last_name,
+                    phone=phone
+                )
+                
+                # Update newsletter preference if profile model exists
+                if hasattr(user, 'profile'):
+                    user.profile.newsletter_subscribed = newsletter_subscription
+                    user.profile.save()
+                
+                # Automatically log in the user after registration
+                user = authenticate(request, username=email, password=password)
+                if user:
+                    login(request, user)
+                    messages.success(request, f'Welcome to our store, {first_name}! Your account has been created successfully.')
+                    return redirect('frontend:dashboard')
+                else:
+                    messages.success(request, 'Registration successful! Please log in.')
+                    return redirect('frontend:login')
+            except Exception as e:
+                messages.error(request, f'Registration failed. Please try again. Error: {str(e)}')
     
     return render(request, 'frontend/auth/register.html')
 

@@ -117,6 +117,53 @@
 
 {% block extra_css %}
 <style>
+    /* Theme Colors */
+    :root {
+        --auth-primary: #930000;       /* Primary brand color */
+        --auth-secondary: #5e0000;     /* Darker variant for hover */
+        --auth-accent: #f5a623;        /* Accent color for highlights */
+        --auth-bg: #f9f9f9;            /* Background color */
+        --auth-text: #333333;          /* Main text color */
+        --auth-text-light: #666666;    /* Secondary text color */
+        --auth-success: #28a745;       /* Success color */
+        --auth-border: #e2e2e2;        /* Border color */
+    }
+
+    body {
+        background-color: var(--auth-bg);
+    }
+    
+    .alert {
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 1.5rem;
+        font-weight: 500;
+        animation: fadeIn 0.5s ease;
+    }
+    
+    .alert-success {
+        background-color: rgba(40, 167, 69, 0.1);
+        border: 1px solid rgba(40, 167, 69, 0.3);
+        color: #28a745;
+    }
+    
+    .alert-error, .alert-danger {
+        background-color: rgba(220, 53, 69, 0.1);
+        border: 1px solid rgba(220, 53, 69, 0.3);
+        color: #dc3545;
+    }
+    
+    .alert-warning {
+        background-color: rgba(255, 193, 7, 0.1);
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        color: #ffc107;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
     .auth-container {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -131,6 +178,7 @@
         padding: 3rem;
         border-radius: var(--border-radius);
         box-shadow: var(--shadow-lg);
+        border-top: 4px solid var(--auth-primary);
     }
 
     .auth-header {
@@ -140,17 +188,25 @@
 
     .auth-header h2 {
         font-size: 2rem;
-        color: var(--dark-color);
+        color: var(--auth-primary);
         margin-bottom: 0.5rem;
+        font-weight: 700;
     }
 
     .auth-header p {
-        color: var(--secondary-color);
+        color: var(--auth-text-light);
     }
 
     .auth-form .form-group {
         position: relative;
         margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        color: var(--auth-text);
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        display: block;
     }
 
     .form-icon {
@@ -158,14 +214,23 @@
         left: 1rem;
         top: 50%;
         transform: translateY(-50%);
-        color: var(--secondary-color);
+        color: var(--auth-primary);
         margin-top: 0.75rem;
     }
 
     .auth-form .form-control {
         padding-left: 3rem;
-        height: 3rem;
+        height: 3.25rem;
         font-size: 1rem;
+        border: 2px solid var(--auth-border);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .auth-form .form-control:focus {
+        border-color: var(--auth-primary);
+        box-shadow: 0 0 0 3px rgba(147, 0, 0, 0.1);
+        outline: none;
     }
 
     .password-toggle {
@@ -192,6 +257,7 @@
         align-items: center;
         font-size: 0.875rem;
         cursor: pointer;
+        color: var(--auth-text-light);
     }
 
     .checkbox-container input[type="checkbox"] {
@@ -201,7 +267,7 @@
     .checkmark {
         width: 18px;
         height: 18px;
-        border: 2px solid var(--border-color);
+        border: 2px solid var(--auth-border);
         border-radius: 3px;
         margin-right: 0.5rem;
         position: relative;
@@ -209,8 +275,8 @@
     }
 
     .checkbox-container input[type="checkbox"]:checked + .checkmark {
-        background: var(--primary-color);
-        border-color: var(--primary-color);
+        background: var(--auth-primary);
+        border-color: var(--auth-primary);
     }
 
     .checkbox-container input[type="checkbox"]:checked + .checkmark::after {
@@ -224,12 +290,15 @@
     }
 
     .forgot-password {
-        color: var(--primary-color);
+        color: var(--auth-primary);
         text-decoration: none;
         font-size: 0.875rem;
+        transition: all 0.3s ease;
+        font-weight: 500;
     }
 
     .forgot-password:hover {
+        color: var(--auth-secondary);
         text-decoration: underline;
     }
 
@@ -239,13 +308,27 @@
         font-size: 1.1rem;
         font-weight: 600;
         margin-bottom: 1.5rem;
+        border-radius: 30px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-primary {
+        background-color: var(--auth-primary);
+        border: none;
+    }
+    
+    .btn-primary:hover {
+        background-color: var(--auth-secondary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
 
     .auth-divider {
         text-align: center;
         position: relative;
-        margin: 1.5rem 0;
-        color: var(--secondary-color);
+        margin: 2rem 0;
+        color: var(--auth-text-light);
     }
 
     .auth-divider::before {
@@ -254,8 +337,8 @@
         top: 50%;
         left: 0;
         right: 0;
-        height: 1px;
-        background: var(--border-color);
+        height: 2px;
+        background: linear-gradient(to right, transparent, var(--auth-border), transparent);
     }
 
     .auth-divider span {
@@ -263,6 +346,7 @@
         padding: 0 1rem;
         position: relative;
         z-index: 1;
+        font-weight: 500;
     }
 
     .social-login {
@@ -274,55 +358,84 @@
 
     .btn-social {
         width: 100%;
-        padding: 0.75rem;
-        border: 2px solid var(--border-color);
+        padding: 0.9rem;
+        border: 2px solid var(--auth-border);
         background: var(--white);
-        color: var(--dark-color);
+        color: var(--auth-text);
         font-weight: 500;
-        transition: var(--transition);
+        transition: all 0.3s ease;
+        border-radius: 30px;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    .btn-google:hover {
+    .btn-google {
         border-color: #db4437;
         color: #db4437;
     }
+    
+    .btn-google:hover {
+        background-color: #db4437;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(219, 68, 55, 0.2);
+    }
 
-    .btn-facebook:hover {
+    .btn-facebook {
         border-color: #4267b2;
         color: #4267b2;
     }
+    
+    .btn-facebook:hover {
+        background-color: #4267b2;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(66, 103, 178, 0.2);
+    }
 
     .btn-social i {
-        margin-right: 0.5rem;
-        font-size: 1.1rem;
+        margin-right: 0.75rem;
+        font-size: 1.2rem;
     }
 
     .auth-footer {
         text-align: center;
-        color: var(--secondary-color);
+        color: var(--auth-text-light);
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--auth-border);
+        margin-top: 2rem;
     }
 
     .auth-footer a {
-        color: var(--primary-color);
+        color: var(--auth-primary);
         text-decoration: none;
-        font-weight: 500;
+        font-weight: 600;
+        transition: all 0.3s ease;
     }
 
     .auth-footer a:hover {
+        color: var(--auth-secondary);
         text-decoration: underline;
     }
 
     .auth-benefits {
-        background: var(--light-color);
-        padding: 2rem;
+        background: linear-gradient(135deg, var(--auth-primary) 0%, var(--auth-secondary) 100%);
+        padding: 2.5rem;
         border-radius: var(--border-radius);
         height: fit-content;
+        color: white;
+        box-shadow: var(--shadow-lg);
     }
 
     .auth-benefits h3 {
-        color: var(--dark-color);
+        color: white;
         margin-bottom: 1.5rem;
         text-align: center;
+        font-weight: 700;
+        font-size: 1.5rem;
     }
 
     .auth-benefits ul {
@@ -333,14 +446,23 @@
     .auth-benefits li {
         display: flex;
         align-items: center;
-        margin-bottom: 1rem;
-        color: var(--dark-color);
+        margin-bottom: 1.5rem;
+        color: rgba(255, 255, 255, 0.9);
+        background: rgba(255, 255, 255, 0.1);
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        transition: transform 0.3s ease;
+    }
+    
+    .auth-benefits li:hover {
+        transform: translateX(5px);
     }
 
     .auth-benefits li i {
-        color: var(--primary-color);
+        color: var(--auth-accent);
         margin-right: 1rem;
         width: 20px;
+        font-size: 1.2rem;
     }
 
     @media (max-width: 768px) {

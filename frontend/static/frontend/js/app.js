@@ -55,6 +55,14 @@ async function apiRequest(url, options = {}) {
     };
 
     try {
+        // Debug log for request details
+        console.log('API Request URL:', `${API_BASE_URL}${url}`);
+        console.log('API Request Options:', JSON.stringify({
+            method: finalOptions.method,
+            headers: finalOptions.headers,
+            body: finalOptions.body ? '(data present)' : '(no data)'
+        }));
+        
         const response = await fetch(`${API_BASE_URL}${url}`, finalOptions);
         
         if (!response.ok) {
@@ -62,13 +70,23 @@ async function apiRequest(url, options = {}) {
             let errorData = {};
             try {
                 errorData = await response.json();
+                // Debug log for error response
+                console.log('Error response full data:', errorData);
             } catch (e) {
-                // If not JSON, just use an empty object
+                // If not JSON, try to get text
+                try {
+                    const textResponse = await response.text();
+                    console.log('Error response text:', textResponse);
+                } catch (textErr) {
+                    console.log('Could not get error response text');
+                }
                 errorData = {};
             }
             
             // Extract error message from various formats
             let errorMessage = '';
+            console.log('Error response data:', errorData);
+            
             if (errorData.message) {
                 errorMessage = errorData.message;
             } else if (errorData.error) {
@@ -88,7 +106,12 @@ async function apiRequest(url, options = {}) {
                     }
                 }
                 
-                if (fieldErrors.length > 0) {
+                // Special handling for password_confirm field
+                if (errorData.password_confirm) {
+                    const pwError = Array.isArray(errorData.password_confirm) ? 
+                        errorData.password_confirm.join(', ') : errorData.password_confirm;
+                    errorMessage = pwError;
+                } else if (fieldErrors.length > 0) {
                     errorMessage = fieldErrors.join('; ');
                 } else {
                     errorMessage = `HTTP error! status: ${response.status}`;
@@ -386,15 +409,39 @@ async function login(email, password) {
 
 async function register(userData) {
     try {
+        // Make sure password_confirm is always explicitly set
+        // Create a new object with both password fields to ensure they're included
+        const processedData = {
+            ...userData,
+            password_confirm: userData.password_confirm || userData.password
+        };
+        
+        // Log the data before sending (for debugging)
+        console.log('Sending registration data:', JSON.stringify(processedData));
+        
         const data = await apiRequest('/users/register/', {
             method: 'POST',
-            body: JSON.stringify(userData)
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(processedData)
         });
         
         showNotification('Registration successful! Please log in.', 'success');
         window.location.href = '/login/';
     } catch (error) {
-        showNotification('Registration failed. Please try again.', 'error');
+        console.error('Registration error:', error);
+        
+        // Get detailed error messages if available
+        let errorMessage = 'Registration failed: ' + (error.message || '');
+        
+        // Handle specific error messages more elegantly
+        if (error.message.includes("password") && error.message.includes("match")) {
+            errorMessage = "Passwords don't match. Please try again.";
+        }
+        
+        // Show the error notification
+        showNotification(errorMessage, 'error');
     }
 }
 
@@ -427,13 +474,33 @@ function setupForms() {
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(registerForm);
+            const email = formData.get('email');
+            
+            // Get phone number (formatting handled by backend)
+            let phoneNumber = formData.get('phone').trim();
+            
+            // Get password fields and explicitly convert to strings
+            const password = String(formData.get('password') || '');
+            const passwordConfirm = String(formData.get('password_confirm') || '');
+            
+            // Validate passwords match
+            if (password !== passwordConfirm) {
+                showNotification('Passwords do not match', 'error');
+                return false;
+            }
+            
+            // Create user data object with explicit password_confirm field
             const userData = {
-                email: formData.get('email'),
-                password: formData.get('password'),
+                // Let the backend generate the username
+                email: email,
+                password: password,
+                password_confirm: passwordConfirm, // Explicitly included as a string
                 first_name: formData.get('first_name'),
                 last_name: formData.get('last_name'),
-                phone: formData.get('phone')
+                phone: phoneNumber
             };
+            
+            console.log('Registration data being sent:', userData);
             await register(userData);
         });
     }

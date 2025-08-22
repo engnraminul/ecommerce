@@ -8,6 +8,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     """User registration serializer"""
     password = serializers.CharField(write_only=True, validators=[validate_password])
     password_confirm = serializers.CharField(write_only=True)
+    username = serializers.CharField(required=False)
     
     class Meta:
         model = User
@@ -17,15 +18,52 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         )
     
     def validate(self, attrs):
-        if attrs['password'] != attrs['password_confirm']:
-            raise serializers.ValidationError("Passwords don't match.")
+        # Print received data for debugging
+        print("UserRegistrationSerializer validate method received:", attrs.keys())
+        
+        # Default password_confirm if not present (this is a fallback)
+        if 'password_confirm' not in attrs and 'password' in attrs:
+            attrs['password_confirm'] = attrs['password']
+            print("Added missing password_confirm field")
+        
+        # Check if passwords match - with safer access using get()
+        password = attrs.get('password')
+        password_confirm = attrs.get('password_confirm')
+        
+        if password != password_confirm:
+            raise serializers.ValidationError({
+                "password_confirm": "Passwords don't match."
+            })
+            
+        # Auto-generate username if not provided
+        if 'username' not in attrs or not attrs['username']:
+            email = attrs['email']
+            username_base = email.split('@')[0]
+            
+            # Clean the username (remove special chars)
+            import re
+            username_base = re.sub(r'[^\w.]', '', username_base)
+            
+            # Ensure uniqueness by adding a random suffix if needed
+            import random
+            username = username_base
+            while User.objects.filter(username=username).exists():
+                username = f"{username_base}{random.randint(1, 9999)}"
+                
+            attrs['username'] = username
+            
         return attrs
     
     def create(self, validated_data):
-        validated_data.pop('password_confirm')
+        # Remove password_confirm as it's not needed for creating the user
+        validated_data.pop('password_confirm', None)
+        
+        # Create the user
         user = User.objects.create_user(**validated_data)
+        
         # Create user profile
         UserProfile.objects.create(user=user)
+        
         return user
 
 

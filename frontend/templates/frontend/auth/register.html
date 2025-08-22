@@ -52,6 +52,8 @@
                     </div>
                 </div>
 
+                <!-- Username field removed as requested -->
+
                 <div class="form-group">
                     <label for="email" class="form-label">Email Address</label>
                     <input type="email" 
@@ -66,15 +68,18 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="phone" class="form-label">Phone Number (Optional)</label>
+                    <label for="phone" class="form-label">Bangladesh Phone Number</label>
                     <input type="tel" 
                            id="phone" 
                            name="phone" 
                            class="form-control" 
-                           placeholder="Enter your phone number">
+                           placeholder="e.g., 01XXXXXXXXX"
+                           pattern="(^(\+8801|8801|01)[3-9]{1}[0-9]{8}$)"
+                           required>
                     <div class="form-icon">
                         <i class="fas fa-phone"></i>
                     </div>
+                    <small class="form-text text-muted">Enter your Bangladesh phone number (e.g., 01XXXXXXXXX or +8801XXXXXXXXX)</small>
                 </div>
 
                 <div class="form-group">
@@ -95,10 +100,10 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="confirm_password" class="form-label">Confirm Password</label>
+                    <label for="password_confirm" class="form-label">Confirm Password</label>
                     <input type="password" 
-                           id="confirm_password" 
-                           name="confirm_password" 
+                           id="password_confirm" 
+                           name="password_confirm" 
                            class="form-control" 
                            placeholder="Confirm your password"
                            required
@@ -106,7 +111,7 @@
                     <div class="form-icon">
                         <i class="fas fa-lock"></i>
                     </div>
-                    <button type="button" class="password-toggle" onclick="togglePassword('confirm_password')">
+                    <button type="button" class="password-toggle" onclick="togglePassword('password_confirm')">
                         <i class="fas fa-eye"></i>
                     </button>
                 </div>
@@ -194,11 +199,175 @@
 
 {% block extra_css %}
 <style>
+    /* Theme Colors */
+    :root {
+        --auth-primary: #930000;       /* Primary brand color */
+        --auth-secondary: #5e0000;     /* Darker variant for hover */
+        --auth-accent: #f5a623;        /* Accent color for highlights */
+        --auth-bg: #f9f9f9;            /* Background color */
+        --auth-text: #333333;          /* Main text color */
+        --auth-text-light: #666666;    /* Secondary text color */
+        --auth-success: #28a745;       /* Success color */
+        --auth-border: #e2e2e2;        /* Border color */
+    }
+    
+    body {
+        background-color: var(--auth-bg);
+    }
+    
+    .alert {
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 1.5rem;
+        font-weight: 500;
+        animation: fadeIn 0.5s ease;
+    }
+    
+    .alert-success {
+        background-color: rgba(40, 167, 69, 0.1);
+        border: 1px solid rgba(40, 167, 69, 0.3);
+        color: #28a745;
+    }
+    
+    .alert-error, .alert-danger {
+        background-color: rgba(220, 53, 69, 0.1);
+        border: 1px solid rgba(220, 53, 69, 0.3);
+        color: #dc3545;
+    }
+    
+    .alert-warning {
+        background-color: rgba(255, 193, 7, 0.1);
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        color: #ffc107;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .auth-card {
+        background: var(--white);
+        padding: 3rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-lg);
+        border-top: 4px solid var(--auth-primary);
+    }
+
+    .auth-header h2 {
+        color: var(--auth-primary);
+        font-weight: 700;
+    }
+    
     .form-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 1rem;
         margin-bottom: 1.5rem;
+    }
+    
+    .auth-form .form-group {
+        position: relative;
+    }
+    
+    .form-label {
+        color: var(--auth-text);
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--auth-primary);
+        margin-top: 0.75rem;
+    }
+    
+    .password-toggle {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--auth-text-light);
+        cursor: pointer;
+        margin-top: 0.75rem;
+        transition: color 0.3s ease;
+    }
+    
+    .password-toggle:hover {
+        color: var(--auth-primary);
+    }
+    
+    .form-options {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .checkbox-container {
+        display: flex;
+        align-items: center;
+        font-size: 0.875rem;
+        cursor: pointer;
+        color: var(--auth-text-light);
+        margin-bottom: 0.5rem;
+    }
+
+    .checkbox-container input[type="checkbox"] {
+        display: none;
+    }
+
+    .checkmark {
+        width: 18px;
+        height: 18px;
+        border: 2px solid var(--auth-border);
+        border-radius: 3px;
+        margin-right: 0.5rem;
+        position: relative;
+        transition: var(--transition);
+    }
+
+    .checkbox-container input[type="checkbox"]:checked + .checkmark {
+        background: var(--auth-primary);
+        border-color: var(--auth-primary);
+    }
+    
+    .checkbox-container input[type="checkbox"]:checked + .checkmark::after {
+        content: '✓';
+        position: absolute;
+        top: -2px;
+        left: 2px;
+        color: var(--white);
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .auth-form .form-control {
+        padding-left: 3rem;
+        height: 3.25rem;
+        font-size: 1rem;
+        border: 2px solid var(--auth-border);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .auth-form .form-control:focus {
+        border-color: var(--auth-primary);
+        box-shadow: 0 0 0 3px rgba(147, 0, 0, 0.1);
+        outline: none;
+    }
+    
+    .form-text {
+        font-size: 0.8rem;
+        color: var(--auth-text-light);
+        margin-top: 0.25rem;
+        display: block;
     }
 
     .password-strength {
@@ -223,7 +392,7 @@
 
     .strength-text {
         font-size: 0.875rem;
-        color: var(--secondary-color);
+        color: var(--auth-text-light);
     }
 
     .strength-weak { background-color: #dc3545; }
@@ -239,37 +408,185 @@
 
     .benefit-item {
         text-align: center;
-        padding: 1rem;
-        background: var(--white);
+        padding: 1.5rem;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
         border-radius: var(--border-radius);
-        box-shadow: var(--shadow-sm);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        transform: translateZ(0);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .benefit-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     }
 
     .benefit-item i {
         font-size: 2rem;
-        color: var(--primary-color);
-        margin-bottom: 0.5rem;
+        color: var(--auth-accent);
+        margin-bottom: 0.75rem;
     }
 
     .benefit-item h4 {
-        font-size: 1rem;
-        margin-bottom: 0.5rem;
-        color: var(--dark-color);
+        font-size: 1.1rem;
+        margin-bottom: 0.75rem;
+        color: white;
+        font-weight: 600;
     }
 
     .benefit-item p {
-        font-size: 0.875rem;
-        color: var(--secondary-color);
-        line-height: 1.4;
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.9);
+        line-height: 1.5;
     }
 
+    .auth-benefits {
+        background: linear-gradient(135deg, var(--auth-primary) 0%, var(--auth-secondary) 100%);
+        padding: 2.5rem;
+        border-radius: var(--border-radius);
+        height: fit-content;
+        color: white;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .auth-benefits h3 {
+        color: white;
+        margin-bottom: 2rem;
+        text-align: center;
+        font-weight: 700;
+        font-size: 1.5rem;
+    }
+    
     .checkbox-container a {
-        color: var(--primary-color);
+        color: var(--auth-primary);
         text-decoration: none;
+        font-weight: 500;
     }
 
     .checkbox-container a:hover {
         text-decoration: underline;
+        color: var(--auth-secondary);
+    }
+    
+    .btn-full {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        border-radius: 30px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-primary {
+        background-color: var(--auth-primary);
+        border: none;
+    }
+    
+    .btn-primary:hover {
+        background-color: var(--auth-secondary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .auth-divider {
+        text-align: center;
+        position: relative;
+        margin: 2rem 0;
+        color: var(--auth-text-light);
+    }
+
+    .auth-divider::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(to right, transparent, var(--auth-border), transparent);
+    }
+
+    .auth-divider span {
+        background: var(--white);
+        padding: 0 1rem;
+        position: relative;
+        z-index: 1;
+        font-weight: 500;
+    }
+    
+    .auth-footer {
+        text-align: center;
+        color: var(--auth-text-light);
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--auth-border);
+        margin-top: 2rem;
+    }
+
+    .auth-footer a {
+        color: var(--auth-primary);
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .auth-footer a:hover {
+        color: var(--auth-secondary);
+        text-decoration: underline;
+    }
+    
+    .social-login {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .btn-social {
+        width: 100%;
+        padding: 0.9rem;
+        border: 2px solid var(--auth-border);
+        background: var(--white);
+        color: var(--auth-text);
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border-radius: 30px;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-google {
+        border-color: #db4437;
+        color: #db4437;
+    }
+    
+    .btn-google:hover {
+        background-color: #db4437;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(219, 68, 55, 0.2);
+    }
+
+    .btn-facebook {
+        border-color: #4267b2;
+        color: #4267b2;
+    }
+    
+    .btn-facebook:hover {
+        background-color: #4267b2;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(66, 103, 178, 0.2);
+    }
+
+    .btn-social i {
+        margin-right: 0.75rem;
+        font-size: 1.2rem;
     }
 
     @media (max-width: 768px) {
@@ -349,15 +666,17 @@
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('registerForm');
         const passwordInput = document.getElementById('password');
-        const confirmPasswordInput = document.getElementById('confirm_password');
+        const confirmPasswordInput = document.getElementById('password_confirm');
 
         // Password strength checker
         passwordInput.addEventListener('input', function() {
             checkPasswordStrength(this.value);
         });
 
-        // Form validation
+        // Form validation - Let app.js handle the actual submission
         form.addEventListener('submit', function(e) {
+            // Note: We don't call e.preventDefault() here because app.js already does that
+            
             let isValid = true;
             
             // Remove previous error styling
@@ -370,11 +689,19 @@
             const firstName = formData.get('first_name').trim();
             const lastName = formData.get('last_name').trim();
             const email = formData.get('email').trim();
+            const phone = formData.get('phone').trim();
             const password = formData.get('password');
-            const confirmPassword = formData.get('confirm_password');
+            const confirmPassword = formData.get('password_confirm');
             const termsAccepted = formData.get('terms_accepted');
-
-            // Validation
+            
+            // Validation for Bangladesh phone number
+            const bdPhoneRegex = /(^(\+8801|8801|01)[3-9]{1}[0-9]{8}$)/;
+            if (!phone || !bdPhoneRegex.test(phone)) {
+                document.getElementById('phone').classList.add('error');
+                ecommerceApp.showNotification('Please enter a valid Bangladesh phone number', 'error');
+                isValid = false;
+            }            
+            
             if (!firstName) {
                 document.getElementById('first_name').classList.add('error');
                 isValid = false;
@@ -396,7 +723,7 @@
             }
 
             if (password !== confirmPassword) {
-                document.getElementById('confirm_password').classList.add('error');
+                document.getElementById('password_confirm').classList.add('error');
                 ecommerceApp.showNotification('Passwords do not match', 'error');
                 isValid = false;
             }
@@ -414,8 +741,12 @@
             }
 
             if (!isValid) {
-                e.preventDefault();
+                e.preventDefault(); // Only prevent default if validation fails
+                return false;
             }
+            
+            // Let app.js handle the actual form submission
+            // We don't prevent default here to let the event propagate
         });
 
         function isValidEmail(email) {
@@ -433,18 +764,33 @@
             }
         });
 
-        // Phone number formatting (optional)
+        // Bangladesh phone number formatting
         document.getElementById('phone').addEventListener('input', function() {
             let value = this.value.replace(/\D/g, '');
+            
+            // Format Bangladesh phone number
             if (value.length > 0) {
-                if (value.length <= 3) {
-                    value = `(${value}`;
-                } else if (value.length <= 6) {
-                    value = `(${value.slice(0, 3)}) ${value.slice(3)}`;
-                } else {
-                    value = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6, 10)}`;
+                // Remove leading zero if present
+                if (value.startsWith('0')) {
+                    value = value.substring(1);
+                }
+                
+                // Remove Bangladesh country code if present (880)
+                if (value.startsWith('880')) {
+                    value = value.substring(3);
+                }
+                
+                // Add standard format for Bangladesh numbers
+                if (value.length > 0) {
+                    value = '0' + value;
                 }
             }
+            
+            // Limit to standard BD mobile number length
+            if (value.length > 11) {
+                value = value.substring(0, 11);
+            }
+            
             this.value = value;
         });
     });

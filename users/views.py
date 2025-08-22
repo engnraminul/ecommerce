@@ -19,8 +19,27 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
     
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        # Log received data for debugging
+        print("Received registration data:", request.data)
+        print("Content-Type:", request.content_type)
+        
+        # Make a copy of the request data to ensure we can modify it
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        
+        # Ensure password_confirm is present if password is present
+        if 'password' in data and 'password_confirm' not in data:
+            data['password_confirm'] = data['password']
+            print("Added missing password_confirm field in view")
+        
+        # Print data keys for debugging
+        print("Data keys after processing:", data.keys())
+        
+        serializer = self.get_serializer(data=data)
+        
+        if not serializer.is_valid():
+            # Log validation errors for debugging
+            print("Validation errors:", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         with transaction.atomic():
             user = serializer.save()
