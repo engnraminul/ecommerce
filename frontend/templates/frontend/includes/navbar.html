@@ -136,11 +136,11 @@
                         <a href="{% url 'frontend:wishlist' %}" class="action-link">
                             <div class="action-icon">
                                 <i class="fas fa-heart"></i>
-                                <span class="action-badge wishlist-count">0</span>
+                                <span class="action-badge wishlist-count" style="display: flex !important; visibility: visible !important; opacity: 1 !important;">0</span>
                             </div>
                             <div class="action-text">
                                 <span class="action-label">Wishlist</span>
-                                <span class="action-count">0 items</span>
+                                <span class="action-count wishlist-items">0 items</span>
                             </div>
                         </a>
                     </div>
@@ -150,7 +150,7 @@
                         <a href="{% url 'frontend:cart' %}" class="action-link cart-link">
                             <div class="action-icon">
                                 <i class="fas fa-shopping-cart"></i>
-                                <span class="action-badge cart-count">0</span>
+                                <span style="display: flex !important; visibility: visible !important; opacity: 1 !important;" class="action-badge cart-count">0</span>
                             </div>
                             <div class="action-text">
                                 <span class="action-label">Cart</span>

@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import api
 
 app_name = 'products'
 
@@ -28,4 +29,7 @@ urlpatterns = [
     path('wishlist/', views.WishlistView.as_view(), name='wishlist'),
     path('wishlist/<int:pk>/', views.WishlistItemView.as_view(), name='wishlist-item'),
     path('<int:product_id>/toggle-wishlist/', views.toggle_wishlist, name='toggle-wishlist'),
+    
+    # API endpoints
+    path('wishlist/api/', api.wishlist_api, name='wishlist-api'),
 ]

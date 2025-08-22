@@ -161,10 +161,10 @@ class CartManager {
             }
         }
 
-        // Toggle visibility of cart badge based on item count
+        // Always show cart badge, even when count is zero
         const cartBadges = document.querySelectorAll('.action-badge.cart-count');
         cartBadges.forEach(badge => {
-            badge.style.display = summaryData.total_items > 0 ? 'flex' : 'none';
+            badge.style.display = 'flex'; // Always show the badge
         });
 
         // Update total amount

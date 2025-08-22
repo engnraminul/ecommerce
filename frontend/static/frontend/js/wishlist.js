@@ -1,4 +1,32 @@
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Wishlist JS loaded, handling page reload persistence');
+    
+    // Ensure wishlist count badge is always visible
+    const wishlistCount = document.querySelector('.wishlist-count');
+    if (wishlistCount) {
+        // Always try to get count from localStorage first for immediate display
+        const savedCount = localStorage.getItem('wishlistCount');
+        if (savedCount) {
+            console.log('Retrieved wishlist count from localStorage:', savedCount);
+            wishlistCount.textContent = savedCount;
+            
+            // Also update the items text if it exists
+            const wishlistItems = document.querySelector('.wishlist-items');
+            if (wishlistItems) {
+                wishlistItems.textContent = savedCount + ' items';
+            }
+        } else {
+            console.log('No wishlist count found in localStorage');
+        }
+        
+        // Always make the badge visible
+        wishlistCount.style.display = 'flex';
+        wishlistCount.style.visibility = 'visible';
+        wishlistCount.style.opacity = '1';
+    } else {
+        console.error('Wishlist count badge element not found');
+    }
+    
     // Select all wishlist buttons on the page
     const wishlistButtons = document.querySelectorAll('.wishlist-btn');
     
@@ -15,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!isAuthenticated) {
                 // Redirect to login page with return URL
                 const currentUrl = encodeURIComponent(window.location.href);
-                window.location.href = `/accounts/login/?next=${currentUrl}`;
+                window.location.href = `/login/?next=${currentUrl}`;
                 return;
             }
             
@@ -103,13 +131,19 @@ document.addEventListener('DOMContentLoaded', function() {
             // Update the wishlist count in header if exists
             const wishlistCount = document.querySelector('.wishlist-count');
             if (wishlistCount && data.wishlist_count !== undefined) {
+                // Store in localStorage for persistence
+                localStorage.setItem('wishlistCount', data.wishlist_count.toString());
+                
                 wishlistCount.textContent = data.wishlist_count;
                 
-                // If wishlist count is zero, hide the count badge
-                if (data.wishlist_count === 0) {
-                    wishlistCount.style.display = 'none';
-                } else {
-                    wishlistCount.style.display = 'inline-block';
+                // Always show the badge, even when count is zero
+                wishlistCount.style.display = 'flex';
+                wishlistCount.style.visibility = 'visible';
+                
+                // Also update the "X items" text if it exists
+                const wishlistItems = document.querySelector('.wishlist-items');
+                if (wishlistItems) {
+                    wishlistItems.textContent = data.wishlist_count + ' items';
                 }
             }
         })
@@ -156,20 +190,124 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Use the correct API endpoint for wishlist
         console.log('Fetching wishlist items from API...');
-        fetch('/api/v1/products/wishlist/', {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-            credentials: 'include' // Include cookies in the request
-        })
+        // Helper function to try multiple wishlist endpoints
+        function tryFetchWishlist() {
+            // Use endpoints that actually return JSON data in your application
+            const endpoints = [
+                '/api/v1/products/wishlist/api/',  // New API endpoint we just created
+            ];
+            
+            return new Promise((resolve, reject) => {
+                // Try each endpoint in sequence
+                let currentEndpointIndex = 0;
+                
+                function tryNextEndpoint() {
+                    if (currentEndpointIndex >= endpoints.length) {
+                        console.error("All wishlist endpoints failed");
+                        reject(new Error("All wishlist endpoints failed"));
+                        return;
+                    }
+                    
+                    const endpoint = endpoints[currentEndpointIndex];
+                    console.log(`Trying wishlist endpoint: ${endpoint}`);
+                    
+                    fetch(endpoint, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        credentials: 'include' // Include cookies in the request
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Endpoint ${endpoint} failed with status ${response.status}`);
+                        }
+                        
+                        // Check if response is JSON before resolving
+                        const contentType = response.headers.get('content-type');
+                        if (!contentType || !contentType.includes('application/json')) {
+                            throw new Error(`Endpoint ${endpoint} returned non-JSON content type: ${contentType}`);
+                        }
+                        
+                        // Return the successful response
+                        resolve(response);
+                    })
+                    .catch(error => {
+                        console.error(`Error with endpoint ${endpoint}:`, error);
+                        currentEndpointIndex++;
+                        tryNextEndpoint();
+                    });
+                }
+                
+                tryNextEndpoint();
+            });
+        }
+        
+        // Before attempting API calls, set the count from localStorage if available
+        const savedCount = localStorage.getItem('wishlistCount');
+        if (savedCount) {
+            const wishlistCount = document.querySelector('.wishlist-count');
+            if (wishlistCount) {
+                wishlistCount.textContent = savedCount;
+                wishlistCount.style.display = 'flex';
+                wishlistCount.style.visibility = 'visible';
+                
+                const wishlistItems = document.querySelector('.wishlist-items');
+                if (wishlistItems) {
+                    wishlistItems.textContent = savedCount + ' items';
+                }
+            }
+        }
+        
+        // Now try the API endpoints
+        tryFetchWishlist()
         .then(response => {
             if (!response.ok) {
                 throw new Error('Network response was not ok');
+            }
+            // Check content type to make sure we're getting JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Response is not JSON data');
             }
             return response.json();
         })
         .then(data => {
             console.log('Wishlist data received:', data);
+            
+            // Update the wishlist count badge
+            const wishlistCount = document.querySelector('.wishlist-count');
+            if (wishlistCount) {
+                let count = 0;
+                
+                // Determine the count based on the data structure
+                if (Array.isArray(data)) {
+                    count = data.length;
+                } else if (data.items && Array.isArray(data.items)) {
+                    count = data.items.length;
+                } else if (data.count !== undefined) {
+                    count = data.count;
+                } else if (data.wishlist_count !== undefined) {
+                    count = data.wishlist_count;
+                }
+                
+                // Store count in localStorage for persistence after page reload
+                localStorage.setItem('wishlistCount', count.toString());
+                
+                // Update the badge text and always display it
+                wishlistCount.textContent = count;
+                wishlistCount.style.display = 'flex';
+                wishlistCount.style.visibility = 'visible';
+                
+                // Also update the "X items" text if it exists
+                const wishlistItems = document.querySelector('.wishlist-items');
+                if (wishlistItems) {
+                    wishlistItems.textContent = count + ' items';
+                }
+            }
+            
             // The response is directly an array of wishlist items
             if (Array.isArray(data)) {
                 data.forEach(item => {
@@ -205,8 +343,71 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Error fetching wishlist items:', error);
             console.log('Error message:', error.message);
-            console.log('Make sure the /api/v1/products/wishlist/ endpoint exists and is returning proper data');
+            console.log('Make sure the /api/v1/products/wishlist/api/ endpoint exists and is returning proper JSON data');
+            
+            // Attempt to create a direct count request as a fallback
+            console.log('Attempting alternative approach for wishlist count...');
+            
+            // Try a simple AJAX request to get just the count
+            fetch('/api/v1/products/wishlist/api/', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                credentials: 'include'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Fallback request failed');
+                }
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Response is not JSON data');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Fallback request succeeded:', data);
+                const count = data.wishlist_count || data.count || 0;
+                
+                // Save to localStorage for future use
+                localStorage.setItem('wishlistCount', count.toString());
+                
+                // Update the UI
+                updateWishlistUIWithCount(count);
+            })
+            .catch(fallbackError => {
+                console.error('Fallback approach also failed:', fallbackError);
+                
+                // As a last resort, use localStorage
+                console.log('Using localStorage as final fallback...');
+                const savedCount = localStorage.getItem('wishlistCount') || '0';
+                console.log('Retrieved count from localStorage:', savedCount);
+                
+                // Update the UI using the localStorage value
+                updateWishlistUIWithCount(savedCount);
+            });
         });
+    }
+    
+    // Helper function to update the wishlist UI with a count
+    function updateWishlistUIWithCount(count) {
+        // Update the badge
+        const wishlistBadge = document.querySelector('.wishlist-count');
+        if (wishlistBadge) {
+            wishlistBadge.textContent = count;
+            wishlistBadge.style.display = 'flex';
+            wishlistBadge.style.visibility = 'visible';
+            wishlistBadge.style.opacity = '1';
+        }
+        
+        // Update the "X items" text
+        const wishlistItems = document.querySelector('.wishlist-items');
+        if (wishlistItems) {
+            wishlistItems.textContent = count + ' items';
+        }
     }
     
     // Helper function to get CSRF token from cookies
@@ -289,4 +490,26 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize wishlist buttons when the page loads
     initWishlistButtons();
+    
+    // Ensure wishlist count badge is always visible
+    window.addEventListener('load', function() {
+        const wishlistCount = document.querySelector('.wishlist-count');
+        if (wishlistCount) {
+            wishlistCount.style.display = 'flex';
+            wishlistCount.style.visibility = 'visible';
+            wishlistCount.style.opacity = '1';
+            
+            // Load count from localStorage if available
+            const savedCount = localStorage.getItem('wishlistCount');
+            if (savedCount) {
+                wishlistCount.textContent = savedCount;
+                
+                // Update items text too
+                const wishlistItems = document.querySelector('.wishlist-items');
+                if (wishlistItems) {
+                    wishlistItems.textContent = savedCount + ' items';
+                }
+            }
+        }
+    });
 });
