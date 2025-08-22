@@ -12,6 +12,7 @@
     <!-- CSS -->
     <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}">
     <link rel="stylesheet" href="{% static 'frontend/css/navbar.css' %}">
+    <link rel="stylesheet" href="{% static 'frontend/css/wishlist.css' %}">
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{% static 'frontend/images/favicon.ico' %}">
@@ -30,7 +31,7 @@
     {% block extra_css %}{% endblock %}
     {% block extra_head %}{% endblock %}
 </head>
-<body>
+<body class="{% if user.is_authenticated %}user-authenticated{% endif %}">
     <style>
           /* Custom Color Variables */
     :root {
@@ -137,6 +138,7 @@
     <script src="{% static 'frontend/js/cart.js' %}?v=1.2"></script>
     <script src="{% static 'frontend/js/app.js' %}?v=1.2"></script>
     <script src="{% static 'frontend/js/navbar.js' %}?v=1.2"></script>
+    <script src="{% static 'frontend/js/wishlist.js' %}?v=1.2"></script>
     {% block extra_js %}{% endblock %}
     
     <!-- CSRF Token for AJAX requests -->

@@ -186,22 +186,35 @@ class WishlistItemView(generics.DestroyAPIView):
 @permission_classes([permissions.IsAuthenticated])
 def toggle_wishlist(request, product_id):
     """Toggle product in wishlist"""
+    # Debug info
+    import logging
+    logger = logging.getLogger('django')
+    logger.info(f"Wishlist toggle request received for product ID: {product_id}")
+    logger.info(f"User authenticated: {request.user.is_authenticated}")
+    logger.info(f"Request data: {request.data}")
+    
     product = get_object_or_404(Product, id=product_id, is_active=True)
     wishlist_item, created = Wishlist.objects.get_or_create(
         user=request.user,
         product=product
     )
     
+    # Get wishlist count for the user
+    wishlist_count = Wishlist.objects.filter(user=request.user).count()
+    logger.info(f"Wishlist count: {wishlist_count}, Item created: {created}")
+    
     if not created:
         wishlist_item.delete()
         return Response({
             'message': 'Product removed from wishlist',
-            'in_wishlist': False
+            'in_wishlist': False,
+            'wishlist_count': wishlist_count - 1  # Subtract 1 since we just deleted it
         })
     else:
         return Response({
             'message': 'Product added to wishlist',
-            'in_wishlist': True
+            'in_wishlist': True,
+            'wishlist_count': wishlist_count
         })
 
 

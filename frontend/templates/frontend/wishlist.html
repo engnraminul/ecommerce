@@ -333,12 +333,15 @@
         
         // Remove from wishlist function
         function removeFromWishlist(productId) {
-            fetch(`/api/v1/products/wishlist/${productId}/`, {
-                method: 'DELETE',
+            fetch(`/api/v1/products/${productId}/toggle-wishlist/`, {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken')
-                }
+                },
+                body: JSON.stringify({
+                    action: 'remove'
+                })
             })
             .then(response => {
                 if (response.ok) {
