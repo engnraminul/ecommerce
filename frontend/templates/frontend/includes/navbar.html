@@ -112,9 +112,12 @@
                                         <i class="fas fa-cog"></i> Settings
                                     </a>
                                     <div class="menu-divider"></div>
-                                    <a href="#" onclick="ecommerceApp.logout()" class="menu-item logout">
-                                        <i class="fas fa-sign-out-alt"></i> Logout
-                                    </a>
+                                    <form action="{% url 'frontend:logout' %}" method="post" style="display:inline;" id="dropdown-logout-form">
+                                        {% csrf_token %}
+                                        <a href="#" onclick="document.getElementById('dropdown-logout-form').submit(); return false;" class="menu-item logout">
+                                            <i class="fas fa-sign-out-alt"></i> Logout
+                                        </a>
+                                    </form>
                                 </div>
                             </div>
                         {% else %}
@@ -368,9 +371,12 @@
                         <a href="{% url 'frontend:wishlist' %}" class="mobile-nav-link">
                             <i class="fas fa-heart"></i> Wishlist
                         </a>
-                        <a href="#" onclick="ecommerceApp.logout()" class="mobile-nav-link">
-                            <i class="fas fa-sign-out-alt"></i> Logout
-                        </a>
+                        <form action="{% url 'frontend:logout' %}" method="post" style="display:inline;" id="mobile-logout-form">
+                            {% csrf_token %}
+                            <a href="#" onclick="document.getElementById('mobile-logout-form').submit(); return false;" class="mobile-nav-link">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </form>
                     {% else %}
                         <div class="menu-divider"></div>
                         <a href="{% url 'frontend:login' %}" class="mobile-nav-link">

@@ -577,12 +577,23 @@ async function register(userData) {
 }
 
 function logout() {
+    // This function is kept for backwards compatibility
+    // But the actual logout is now handled by the event listeners on logout links
+    
+    // Clear client-side authentication tokens
     authToken = null;
     localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
+    
+    // Clear cart data
     localStorage.removeItem('cart');
     cart = [];
-    showNotification('Logged out successfully', 'info');
-    window.location.href = '/';
+    
+    // Show notification
+    showNotification('Logging out...', 'info');
+    
+    // Return true to allow the default link behavior
+    return true;
 }
 
 // Form Handlers
@@ -819,7 +830,7 @@ window.ecommerceApp = {
     updateCartQuantity,
     addToWishlist,
     login,
-    logout,
+    logout, // This function exists but wasn't properly connected
     createOrder,
     showNotification,
     renderCartItems, // Add the compatibility function

@@ -135,10 +135,10 @@
 
     <!-- JavaScript -->
     <!-- Load cart.js first as others depend on it -->
-    <script src="{% static 'frontend/js/cart.js' %}?v=1.2"></script>
-    <script src="{% static 'frontend/js/app.js' %}?v=1.2"></script>
-    <script src="{% static 'frontend/js/navbar.js' %}?v=1.2"></script>
-    <script src="{% static 'frontend/js/wishlist.js' %}?v=1.2"></script>
+    <script src="{% static 'frontend/js/cart.js' %}?v=1.4"></script>
+    <script src="{% static 'frontend/js/app.js' %}?v=1.4"></script>
+    <script src="{% static 'frontend/js/navbar.js' %}?v=1.4"></script>
+    <script src="{% static 'frontend/js/wishlist.js' %}?v=1.4"></script>
     {% block extra_js %}{% endblock %}
     
     <!-- CSRF Token for AJAX requests -->
@@ -146,7 +146,7 @@
         window.csrfToken = '{{ csrf_token }}';
     </script>
     
-    <!-- Initialize cart functionality -->
+    <!-- Initialize cart functionality and handle logout -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Ensure cartManager is initialized
@@ -156,6 +156,25 @@
             } else {
                 console.warn('Cart manager not available!');
             }
+            
+            // Handle logout forms - clear local storage before submitting
+            const logoutForms = document.querySelectorAll('#mobile-logout-form, #dropdown-logout-form');
+            logoutForms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    // Clear auth tokens and cart data
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('refreshToken');
+                    localStorage.removeItem('cart');
+                    
+                    // Show notification (will be brief as page redirects)
+                    if (window.showNotification) {
+                        window.showNotification('Logging out...', 'info');
+                    }
+                    
+                    // Continue with form submission
+                    return true;
+                });
+            });
         });
     </script>
 </body>
