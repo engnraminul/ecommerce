@@ -219,6 +219,9 @@
         padding: 2rem;
         box-shadow: var(--card-shadow);
         transition: var(--transition);
+        max-width: 600px;
+        margin: 0 auto;
+        width: 90%;
     }
 
     .search-card:hover {
@@ -917,11 +920,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const deliveryRateClass = deliverySuccessRate < 30 ? 'high' : deliverySuccessRate < 60 ? 'medium' : deliverySuccessRate < 80 ? 'low' : 'minimal';
 
         // Calculate accurate risk level based on delivery success rate and cancellation patterns
-        let calculatedRiskLevel = 'MINIMAL';
+        let calculatedRiskLevel = 'SAFE';
         let riskLevelClass = 'minimal';
 
-        // Prioritize highest risk factors first - handle edge cases
-        if (deliverySuccessRate <= 30 || actualCancelRate >= 70 || (summary.total_parcels > 0 && summary.total_delivered === 0 && summary.total_cancelled > 0)) {
+        // Risk assessment logic with fixed thresholds
+        if (deliverySuccessRate <= 30 || actualCancelRate >= 70) {
             calculatedRiskLevel = 'HIGH';
             riskLevelClass = 'high';
         } else if (deliverySuccessRate <= 60 || actualCancelRate >= 40) {
@@ -932,8 +935,14 @@ document.addEventListener('DOMContentLoaded', function() {
             riskLevelClass = 'low';
         }
 
-        // Use calculated risk level if backend doesn't provide accurate one
-        const displayRiskLevel = summary.highest_risk_level || calculatedRiskLevel;
+        // Additional risk factors
+        if (actualCancelRate >= 70 || (summary.total_parcels > 0 && summary.total_delivered === 0 && summary.total_cancelled > 0)) {
+            calculatedRiskLevel = 'HIGH';
+            riskLevelClass = 'high';
+        }
+
+        // Always use our calculated risk level for consistency
+        const displayRiskLevel = calculatedRiskLevel;
 
         return `
             <div class="summary-title">
@@ -989,16 +998,41 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let successRate = 0;
         let successRateClass = 'low';
+        let calculatedRiskLevel = 'SAFE';
+        let riskLevel = 'minimal';
 
         if (isSuccess && courierData.total_parcels > 0) {
             successRate = ((courierData.total_delivered / courierData.total_parcels) * 100).toFixed(1);
-            if (successRate < 30) successRateClass = 'high';
-            else if (successRate < 60) successRateClass = 'medium';
-            else if (successRate < 80) successRateClass = 'low';
-            else successRateClass = 'minimal';
-        }
+            let cancelRate = ((courierData.total_cancelled / courierData.total_parcels) * 100);
+            
+            // Use the same risk assessment logic as the summary card
+            if (Number(successRate) <= 30 || cancelRate >= 70) {
+                successRateClass = 'high';
+                calculatedRiskLevel = 'HIGH';
+                riskLevel = 'high';
+            } else if (Number(successRate) <= 60 || cancelRate >= 40) {
+                successRateClass = 'medium';
+                calculatedRiskLevel = 'MEDIUM';
+                riskLevel = 'medium';
+            } else if (Number(successRate) <= 80 || cancelRate >= 20) {
+                successRateClass = 'low';
+                calculatedRiskLevel = 'LOW';
+                riskLevel = 'low';
+            } else {
+                successRateClass = 'minimal';
+                calculatedRiskLevel = 'SAFE';
+                riskLevel = 'minimal';
+            }
 
-        const riskLevel = isSuccess ? (courierData.risk_level || 'MINIMAL').toLowerCase() : 'unknown';
+            // Additional check for zero deliveries with cancellations
+            if (courierData.total_delivered === 0 && courierData.total_cancelled > 0) {
+                calculatedRiskLevel = 'HIGH';
+                riskLevel = 'high';
+            }
+        } else {
+            riskLevel = 'unknown';
+            calculatedRiskLevel = 'UNKNOWN';
+        }
         const fraudScore = isSuccess ? (courierData.fraud_score || 0) : 0;
 
         row.innerHTML = `
@@ -1016,10 +1050,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <td><span class="metric-value">${isSuccess ? (courierData.total_cancelled || 0) : '-'}</span></td>
             <td><span class="success-rate ${successRateClass}">${isSuccess ? successRate + '%' : '-'}</span></td>
             <td>
-                ${isSuccess ?
-                    `<span class="risk-badge ${riskLevel}">${courierData.risk_level || 'MINIMAL'}</span>` :
-                    '<span class="risk-badge" style="background: #6c757d;">UNKNOWN</span>'
-                }
+                <span class="risk-badge ${riskLevel}">${calculatedRiskLevel}</span>
             </td>
         `;
 
