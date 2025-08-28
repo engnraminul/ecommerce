@@ -44,6 +44,9 @@ urlpatterns = [
     # API
     path('api/v1/', include(api_urlpatterns)),
     
+    # Fraud Checker
+    path('fraud-checker/', include('fraud_checker.urls')),
+    
     # Frontend (for Django templates if needed)
     path('', include('frontend.urls')),  # Will create this for templates
 ]
