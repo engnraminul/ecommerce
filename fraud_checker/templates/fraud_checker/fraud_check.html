@@ -1,0 +1,1055 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+
+{% block title %}Fraud Checker - Professional eCommerce{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="fraud-checker-page">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="header-content">
+                <div class="header-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Advanced Fraud Checker</h1>
+                    <p>Comprehensive fraud risk analysis across multiple courier services</p>
+                    <div class="courier-badges">
+                        <span class="courier-badge steadfast">Steadfast</span>
+                        <span class="courier-badge pathao">Pathao</span>
+                        <span class="courier-badge redx">RedX</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Form -->
+        <div class="search-section">
+            <div class="search-card">
+                <form id="fraud-check-form">
+                    {% csrf_token %}
+                    <div class="search-input-group">
+                        <div class="input-wrapper">
+                            <i class="fas fa-phone input-icon"></i>
+                            <input type="text" id="phone-number" name="phone_number" 
+                                   placeholder="Enter phone number (e.g., 01777173040)" 
+                                   class="search-input" required>
+                        </div>
+                        <button type="submit" class="search-btn" id="check-btn">
+                            <i class="fas fa-search"></i>
+                            <span>Check Risk</span>
+                        </button>
+                    </div>
+                    <div class="search-help">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Enter a Bangladeshi mobile number to check fraud risk across all courier services</span>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results-section" class="results-section" style="display: none;">
+            <!-- Summary Card -->
+            <div id="summary-card" class="summary-card">
+                <!-- Summary content will be inserted here -->
+            </div>
+
+            <!-- Courier Results Table -->
+            <div class="table-card">
+                <div class="table-header">
+                    <h3><i class="fas fa-table"></i> Courier Analysis Results</h3>
+                    <div class="table-subtitle">Detailed breakdown by courier service</div>
+                </div>
+                <div class="table-container">
+                    <table id="courier-results-table" class="modern-table">
+                        <thead>
+                            <tr>
+                                <th class="courier-col">
+                                    <i class="fas fa-truck"></i>
+                                    Courier
+                                </th>
+                                <th class="status-col">
+                                    <i class="fas fa-signal"></i>
+                                    Status
+                                </th>
+                                <th class="parcels-col">
+                                    <i class="fas fa-boxes"></i>
+                                    Total Parcels
+                                </th>
+                                <th class="delivered-col">
+                                    <i class="fas fa-check-circle"></i>
+                                    Delivered
+                                </th>
+                                <th class="cancelled-col">
+                                    <i class="fas fa-times-circle"></i>
+                                    Cancelled
+                                </th>
+                                <th class="rate-col">
+                                    <i class="fas fa-truck"></i>
+                                    Success Rate
+                                </th>
+                                <th class="risk-col">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    Risk Level
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="courier-table-body">
+                            <!-- Table rows will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div id="loading-modal" class="loading-modal" style="display: none;">
+    <div class="loading-content">
+        <div class="loading-spinner">
+            <div class="spinner-ring"></div>
+            <div class="spinner-ring"></div>
+            <div class="spinner-ring"></div>
+        </div>
+        <h3>Analyzing Fraud Risk</h3>
+        <p>Checking data across multiple courier services...</p>
+        <div class="loading-progress">
+            <div class="progress-bar"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --warning-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        --danger-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        --info-gradient: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+        --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        --card-shadow-hover: 0 20px 60px rgba(0, 0, 0, 0.15);
+        --border-radius-lg: 16px;
+        --border-radius-md: 12px;
+        --border-radius-sm: 8px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .fraud-checker-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    /* Page Header */
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .header-icon {
+        font-size: 4rem;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .header-text h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--dark-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .header-text p {
+        font-size: 1.1rem;
+        color: var(--secondary-color);
+        margin-bottom: 1rem;
+    }
+
+    .courier-badges {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .courier-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: white;
+    }
+
+    .courier-badge.steadfast {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .courier-badge.pathao {
+        background: linear-gradient(135deg, #f093fb, #f5576c);
+    }
+
+    .courier-badge.redx {
+        background: linear-gradient(135deg, #4facfe, #00f2fe);
+    }
+
+    /* Search Section */
+    .search-section {
+        margin-bottom: 3rem;
+    }
+
+    .search-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 2rem;
+        box-shadow: var(--card-shadow);
+        transition: var(--transition);
+    }
+
+    .search-card:hover {
+        box-shadow: var(--card-shadow-hover);
+        transform: translateY(-2px);
+    }
+
+    .search-input-group {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .input-wrapper {
+        position: relative;
+        flex: 1;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--secondary-color);
+        font-size: 1.1rem;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 1rem 1rem 1rem 3rem;
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius-md);
+        font-size: 1.1rem;
+        transition: var(--transition);
+        background: var(--light-color);
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #667eea;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .search-btn {
+        padding: 1rem 2rem;
+        background: var(--primary-gradient);
+        color: white;
+        border: none;
+        border-radius: var(--border-radius-md);
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 140px;
+        justify-content: center;
+    }
+
+    .search-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    .search-btn:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .search-help {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--secondary-color);
+        font-size: 0.9rem;
+        justify-content: center;
+    }
+
+    /* Summary Card */
+    .summary-card {
+        background: var(--primary-gradient);
+        color: white;
+        border-radius: var(--border-radius-lg);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--card-shadow);
+    }
+
+    .summary-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+    }
+
+    .summary-item {
+        text-align: center;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: var(--border-radius-md);
+        backdrop-filter: blur(10px);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .summary-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+        opacity: 0;
+        transition: var(--transition);
+    }
+
+    .summary-item:hover::before {
+        opacity: 1;
+    }
+
+    .summary-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .summary-icon {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        font-size: 1rem;
+        opacity: 0.7;
+    }
+
+    /* Color-coded summary items */
+    .summary-item.success {
+        background: linear-gradient(135deg, rgba(0, 184, 148, 0.2) 0%, rgba(0, 184, 148, 0.1) 100%);
+        border-left: 3px solid #00b894;
+    }
+
+    .summary-item.warning {
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.2) 0%, rgba(255, 193, 7, 0.1) 100%);
+        border-left: 3px solid #ffc107;
+    }
+
+    .summary-item.minimal {
+        background: linear-gradient(135deg, rgba(0, 184, 148, 0.2) 0%, rgba(0, 184, 148, 0.1) 100%);
+        border-left: 3px solid #00b894;
+    }
+
+    .summary-item.low {
+        background: linear-gradient(135deg, rgba(116, 185, 255, 0.2) 0%, rgba(116, 185, 255, 0.1) 100%);
+        border-left: 3px solid #74b9ff;
+    }
+
+    .summary-item.medium {
+        background: linear-gradient(135deg, rgba(253, 203, 110, 0.2) 0%, rgba(253, 203, 110, 0.1) 100%);
+        border-left: 3px solid #fdcb6e;
+    }
+
+    .summary-item.high {
+        background: linear-gradient(135deg, rgba(231, 76, 60, 0.2) 0%, rgba(231, 76, 60, 0.1) 100%);
+        border-left: 3px solid #e74c3c;
+    }
+
+    .summary-item.unknown {
+        background: linear-gradient(135deg, rgba(108, 117, 125, 0.2) 0%, rgba(108, 117, 125, 0.1) 100%);
+        border-left: 3px solid #6c757d;
+    }
+
+    .summary-number {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .summary-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        font-weight: 500;
+    }
+
+    /* Table Card */
+    .table-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+    }
+
+    .table-header {
+        padding: 2rem 2rem 1rem;
+        background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 100%);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .table-header h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--dark-color);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .table-subtitle {
+        color: var(--secondary-color);
+        font-size: 0.95rem;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .modern-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+
+    .modern-table thead {
+        background: var(--primary-gradient);
+        color: white;
+    }
+
+    .modern-table th {
+        padding: 1rem 0.75rem;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .modern-table th i {
+        margin-right: 0.5rem;
+        opacity: 0.8;
+    }
+
+    .modern-table tbody tr {
+        transition: var(--transition);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .modern-table tbody tr:hover {
+        background: var(--light-color);
+    }
+
+    .modern-table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .modern-table td {
+        padding: 1.25rem 0.75rem;
+        vertical-align: middle;
+    }
+
+    /* Table Column Styles */
+    .courier-name {
+        font-weight: 700;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .courier-logo {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+
+    .status-badge {
+        padding: 0.375rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .status-badge.success {
+        background: linear-gradient(135deg, #00b894, #00cec9);
+        color: white;
+    }
+
+    .status-badge.error {
+        background: linear-gradient(135deg, #e17055, #d63031);
+        color: white;
+    }
+
+    .metric-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--dark-color);
+    }
+
+    .success-rate {
+        font-weight: 600;
+    }
+
+    .success-rate.high {
+        color: #d63031;
+    }
+
+    .success-rate.medium {
+        color: #e17055;
+    }
+
+    .success-rate.low {
+        color: #fdcb6e;
+    }
+
+    .success-rate.minimal {
+        color: #00b894;
+    }
+
+    .risk-badge {
+        padding: 0.375rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: white;
+    }
+
+    .risk-badge.minimal {
+        background: var(--success-gradient);
+    }
+
+    .risk-badge.low {
+        background: var(--info-gradient);
+    }
+
+    .risk-badge.medium {
+        background: var(--warning-gradient);
+    }
+
+    .risk-badge.high {
+        background: var(--danger-gradient);
+    }
+
+    .fraud-score {
+        font-size: 1.2rem;
+        font-weight: 700;
+        padding: 0.5rem;
+        border-radius: var(--border-radius-sm);
+        text-align: center;
+        min-width: 50px;
+    }
+
+    .fraud-score.minimal {
+        background: rgba(0, 184, 148, 0.1);
+        color: #00b894;
+    }
+
+    .fraud-score.low {
+        background: rgba(116, 185, 255, 0.1);
+        color: #74b9ff;
+    }
+
+    .fraud-score.medium {
+        background: rgba(253, 203, 110, 0.1);
+        color: #fdcb6e;
+    }
+
+    .fraud-score.high {
+        background: rgba(231, 76, 60, 0.1);
+        color: #e74c3c;
+    }
+
+    /* Loading Modal */
+    .loading-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(5px);
+    }
+
+    .loading-content {
+        background: white;
+        padding: 3rem 2rem;
+        border-radius: var(--border-radius-lg);
+        text-align: center;
+        max-width: 400px;
+        width: 90%;
+        box-shadow: var(--card-shadow-hover);
+    }
+
+    .loading-spinner {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 2rem;
+    }
+
+    .spinner-ring {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border: 4px solid transparent;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    .spinner-ring:nth-child(2) {
+        animation-delay: 0.1s;
+        border-top-color: #764ba2;
+    }
+
+    .spinner-ring:nth-child(3) {
+        animation-delay: 0.2s;
+        border-top-color: #f093fb;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .loading-content h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--dark-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .loading-content p {
+        color: var(--secondary-color);
+        margin-bottom: 1.5rem;
+    }
+
+    .loading-progress {
+        width: 100%;
+        height: 4px;
+        background: var(--border-color);
+        border-radius: 2px;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        height: 100%;
+        background: var(--primary-gradient);
+        border-radius: 2px;
+        animation: progress 2s ease-in-out infinite;
+    }
+
+    @keyframes progress {
+        0% { width: 0%; }
+        50% { width: 70%; }
+        100% { width: 100%; }
+    }
+
+    /* Error Message */
+    .error-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 2rem;
+        text-align: center;
+        box-shadow: var(--card-shadow);
+        border-left: 4px solid #e74c3c;
+    }
+
+    .error-icon {
+        font-size: 3rem;
+        color: #e74c3c;
+        margin-bottom: 1rem;
+    }
+
+    .error-message {
+        color: var(--dark-color);
+        font-size: 1.1rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .fraud-checker-page {
+            padding: 1rem;
+        }
+
+        .header-content {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .header-icon {
+            font-size: 3rem;
+        }
+
+        .header-text h1 {
+            font-size: 2rem;
+        }
+
+        .search-input-group {
+            flex-direction: column;
+        }
+
+        .search-btn {
+            width: 100%;
+        }
+
+        .summary-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .table-container {
+            font-size: 0.8rem;
+        }
+
+        .modern-table th,
+        .modern-table td {
+            padding: 0.75rem 0.5rem;
+        }
+
+        .courier-name {
+            font-size: 0.9rem;
+        }
+
+        .metric-value {
+            font-size: 1rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .summary-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .table-header {
+            padding: 1.5rem 1rem 1rem;
+        }
+
+        .modern-table {
+            font-size: 0.75rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fraudCheckForm = document.getElementById('fraud-check-form');
+    const loadingModal = document.getElementById('loading-modal');
+    const resultsSection = document.getElementById('results-section');
+    const checkBtn = document.getElementById('check-btn');
+    
+    // Check if all required elements exist
+    if (!fraudCheckForm) {
+        console.error('Fraud check form not found');
+        return;
+    }
+    if (!loadingModal) {
+        console.error('Loading modal not found');
+        return;
+    }
+    if (!resultsSection) {
+        console.error('Results section not found');
+        return;
+    }
+    if (!checkBtn) {
+        console.error('Check button not found');
+        return;
+    }
+
+    fraudCheckForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const phoneNumber = document.getElementById('phone-number').value.trim();
+        
+        if (!phoneNumber) {
+            showError('Please enter a phone number');
+            return;
+        }
+
+        showLoading();
+        
+        try {
+            const response = await fetch('{% url "fraud_checker:api_check" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    phone_number: phoneNumber
+                })
+            });
+
+            const data = await response.json();
+            hideLoading();
+
+            if (data.success) {
+                displayResults(data);
+            } else {
+                showError(data.error || 'Failed to check fraud status');
+            }
+        } catch (error) {
+            hideLoading();
+            showError('Network error: ' + error.message);
+        }
+    });
+
+    function showLoading() {
+        loadingModal.style.display = 'flex';
+        checkBtn.disabled = true;
+        checkBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Checking...</span>';
+    }
+
+    function hideLoading() {
+        loadingModal.style.display = 'none';
+        checkBtn.disabled = false;
+        checkBtn.innerHTML = '<i class="fas fa-search"></i><span>Check Risk</span>';
+    }
+
+    function displayResults(data) {
+        try {
+            // Generate summary card
+            const summaryCardElement = document.getElementById('summary-card');
+            if (!summaryCardElement) {
+                console.error('Summary card element not found');
+                return;
+            }
+            
+            const summaryHTML = generateSummaryCard(data.summary, data);
+            summaryCardElement.innerHTML = summaryHTML;
+
+            // Generate table rows
+            const tableBody = document.getElementById('courier-table-body');
+            if (!tableBody) {
+                console.error('Table body element not found');
+                return;
+            }
+            
+            tableBody.innerHTML = '';
+
+            // Add rows for each courier
+            const couriers = [
+                { key: 'steadfast', name: 'Steadfast', logo: 'S', color: '#667eea' },
+                { key: 'pathao', name: 'Pathao', logo: 'P', color: '#f5576c' },
+                { key: 'redx', name: 'RedX', logo: 'R', color: '#00f2fe' }
+            ];
+
+            couriers.forEach(courier => {
+                const courierData = data.couriers[courier.key];
+                const row = generateTableRow(courier, courierData);
+                tableBody.appendChild(row);
+            });
+
+            if (resultsSection) {
+                resultsSection.style.display = 'block';
+                resultsSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        } catch (error) {
+            console.error('Error displaying results:', error);
+            showError('Failed to display results: ' + error.message);
+        }
+    }
+
+    function generateSummaryCard(summary, data) {
+        // Calculate delivery success rate
+        const deliverySuccessRate = summary.total_parcels > 0 ? ((summary.total_delivered / summary.total_parcels) * 100) : 0;
+
+        // Calculate actual cancellation rate from raw data (for risk assessment)
+        const actualCancelRate = summary.total_parcels > 0 ? ((summary.total_cancelled / summary.total_parcels) * 100) : 0;
+
+        // Determine color classes based on delivery success rate
+        const deliveryRateClass = deliverySuccessRate < 30 ? 'high' : deliverySuccessRate < 60 ? 'medium' : deliverySuccessRate < 80 ? 'low' : 'minimal';
+
+        // Calculate accurate risk level based on delivery success rate and cancellation patterns
+        let calculatedRiskLevel = 'MINIMAL';
+        let riskLevelClass = 'minimal';
+
+        // Prioritize highest risk factors first - handle edge cases
+        if (deliverySuccessRate <= 30 || actualCancelRate >= 70 || (summary.total_parcels > 0 && summary.total_delivered === 0 && summary.total_cancelled > 0)) {
+            calculatedRiskLevel = 'HIGH';
+            riskLevelClass = 'high';
+        } else if (deliverySuccessRate <= 60 || actualCancelRate >= 40) {
+            calculatedRiskLevel = 'MEDIUM';
+            riskLevelClass = 'medium';
+        } else if (deliverySuccessRate <= 80 || actualCancelRate >= 20) {
+            calculatedRiskLevel = 'LOW';
+            riskLevelClass = 'low';
+        }
+
+        // Use calculated risk level if backend doesn't provide accurate one
+        const displayRiskLevel = summary.highest_risk_level || calculatedRiskLevel;
+
+        return `
+            <div class="summary-title">
+                <i class="fas fa-chart-line"></i> Overall Risk Analysis
+            </div>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-number">${summary.total_parcels}</div>
+                    <div class="summary-label">Total Parcels</div>
+                    <div class="summary-icon">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                </div>
+                <div class="summary-item success">
+                    <div class="summary-number">${summary.total_delivered}</div>
+                    <div class="summary-label">Delivered</div>
+                    <div class="summary-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+                <div class="summary-item warning">
+                    <div class="summary-number">${summary.total_cancelled}</div>
+                    <div class="summary-label">Cancelled</div>
+                    <div class="summary-icon">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                </div>
+                <div class="summary-item ${deliveryRateClass}">
+                    <div class="summary-number">${deliverySuccessRate.toFixed(1)}%</div>
+                    <div class="summary-label">Delivery Success Rate</div>
+                    <div class="summary-icon">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                </div>
+                <div class="summary-item ${riskLevelClass}">
+                    <div class="summary-number">${displayRiskLevel}</div>
+                    <div class="summary-label">Risk Level</div>
+                    <div class="summary-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function generateTableRow(courier, courierData) {
+        const row = document.createElement('tr');
+        
+        const isSuccess = courierData.success;
+        const statusBadge = isSuccess ? 
+            '<span class="status-badge success"><i class="fas fa-check"></i></span>' :
+            '<span class="status-badge error"><i class="fas fa-times"></i></span>';
+
+        let successRate = 0;
+        let successRateClass = 'low';
+
+        if (isSuccess && courierData.total_parcels > 0) {
+            successRate = ((courierData.total_delivered / courierData.total_parcels) * 100).toFixed(1);
+            if (successRate < 30) successRateClass = 'high';
+            else if (successRate < 60) successRateClass = 'medium';
+            else if (successRate < 80) successRateClass = 'low';
+            else successRateClass = 'minimal';
+        }
+
+        const riskLevel = isSuccess ? (courierData.risk_level || 'MINIMAL').toLowerCase() : 'unknown';
+        const fraudScore = isSuccess ? (courierData.fraud_score || 0) : 0;
+
+        row.innerHTML = `
+            <td>
+                <div class="courier-name">
+                    <div class="courier-logo" style="background: ${courier.color};">
+                        ${courier.logo}
+                    </div>
+                    ${courier.name}
+                </div>
+            </td>
+            <td>${statusBadge}</td>
+            <td><span class="metric-value">${isSuccess ? (courierData.total_parcels || 0) : '-'}</span></td>
+            <td><span class="metric-value">${isSuccess ? (courierData.total_delivered || 0) : '-'}</span></td>
+            <td><span class="metric-value">${isSuccess ? (courierData.total_cancelled || 0) : '-'}</span></td>
+            <td><span class="success-rate ${successRateClass}">${isSuccess ? successRate + '%' : '-'}</span></td>
+            <td>
+                ${isSuccess ?
+                    `<span class="risk-badge ${riskLevel}">${courierData.risk_level || 'MINIMAL'}</span>` :
+                    '<span class="risk-badge" style="background: #6c757d;">UNKNOWN</span>'
+                }
+            </td>
+        `;
+
+        return row;
+    }
+
+    function showError(message) {
+        try {
+            const resultsSection = document.getElementById('results-section');
+            if (!resultsSection) {
+                console.error('Results section element not found');
+                alert('Error: ' + message); // Fallback to alert
+                return;
+            }
+            
+            resultsSection.innerHTML = `
+                <div class="error-card">
+                    <div class="error-icon">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                    <div class="error-message">${message}</div>
+                </div>
+            `;
+            resultsSection.style.display = 'block';
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+        } catch (error) {
+            console.error('Error showing error message:', error);
+            alert('Error: ' + message); // Fallback to alert
+        }
+    }
+});
+</script>
+{% endblock %}
