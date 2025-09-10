@@ -1,0 +1,400 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}MB Admin - Products{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
+<li class="breadcrumb-item active">Products</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>Products</h1>
+    </div>
+    <div class="col-md-4 text-end">
+        <div class="btn-group" role="group">
+            <a href="{% url 'dashboard:product_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Product
+            </a>
+            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-ellipsis-v"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#importProductsModal">
+                        <i class="fas fa-file-import me-2"></i> Import Products
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="{% url 'dashboard:export_products' %}">
+                        <i class="fas fa-file-export me-2"></i> Export Products
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="row mb-4" id="filterSection">
+    <div class="col-12">
+        <div class="card border-0 shadow">
+            <div class="card-body">
+                <form method="get" action="{% url 'dashboard:product_list' %}">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label for="category" class="form-label">Category</label>
+                            <select class="form-select" id="category" name="category">
+                                <option value="">All Categories</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}" {% if current_category == category.id %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">All Statuses</option>
+                                <option value="active" {% if current_status == 'active' %}selected{% endif %}>Active</option>
+                                <option value="inactive" {% if current_status == 'inactive' %}selected{% endif %}>Inactive</option>
+                                <option value="draft" {% if current_status == 'draft' %}selected{% endif %}>Draft</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="stock" class="form-label">Stock</label>
+                            <select class="form-select" id="stock" name="stock">
+                                <option value="">All</option>
+                                <option value="in_stock" {% if stock_status == 'in_stock' %}selected{% endif %}>In Stock</option>
+                                <option value="out_of_stock" {% if stock_status == 'out_of_stock' %}selected{% endif %}>Out of Stock</option>
+                                <option value="low_stock" {% if stock_status == 'low_stock' %}selected{% endif %}>Low Stock</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="q" class="form-label">Search</label>
+                            <input type="text" class="form-control" id="q" name="q" value="{{ search_query }}" placeholder="Name, SKU...">
+                        </div>
+                        
+                        <div class="col-12 text-end">
+                            <button type="submit" class="btn btn-primary">Apply Filters</button>
+                            <a href="{% url 'dashboard:product_list' %}" class="btn btn-outline-secondary">Clear</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Products Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th style="width: 80px">Image</th>
+                                <th>Name</th>
+                                <th>SKU</th>
+                                <th>Category</th>
+                                <th>Stock</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products %}
+                            <tr>
+                                <td>
+                                    {% if product.image %}
+                                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-fluid" style="max-width: 60px; max-height: 60px;">
+                                    {% else %}
+                                    <div class="bg-light" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-image text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'dashboard:product_detail' product.id %}">{{ product.name }}</a>
+                                    {% if product.has_variants %}
+                                    <span class="badge bg-info ms-1">{{ product.variants.count }} variants</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ product.sku }}</td>
+                                <td>{{ product.category.name }}</td>
+                                <td>
+                                    {% if product.has_variants %}
+                                        {% if product.total_stock == 0 %}
+                                        <span class="text-danger">Out of Stock</span>
+                                        {% elif product.total_stock < 10 %}
+                                        <span class="text-warning">Low ({{ product.total_stock }})</span>
+                                        {% else %}
+                                        {{ product.total_stock }} in stock
+                                        {% endif %}
+                                    {% else %}
+                                        {% if product.stock == 0 %}
+                                        <span class="text-danger">Out of Stock</span>
+                                        {% elif product.stock < 10 %}
+                                        <span class="text-warning">Low ({{ product.stock }})</span>
+                                        {% else %}
+                                        {{ product.stock }} in stock
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if product.has_variants %}
+                                        ${{ product.min_price|floatformat:2 }}
+                                        {% if product.min_price != product.max_price %}
+                                        - ${{ product.max_price|floatformat:2 }}
+                                        {% endif %}
+                                    {% else %}
+                                        ${{ product.price|floatformat:2 }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if product.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'dashboard:product_edit' product.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'dashboard:product_detail' product.id %}">
+                                                    <i class="fas fa-eye me-2"></i> View Details
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'dashboard:product_edit' product.id %}">
+                                                    <i class="fas fa-edit me-2"></i> Edit
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'dashboard:manage_variants' product.id %}">
+                                                    <i class="fas fa-th-large me-2"></i> Manage Variants
+                                                </a>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#duplicateProductModal{{ product.id }}">
+                                                    <i class="fas fa-copy me-2"></i> Duplicate
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteProductModal{{ product.id }}">
+                                                    <i class="fas fa-trash-alt me-2"></i> Delete
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <!-- Delete Modal -->
+                                    <div class="modal fade" id="deleteProductModal{{ product.id }}" tabindex="-1" aria-labelledby="deleteProductModalLabel{{ product.id }}" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="deleteProductModalLabel{{ product.id }}">Delete Product</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p>Are you sure you want to delete <strong>{{ product.name }}</strong>?</p>
+                                                    <p class="text-danger mb-0">This action cannot be undone.</p>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                    <form action="{% url 'dashboard:product_delete' product.id %}" method="post">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-danger">Delete</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Duplicate Modal -->
+                                    <div class="modal fade" id="duplicateProductModal{{ product.id }}" tabindex="-1" aria-labelledby="duplicateProductModalLabel{{ product.id }}" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="duplicateProductModalLabel{{ product.id }}">Duplicate Product</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <form action="{% url 'dashboard:product_duplicate' product.id %}" method="post">
+                                                    {% csrf_token %}
+                                                    <div class="modal-body">
+                                                        <p>You are about to create a copy of <strong>{{ product.name }}</strong>.</p>
+                                                        <div class="mb-3">
+                                                            <label for="new_name{{ product.id }}" class="form-label">New Product Name</label>
+                                                            <input type="text" class="form-control" id="new_name{{ product.id }}" name="new_name" value="Copy of {{ product.name }}" required>
+                                                        </div>
+                                                        <div class="form-check mb-3">
+                                                            <input class="form-check-input" type="checkbox" id="copy_images{{ product.id }}" name="copy_images" checked>
+                                                            <label class="form-check-label" for="copy_images{{ product.id }}">
+                                                                Copy images
+                                                            </label>
+                                                        </div>
+                                                        <div class="form-check mb-0">
+                                                            <input class="form-check-input" type="checkbox" id="copy_variants{{ product.id }}" name="copy_variants" checked>
+                                                            <label class="form-check-label" for="copy_variants{{ product.id }}">
+                                                                Copy variants
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn btn-primary">Duplicate</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center py-5">
+                                    <i class="fas fa-box fa-3x mb-3 text-muted"></i>
+                                    <p class="mb-0">No products found.</p>
+                                    {% if search_query or current_category or current_status or stock_status %}
+                                    <p class="mb-3">Try adjusting your filter criteria.</p>
+                                    <a href="{% url 'dashboard:product_list' %}" class="btn btn-outline-primary">Clear Filters</a>
+                                    {% else %}
+                                    <p class="mb-3">Get started by adding your first product.</p>
+                                    <a href="{% url 'dashboard:product_create' %}" class="btn btn-primary">Add Product</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if products.has_other_pages %}
+                <nav aria-label="Products pagination">
+                    <ul class="pagination justify-content-center mt-4">
+                        {% if products.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if stock_status %}&stock={{ stock_status }}{% endif %}" aria-label="First">
+                                <span aria-hidden="true">&laquo;&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ products.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if stock_status %}&stock={{ stock_status }}{% endif %}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link" aria-hidden="true">&laquo;&laquo;</span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link" aria-hidden="true">&laquo;</span>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in products.paginator.page_range %}
+                            {% if products.number == num %}
+                            <li class="page-item active" aria-current="page">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                            {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if stock_status %}&stock={{ stock_status }}{% endif %}">{{ num }}</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if products.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ products.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if stock_status %}&stock={{ stock_status }}{% endif %}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ products.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if stock_status %}&stock={{ stock_status }}{% endif %}" aria-label="Last">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link" aria-hidden="true">&raquo;</span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link" aria-hidden="true">&raquo;&raquo;</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Import Products Modal -->
+<div class="modal fade" id="importProductsModal" tabindex="-1" aria-labelledby="importProductsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importProductsModalLabel">Import Products</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'dashboard:import_products' %}" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="import_file" class="form-label">CSV File</label>
+                        <input type="file" class="form-control" id="import_file" name="import_file" accept=".csv" required>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="overwrite_existing" name="overwrite_existing">
+                        <label class="form-check-label" for="overwrite_existing">
+                            Overwrite existing products (by SKU)
+                        </label>
+                    </div>
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">CSV Format</h6>
+                        <p class="mb-0">Your CSV file should include the following columns: name, sku, description, price, category, stock</p>
+                        <a href="{% url 'dashboard:download_product_csv_template' %}" class="alert-link">Download Template</a>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Import</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Toggle filters visibility
+        const filterSection = document.getElementById('filterSection');
+        
+        // Show filters by default since they're compact and useful
+        filterSection.style.display = 'block';
+    });
+</script>
+{% endblock %}

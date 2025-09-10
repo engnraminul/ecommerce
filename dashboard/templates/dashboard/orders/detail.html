@@ -1,0 +1,449 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}MB Admin - Order #{{ order.order_number }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:order_list' %}">Orders</a></li>
+<li class="breadcrumb-item active">Order #{{ order.order_number }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>Order #{{ order.order_number }}</h1>
+        <p class="text-muted">Placed on {{ order.created_at|date:"M d, Y" }} at {{ order.created_at|date:"H:i" }}</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#updateStatusModal">
+                <i class="fas fa-edit me-1"></i> Update Status
+            </button>
+            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-ellipsis-v"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <a class="dropdown-item print-invoice" href="{% url 'dashboard:order_invoice' order.id %}" target="_blank">
+                        <i class="fas fa-print me-2"></i> Print Invoice
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="{% url 'dashboard:order_invoice' order.id %}?download=true">
+                        <i class="fas fa-download me-2"></i> Download Invoice
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#cancelOrderModal">
+                        <i class="fas fa-times me-2"></i> Cancel Order
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Order Summary -->
+    <div class="col-lg-4 mb-4">
+        <div class="card border-0 shadow h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Order Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6 class="text-muted">Status</h6>
+                    {% if order.status == 'pending' %}
+                    <span class="badge bg-warning p-2 fs-6 w-100">Pending</span>
+                    {% elif order.status == 'processing' %}
+                    <span class="badge bg-info p-2 fs-6 w-100">Processing</span>
+                    {% elif order.status == 'shipped' %}
+                    <span class="badge bg-primary p-2 fs-6 w-100">Shipped</span>
+                    {% elif order.status == 'delivered' %}
+                    <span class="badge bg-success p-2 fs-6 w-100">Delivered</span>
+                    {% elif order.status == 'cancelled' %}
+                    <span class="badge bg-danger p-2 fs-6 w-100">Cancelled</span>
+                    {% else %}
+                    <span class="badge bg-secondary p-2 fs-6 w-100">{{ order.status }}</span>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="text-muted">Payment</h6>
+                    <p class="mb-0">{{ order.payment_method }}</p>
+                    <p class="mb-0 small">{{ order.payment_status }}</p>
+                </div>
+                
+                <div class="mb-0">
+                    <h6 class="text-muted">Totals</h6>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Subtotal:</span>
+                        <span>${{ order.subtotal|floatformat:2 }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Shipping:</span>
+                        <span>${{ order.shipping_cost|floatformat:2 }}</span>
+                    </div>
+                    {% if order.discount %}
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Discount:</span>
+                        <span>-${{ order.discount|floatformat:2 }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Tax:</span>
+                        <span>${{ order.tax|floatformat:2 }}</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between fw-bold">
+                        <span>Total:</span>
+                        <span>${{ order.total_amount|floatformat:2 }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Customer Information -->
+    <div class="col-lg-4 mb-4">
+        <div class="card border-0 shadow h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Customer Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6 class="text-muted">Customer</h6>
+                    <p class="mb-1">
+                        {% if order.user %}
+                        <a href="{% url 'dashboard:user_detail' order.user.id %}">
+                            {{ order.user.get_full_name|default:order.user.email }}
+                        </a>
+                        {% else %}
+                        Guest Customer
+                        {% endif %}
+                    </p>
+                    <p class="mb-0">
+                        {% if order.email %}
+                        <a href="mailto:{{ order.email }}">{{ order.email }}</a>
+                        {% elif order.user.email %}
+                        <a href="mailto:{{ order.user.email }}">{{ order.user.email }}</a>
+                        {% endif %}
+                    </p>
+                    <p class="mb-0">
+                        {% if order.shipping_address %}
+                        <a href="tel:{{ order.shipping_address.phone }}">{{ order.shipping_address.phone }}</a>
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="text-muted">Shipping Address</h6>
+                    {% if order.shipping_address %}
+                    <p class="mb-0">{{ order.shipping_address.full_name }}</p>
+                    <p class="mb-0">{{ order.shipping_address.address_line1 }}</p>
+                    {% if order.shipping_address.address_line2 %}
+                    <p class="mb-0">{{ order.shipping_address.address_line2 }}</p>
+                    {% endif %}
+                    <p class="mb-0">{{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{ order.shipping_address.postal_code }}</p>
+                    <p class="mb-0">{{ order.shipping_address.country }}</p>
+                    {% else %}
+                    <p class="text-muted">No shipping address provided</p>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-0">
+                    <h6 class="text-muted">Billing Address</h6>
+                    {% if order.billing_address %}
+                    <p class="mb-0">{{ order.billing_address.full_name }}</p>
+                    <p class="mb-0">{{ order.billing_address.address_line1 }}</p>
+                    {% if order.billing_address.address_line2 %}
+                    <p class="mb-0">{{ order.billing_address.address_line2 }}</p>
+                    {% endif %}
+                    <p class="mb-0">{{ order.billing_address.city }}, {{ order.billing_address.state }} {{ order.billing_address.postal_code }}</p>
+                    <p class="mb-0">{{ order.billing_address.country }}</p>
+                    {% else %}
+                    <p class="text-muted">Same as shipping address</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Order Notes -->
+    <div class="col-lg-4 mb-4">
+        <div class="card border-0 shadow h-100">
+            <div class="card-header bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Notes & History</h5>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addNoteModal">
+                        <i class="fas fa-plus"></i> Add Note
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% if order.notes.all %}
+                        {% for note in order.notes.all %}
+                        <div class="list-group-item border-0">
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">{{ note.created_at|date:"M d, Y H:i" }}</small>
+                                <small class="text-muted">{{ note.user.get_full_name|default:note.user.username }}</small>
+                            </div>
+                            <p class="mb-0">{{ note.content }}</p>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-muted mb-0">No notes for this order</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <hr class="m-0">
+                
+                <div class="p-3">
+                    <h6 class="text-muted">Order History</h6>
+                    <div class="timeline small">
+                        {% if order.history.all %}
+                            {% for event in order.history.all %}
+                            <div class="timeline-item">
+                                <div class="timeline-point 
+                                    {% if event.type == 'status_change' %}bg-primary
+                                    {% elif event.type == 'note' %}bg-info
+                                    {% elif event.type == 'payment' %}bg-success
+                                    {% else %}bg-secondary{% endif %}">
+                                </div>
+                                <div class="timeline-content">
+                                    <div class="d-flex justify-content-between">
+                                        <small class="text-muted">{{ event.timestamp|date:"M d, Y H:i" }}</small>
+                                    </div>
+                                    <p class="mb-0 small">{{ event.description }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted small">No history available</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Order Items -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card border-0 shadow">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Order Items</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th style="width: 80px">Image</th>
+                                <th>Product</th>
+                                <th>Variant</th>
+                                <th class="text-end">Price</th>
+                                <th class="text-center">Quantity</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.items.all %}
+                            <tr>
+                                <td>
+                                    {% if item.variant.image %}
+                                    <img src="{{ item.variant.image.url }}" alt="{{ item.product.name }}" class="img-fluid" style="max-width: 60px; max-height: 60px;">
+                                    {% elif item.product.image %}
+                                    <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="img-fluid" style="max-width: 60px; max-height: 60px;">
+                                    {% else %}
+                                    <div class="bg-light" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-image text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'dashboard:product_detail' item.product.id %}">{{ item.product.name }}</a>
+                                    <br>
+                                    <small class="text-muted">SKU: {{ item.product.sku }}</small>
+                                </td>
+                                <td>
+                                    {% if item.variant %}
+                                    {{ item.variant.get_variant_name }}
+                                    {% else %}
+                                    <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">${{ item.unit_price|floatformat:2 }}</td>
+                                <td class="text-center">{{ item.quantity }}</td>
+                                <td class="text-end">${{ item.total_price|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Update Modal -->
+<div class="modal fade" id="updateStatusModal" tabindex="-1" aria-labelledby="updateStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateStatusModalLabel">Update Order Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'dashboard:update_order_status' order.id %}" method="post" class="status-change-form">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            {% for status_code, status_name in status_choices %}
+                            <option value="{{ status_code }}" {% if order.status == status_code %}selected{% endif %}>
+                                {{ status_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="status_notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="status_notes" name="status_notes" rows="3"></textarea>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="notify_customer" name="notify_customer" checked>
+                        <label class="form-check-label" for="notify_customer">
+                            Notify customer
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Note Modal -->
+<div class="modal fade" id="addNoteModal" tabindex="-1" aria-labelledby="addNoteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addNoteModalLabel">Add Order Note</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'dashboard:add_order_note' order.id %}" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="note_content" class="form-label">Note</label>
+                        <textarea class="form-control" id="note_content" name="content" rows="3" required></textarea>
+                    </div>
+                    <div class="form-check mb-0">
+                        <input class="form-check-input" type="checkbox" id="is_public" name="is_public">
+                        <label class="form-check-label" for="is_public">
+                            Visible to customer
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Note</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Order Modal -->
+<div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancelOrderModalLabel">Cancel Order</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'dashboard:cancel_order' order.id %}" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        Are you sure you want to cancel this order? This action cannot be undone.
+                    </div>
+                    <div class="mb-3">
+                        <label for="cancel_reason" class="form-label">Reason for Cancellation</label>
+                        <textarea class="form-control" id="cancel_reason" name="cancel_reason" rows="3" required></textarea>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="refund_payment" name="refund_payment">
+                        <label class="form-check-label" for="refund_payment">
+                            Issue refund (if payment was processed)
+                        </label>
+                    </div>
+                    <div class="form-check mb-0">
+                        <input class="form-check-input" type="checkbox" id="notify_customer_cancel" name="notify_customer" checked>
+                        <label class="form-check-label" for="notify_customer_cancel">
+                            Notify customer
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Keep Order</button>
+                    <button type="submit" class="btn btn-danger">Yes, Cancel Order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 1.5rem;
+    }
+    
+    .timeline:before {
+        content: '';
+        position: absolute;
+        left: 0.5rem;
+        top: 0;
+        height: 100%;
+        width: 1px;
+        background-color: #e0e0e0;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-bottom: 1rem;
+    }
+    
+    .timeline-point {
+        position: absolute;
+        left: -1.5rem;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        top: 0.3rem;
+        z-index: 1;
+    }
+    
+    .badge.fs-6 {
+        font-size: 0.85rem !important;
+    }
+    
+    .list-group-item + .list-group-item {
+        border-top-width: 1px !important;
+    }
+</style>
+{% endblock %}

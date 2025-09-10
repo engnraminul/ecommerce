@@ -1,0 +1,335 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}MB Admin - Dashboard{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Dashboard</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="mb-4">Dashboard</h1>
+    </div>
+</div>
+
+<!-- Stats Overview Cards -->
+<div class="row mb-4">
+    <!-- Orders Card -->
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card border-0 shadow">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-gradient rounded-3 p-3 me-3">
+                        <i class="fas fa-shopping-cart fa-2x text-white"></i>
+                    </div>
+                    <div>
+                        <h5 class="text-muted fw-normal mb-0">Orders</h5>
+                        <h2 class="mb-0">{{ total_orders }}</h2>
+                        <p class="text-success mb-0 small">
+                            <i class="fas fa-arrow-up"></i> {{ recent_orders }} new (30 days)
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Revenue Card -->
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card border-0 shadow">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="bg-success bg-gradient rounded-3 p-3 me-3">
+                        <i class="fas fa-dollar-sign fa-2x text-white"></i>
+                    </div>
+                    <div>
+                        <h5 class="text-muted fw-normal mb-0">Revenue</h5>
+                        <h2 class="mb-0">${{ total_revenue|floatformat:2 }}</h2>
+                        <p class="text-success mb-0 small">
+                            <i class="fas fa-arrow-up"></i> ${{ recent_revenue|floatformat:2 }} (30 days)
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Products Card -->
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card border-0 shadow">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="bg-info bg-gradient rounded-3 p-3 me-3">
+                        <i class="fas fa-box fa-2x text-white"></i>
+                    </div>
+                    <div>
+                        <h5 class="text-muted fw-normal mb-0">Products</h5>
+                        <h2 class="mb-0">{{ total_products }}</h2>
+                        <p class="text-danger mb-0 small">
+                            <i class="fas fa-exclamation-circle"></i> {{ out_of_stock }} out of stock
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pending Orders Card -->
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card border-0 shadow">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="bg-warning bg-gradient rounded-3 p-3 me-3">
+                        <i class="fas fa-clock fa-2x text-white"></i>
+                    </div>
+                    <div>
+                        <h5 class="text-muted fw-normal mb-0">Pending</h5>
+                        <h2 class="mb-0">{{ pending_orders }}</h2>
+                        <p class="text-muted mb-0 small">Awaiting processing</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <!-- Orders Chart -->
+    <div class="col-lg-6 mb-4">
+        <div class="card border-0 shadow h-100">
+            <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0">Orders (Last 30 Days)</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="ordersChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Revenue Chart -->
+    <div class="col-lg-6 mb-4">
+        <div class="card border-0 shadow h-100">
+            <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0">Revenue (Last 30 Days)</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Orders Table -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow">
+            <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Recent Orders</h5>
+                <a href="{% url 'dashboard:order_list' %}" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Customer</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Total</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in latest_orders %}
+                            <tr>
+                                <td>{{ order.order_number }}</td>
+                                <td>
+                                    {% if order.user %}
+                                    {{ order.user.get_full_name|default:order.user.email }}
+                                    {% else %}
+                                    Guest Order
+                                    {% endif %}
+                                </td>
+                                <td>{{ order.created_at|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if order.status == 'pending' %}
+                                    <span class="badge bg-warning">Pending</span>
+                                    {% elif order.status == 'processing' %}
+                                    <span class="badge bg-info">Processing</span>
+                                    {% elif order.status == 'shipped' %}
+                                    <span class="badge bg-primary">Shipped</span>
+                                    {% elif order.status == 'delivered' %}
+                                    <span class="badge bg-success">Delivered</span>
+                                    {% elif order.status == 'cancelled' %}
+                                    <span class="badge bg-danger">Cancelled</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ order.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>${{ order.total_amount|floatformat:2 }}</td>
+                                <td>
+                                    <a href="{% url 'dashboard:order_detail' order.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center">No orders found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stock Alerts and Inventory Status -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card border-0 shadow h-100">
+            <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0">Stock Alerts</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-danger bg-gradient rounded p-2 me-3">
+                        <i class="fas fa-exclamation-triangle text-white"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0">Out of Stock</h6>
+                        <h4 class="mb-0">{{ out_of_stock }} products</h4>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="bg-warning bg-gradient rounded p-2 me-3">
+                        <i class="fas fa-exclamation-circle text-white"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0">Low Stock</h6>
+                        <h4 class="mb-0">{{ low_stock }} products</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card border-0 shadow h-100">
+            <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="{% url 'dashboard:product_create' %}" class="btn btn-primary w-100">
+                            <i class="fas fa-plus me-2"></i> Add Product
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="#" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-tag me-2"></i> Add Category
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="#" class="btn btn-outline-success w-100">
+                            <i class="fas fa-file-export me-2"></i> Export Orders
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="#" class="btn btn-outline-info w-100">
+                            <i class="fas fa-cog me-2"></i> Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Charts initialization
+    document.addEventListener('DOMContentLoaded', function () {
+        // Orders Chart
+        const orderCtx = document.getElementById('ordersChart').getContext('2d');
+        const orderData = {
+            labels: [
+                {% for data in orders_by_day reversed %}
+                '{{ data.date }}',
+                {% endfor %}
+            ],
+            datasets: [{
+                label: 'Orders',
+                data: [
+                    {% for data in orders_by_day reversed %}
+                    {{ data.count }},
+                    {% endfor %}
+                ],
+                fill: true,
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                borderColor: 'rgba(13, 110, 253, 1)',
+                tension: 0.4
+            }]
+        };
+        
+        new Chart(orderCtx, {
+            type: 'line',
+            data: orderData,
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Revenue Chart
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        const revenueData = {
+            labels: [
+                {% for data in revenue_by_day reversed %}
+                '{{ data.date }}',
+                {% endfor %}
+            ],
+            datasets: [{
+                label: 'Revenue ($)',
+                data: [
+                    {% for data in revenue_by_day reversed %}
+                    {{ data.amount }},
+                    {% endfor %}
+                ],
+                fill: true,
+                backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                borderColor: 'rgba(25, 135, 84, 1)',
+                tension: 0.4
+            }]
+        };
+        
+        new Chart(revenueCtx, {
+            type: 'line',
+            data: revenueData,
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
