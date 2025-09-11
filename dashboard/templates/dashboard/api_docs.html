@@ -1,0 +1,804 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}API Documentation - MB Admin{% endblock %}
+
+{% block page_title %}API Documentation{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="mb-4">
+                    <h5 class="mb-3">Introduction</h5>
+                    <p>
+                        Our RESTful API allows you to programmatically access and modify store data. 
+                        With this API, you can integrate our ecommerce platform with other systems, 
+                        build custom applications, or automate tasks.
+                    </p>
+                    <div class="alert alert-info">
+                        <strong>Base URL:</strong> <code>https://api.example.com/v1</code>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <h5 class="mb-3">Authentication</h5>
+                    <p>
+                        All API requests require authentication using an API key. You can generate or manage your API key in 
+                        <a href="#">Settings > Advanced > API Settings</a>.
+                    </p>
+                    
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <strong>Authentication Method</strong>
+                        </div>
+                        <div class="card-body">
+                            <p>Include your API key in the header of all requests:</p>
+                            <pre class="bg-light p-3 rounded"><code>Authorization: Bearer YOUR_API_KEY</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-shield-alt me-2"></i> Keep your API key secure. Do not share it or expose it in client-side code.
+                    </div>
+                </div>
+                
+                <div class="mb-5">
+                    <h5 class="mb-3">Rate Limiting</h5>
+                    <p>
+                        To ensure system stability, API requests are limited to <strong>100 requests per minute</strong> per API key.
+                        If you exceed this limit, you'll receive a <code>429 Too Many Requests</code> response.
+                    </p>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <strong>Rate Limit Headers</strong>
+                        </div>
+                        <div class="card-body">
+                            <p>Each API response includes headers with rate limit information:</p>
+                            <ul>
+                                <li><code>X-RateLimit-Limit</code>: Maximum number of requests allowed per minute</li>
+                                <li><code>X-RateLimit-Remaining</code>: Number of requests remaining in the current period</li>
+                                <li><code>X-RateLimit-Reset</code>: Time when the rate limit will reset (Unix timestamp)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3 mb-4 mb-md-0">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">API Reference</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    <a href="#products-api" class="list-group-item list-group-item-action">Products</a>
+                    <a href="#orders-api" class="list-group-item list-group-item-action">Orders</a>
+                    <a href="#customers-api" class="list-group-item list-group-item-action">Customers</a>
+                    <a href="#categories-api" class="list-group-item list-group-item-action">Categories</a>
+                    <a href="#inventory-api" class="list-group-item list-group-item-action">Inventory</a>
+                    <a href="#coupons-api" class="list-group-item list-group-item-action">Coupons</a>
+                    <a href="#shipping-api" class="list-group-item list-group-item-action">Shipping</a>
+                    <a href="#webhooks-api" class="list-group-item list-group-item-action">Webhooks</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-9">
+        <div class="card">
+            <div class="card-body">
+                <!-- Products API -->
+                <section id="products-api" class="mb-5">
+                    <h4 class="mb-4">Products API</h4>
+                    
+                    <div class="mb-4">
+                        <h5>List Products</h5>
+                        <div class="card mb-3">
+                            <div class="card-header d-flex bg-light">
+                                <span class="badge bg-success me-2">GET</span>
+                                <code>/products</code>
+                            </div>
+                            <div class="card-body">
+                                <p>Returns a paginated list of products.</p>
+                                
+                                <h6>Query Parameters</h6>
+                                <table class="table table-sm table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Parameter</th>
+                                            <th>Type</th>
+                                            <th>Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><code>page</code></td>
+                                            <td>integer</td>
+                                            <td>Page number (default: 1)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>limit</code></td>
+                                            <td>integer</td>
+                                            <td>Items per page (default: 20, max: 100)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>category</code></td>
+                                            <td>string</td>
+                                            <td>Filter by category ID</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>search</code></td>
+                                            <td>string</td>
+                                            <td>Search in title and description</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                
+                                <h6>Response</h6>
+                                <pre class="bg-light p-3 rounded"><code>{
+  "data": [
+    {
+      "id": "prod_123456",
+      "title": "Example Product",
+      "description": "This is an example product",
+      "price": 29.99,
+      "compare_at_price": 39.99,
+      "category_id": "cat_123",
+      "status": "active",
+      "featured": false,
+      "created_at": "2023-01-15T10:00:00Z",
+      "updated_at": "2023-01-20T15:30:00Z",
+      "images": [
+        {
+          "id": "img_123",
+          "url": "https://example.com/images/product1.jpg",
+          "position": 1
+        }
+      ]
+    },
+    // More products...
+  ],
+  "meta": {
+    "current_page": 1,
+    "total_pages": 10,
+    "total_count": 192,
+    "links": {
+      "next": "/products?page=2",
+      "prev": null
+    }
+  }
+}</code></pre>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-3">
+                            <div class="card-header d-flex bg-light">
+                                <span class="badge bg-primary me-2">POST</span>
+                                <code>/products</code>
+                            </div>
+                            <div class="card-body">
+                                <p>Creates a new product.</p>
+                                
+                                <h6>Request Body</h6>
+                                <pre class="bg-light p-3 rounded"><code>{
+  "title": "New Product",
+  "description": "This is a new product",
+  "price": 49.99,
+  "compare_at_price": 59.99,
+  "category_id": "cat_456",
+  "status": "active",
+  "featured": true,
+  "inventory_quantity": 100,
+  "images": [
+    {
+      "url": "https://example.com/images/new-product.jpg",
+      "position": 1
+    }
+  ]
+}</code></pre>
+                                
+                                <h6>Response</h6>
+                                <pre class="bg-light p-3 rounded"><code>{
+  "id": "prod_789012",
+  "title": "New Product",
+  "description": "This is a new product",
+  "price": 49.99,
+  "compare_at_price": 59.99,
+  "category_id": "cat_456",
+  "status": "active",
+  "featured": true,
+  "created_at": "2023-10-12T14:30:00Z",
+  "updated_at": "2023-10-12T14:30:00Z",
+  "images": [
+    {
+      "id": "img_456",
+      "url": "https://example.com/images/new-product.jpg",
+      "position": 1
+    }
+  ]
+}</code></pre>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-3">
+                            <div class="card-header d-flex bg-light">
+                                <span class="badge bg-success me-2">GET</span>
+                                <code>/products/{product_id}</code>
+                            </div>
+                            <div class="card-body">
+                                <p>Returns details of a specific product.</p>
+                                
+                                <h6>Path Parameters</h6>
+                                <table class="table table-sm table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Parameter</th>
+                                            <th>Type</th>
+                                            <th>Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><code>product_id</code></td>
+                                            <td>string</td>
+                                            <td>Unique product identifier</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                
+                                <h6>Response</h6>
+                                <pre class="bg-light p-3 rounded"><code>{
+  "id": "prod_123456",
+  "title": "Example Product",
+  "description": "This is an example product",
+  "price": 29.99,
+  "compare_at_price": 39.99,
+  "category_id": "cat_123",
+  "status": "active",
+  "featured": false,
+  "created_at": "2023-01-15T10:00:00Z",
+  "updated_at": "2023-01-20T15:30:00Z",
+  "images": [
+    {
+      "id": "img_123",
+      "url": "https://example.com/images/product1.jpg",
+      "position": 1
+    }
+  ],
+  "variants": [
+    {
+      "id": "var_123",
+      "title": "Small / Blue",
+      "price": 29.99,
+      "inventory_quantity": 25,
+      "sku": "PROD-S-BLUE"
+    },
+    {
+      "id": "var_124",
+      "title": "Medium / Blue",
+      "price": 29.99,
+      "inventory_quantity": 15,
+      "sku": "PROD-M-BLUE"
+    }
+  ]
+}</code></pre>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-3">
+                            <div class="card-header d-flex bg-light">
+                                <span class="badge bg-warning text-dark me-2">PUT</span>
+                                <code>/products/{product_id}</code>
+                            </div>
+                            <div class="card-body">
+                                <p>Updates an existing product.</p>
+                                
+                                <h6>Path Parameters</h6>
+                                <table class="table table-sm table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Parameter</th>
+                                            <th>Type</th>
+                                            <th>Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><code>product_id</code></td>
+                                            <td>string</td>
+                                            <td>Unique product identifier</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                
+                                <h6>Request Body</h6>
+                                <pre class="bg-light p-3 rounded"><code>{
+  "title": "Updated Product Title",
+  "price": 34.99
+}</code></pre>
+                                
+                                <h6>Response</h6>
+                                <pre class="bg-light p-3 rounded"><code>{
+  "id": "prod_123456",
+  "title": "Updated Product Title",
+  "description": "This is an example product",
+  "price": 34.99,
+  "compare_at_price": 39.99,
+  "category_id": "cat_123",
+  "status": "active",
+  "featured": false,
+  "created_at": "2023-01-15T10:00:00Z",
+  "updated_at": "2023-10-12T16:45:00Z",
+  "images": [
+    {
+      "id": "img_123",
+      "url": "https://example.com/images/product1.jpg",
+      "position": 1
+    }
+  ]
+}</code></pre>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header d-flex bg-light">
+                                <span class="badge bg-danger me-2">DELETE</span>
+                                <code>/products/{product_id}</code>
+                            </div>
+                            <div class="card-body">
+                                <p>Deletes a product.</p>
+                                
+                                <h6>Path Parameters</h6>
+                                <table class="table table-sm table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Parameter</th>
+                                            <th>Type</th>
+                                            <th>Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><code>product_id</code></td>
+                                            <td>string</td>
+                                            <td>Unique product identifier</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                
+                                <h6>Response</h6>
+                                <pre class="bg-light p-3 rounded"><code>{
+  "success": true,
+  "message": "Product deleted successfully"
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Orders API -->
+                <section id="orders-api" class="mb-5">
+                    <h4 class="mb-4">Orders API</h4>
+                    
+                    <div class="mb-4">
+                        <h5>List Orders</h5>
+                        <div class="card mb-3">
+                            <div class="card-header d-flex bg-light">
+                                <span class="badge bg-success me-2">GET</span>
+                                <code>/orders</code>
+                            </div>
+                            <div class="card-body">
+                                <p>Returns a paginated list of orders.</p>
+                                
+                                <h6>Query Parameters</h6>
+                                <table class="table table-sm table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Parameter</th>
+                                            <th>Type</th>
+                                            <th>Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><code>page</code></td>
+                                            <td>integer</td>
+                                            <td>Page number (default: 1)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>limit</code></td>
+                                            <td>integer</td>
+                                            <td>Items per page (default: 20, max: 100)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>status</code></td>
+                                            <td>string</td>
+                                            <td>Filter by status (pending, processing, completed, etc.)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>customer_id</code></td>
+                                            <td>string</td>
+                                            <td>Filter by customer ID</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>from_date</code></td>
+                                            <td>string (ISO date)</td>
+                                            <td>Filter orders created on or after this date</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>to_date</code></td>
+                                            <td>string (ISO date)</td>
+                                            <td>Filter orders created on or before this date</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                
+                                <h6>Response</h6>
+                                <pre class="bg-light p-3 rounded"><code>{
+  "data": [
+    {
+      "id": "order_123456",
+      "order_number": "ORD-12345",
+      "customer_id": "cust_123",
+      "status": "processing",
+      "currency": "USD",
+      "subtotal": 59.98,
+      "shipping_cost": 5.00,
+      "tax": 6.50,
+      "total": 71.48,
+      "shipping_address": {
+        "name": "John Doe",
+        "address1": "123 Main St",
+        "city": "Anytown",
+        "state": "CA",
+        "postal_code": "12345",
+        "country": "US"
+      },
+      "line_items": [
+        {
+          "product_id": "prod_123",
+          "variant_id": "var_123",
+          "title": "Example Product",
+          "quantity": 2,
+          "price": 29.99
+        }
+      ],
+      "created_at": "2023-10-10T08:30:00Z",
+      "updated_at": "2023-10-10T08:35:00Z"
+    },
+    // More orders...
+  ],
+  "meta": {
+    "current_page": 1,
+    "total_pages": 5,
+    "total_count": 87,
+    "links": {
+      "next": "/orders?page=2",
+      "prev": null
+    }
+  }
+}</code></pre>
+                            </div>
+                        </div>
+                        
+                        <!-- Additional Order API endpoints would go here -->
+                    </div>
+                </section>
+                
+                <!-- Customers API -->
+                <section id="customers-api" class="mb-5">
+                    <h4 class="mb-4">Customers API</h4>
+                    
+                    <div class="mb-4">
+                        <h5>List Customers</h5>
+                        <div class="card mb-3">
+                            <div class="card-header d-flex bg-light">
+                                <span class="badge bg-success me-2">GET</span>
+                                <code>/customers</code>
+                            </div>
+                            <div class="card-body">
+                                <p>Returns a paginated list of customers.</p>
+                                
+                                <h6>Query Parameters</h6>
+                                <table class="table table-sm table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Parameter</th>
+                                            <th>Type</th>
+                                            <th>Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><code>page</code></td>
+                                            <td>integer</td>
+                                            <td>Page number (default: 1)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>limit</code></td>
+                                            <td>integer</td>
+                                            <td>Items per page (default: 20, max: 100)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>search</code></td>
+                                            <td>string</td>
+                                            <td>Search in name and email</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                
+                                <h6>Response</h6>
+                                <pre class="bg-light p-3 rounded"><code>{
+  "data": [
+    {
+      "id": "cust_123456",
+      "email": "john.doe@example.com",
+      "first_name": "John",
+      "last_name": "Doe",
+      "phone": "+1-555-123-4567",
+      "total_spent": 324.75,
+      "orders_count": 5,
+      "created_at": "2022-06-15T10:00:00Z",
+      "updated_at": "2023-09-20T15:30:00Z"
+    },
+    // More customers...
+  ],
+  "meta": {
+    "current_page": 1,
+    "total_pages": 15,
+    "total_count": 283,
+    "links": {
+      "next": "/customers?page=2",
+      "prev": null
+    }
+  }
+}</code></pre>
+                            </div>
+                        </div>
+                        
+                        <!-- Additional Customer API endpoints would go here -->
+                    </div>
+                </section>
+                
+                <!-- Other API sections would go here -->
+                
+                <section id="categories-api" class="mb-5">
+                    <h4 class="mb-4">Categories API</h4>
+                    <p class="text-muted">[Documentation for Categories API endpoints]</p>
+                </section>
+                
+                <section id="inventory-api" class="mb-5">
+                    <h4 class="mb-4">Inventory API</h4>
+                    <p class="text-muted">[Documentation for Inventory API endpoints]</p>
+                </section>
+                
+                <section id="coupons-api" class="mb-5">
+                    <h4 class="mb-4">Coupons API</h4>
+                    <p class="text-muted">[Documentation for Coupons API endpoints]</p>
+                </section>
+                
+                <section id="shipping-api" class="mb-5">
+                    <h4 class="mb-4">Shipping API</h4>
+                    <p class="text-muted">[Documentation for Shipping API endpoints]</p>
+                </section>
+                
+                <section id="webhooks-api">
+                    <h4 class="mb-4">Webhooks API</h4>
+                    <p class="text-muted">[Documentation for Webhooks API endpoints]</p>
+                </section>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Code Examples</h5>
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-tabs" id="codeExampleTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="curl-tab" data-bs-toggle="tab" data-bs-target="#curl" type="button" role="tab" aria-controls="curl" aria-selected="true">cURL</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="python-tab" data-bs-toggle="tab" data-bs-target="#python" type="button" role="tab" aria-controls="python" aria-selected="false">Python</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="javascript-tab" data-bs-toggle="tab" data-bs-target="#javascript" type="button" role="tab" aria-controls="javascript" aria-selected="false">JavaScript</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="php-tab" data-bs-toggle="tab" data-bs-target="#php" type="button" role="tab" aria-controls="php" aria-selected="false">PHP</button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content p-3 border border-top-0 rounded-bottom" id="codeExampleTabsContent">
+                    <div class="tab-pane fade show active" id="curl" role="tabpanel" aria-labelledby="curl-tab">
+                        <h6 class="mb-3">List Products</h6>
+                        <pre class="bg-light p-3 rounded"><code>curl -X GET "https://api.example.com/v1/products?limit=10" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json"</code></pre>
+                        
+                        <h6 class="mb-3">Create Product</h6>
+                        <pre class="bg-light p-3 rounded"><code>curl -X POST "https://api.example.com/v1/products" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "New Product",
+    "description": "This is a new product",
+    "price": 49.99,
+    "category_id": "cat_456",
+    "status": "active"
+  }'</code></pre>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="python" role="tabpanel" aria-labelledby="python-tab">
+                        <h6 class="mb-3">List Products</h6>
+                        <pre class="bg-light p-3 rounded"><code>import requests
+
+api_key = "YOUR_API_KEY"
+url = "https://api.example.com/v1/products"
+
+headers = {
+    "Authorization": f"Bearer {api_key}",
+    "Content-Type": "application/json"
+}
+
+params = {
+    "limit": 10
+}
+
+response = requests.get(url, headers=headers, params=params)
+products = response.json()
+
+print(products)</code></pre>
+                        
+                        <h6 class="mb-3">Create Product</h6>
+                        <pre class="bg-light p-3 rounded"><code>import requests
+import json
+
+api_key = "YOUR_API_KEY"
+url = "https://api.example.com/v1/products"
+
+headers = {
+    "Authorization": f"Bearer {api_key}",
+    "Content-Type": "application/json"
+}
+
+product_data = {
+    "title": "New Product",
+    "description": "This is a new product",
+    "price": 49.99,
+    "category_id": "cat_456",
+    "status": "active"
+}
+
+response = requests.post(url, headers=headers, data=json.dumps(product_data))
+new_product = response.json()
+
+print(new_product)</code></pre>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="javascript" role="tabpanel" aria-labelledby="javascript-tab">
+                        <h6 class="mb-3">List Products</h6>
+                        <pre class="bg-light p-3 rounded"><code>const apiKey = 'YOUR_API_KEY';
+const url = 'https://api.example.com/v1/products?limit=10';
+
+fetch(url, {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${apiKey}`,
+    'Content-Type': 'application/json'
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));</code></pre>
+                        
+                        <h6 class="mb-3">Create Product</h6>
+                        <pre class="bg-light p-3 rounded"><code>const apiKey = 'YOUR_API_KEY';
+const url = 'https://api.example.com/v1/products';
+
+const productData = {
+  title: 'New Product',
+  description: 'This is a new product',
+  price: 49.99,
+  category_id: 'cat_456',
+  status: 'active'
+};
+
+fetch(url, {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${apiKey}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify(productData)
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));</code></pre>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="php" role="tabpanel" aria-labelledby="php-tab">
+                        <h6 class="mb-3">List Products</h6>
+                        <pre class="bg-light p-3 rounded"><code>&lt;?php
+$api_key = "YOUR_API_KEY";
+$url = "https://api.example.com/v1/products?limit=10";
+
+$curl = curl_init();
+
+curl_setopt_array($curl, [
+  CURLOPT_URL => $url,
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_HTTPHEADER => [
+    "Authorization: Bearer " . $api_key,
+    "Content-Type: application/json"
+  ]
+]);
+
+$response = curl_exec($curl);
+$err = curl_error($curl);
+
+curl_close($curl);
+
+if ($err) {
+  echo "cURL Error #:" . $err;
+} else {
+  $products = json_decode($response, true);
+  print_r($products);
+}
+?&gt;</code></pre>
+                        
+                        <h6 class="mb-3">Create Product</h6>
+                        <pre class="bg-light p-3 rounded"><code>&lt;?php
+$api_key = "YOUR_API_KEY";
+$url = "https://api.example.com/v1/products";
+
+$product_data = [
+  "title" => "New Product",
+  "description" => "This is a new product",
+  "price" => 49.99,
+  "category_id" => "cat_456",
+  "status" => "active"
+];
+
+$curl = curl_init();
+
+curl_setopt_array($curl, [
+  CURLOPT_URL => $url,
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_POST => true,
+  CURLOPT_POSTFIELDS => json_encode($product_data),
+  CURLOPT_HTTPHEADER => [
+    "Authorization: Bearer " . $api_key,
+    "Content-Type: application/json"
+  ]
+]);
+
+$response = curl_exec($curl);
+$err = curl_error($curl);
+
+curl_close($curl);
+
+if ($err) {
+  echo "cURL Error #:" . $err;
+} else {
+  $new_product = json_decode($response, true);
+  print_r($new_product);
+}
+?&gt;</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

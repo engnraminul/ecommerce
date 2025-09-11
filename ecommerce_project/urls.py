@@ -49,6 +49,8 @@ urlpatterns = [
     
     # Frontend (for Django templates if needed)
     path('', include('frontend.urls')),  # Will create this for templates
+
+    path('mb-admin/', include('dashboard.urls')),  # Dashboard URLs
 ]
 
 # Serve media files during development

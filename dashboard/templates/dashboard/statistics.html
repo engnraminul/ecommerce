@@ -1,0 +1,728 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Statistics - MB Admin{% endblock %}
+
+{% block page_title %}Sales & Performance Statistics{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Time Period</h5>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-primary period-btn active" data-period="week">Week</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary period-btn" data-period="month">Month</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary period-btn" data-period="year">Year</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary period-btn" data-period="all">All Time</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card card-stats h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0" id="total-sales-stat">$0.00</h3>
+                        <p class="text-white mb-0">Total Sales</p>
+                    </div>
+                    <div>
+                        <i class="fas fa-money-bill-wave fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card card-stats h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0" id="total-orders-stat">0</h3>
+                        <p class="text-white mb-0">Total Orders</p>
+                    </div>
+                    <div>
+                        <i class="fas fa-shopping-cart fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card card-stats h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0" id="avg-order-value-stat">$0.00</h3>
+                        <p class="text-white mb-0">Average Order Value</p>
+                    </div>
+                    <div>
+                        <i class="fas fa-receipt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card card-stats h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0" id="customer-count-stat">0</h3>
+                        <p class="text-white mb-0">Total Customers</p>
+                    </div>
+                    <div>
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Sales Over Time</h5>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="salesChartDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        Chart Type
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="salesChartDropdown">
+                        <li><a class="dropdown-item chart-type-option active" data-type="line" href="#">Line Chart</a></li>
+                        <li><a class="dropdown-item chart-type-option" data-type="bar" href="#">Bar Chart</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="height: 350px;">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Sales by Category</h5>
+            </div>
+            <div class="card-body">
+                <div style="height: 350px;">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Top Products</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Orders</th>
+                                <th>Revenue</th>
+                                <th>Average Price</th>
+                            </tr>
+                        </thead>
+                        <tbody id="top-products-table">
+                            <tr>
+                                <td colspan="4" class="text-center py-3">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <span class="ms-2">Loading data...</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Order Status Breakdown</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div style="height: 250px;">
+                            <canvas id="orderStatusChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Status</th>
+                                        <th>Count</th>
+                                        <th>Percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="order-status-table">
+                                    <tr>
+                                        <td colspan="3" class="text-center py-3">
+                                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                            <span class="ms-2">Loading data...</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Sales Analytics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card border mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Customer Retention Rate</h6>
+                                <div class="d-flex align-items-center">
+                                    <div class="display-4 me-3" id="retention-rate">-%</div>
+                                    <div class="flex-grow-1">
+                                        <div class="progress" style="height: 10px;">
+                                            <div class="progress-bar bg-success" role="progressbar" style="width: 0%;" id="retention-progress"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <small class="text-muted">Percentage of repeat customers</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card border mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Conversion Rate</h6>
+                                <div class="d-flex align-items-center">
+                                    <div class="display-4 me-3" id="conversion-rate">-%</div>
+                                    <div class="flex-grow-1">
+                                        <div class="progress" style="height: 10px;">
+                                            <div class="progress-bar bg-primary" role="progressbar" style="width: 0%;" id="conversion-progress"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <small class="text-muted">Orders to site visits ratio</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card border mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Inventory Turnover</h6>
+                                <div class="d-flex align-items-center">
+                                    <div class="display-4 me-3" id="inventory-turnover">-</div>
+                                    <div class="flex-grow-1">
+                                        <div class="progress" style="height: 10px;">
+                                            <div class="progress-bar bg-info" role="progressbar" style="width: 0%;" id="inventory-progress"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <small class="text-muted">Sales to inventory ratio</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="mb-3">Recommendations</h6>
+                        <div class="list-group" id="recommendations-list">
+                            <div class="text-center py-3">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2">Analyzing data for recommendations...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="mb-3">Download Reports</h6>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" id="download-sales-report-btn">
+                                <i class="fas fa-file-excel me-2"></i> Sales Report
+                            </button>
+                            <button class="btn btn-outline-primary" id="download-product-report-btn">
+                                <i class="fas fa-file-excel me-2"></i> Product Performance Report
+                            </button>
+                            <button class="btn btn-outline-primary" id="download-customer-report-btn">
+                                <i class="fas fa-file-excel me-2"></i> Customer Analysis Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize chart objects
+    let salesChart, categoryChart, orderStatusChart;
+    
+    // Current period selection
+    let currentPeriod = 'week';
+    
+    // Load initial data
+    loadStatistics(currentPeriod);
+    
+    // Set up event listeners for period buttons
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Update active class
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Load data for selected period
+            currentPeriod = this.dataset.period;
+            loadStatistics(currentPeriod);
+        });
+    });
+    
+    // Set up event listeners for chart type options
+    document.querySelectorAll('.chart-type-option').forEach(option => {
+        option.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Update active class
+            document.querySelectorAll('.chart-type-option').forEach(o => o.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Update chart type
+            const chartType = this.dataset.type;
+            updateSalesChartType(chartType);
+        });
+    });
+    
+    // Set up event listeners for report download buttons
+    document.getElementById('download-sales-report-btn').addEventListener('click', function() {
+        downloadReport('sales', currentPeriod);
+    });
+    
+    document.getElementById('download-product-report-btn').addEventListener('click', function() {
+        downloadReport('products', currentPeriod);
+    });
+    
+    document.getElementById('download-customer-report-btn').addEventListener('click', function() {
+        downloadReport('customers', currentPeriod);
+    });
+    
+    // Function to load statistics for the selected period
+    function loadStatistics(period) {
+        fetch(`/mb-admin/api/statistics/?period=${period}`)
+            .then(response => response.json())
+            .then(data => {
+                // Update summary statistics
+                updateSummaryStats(data);
+                
+                // Update charts
+                updateSalesChart(data.sales_by_period, period);
+                updateCategoryChart(data.sales_by_category || []);
+                updateOrderStatusChart(data.orders_by_status || []);
+                
+                // Update tables
+                updateTopProductsTable(data.popular_products || []);
+                updateOrderStatusTable(data.orders_by_status || []);
+                
+                // Update analytics metrics
+                updateAnalyticsMetrics(data.analytics || {});
+                
+                // Update recommendations
+                updateRecommendations(data.recommendations || []);
+            })
+            .catch(error => {
+                console.error('Error loading statistics:', error);
+                showAlert('Failed to load statistics data.', 'danger');
+            });
+    }
+    
+    // Update summary statistics
+    function updateSummaryStats(data) {
+        document.getElementById('total-sales-stat').textContent = `$${data.total_sales.toFixed(2)}`;
+        document.getElementById('total-orders-stat').textContent = data.orders_count;
+        document.getElementById('customer-count-stat').textContent = data.customers_count;
+        
+        // Calculate average order value
+        const avgOrderValue = data.orders_count > 0 ? data.total_sales / data.orders_count : 0;
+        document.getElementById('avg-order-value-stat').textContent = `$${avgOrderValue.toFixed(2)}`;
+    }
+    
+    // Update sales chart
+    function updateSalesChart(salesData, period) {
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        
+        // Determine labels and format based on period
+        let labels = [];
+        let tooltipFormat = '';
+        
+        switch(period) {
+            case 'week':
+                labels = salesData.map(item => {
+                    const date = new Date(item.date);
+                    return date.toLocaleDateString('en-US', { weekday: 'short' });
+                });
+                tooltipFormat = 'MMM D';
+                break;
+            case 'month':
+                labels = salesData.map(item => `Week ${item.week}`);
+                tooltipFormat = 'Week W';
+                break;
+            case 'year':
+                labels = salesData.map(item => {
+                    const date = new Date(item.year, item.month - 1);
+                    return date.toLocaleDateString('en-US', { month: 'short' });
+                });
+                tooltipFormat = 'MMMM YYYY';
+                break;
+            case 'all':
+                labels = salesData.map(item => item.period);
+                tooltipFormat = 'YYYY';
+                break;
+        }
+        
+        const chartData = {
+            labels: labels,
+            datasets: [{
+                label: 'Sales',
+                data: salesData.map(item => item.sales),
+                backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                borderColor: 'rgba(52, 152, 219, 1)',
+                borderWidth: 2,
+                tension: 0.3,
+                pointBackgroundColor: 'rgba(52, 152, 219, 1)',
+                pointRadius: 4
+            }]
+        };
+        
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value;
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return '$' + context.parsed.y.toFixed(2);
+                        }
+                    }
+                }
+            }
+        };
+        
+        // Destroy existing chart if it exists
+        if (salesChart) {
+            salesChart.destroy();
+        }
+        
+        // Create new chart
+        salesChart = new Chart(ctx, {
+            type: 'line',
+            data: chartData,
+            options: chartOptions
+        });
+    }
+    
+    // Update chart type (line or bar)
+    function updateSalesChartType(chartType) {
+        if (salesChart) {
+            salesChart.config.type = chartType;
+            salesChart.update();
+        }
+    }
+    
+    // Update category chart
+    function updateCategoryChart(categoryData) {
+        const ctx = document.getElementById('categoryChart').getContext('2d');
+        
+        const chartData = {
+            labels: categoryData.map(item => item.category_name),
+            datasets: [{
+                data: categoryData.map(item => item.sales),
+                backgroundColor: [
+                    'rgba(52, 152, 219, 0.7)',
+                    'rgba(46, 204, 113, 0.7)',
+                    'rgba(155, 89, 182, 0.7)',
+                    'rgba(230, 126, 34, 0.7)',
+                    'rgba(231, 76, 60, 0.7)',
+                    'rgba(52, 73, 94, 0.7)',
+                    'rgba(241, 196, 15, 0.7)'
+                ],
+                borderWidth: 1
+            }]
+        };
+        
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        boxWidth: 15
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            return label + ': $' + value.toFixed(2);
+                        }
+                    }
+                }
+            }
+        };
+        
+        // Destroy existing chart if it exists
+        if (categoryChart) {
+            categoryChart.destroy();
+        }
+        
+        // Create new chart
+        categoryChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: chartData,
+            options: chartOptions
+        });
+    }
+    
+    // Update order status chart
+    function updateOrderStatusChart(statusData) {
+        const ctx = document.getElementById('orderStatusChart').getContext('2d');
+        
+        const chartData = {
+            labels: statusData.map(item => item.status.charAt(0).toUpperCase() + item.status.slice(1)),
+            datasets: [{
+                data: statusData.map(item => item.count),
+                backgroundColor: [
+                    'rgba(241, 196, 15, 0.7)',
+                    'rgba(52, 152, 219, 0.7)',
+                    'rgba(46, 204, 113, 0.7)',
+                    'rgba(231, 76, 60, 0.7)',
+                    'rgba(52, 73, 94, 0.7)'
+                ],
+                borderWidth: 1
+            }]
+        };
+        
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        boxWidth: 15
+                    }
+                }
+            }
+        };
+        
+        // Destroy existing chart if it exists
+        if (orderStatusChart) {
+            orderStatusChart.destroy();
+        }
+        
+        // Create new chart
+        orderStatusChart = new Chart(ctx, {
+            type: 'pie',
+            data: chartData,
+            options: chartOptions
+        });
+    }
+    
+    // Update top products table
+    function updateTopProductsTable(productsData) {
+        const tbody = document.getElementById('top-products-table');
+        tbody.innerHTML = '';
+        
+        if (productsData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center">No product data available</td></tr>';
+            return;
+        }
+        
+        productsData.forEach(product => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${product.product_name}</td>
+                <td>${product.orders}</td>
+                <td>$${product.revenue.toFixed(2)}</td>
+                <td>$${(product.revenue / product.quantity).toFixed(2)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+    
+    // Update order status table
+    function updateOrderStatusTable(statusData) {
+        const tbody = document.getElementById('order-status-table');
+        tbody.innerHTML = '';
+        
+        if (statusData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" class="text-center">No status data available</td></tr>';
+            return;
+        }
+        
+        // Calculate total
+        const totalOrders = statusData.reduce((sum, item) => sum + item.count, 0);
+        
+        statusData.forEach(status => {
+            const percentage = totalOrders > 0 ? ((status.count / totalOrders) * 100).toFixed(1) : 0;
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${status.status.charAt(0).toUpperCase() + status.status.slice(1)}</td>
+                <td>${status.count}</td>
+                <td>${percentage}%</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+    
+    // Update analytics metrics
+    function updateAnalyticsMetrics(analytics) {
+        // Default values if data is not available
+        const retention = analytics.customer_retention_rate || 0;
+        const conversion = analytics.conversion_rate || 0;
+        const inventory = analytics.inventory_turnover || 0;
+        
+        // Update retention rate
+        document.getElementById('retention-rate').textContent = `${retention}%`;
+        document.getElementById('retention-progress').style.width = `${retention}%`;
+        
+        // Update conversion rate
+        document.getElementById('conversion-rate').textContent = `${conversion}%`;
+        document.getElementById('conversion-progress').style.width = `${conversion}%`;
+        
+        // Update inventory turnover
+        document.getElementById('inventory-turnover').textContent = inventory.toFixed(1);
+        document.getElementById('inventory-progress').style.width = `${Math.min(inventory * 10, 100)}%`;
+    }
+    
+    // Update recommendations
+    function updateRecommendations(recommendations) {
+        const list = document.getElementById('recommendations-list');
+        list.innerHTML = '';
+        
+        if (recommendations.length === 0) {
+            list.innerHTML = '<div class="alert alert-info">No recommendations available at this time.</div>';
+            return;
+        }
+        
+        recommendations.forEach(recommendation => {
+            const item = document.createElement('div');
+            item.className = 'list-group-item';
+            
+            let iconClass = 'info';
+            switch(recommendation.type) {
+                case 'warning':
+                    iconClass = 'warning text-warning';
+                    break;
+                case 'success':
+                    iconClass = 'check-circle text-success';
+                    break;
+                case 'danger':
+                    iconClass = 'exclamation-triangle text-danger';
+                    break;
+            }
+            
+            item.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-${iconClass} me-3"></i>
+                    <div>
+                        <h6 class="mb-1">${recommendation.title}</h6>
+                        <p class="mb-0 small">${recommendation.description}</p>
+                    </div>
+                </div>
+            `;
+            
+            list.appendChild(item);
+        });
+    }
+    
+    // Download reports
+    function downloadReport(reportType, period) {
+        const url = `/mb-admin/api/reports/${reportType}/?period=${period}`;
+        
+        // Show a loading message
+        showAlert(`Generating ${reportType} report...`, 'info');
+        
+        // Redirect to download URL
+        window.location.href = url;
+    }
+    
+    // Helper function to show alerts
+    function showAlert(message, type) {
+        // Create alert element
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        // Insert at the top of the content area
+        const container = document.querySelector('.container-fluid');
+        container.insertBefore(alertDiv, container.firstChild);
+        
+        // Auto dismiss after 5 seconds
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                const bsAlert = bootstrap.Alert.getOrCreateInstance(alertDiv);
+                bsAlert.close();
+            }
+        }, 5000);
+    }
+});
+</script>
+{% endblock %}

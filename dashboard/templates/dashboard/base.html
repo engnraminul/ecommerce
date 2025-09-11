@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MB Admin Dashboard{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        
+        /* Sidebar */
+        #sidebar {
+            position: fixed;
+            width: 250px;
+            height: 100%;
+            left: 0;
+            top: 0;
+            background: var(--secondary-color);
+            color: #fff;
+            transition: all 0.3s;
+            z-index: 999;
+        }
+        
+        #sidebar .sidebar-header {
+            background: var(--dark-color);
+            padding: 20px;
+        }
+        
+        #sidebar ul.components {
+            padding: 20px 0;
+            border-bottom: 1px solid #47748b;
+        }
+        
+        #sidebar ul li a {
+            padding: 15px 20px;
+            display: block;
+            color: #fff;
+            text-decoration: none;
+        }
+        
+        #sidebar ul li a:hover,
+        #sidebar ul li a.active {
+            background: var(--primary-color);
+        }
+        
+        #sidebar ul li a i {
+            margin-right: 10px;
+        }
+        
+        /* Content */
+        #content {
+            width: calc(100% - 250px);
+            min-height: 100vh;
+            position: absolute;
+            right: 0;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+        
+        #content.active {
+            width: 100%;
+        }
+        
+        /* Top navigation */
+        .navbar {
+            background: #fff;
+            border-bottom: 1px solid #eaeaea;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* Cards */
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+            margin-bottom: 20px;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            border-radius: 8px 8px 0 0;
+            font-weight: 500;
+        }
+        
+        .card-stats {
+            background: linear-gradient(to right, var(--primary-color), var(--dark-color));
+            color: white;
+            border-radius: 8px;
+        }
+        
+        /* Tables */
+        .table thead th {
+            background-color: var(--light-color);
+            font-weight: 600;
+        }
+        
+        /* Forms */
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            #sidebar {
+                margin-left: -250px;
+            }
+            #sidebar.active {
+                margin-left: 0;
+            }
+            #content {
+                width: 100%;
+            }
+            #content.active {
+                width: calc(100% - 250px);
+            }
+            .toggle-btn {
+                display: block;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="wrapper d-flex">
+        <!-- Sidebar -->
+        <nav id="sidebar">
+            <div class="sidebar-header">
+                <h4 class="mb-0">MB Admin</h4>
+            </div>
+            <ul class="list-unstyled components">
+                <li>
+                    <a href="{% url 'dashboard:home' %}" class="{% if active_page == 'home' %}active{% endif %}">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'dashboard:products' %}" class="{% if active_page == 'products' %}active{% endif %}">
+                        <i class="fas fa-box"></i> Products
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'dashboard:orders' %}" class="{% if active_page == 'orders' %}active{% endif %}">
+                        <i class="fas fa-shopping-cart"></i> Orders
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'dashboard:users' %}" class="{% if active_page == 'users' %}active{% endif %}">
+                        <i class="fas fa-users"></i> Users
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'dashboard:statistics' %}" class="{% if active_page == 'statistics' %}active{% endif %}">
+                        <i class="fas fa-chart-bar"></i> Statistics
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'dashboard:accounts' %}" class="{% if active_page == 'accounts' %}active{% endif %}">
+                        <i class="fas fa-user-shield"></i> Accounts
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'dashboard:settings' %}" class="{% if active_page == 'settings' %}active{% endif %}">
+                        <i class="fas fa-cog"></i> Settings
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'dashboard:api_docs' %}" class="{% if active_page == 'api_docs' %}active{% endif %}">
+                        <i class="fas fa-code"></i> API Docs
+                    </a>
+                </li>
+                <li>
+                    <a href="/" target="_blank">
+                        <i class="fas fa-store"></i> Visit Store
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'dashboard:logout' %}">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Page Content -->
+        <div id="content">
+            <!-- Top Navbar -->
+            <nav class="navbar navbar-expand-lg">
+                <div class="container-fluid">
+                    <button type="button" id="sidebarCollapse" class="btn btn-sm btn-outline-primary toggle-btn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <span class="ms-3 fw-bold text-secondary">{% block page_title %}Dashboard{% endblock %}</span>
+                    <div class="ms-auto d-flex align-items-center">
+                        <div class="dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user-circle me-1"></i> {{ request.user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{% url 'dashboard:profile' %}"><i class="fas fa-user me-2"></i>Profile</a></li>
+                                <li><a class="dropdown-item" href="{% url 'dashboard:settings' %}"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'dashboard:logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="container-fluid p-4">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                {% block content %}
+                {% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Toggle sidebar
+            document.getElementById('sidebarCollapse').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.toggle('active');
+                document.getElementById('content').classList.toggle('active');
+            });
+
+            // Responsive sidebar behavior
+            function checkWidth() {
+                if (window.innerWidth < 768) {
+                    document.getElementById('sidebar').classList.add('active');
+                    document.getElementById('content').classList.remove('active');
+                } else {
+                    document.getElementById('sidebar').classList.remove('active');
+                    document.getElementById('content').classList.add('active');
+                }
+            }
+
+            // Initial check
+            checkWidth();
+            
+            // Listen for resize events
+            window.addEventListener('resize', checkWidth);
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
