@@ -12,11 +12,13 @@ class Order(models.Model):
     """Main order model"""
     ORDER_STATUS_CHOICES = [
         ('pending', 'Pending'),
+        ('cancelled', 'Cancelled'),
         ('confirmed', 'Confirmed'),
         ('processing', 'Processing'),
         ('shipped', 'Shipped'),
         ('delivered', 'Delivered'),
-        ('cancelled', 'Cancelled'),
+        ('returned', 'Returned'),
+        ('partially_returned', 'Partially Returned'),
         ('refunded', 'Refunded'),
     ]
     
@@ -65,6 +67,13 @@ class Order(models.Model):
     confirmed_at = models.DateTimeField(null=True, blank=True)
     shipped_at = models.DateTimeField(null=True, blank=True)
     delivered_at = models.DateTimeField(null=True, blank=True)
+
+    #curier details
+    curier_id = models.CharField(max_length=100, blank=True)
+    curier_charge = models.DecimalField(max_digits=8, decimal_places=2, default=0, validators=[MinValueValidator(0)])
+    curier_status = models.CharField(max_length=100, blank=True)
+    
+    
     
     class Meta:
         ordering = ['-created_at']
