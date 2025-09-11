@@ -41,9 +41,6 @@ urlpatterns = [
     # Admin
     path('admin/', admin.site.urls),
     
-    # Custom Admin Dashboard
-    path('mb-admin/', include('dashboard.urls')),
-    
     # API
     path('api/v1/', include(api_urlpatterns)),
     

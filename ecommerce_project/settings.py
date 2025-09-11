@@ -52,7 +52,6 @@ INSTALLED_APPS = [
     'orders.apps.OrdersConfig',
     'frontend.apps.FrontendConfig',
     'fraud_checker.apps.FraudCheckerConfig',
-    'dashboard.apps.DashboardConfig',
 ]
 
 MIDDLEWARE = [
