@@ -8,16 +8,25 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: #3498db;
-            --secondary-color: #2c3e50;
-            --accent-color: #e74c3c;
-            --light-color: #ecf0f1;
-            --dark-color: #34495e;
+            --primary-color: #930000;
+            --secondary-color: #334155;
+            --dark-color: #1e293b;
+            --light-color: #f8fafc;
+            --white: #ffffff;
+            --border-color: #e2e8f0;
+            --success-color: #059669;
+            --danger-color: #dc2626;
+            --warning-color: #d97706;
+            --info-color: #0284c7;
+            --border-radius: 8px;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.2);
+            --transition: all 0.3s ease;
         }
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
+            background-color: var(--light-color);
         }
         
         /* Sidebar */
@@ -28,9 +37,13 @@
             left: 0;
             top: 0;
             background: var(--secondary-color);
-            color: #fff;
-            transition: all 0.3s;
+            color: var(--white);
+            transition: var(--transition);
             z-index: 999;
+        }
+        
+        #sidebar.collapsed {
+            margin-left: -250px;
         }
         
         #sidebar .sidebar-header {
@@ -65,11 +78,11 @@
             min-height: 100vh;
             position: absolute;
             right: 0;
-            transition: all 0.3s;
-            background: #f8f9fa;
+            transition: var(--transition);
+            background: var(--light-color);
         }
         
-        #content.active {
+        #content.expanded {
             width: 100%;
         }
         
@@ -130,18 +143,46 @@
             #sidebar {
                 margin-left: -250px;
             }
-            #sidebar.active {
+            #sidebar.collapsed {
                 margin-left: 0;
             }
             #content {
                 width: 100%;
             }
-            #content.active {
+            #content.expanded {
                 width: calc(100% - 250px);
             }
             .toggle-btn {
                 display: block;
             }
+        }
+        
+        /* Custom theme color adjustments */
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover, .btn-primary:focus {
+            background-color: #790000;
+            border-color: #790000;
+        }
+        
+        .nav-link.active, .navbar-nav .active > .nav-link {
+            color: var(--primary-color) !important;
+        }
+        
+        a {
+            color: var(--primary-color);
+        }
+        
+        a:hover {
+            color: #790000;
+        }
+        
+        .card-header {
+            background-color: var(--secondary-color);
+            color: var(--white);
         }
     </style>
     {% block extra_css %}{% endblock %}
@@ -212,10 +253,10 @@
             <!-- Top Navbar -->
             <nav class="navbar navbar-expand-lg">
                 <div class="container-fluid">
-                    <button type="button" id="sidebarCollapse" class="btn btn-sm btn-outline-primary toggle-btn">
+                    <button type="button" id="sidebarCollapse" class="btn btn-sm btn-primary toggle-btn" aria-label="Toggle Sidebar">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <span class="ms-3 fw-bold text-secondary">{% block page_title %}Dashboard{% endblock %}</span>
+                    <span class="ms-3 fw-bold" style="color: var(--primary-color);">{% block page_title %}Dashboard{% endblock %}</span>
                     <div class="ms-auto d-flex align-items-center">
                         <div class="dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -252,20 +293,35 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('content');
+            const sidebarToggle = document.getElementById('sidebarCollapse');
+            
             // Toggle sidebar
-            document.getElementById('sidebarCollapse').addEventListener('click', function() {
-                document.getElementById('sidebar').classList.toggle('active');
-                document.getElementById('content').classList.toggle('active');
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                content.classList.toggle('expanded');
+                
+                // Save state to localStorage
+                const sidebarCollapsed = sidebar.classList.contains('collapsed');
+                localStorage.setItem('sidebarCollapsed', sidebarCollapsed);
             });
 
+            // Check saved state on page load
+            const savedState = localStorage.getItem('sidebarCollapsed');
+            if (savedState === 'true') {
+                sidebar.classList.add('collapsed');
+                content.classList.add('expanded');
+            }
+            
             // Responsive sidebar behavior
             function checkWidth() {
                 if (window.innerWidth < 768) {
-                    document.getElementById('sidebar').classList.add('active');
-                    document.getElementById('content').classList.remove('active');
-                } else {
-                    document.getElementById('sidebar').classList.remove('active');
-                    document.getElementById('content').classList.add('active');
+                    sidebar.classList.add('collapsed');
+                    content.classList.add('expanded');
+                } else if (savedState !== 'true') {
+                    sidebar.classList.remove('collapsed');
+                    content.classList.remove('expanded');
                 }
             }
 

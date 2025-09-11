@@ -156,7 +156,7 @@
                             <label for="productBasePrice" class="form-label">Base Price</label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="productBasePrice" name="base_price" step="0.01" min="0" required>
+                                <input type="number" class="form-control" id="productBasePrice" name="price" step="0.01" min="0" required>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -211,7 +211,7 @@
                             <label for="editProductBasePrice" class="form-label">Base Price</label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="editProductBasePrice" name="base_price" step="0.01" min="0" required>
+                                <input type="number" class="form-control" id="editProductBasePrice" name="price" step="0.01" min="0" required>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -430,7 +430,12 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         
         fetch(url)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Server responded with an error');
+                }
+                return response.json();
+            })
             .then(data => {
                 displayProducts(data.results);
                 updatePagination(data);
@@ -440,12 +445,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error loading products:', error);
                 document.getElementById('productsTableBody').innerHTML = `
                     <tr>
-                        <td colspan="8" class="text-center py-4 text-danger">
-                            <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
-                            <p>Error loading products. Please try again.</p>
+                        <td colspan="8" class="text-center py-4">
+                            <div class="alert alert-danger" role="alert">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Error loading products. Please try again.</strong>
+                            </div>
                         </td>
                     </tr>
                 `;
+                
+                // Also display a top alert
+                showAlert('Error loading products. Please try again.', 'danger');
             });
     }
     
@@ -579,7 +589,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Convert string values to proper types
         productData.is_active = productData.is_active === 'true';
-        productData.base_price = parseFloat(productData.base_price);
+        productData.price = parseFloat(productData.price);
         
         fetch('/mb-admin/api/products/', {
             method: 'POST',
@@ -640,7 +650,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Convert string values to proper types
         productData.is_active = productData.is_active === 'true';
-        productData.base_price = parseFloat(productData.base_price);
+        productData.price = parseFloat(productData.price);
         
         fetch(`/mb-admin/api/products/${productId}/`, {
             method: 'PUT',

@@ -37,6 +37,7 @@ class CategoryDashboardSerializer(serializers.ModelSerializer):
 class ProductDashboardSerializer(serializers.ModelSerializer):
     category_name = serializers.ReadOnlyField(source='category.name')
     variant_count = serializers.SerializerMethodField()
+    base_price = serializers.ReadOnlyField(source='price')  # Map 'base_price' to 'price'
     
     class Meta:
         model = Product
