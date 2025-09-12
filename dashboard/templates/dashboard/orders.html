@@ -4,6 +4,66 @@
 
 {% block page_title %}Orders Management{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Order Details Modal Custom Styles */
+    .modal-content {
+        border-radius: var(--border-radius);
+    }
+    
+    .modal-header .btn-close-white:focus {
+        box-shadow: none;
+    }
+    
+    .card {
+        transition: transform 0.2s;
+        border-radius: var(--border-radius);
+    }
+    
+    .card:hover {
+        transform: translateY(-3px);
+    }
+    
+    .badge {
+        font-weight: 500;
+        letter-spacing: 0.3px;
+        padding: 0.5rem 0.75rem;
+        border-radius: 4px;
+    }
+    
+    /* Custom table styling */
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+    
+    /* Order status badge sizes */
+    #orderDetailStatus {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    /* Card subtitles with icons */
+    .card-subtitle {
+        font-weight: 500;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* Action buttons */
+    .btn-outline-primary {
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    
+    .btn-outline-primary:hover {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
@@ -87,119 +147,176 @@
     </div>
 </div>
 
-<!-- Order details section -->
-<div class="card" id="orderDetailsCard" style="display: none;">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Order Details <span id="orderNumberDisplay" class="badge bg-secondary ms-2"></span></h5>
-        <button type="button" class="btn-close" id="closeOrderDetailsBtn" aria-label="Close"></button>
-    </div>
-    <div class="card-body">
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <h6 class="mb-3">Order Information</h6>
-                <dl class="row">
-                    <dt class="col-sm-4">Order Number</dt>
-                    <dd class="col-sm-8" id="orderDetailNumber"></dd>
-                    
-                    <dt class="col-sm-4">Order Date</dt>
-                    <dd class="col-sm-8" id="orderDetailDate"></dd>
-                    
-                    <dt class="col-sm-4">Status</dt>
-                    <dd class="col-sm-8">
-                        <div class="d-flex align-items-center">
-                            <span id="orderDetailStatus" class="badge me-2"></span>
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="changeStatusBtn" data-bs-toggle="dropdown" aria-expanded="false">
-                                    Change
-                                </button>
-                                <ul class="dropdown-menu" aria-labelledby="changeStatusBtn" id="statusDropdown">
-                                    <li><a class="dropdown-item" data-status="pending" href="#">Pending</a></li>
-                                    <li><a class="dropdown-item" data-status="processing" href="#">Processing</a></li>
-                                    <li><a class="dropdown-item" data-status="shipped" href="#">Shipped</a></li>
-                                    <li><a class="dropdown-item" data-status="delivered" href="#">Delivered</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" data-status="cancelled" href="#">Cancelled</a></li>
-                                </ul>
+<!-- Order Details Modal -->
+<div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-labelledby="orderDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header" style="background-color: var(--secondary-color); color: var(--white); border-radius: var(--border-radius) var(--border-radius) 0 0;">
+                <h5 class="modal-title" id="orderDetailsModalLabel">
+                    Order #<span id="orderNumberDisplay"></span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Order Status Badge -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="d-flex align-items-center">
+                        <span id="orderDetailStatus" class="badge me-2"></span>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="changeStatusBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                                Change Status
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="changeStatusBtn" id="statusDropdown">
+                                <li><a class="dropdown-item" data-status="pending" href="#">Pending</a></li>
+                                <li><a class="dropdown-item" data-status="processing" href="#">Processing</a></li>
+                                <li><a class="dropdown-item" data-status="shipped" href="#">Shipped</a></li>
+                                <li><a class="dropdown-item" data-status="delivered" href="#">Delivered</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" data-status="cancelled" href="#">Cancelled</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="badge" id="orderDetailPaymentStatus"></span>
+                    </div>
+                </div>
+                
+                <!-- Order Summary Cards -->
+                <div class="row g-4 mb-4">
+                    <!-- Order Info Card -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-3 text-muted">
+                                    <i class="fas fa-info-circle me-2"></i>Order Information
+                                </h6>
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-4 text-muted">Order Number</dt>
+                                    <dd class="col-sm-8 fw-medium" id="orderDetailNumber"></dd>
+                                    
+                                    <dt class="col-sm-4 text-muted">Date & Time</dt>
+                                    <dd class="col-sm-8" id="orderDetailDate"></dd>
+                                    
+                                    <dt class="col-sm-4 text-muted">Total Amount</dt>
+                                    <dd class="col-sm-8 fw-bold" id="orderDetailTotal"></dd>
+                                </dl>
                             </div>
                         </div>
-                    </dd>
+                    </div>
                     
-                    <dt class="col-sm-4">Payment Status</dt>
-                    <dd class="col-sm-8" id="orderDetailPaymentStatus"></dd>
-                    
-                    <dt class="col-sm-4">Total Amount</dt>
-                    <dd class="col-sm-8" id="orderDetailTotal"></dd>
-                </dl>
-            </div>
-            <div class="col-md-6">
-                <h6 class="mb-3">Customer Information</h6>
-                <dl class="row">
-                    <dt class="col-sm-4">Customer Name</dt>
-                    <dd class="col-sm-8" id="orderDetailCustomerName"></dd>
-                    
-                    <dt class="col-sm-4">Email</dt>
-                    <dd class="col-sm-8" id="orderDetailCustomerEmail"></dd>
-                    
-                    <dt class="col-sm-4">Phone</dt>
-                    <dd class="col-sm-8" id="orderDetailCustomerPhone"></dd>
-                </dl>
+                    <!-- Customer Info Card -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-3 text-muted">
+                                    <i class="fas fa-user me-2"></i>Customer Information
+                                </h6>
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-4 text-muted">Name</dt>
+                                    <dd class="col-sm-8" id="orderDetailCustomerName"></dd>
+                                    
+                                    <dt class="col-sm-4 text-muted">Email</dt>
+                                    <dd class="col-sm-8" id="orderDetailCustomerEmail"></dd>
+                                    
+                                    <dt class="col-sm-4 text-muted">Phone</dt>
+                                    <dd class="col-sm-8" id="orderDetailCustomerPhone"></dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
-                <h6 class="mb-2 mt-4">Shipping Address</h6>
-                <p class="border rounded p-2 bg-light" id="orderDetailShippingAddress"></p>
-            </div>
-        </div>
-        
-        <h6 class="border-bottom pb-2 mb-3">Order Items</h6>
-        <div class="table-responsive">
-            <table class="table table-sm">
-                <thead>
-                    <tr>
-                        <th>Product</th>
-                        <th>Variant</th>
-                        <th>Quantity</th>
-                        <th>Price</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-                <tbody id="orderItemsTableBody"></tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="4" class="text-end fw-bold">Subtotal:</td>
-                        <td id="orderDetailSubtotal"></td>
-                    </tr>
-                    <tr>
-                        <td colspan="4" class="text-end">Shipping:</td>
-                        <td id="orderDetailShipping"></td>
-                    </tr>
-                    <tr>
-                        <td colspan="4" class="text-end">Tax:</td>
-                        <td id="orderDetailTax"></td>
-                    </tr>
-                    <tr>
-                        <td colspan="4" class="text-end fw-bold">Total:</td>
-                        <td class="fw-bold" id="orderDetailGrandTotal"></td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-        
-        <div class="mt-4 d-flex justify-content-between">
-            <div>
-                <button class="btn btn-outline-secondary me-2" id="printOrderBtn">
-                    <i class="fas fa-print me-1"></i> Print Order
-                </button>
-                <button class="btn btn-outline-primary" id="sendInvoiceBtn">
-                    <i class="fas fa-envelope me-1"></i> Send Invoice
-                </button>
-            </div>
-            <div>
-                <button class="btn btn-outline-danger" id="deleteOrderBtn">
-                    <i class="fas fa-trash me-1"></i> Delete Order
-                </button>
+                <!-- Order Instructions & Shipping Address -->
+                <div class="row g-4 mb-4">
+                    <!-- Order Instructions -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-3 text-muted">
+                                    <i class="fas fa-clipboard-list me-2"></i>Order Instructions
+                                </h6>
+                                <p class="border rounded p-3 bg-light mb-0" id="orderDetailInstructions">No special instructions provided.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Shipping Address -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-3 text-muted">
+                                    <i class="fas fa-map-marker-alt me-2"></i>Shipping Address
+                                </h6>
+                                <p class="border rounded p-3 bg-light mb-0" id="orderDetailShippingAddress"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Order Items -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-3 text-muted">
+                            <i class="fas fa-shopping-bag me-2"></i>Order Items
+                        </h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Variant</th>
+                                        <th class="text-center">Quantity</th>
+                                        <th class="text-end">Price</th>
+                                        <th class="text-end">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="orderItemsTableBody"></tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <td colspan="4" class="text-end">Subtotal:</td>
+                                        <td class="text-end" id="orderDetailSubtotal"></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" class="text-end">Shipping:</td>
+                                        <td class="text-end" id="orderDetailShipping"></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" class="text-end">Tax:</td>
+                                        <td class="text-end" id="orderDetailTax"></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" class="text-end fw-bold">Total:</td>
+                                        <td class="text-end fw-bold" id="orderDetailGrandTotal"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <button class="btn btn-outline-secondary me-2" id="printOrderBtn">
+                            <i class="fas fa-print me-1"></i> Print Order
+                        </button>
+                        <button class="btn btn-outline-primary" id="sendInvoiceBtn">
+                            <i class="fas fa-envelope me-1"></i> Send Invoice
+                        </button>
+                    </div>
+                    <div>
+                        <button class="btn btn-outline-danger" id="deleteOrderBtn">
+                            <i class="fas fa-trash me-1"></i> Delete Order
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Hidden storage for order details card (for backwards compatibility) -->
+<div id="orderDetailsCard" style="display: none;"></div>
 
 <!-- Order status change modal -->
 <div class="modal fade" id="statusChangeModal" tabindex="-1" aria-labelledby="statusChangeModalLabel" aria-hidden="true">
@@ -247,9 +364,7 @@ document.addEventListener('DOMContentLoaded', function() {
         loadOrders(1);
     });
     
-    document.getElementById('closeOrderDetailsBtn').addEventListener('click', function() {
-        document.getElementById('orderDetailsCard').style.display = 'none';
-    });
+    // Modal is handled by Bootstrap
     
     // Initial data loading
     loadOrders(1);
@@ -447,15 +562,35 @@ document.addEventListener('DOMContentLoaded', function() {
     // Order details
     function loadOrderDetails(orderId) {
         fetch(`/mb-admin/api/orders/${orderId}/`)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(order => {
                 displayOrderDetails(order);
                 
+                // Show the modal after order data is loaded
+                const orderModal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+                orderModal.show();
+                
                 // Also fetch order items
                 return fetch(`/mb-admin/api/orders/${orderId}/items/`)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(items => {
                         displayOrderItems(items);
+                    })
+                    .catch(error => {
+                        console.error('Error loading order items:', error);
+                        // Display a message in the items table
+                        document.getElementById('orderItemsTableBody').innerHTML = 
+                            '<tr><td colspan="5" class="text-center text-danger">Failed to load order items. Please try again.</td></tr>';
                     });
             })
             .catch(error => {
@@ -465,8 +600,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function displayOrderDetails(order) {
-        // Show order details card
-        document.getElementById('orderDetailsCard').style.display = 'block';
+        // Log order data for debugging
+        console.log('Order details:', order);
+        
+        // Store order data globally for access in other functions
+        window.currentOrderData = order;
         
         // Set order header details
         document.getElementById('orderNumberDisplay').textContent = order.order_number;
@@ -481,62 +619,79 @@ document.addEventListener('DOMContentLoaded', function() {
                 statusBadgeClass = 'bg-warning text-dark';
                 break;
             case 'processing':
-                statusBadgeClass = 'bg-info';
+                statusBadgeClass = 'bg-info text-white';
                 break;
             case 'shipped':
-                statusBadgeClass = 'bg-primary';
+                statusBadgeClass = 'bg-primary text-white';
                 break;
             case 'delivered':
-                statusBadgeClass = 'bg-success';
+                statusBadgeClass = 'bg-success text-white';
                 break;
             case 'cancelled':
-                statusBadgeClass = 'bg-danger';
+                statusBadgeClass = 'bg-danger text-white';
                 break;
             default:
-                statusBadgeClass = 'bg-secondary';
+                statusBadgeClass = 'bg-secondary text-white';
         }
         statusElement.className = `badge ${statusBadgeClass}`;
         statusElement.textContent = order.status.charAt(0).toUpperCase() + order.status.slice(1);
         
-        // Set payment status
-        let paymentStatusText;
+        // Set payment status with badge style
+        const paymentStatusElement = document.getElementById('orderDetailPaymentStatus');
+        let paymentStatusClass;
         switch (order.payment_status) {
             case 'paid':
-                paymentStatusText = '<span class="badge bg-success">Paid</span>';
+                paymentStatusClass = 'bg-success text-white';
                 break;
             case 'unpaid':
-                paymentStatusText = '<span class="badge bg-danger">Unpaid</span>';
+                paymentStatusClass = 'bg-danger text-white';
                 break;
             case 'refunded':
-                paymentStatusText = '<span class="badge bg-warning text-dark">Refunded</span>';
+                paymentStatusClass = 'bg-warning text-dark';
                 break;
             default:
-                paymentStatusText = '<span class="badge bg-secondary">Unknown</span>';
+                paymentStatusClass = 'bg-secondary text-white';
         }
-        document.getElementById('orderDetailPaymentStatus').innerHTML = paymentStatusText;
+        paymentStatusElement.className = `badge ${paymentStatusClass}`;
+        paymentStatusElement.textContent = order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1);
         
         // Set total amount
         document.getElementById('orderDetailTotal').textContent = `$${order.total_amount}`;
         
         // Set customer information
         document.getElementById('orderDetailCustomerName').textContent = order.user_name || 'Guest';
-        document.getElementById('orderDetailCustomerEmail').textContent = order.user ? order.user.email : 'N/A';
-        document.getElementById('orderDetailCustomerPhone').textContent = order.shipping_address && order.shipping_address.phone ? order.shipping_address.phone : 'N/A';
+        document.getElementById('orderDetailCustomerEmail').textContent = order.user_email || order.customer_email || 'N/A';
+        document.getElementById('orderDetailCustomerPhone').textContent = order.customer_phone || (order.shipping_address && order.shipping_address.phone) || 'N/A';
         
         // Set shipping address
         let addressText = 'No shipping address available';
         if (order.shipping_address) {
-            const address = order.shipping_address;
-            addressText = `
-                ${address.name || ''}<br>
-                ${address.address_line1 || ''}<br>
-                ${address.address_line2 ? address.address_line2 + '<br>' : ''}
-                ${address.city || ''}, ${address.state || ''} ${address.postal_code || ''}<br>
-                ${address.country || ''}<br>
-                ${address.phone || ''}
-            `;
+            try {
+                const address = order.shipping_address;
+                console.log('Shipping address:', address);
+                
+                addressText = `
+                    ${address.first_name || ''} ${address.last_name || ''}<br>
+                    ${address.address_line_1 || ''}<br>
+                    ${address.address_line_2 ? address.address_line_2 + '<br>' : ''}
+                    ${address.city || ''}, ${address.state || ''} ${address.postal_code || ''}<br>
+                    ${address.country || ''}<br>
+                    ${address.phone ? 'Phone: ' + address.phone : ''}
+                `;
+            } catch (error) {
+                console.error('Error formatting shipping address:', error, order.shipping_address);
+            }
+        } else {
+            console.log('No shipping address found in order data');
         }
         document.getElementById('orderDetailShippingAddress').innerHTML = addressText;
+        
+        // Set order instructions (if available)
+        if (order.instructions || order.customer_notes) {
+            document.getElementById('orderDetailInstructions').textContent = order.instructions || order.customer_notes;
+        } else {
+            document.getElementById('orderDetailInstructions').textContent = 'No special instructions provided.';
+        }
         
         // Set up status change dropdown
         document.querySelectorAll('#statusDropdown .dropdown-item').forEach(item => {
@@ -582,6 +737,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function displayOrderItems(items) {
+        // Log items data for debugging
+        console.log('Order items:', items);
+        
         const tbody = document.getElementById('orderItemsTableBody');
         tbody.innerHTML = '';
         
@@ -593,28 +751,38 @@ document.addEventListener('DOMContentLoaded', function() {
         let subtotal = 0;
         
         items.forEach(item => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${item.product_name}</td>
-                <td>${item.variant_name}</td>
-                <td>${item.quantity}</td>
-                <td>$${item.price.toFixed(2)}</td>
-                <td>$${item.total_price.toFixed(2)}</td>
-            `;
-            tbody.appendChild(tr);
-            
-            subtotal += item.total_price;
+            try {
+                const productName = item.product_name || 'Unknown Product';
+                const variantName = item.variant_name || 'N/A';
+                const quantity = item.quantity || 0;
+                const price = parseFloat(item.price || 0).toFixed(2);
+                const totalPrice = parseFloat(item.total_price || 0).toFixed(2);
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="align-middle">${productName}</td>
+                    <td class="align-middle">${variantName}</td>
+                    <td class="text-center align-middle">${quantity}</td>
+                    <td class="text-end align-middle">$${price}</td>
+                    <td class="text-end align-middle">$${totalPrice}</td>
+                `;
+                tbody.appendChild(tr);
+                
+                subtotal += parseFloat(item.total_price || 0);
+            } catch (error) {
+                console.error('Error rendering order item:', error, item);
+            }
         });
         
         // Set subtotal
         document.getElementById('orderDetailSubtotal').textContent = `$${subtotal.toFixed(2)}`;
         
-        // Get order for shipping and tax info
-        const order = orders.find(o => o.id === parseInt(currentOrderId));
+        // Get current order for shipping and tax info
+        const currentOrder = window.currentOrderData;
         
-        // Set shipping, tax, and grand total (placeholder values if not available)
-        const shipping = order && order.shipping_cost ? order.shipping_cost : 0;
-        const tax = order && order.tax ? order.tax : 0;
+        // Set shipping, tax, and grand total using order data
+        const shipping = currentOrder && currentOrder.shipping_cost ? parseFloat(currentOrder.shipping_cost) : 0;
+        const tax = currentOrder && currentOrder.tax_amount ? parseFloat(currentOrder.tax_amount) : 0;
         
         document.getElementById('orderDetailShipping').textContent = `$${shipping.toFixed(2)}`;
         document.getElementById('orderDetailTax').textContent = `$${tax.toFixed(2)}`;
@@ -717,8 +885,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error('Failed to delete order');
             }
             
-            // Hide order details
-            document.getElementById('orderDetailsCard').style.display = 'none';
+            // Hide the modal
+            const orderModal = bootstrap.Modal.getInstance(document.getElementById('orderDetailsModal'));
+            if (orderModal) {
+                orderModal.hide();
+            }
             
             // Refresh orders list
             loadOrders(currentPage);

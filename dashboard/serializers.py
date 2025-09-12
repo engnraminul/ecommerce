@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import DashboardSetting, AdminActivity
 from products.models import Product, ProductVariant, Category
-from orders.models import Order, OrderItem
+from orders.models import Order, OrderItem, ShippingAddress
 from users.models import User
 
 class DashboardSettingSerializer(serializers.ModelSerializer):
@@ -55,41 +55,53 @@ class ProductVariantDashboardSerializer(serializers.ModelSerializer):
         fields = ['id', 'product', 'product_name', 'sku', 'name', 'price', 
                  'stock_quantity', 'is_active', 'image']
 
+class ShippingAddressDashboardSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShippingAddress
+        fields = ['first_name', 'last_name', 'company', 'address_line_1', 'address_line_2',
+                 'city', 'state', 'postal_code', 'country', 'phone', 'email', 'delivery_instructions']
+
 class OrderDashboardSerializer(serializers.ModelSerializer):
     user_name = serializers.SerializerMethodField()
+    user_email = serializers.SerializerMethodField()
     total_items = serializers.SerializerMethodField()
+    instructions = serializers.SerializerMethodField()
+    shipping_address = ShippingAddressDashboardSerializer(read_only=True)
     
     class Meta:
         model = Order
-        fields = ['id', 'user', 'user_name', 'order_number', 'status', 'total_amount',
-                  'payment_status', 'shipping_address', 'created_at', 'updated_at', 'total_items']
+        fields = ['id', 'user', 'user_name', 'user_email', 'order_number', 'status', 'total_amount',
+                  'payment_status', 'shipping_address', 'created_at', 'updated_at', 'total_items',
+                  'instructions', 'customer_email', 'customer_phone', 'customer_notes', 'shipping_cost', 'tax_amount']
     
     def get_user_name(self, obj):
         if obj.user:
             return f"{obj.user.first_name} {obj.user.last_name}".strip() or obj.user.username
         return "Guest User"
     
+    def get_user_email(self, obj):
+        if obj.user:
+            return obj.user.email
+        return obj.customer_email or obj.guest_email or "N/A"
+    
+    def get_instructions(self, obj):
+        return obj.customer_notes
+        
     def get_total_items(self, obj):
         return obj.items.count()
 
 class OrderItemDashboardSerializer(serializers.ModelSerializer):
-    product_name = serializers.SerializerMethodField()
-    variant_name = serializers.SerializerMethodField()
+    price = serializers.DecimalField(source='unit_price', max_digits=10, decimal_places=2, read_only=True)
+    total_price = serializers.SerializerMethodField()
     
     class Meta:
         model = OrderItem
-        fields = ['id', 'order', 'product_variant', 'product_name', 'variant_name',
-                  'quantity', 'price', 'total_price']
+        fields = ['id', 'order', 'product_name', 'variant_name', 'quantity', 'price', 'total_price']
     
-    def get_product_name(self, obj):
-        if obj.product_variant and obj.product_variant.product:
-            return obj.product_variant.product.name
-        return "Unknown Product"
-    
-    def get_variant_name(self, obj):
-        if obj.product_variant:
-            return obj.product_variant.name
-        return "Unknown Variant"
+    def get_total_price(self, obj):
+        if hasattr(obj, 'total_price'):
+            return obj.total_price
+        return obj.unit_price * obj.quantity if obj.unit_price and obj.quantity else 0
 
 class DashboardStatisticsSerializer(serializers.Serializer):
     total_sales = serializers.DecimalField(max_digits=14, decimal_places=2)
