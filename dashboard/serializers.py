@@ -91,17 +91,19 @@ class OrderDashboardSerializer(serializers.ModelSerializer):
         return obj.items.count()
 
 class OrderItemDashboardSerializer(serializers.ModelSerializer):
-    price = serializers.DecimalField(source='unit_price', max_digits=10, decimal_places=2, read_only=True)
-    total_price = serializers.SerializerMethodField()
+    """Serializer for order items in the dashboard"""
     
     class Meta:
         model = OrderItem
-        fields = ['id', 'order', 'product_name', 'variant_name', 'quantity', 'price', 'total_price']
-    
-    def get_total_price(self, obj):
-        if hasattr(obj, 'total_price'):
-            return obj.total_price
-        return obj.unit_price * obj.quantity if obj.unit_price and obj.quantity else 0
+        fields = ['id', 'order', 'product_name', 'variant_name', 'quantity', 'unit_price']
+        
+    def to_representation(self, instance):
+        """Override to customize response data"""
+        data = super().to_representation(instance)
+        # Add calculated field
+        data['price'] = str(instance.unit_price)
+        data['total_price'] = str(instance.unit_price * instance.quantity)
+        return data
 
 class DashboardStatisticsSerializer(serializers.Serializer):
     total_sales = serializers.DecimalField(max_digits=14, decimal_places=2)

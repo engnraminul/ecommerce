@@ -1,6 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
+from . import order_views
 
 router = DefaultRouter()
 router.register(r'settings', views.DashboardSettingViewSet)
@@ -10,11 +11,12 @@ router.register(r'categories', views.CategoryDashboardViewSet)
 router.register(r'products', views.ProductDashboardViewSet)
 router.register(r'variants', views.ProductVariantDashboardViewSet)
 router.register(r'orders', views.OrderDashboardViewSet)
-
 app_name = 'dashboard'
 
 urlpatterns = [
     path('api/', include(router.urls)),
+    # Explicit URL pattern for order items to fix the 404 issue
+    path('api/orders/<int:order_id>/items/', order_views.get_order_items, name='order_items'),
     path('api/statistics/', views.DashboardStatisticsView.as_view(), name='statistics'),
     
     # Frontend views for the dashboard SPA

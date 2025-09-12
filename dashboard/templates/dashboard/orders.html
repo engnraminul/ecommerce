@@ -561,37 +561,105 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Order details
     function loadOrderDetails(orderId) {
+        console.log(`Loading order details for ID: ${orderId}`);
+        
+        // First, load order data
         fetch(`/mb-admin/api/orders/${orderId}/`)
             .then(response => {
+                console.log(`Order API response status: ${response.status}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
                 return response.json();
             })
             .then(order => {
+                console.log('Order data received:', order);
                 displayOrderDetails(order);
                 
                 // Show the modal after order data is loaded
                 const orderModal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
                 orderModal.show();
                 
-                // Also fetch order items
-                return fetch(`/mb-admin/api/orders/${orderId}/items/`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! Status: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(items => {
-                        displayOrderItems(items);
-                    })
-                    .catch(error => {
-                        console.error('Error loading order items:', error);
-                        // Display a message in the items table
-                        document.getElementById('orderItemsTableBody').innerHTML = 
-                            '<tr><td colspan="5" class="text-center text-danger">Failed to load order items. Please try again.</td></tr>';
-                    });
+                // Then load order items with delay to ensure proper loading
+                setTimeout(() => {
+                    console.log(`Loading items for order ${orderId}...`);
+                    document.getElementById('orderItemsTableBody').innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center py-3">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <span class="ms-2">Loading order items...</span>
+                            </td>
+                        </tr>
+                    `;
+                    
+                    // Use the explicit route to fetch order items
+                    fetch(`/mb-admin/api/orders/${orderId}/items/`)
+                        .then(response => {
+                            console.log(`Items API response status: ${response.status}`);
+                            
+                            // Debug the raw response
+                            response.clone().text().then(text => {
+                                console.log('Raw response text:', text.substring(0, 200) + '...');
+                                try {
+                                    // Try to parse as JSON to see if it's valid
+                                    const jsonData = JSON.parse(text);
+                                    console.log('Response parsed successfully as JSON:', jsonData);
+                                } catch (err) {
+                                    console.error('Response is not valid JSON:', err);
+                                }
+                            });
+                            
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! Status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(items => {
+                            console.log(`Received items:`, items);
+                            if (Array.isArray(items)) {
+                                console.log(`Found ${items.length} items`);
+                                if (items.length > 0) {
+                                    displayOrderItems(items);
+                                } else {
+                                    document.getElementById('orderItemsTableBody').innerHTML = 
+                                        '<tr><td colspan="5" class="text-center">No items found in this order.</td></tr>';
+                                }
+                            } else if (typeof items === 'object' && items !== null && items.error) {
+                                // Handle server-side error message
+                                console.error('Server error:', items.error);
+                                document.getElementById('orderItemsTableBody').innerHTML = 
+                                    `<tr><td colspan="5" class="text-center text-danger">Error: ${items.error}</td></tr>`;
+                            } else {
+                                console.error('Items response is not an array:', items);
+                                document.getElementById('orderItemsTableBody').innerHTML = 
+                                    '<tr><td colspan="5" class="text-center text-warning">Invalid order items format received.</td></tr>';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error loading order items:', error);
+                            // Display a message in the items table
+                            document.getElementById('orderItemsTableBody').innerHTML = 
+                                `<tr><td colspan="5" class="text-center text-danger">
+                                    <i class="fas fa-exclamation-circle me-2"></i>
+                                    Failed to load order items: ${error.message || 'Unknown error'}
+                                </td></tr>`;
+                                
+                            // Retry button
+                            document.getElementById('orderItemsTableBody').innerHTML += 
+                                `<tr><td colspan="5" class="text-center">
+                                    <button class="btn btn-sm btn-outline-primary retry-items-btn mt-2">
+                                        <i class="fas fa-sync-alt me-1"></i> Retry
+                                    </button>
+                                </td></tr>`;
+                                
+                            // Add event listener to retry button
+                            document.querySelector('.retry-items-btn').addEventListener('click', function() {
+                                loadOrderDetails(orderId);
+                            });
+                        });
+                }, 500);
             })
             .catch(error => {
                 console.error('Error loading order details:', error);
@@ -750,27 +818,52 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let subtotal = 0;
         
-        items.forEach(item => {
+        // Safer processing of items
+        items.forEach((item, index) => {
             try {
+                console.log(`Processing item ${index}:`, item);
+                
+                // Default values if data is missing
                 const productName = item.product_name || 'Unknown Product';
                 const variantName = item.variant_name || 'N/A';
-                const quantity = item.quantity || 0;
-                const price = parseFloat(item.price || 0).toFixed(2);
-                const totalPrice = parseFloat(item.total_price || 0).toFixed(2);
+                const quantity = Number(item.quantity) || 0;
+                
+                // Handle price fields with multiple fallbacks
+                let unitPrice = 0;
+                if (item.unit_price) {
+                    unitPrice = Number(item.unit_price);
+                } else if (item.price) {
+                    unitPrice = Number(item.price);
+                }
+                
+                // Calculate total with fallbacks
+                let itemTotal = 0;
+                if (item.total_price) {
+                    itemTotal = Number(item.total_price);
+                } else {
+                    itemTotal = unitPrice * quantity;
+                }
+                
+                // Format for display
+                const formattedPrice = unitPrice.toFixed(2);
+                const formattedTotal = itemTotal.toFixed(2);
                 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td class="align-middle">${productName}</td>
                     <td class="align-middle">${variantName}</td>
                     <td class="text-center align-middle">${quantity}</td>
-                    <td class="text-end align-middle">$${price}</td>
-                    <td class="text-end align-middle">$${totalPrice}</td>
+                    <td class="text-end align-middle">$${formattedPrice}</td>
+                    <td class="text-end align-middle">$${formattedTotal}</td>
                 `;
                 tbody.appendChild(tr);
                 
-                subtotal += parseFloat(item.total_price || 0);
+                // Add to subtotal
+                subtotal += itemTotal;
+                console.log(`Added $${itemTotal} to subtotal, now: $${subtotal}`);
+                
             } catch (error) {
-                console.error('Error rendering order item:', error, item);
+                console.error(`Error rendering order item ${index}:`, error, item);
             }
         });
         
@@ -779,10 +872,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Get current order for shipping and tax info
         const currentOrder = window.currentOrderData;
+        console.log('Current order for totals:', currentOrder);
         
         // Set shipping, tax, and grand total using order data
-        const shipping = currentOrder && currentOrder.shipping_cost ? parseFloat(currentOrder.shipping_cost) : 0;
-        const tax = currentOrder && currentOrder.tax_amount ? parseFloat(currentOrder.tax_amount) : 0;
+        const shipping = currentOrder && currentOrder.shipping_cost ? Number(currentOrder.shipping_cost) : 0;
+        const tax = currentOrder && currentOrder.tax_amount ? Number(currentOrder.tax_amount) : 0;
+        
+        console.log(`Shipping: $${shipping}, Tax: $${tax}, Subtotal: $${subtotal}`);
         
         document.getElementById('orderDetailShipping').textContent = `$${shipping.toFixed(2)}`;
         document.getElementById('orderDetailTax').textContent = `$${tax.toFixed(2)}`;
