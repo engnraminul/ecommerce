@@ -48,6 +48,7 @@ class Order(models.Model):
     tax_amount = models.DecimalField(max_digits=8, decimal_places=2, default=0, validators=[MinValueValidator(0)])
     discount_amount = models.DecimalField(max_digits=8, decimal_places=2, default=0, validators=[MinValueValidator(0)])
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
+    cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(0)])
     
     # Coupon information
     coupon_code = models.CharField(max_length=50, blank=True)
@@ -70,11 +71,10 @@ class Order(models.Model):
 
     #curier details
     curier_id = models.CharField(max_length=100, blank=True)
-    curier_charge = models.DecimalField(max_digits=8, decimal_places=2, default=0, validators=[MinValueValidator(0)])
+    curier_charge = models.DecimalField(max_digits=8, decimal_places=2, default=110, validators=[MinValueValidator(0)])
     curier_status = models.CharField(max_length=100, blank=True)
-    
-    
-    
+    partially_ammount = models.DecimalField(max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(0)])
+
     class Meta:
         ordering = ['-created_at']
         indexes = [

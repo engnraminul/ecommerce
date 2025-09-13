@@ -67,7 +67,7 @@ class OrderAdmin(admin.ModelAdmin):
         ('Financial Details', {
             'fields': (
                 'subtotal', 'shipping_cost', 'tax_amount', 
-                'discount_amount', 'coupon_code', 'coupon_discount', 'total_amount'
+                'discount_amount', 'coupon_code', 'coupon_discount', 'total_amount', 'cost_price'
             )
         }),
         ('Customer Info', {
@@ -86,6 +86,10 @@ class OrderAdmin(admin.ModelAdmin):
                 'created_at', 'updated_at', 'confirmed_at', 
                 'shipped_at', 'delivered_at'
             ),
+            'classes': ('collapse',)
+        }),
+        ('Courier Details', {
+            'fields': ('curier_id', 'curier_charge', 'curier_status', 'partially_ammount'),
             'classes': ('collapse',)
         }),
     )

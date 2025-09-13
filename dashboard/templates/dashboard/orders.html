@@ -172,9 +172,12 @@
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="changeStatusBtn" id="statusDropdown">
                                 <li><a class="dropdown-item" data-status="pending" href="#">Pending</a></li>
+                                <li><a class="dropdown-item" data-status="confirmed" href="#">Confirmed</a></li>
                                 <li><a class="dropdown-item" data-status="processing" href="#">Processing</a></li>
                                 <li><a class="dropdown-item" data-status="shipped" href="#">Shipped</a></li>
                                 <li><a class="dropdown-item" data-status="delivered" href="#">Delivered</a></li>
+                                <li><a class="dropdown-item" data-status="returned" href="#">Returned</a></li>
+                                <li><a class="dropdown-item" data-status="partially_refunded" href="#">Partially Refunded</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" data-status="cancelled" href="#">Cancelled</a></li>
                             </ul>
@@ -781,8 +784,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Set up confirmation button
                 document.getElementById('confirmStatusChangeBtn').onclick = function() {
+                    // Just call updateOrderStatus - it will handle the modal closing
                     updateOrderStatus(order.id, newStatus);
-                    modal.hide();
+                    // Don't hide the modal here - let updateOrderStatus handle it
                 };
             });
         });
@@ -905,6 +909,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('Request data:', requestData);
         
+        // Get the modal element reference for later cleanup
+        const statusChangeModalElement = document.getElementById('statusChangeModal');
+        
         fetch(`/mb-admin/api/orders/${orderId}/update_status/`, {
             method: 'POST',
             headers: {
@@ -969,6 +976,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             statusElement.className = `badge ${statusBadgeClass}`;
             
+            // Clean up the modal properly using our helper function
+            cleanupModal(statusChangeModalElement);
+            
             // Refresh orders list in background
             loadOrders(currentPage);
             
@@ -977,6 +987,9 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Error updating order status:', error);
             showAlert(`Failed to update order status: ${error.message}`, 'danger');
+            
+            // Ensure modal is closed properly even on error
+            cleanupModal(statusChangeModalElement);
         });
     }
     
@@ -1002,9 +1015,32 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Helper function to properly clean up a modal
+    function cleanupModal(modalElement) {
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        if (modal) {
+            modal.hide();
+            
+            // Remove backdrop manually if it's still there
+            setTimeout(() => {
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) {
+                    backdrop.remove();
+                }
+                // Also remove any body classes that Bootstrap might have added
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+            }, 300);
+        }
+    }
+    
     function deleteOrder(orderId) {
         console.log(`Attempting to delete order ID: ${orderId}`);
         console.log('CSRF Token:', getCookie('csrftoken'));
+        
+        // Reference the modal element
+        const orderModalElement = document.getElementById('orderDetailsModal');
         
         fetch(`/mb-admin/api/orders/${orderId}/`, {
             method: 'DELETE',
@@ -1039,11 +1075,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             const errorMessage = 'Database table missing. The order will be deleted, but activity logging might fail.';
                             console.warn(errorMessage);
                             
-                            // Close the modal even though there was an error (since the delete operation might have succeeded)
-                            const orderModal = bootstrap.Modal.getInstance(document.getElementById('orderDetailsModal'));
-                            if (orderModal) {
-                                orderModal.hide();
-                            }
+                            // Close the modal properly even though there was an error
+                            cleanupModal(orderModalElement);
                             
                             // Refresh orders list in case the delete actually worked
                             loadOrders(currentPage);
@@ -1060,11 +1093,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            // Hide the modal
-            const orderModal = bootstrap.Modal.getInstance(document.getElementById('orderDetailsModal'));
-            if (orderModal) {
-                orderModal.hide();
-            }
+            // Hide the modal properly using our cleanup function
+            cleanupModal(orderModalElement);
             
             // Refresh orders list
             loadOrders(currentPage);
@@ -1074,6 +1104,9 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Error deleting order:', error);
             showAlert(`Failed to delete order: ${error.message}`, 'danger');
+            
+            // Ensure modal is closed properly even on error
+            cleanupModal(orderModalElement);
         });
     }
     
