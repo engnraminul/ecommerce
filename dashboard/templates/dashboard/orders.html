@@ -329,26 +329,49 @@
 <div class="modal fade" id="statusChangeModal" tabindex="-1" aria-labelledby="statusChangeModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header" style="background-color: var(--secondary-color); color: var(--white);">
                 <h5 class="modal-title" id="statusChangeModalLabel">Update Order Status</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to change the status of order <strong id="statusChangeOrderNumber"></strong> to <strong id="statusChangeNewStatus"></strong>?</p>
+                
+                <!-- Common fields -->
                 <div class="form-check mb-3">
                     <input class="form-check-input" type="checkbox" id="notifyCustomerCheck" checked>
                     <label class="form-check-label" for="notifyCustomerCheck">
                         Notify customer via email about this status change
                     </label>
                 </div>
+                
+                <!-- Courier Charge field - shown for all status changes -->
+                <div class="mb-3">
+                    <label for="courierChargeInput" class="form-label">Courier Charge (optional)</label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="number" class="form-control" id="courierChargeInput" placeholder="Enter courier charge" min="0" step="0.01">
+                    </div>
+                    <small class="text-muted">Leave empty to keep current charge</small>
+                </div>
+                
+                <!-- Partially Refunded Amount - shown only for partially_refunded status -->
+                <div class="mb-3" id="partiallyRefundedFieldContainer" style="display: none;">
+                    <label for="partiallyRefundedInput" class="form-label">Refund Amount <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="number" class="form-control" id="partiallyRefundedInput" placeholder="Enter refund amount" min="0" step="0.01" required>
+                    </div>
+                    <small class="text-danger" id="partiallyRefundedError" style="display: none;">Please enter a refund amount</small>
+                </div>
+                
                 <div class="mb-3">
                     <label for="statusChangeComment" class="form-label">Additional Comments (optional)</label>
                     <textarea class="form-control" id="statusChangeComment" rows="3"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="confirmStatusChangeBtn">Confirm Status Change</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmStatusChangeBtn" style="background-color: var(--primary-color); border-color: var(--primary-color);">Confirm Status Change</button>
             </div>
         </div>
     </div>
@@ -776,7 +799,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Set values for confirmation modal
                 document.getElementById('statusChangeOrderNumber').textContent = order.order_number;
-                document.getElementById('statusChangeNewStatus').textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+                document.getElementById('statusChangeNewStatus').textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1).replace('_', ' ');
+                
+                // Reset form fields
+                document.getElementById('courierChargeInput').value = '';
+                document.getElementById('partiallyRefundedInput').value = '';
+                document.getElementById('partiallyRefundedError').style.display = 'none';
+                
+                // Show/hide partially refunded amount field based on status
+                const partiallyRefundedContainer = document.getElementById('partiallyRefundedFieldContainer');
+                if (newStatus === 'partially_refunded') {
+                    partiallyRefundedContainer.style.display = 'block';
+                } else {
+                    partiallyRefundedContainer.style.display = 'none';
+                }
+                
+                // If we have existing courier charge, pre-fill the field
+                if (order.curier_charge) {
+                    document.getElementById('courierChargeInput').value = order.curier_charge;
+                }
                 
                 // Show confirmation modal
                 const modal = new bootstrap.Modal(document.getElementById('statusChangeModal'));
@@ -897,6 +938,21 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateOrderStatus(orderId, newStatus) {
         const notifyCustomer = document.getElementById('notifyCustomerCheck').checked;
         const comment = document.getElementById('statusChangeComment').value.trim();
+        const courierCharge = document.getElementById('courierChargeInput').value.trim();
+        
+        // Check if we need to validate the partially refunded amount
+        let partiallyRefundedAmount = null;
+        if (newStatus === 'partially_refunded') {
+            partiallyRefundedAmount = document.getElementById('partiallyRefundedInput').value.trim();
+            
+            // Validate that an amount is provided for partially_refunded status
+            if (!partiallyRefundedAmount) {
+                document.getElementById('partiallyRefundedError').style.display = 'block';
+                return; // Stop execution if validation fails
+            } else {
+                document.getElementById('partiallyRefundedError').style.display = 'none';
+            }
+        }
         
         console.log(`Updating order ${orderId} status to ${newStatus}`);
         console.log('CSRF Token:', getCookie('csrftoken'));
@@ -906,6 +962,16 @@ document.addEventListener('DOMContentLoaded', function() {
             notify_customer: notifyCustomer,
             comment: comment
         };
+        
+        // Add courier charge if provided
+        if (courierCharge) {
+            requestData.curier_charge = parseFloat(courierCharge);
+        }
+        
+        // Add partially refunded amount if applicable
+        if (partiallyRefundedAmount) {
+            requestData.partially_ammount = parseFloat(partiallyRefundedAmount);
+        }
         
         console.log('Request data:', requestData);
         

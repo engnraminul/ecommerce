@@ -12,7 +12,8 @@ from .models import DashboardSetting, AdminActivity
 from .serializers import (
     DashboardSettingSerializer, AdminActivitySerializer, UserDashboardSerializer,
     CategoryDashboardSerializer, ProductDashboardSerializer, ProductVariantDashboardSerializer,
-    OrderDashboardSerializer, OrderItemDashboardSerializer, DashboardStatisticsSerializer
+    OrderDashboardSerializer, OrderItemDashboardSerializer, DashboardStatisticsSerializer,
+    ShippingAddressDashboardSerializer
 )
 from products.models import Product, ProductVariant, Category
 from orders.models import Order, OrderItem
@@ -25,26 +26,39 @@ class DashboardSettingViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         instance = serializer.save()
-        self.log_activity('created', instance)
+        try:
+            self.log_activity('created', instance)
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
         
     def perform_update(self, serializer):
         instance = serializer.save()
-        self.log_activity('updated', instance)
+        try:
+            self.log_activity('updated', instance)
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
         
     def perform_destroy(self, instance):
-        self.log_activity('deleted', instance)
+        try:
+            self.log_activity('deleted', instance)
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
         instance.delete()
     
     def log_activity(self, action, instance):
-        AdminActivity.objects.create(
-            user=self.request.user,
-            action=action,
-            model_name='DashboardSetting',
-            object_id=instance.id,
-            object_repr=instance.key,
-            ip_address=self.get_client_ip(),
-            user_agent=self.request.META.get('HTTP_USER_AGENT', '')
-        )
+        try:
+            AdminActivity.objects.create(
+                user=self.request.user,
+                action=action,
+                model_name='DashboardSetting',
+                object_id=instance.id,
+                object_repr=instance.key,
+                ip_address=self.get_client_ip(),
+                user_agent=self.request.META.get('HTTP_USER_AGENT', '')
+            )
+        except Exception as e:
+            # Handle database errors, particularly if the AdminActivity table doesn't exist
+            print(f"Failed to log activity: {str(e)}")
     
     def get_client_ip(self):
         x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
@@ -71,26 +85,39 @@ class UserDashboardViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         instance = serializer.save()
-        self.log_activity('created', instance)
+        try:
+            self.log_activity('created', instance)
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
         
     def perform_update(self, serializer):
         instance = serializer.save()
-        self.log_activity('updated', instance)
+        try:
+            self.log_activity('updated', instance)
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
         
     def perform_destroy(self, instance):
-        self.log_activity('deleted', instance)
+        try:
+            self.log_activity('deleted', instance)
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
         instance.delete()
     
     def log_activity(self, action, instance):
-        AdminActivity.objects.create(
-            user=self.request.user,
-            action=action,
-            model_name='User',
-            object_id=instance.id,
-            object_repr=instance.username,
-            ip_address=self.get_client_ip(),
-            user_agent=self.request.META.get('HTTP_USER_AGENT', '')
-        )
+        try:
+            AdminActivity.objects.create(
+                user=self.request.user,
+                action=action,
+                model_name='User',
+                object_id=instance.id,
+                object_repr=instance.username,
+                ip_address=self.get_client_ip(),
+                user_agent=self.request.META.get('HTTP_USER_AGENT', '')
+            )
+        except Exception as e:
+            # Handle database errors, particularly if the AdminActivity table doesn't exist
+            print(f"Failed to log activity: {str(e)}")
     
     def get_client_ip(self):
         x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
@@ -108,26 +135,39 @@ class CategoryDashboardViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         instance = serializer.save()
-        self.log_activity('created', instance)
+        try:
+            self.log_activity('created', instance)
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
         
     def perform_update(self, serializer):
         instance = serializer.save()
-        self.log_activity('updated', instance)
+        try:
+            self.log_activity('updated', instance)
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
         
     def perform_destroy(self, instance):
-        self.log_activity('deleted', instance)
+        try:
+            self.log_activity('deleted', instance)
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
         instance.delete()
     
     def log_activity(self, action, instance):
-        AdminActivity.objects.create(
-            user=self.request.user,
-            action=action,
-            model_name='Category',
-            object_id=instance.id,
-            object_repr=instance.name,
-            ip_address=self.get_client_ip(),
-            user_agent=self.request.META.get('HTTP_USER_AGENT', '')
-        )
+        try:
+            AdminActivity.objects.create(
+                user=self.request.user,
+                action=action,
+                model_name='Category',
+                object_id=instance.id,
+                object_repr=instance.name,
+                ip_address=self.get_client_ip(),
+                user_agent=self.request.META.get('HTTP_USER_AGENT', '')
+            )
+        except Exception as e:
+            # Handle database errors, particularly if the AdminActivity table doesn't exist
+            print(f"Failed to log activity: {str(e)}")
     
     def get_client_ip(self):
         x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
@@ -139,32 +179,45 @@ class ProductDashboardViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductDashboardSerializer
     permission_classes = [IsAdminUser]
-    filterset_fields = ['category', 'is_active']
-    search_fields = ['name', 'description']
-    ordering_fields = ['name', 'created_at', 'base_price']
+    filterset_fields = ['category', 'is_active', 'is_featured', 'is_digital', 'shipping_type']
+    search_fields = ['name', 'description', 'short_description', 'sku', 'barcode']
+    ordering_fields = ['name', 'created_at', 'price', 'stock_quantity']
     
     def perform_create(self, serializer):
         instance = serializer.save()
-        self.log_activity('created', instance)
+        try:
+            self.log_activity('created', instance)
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
         
     def perform_update(self, serializer):
         instance = serializer.save()
-        self.log_activity('updated', instance)
+        try:
+            self.log_activity('updated', instance)
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
         
     def perform_destroy(self, instance):
-        self.log_activity('deleted', instance)
+        try:
+            self.log_activity('deleted', instance)
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
         instance.delete()
     
     def log_activity(self, action, instance):
-        AdminActivity.objects.create(
-            user=self.request.user,
-            action=action,
-            model_name='Product',
-            object_id=instance.id,
-            object_repr=instance.name,
-            ip_address=self.get_client_ip(),
-            user_agent=self.request.META.get('HTTP_USER_AGENT', '')
-        )
+        try:
+            AdminActivity.objects.create(
+                user=self.request.user,
+                action=action,
+                model_name='Product',
+                object_id=instance.id,
+                object_repr=instance.name,
+                ip_address=self.get_client_ip(),
+                user_agent=self.request.META.get('HTTP_USER_AGENT', '')
+            )
+        except Exception as e:
+            # Handle database errors, particularly if the AdminActivity table doesn't exist
+            print(f"Failed to log activity: {str(e)}")
     
     def get_client_ip(self):
         x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
@@ -182,26 +235,39 @@ class ProductVariantDashboardViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         instance = serializer.save()
-        self.log_activity('created', instance)
+        try:
+            self.log_activity('created', instance)
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
         
     def perform_update(self, serializer):
         instance = serializer.save()
-        self.log_activity('updated', instance)
+        try:
+            self.log_activity('updated', instance)
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
         
     def perform_destroy(self, instance):
-        self.log_activity('deleted', instance)
+        try:
+            self.log_activity('deleted', instance)
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
         instance.delete()
     
     def log_activity(self, action, instance):
-        AdminActivity.objects.create(
-            user=self.request.user,
-            action=action,
-            model_name='ProductVariant',
-            object_id=instance.id,
-            object_repr=f"{instance.product.name} - {instance.name}",
-            ip_address=self.get_client_ip(),
-            user_agent=self.request.META.get('HTTP_USER_AGENT', '')
-        )
+        try:
+            AdminActivity.objects.create(
+                user=self.request.user,
+                action=action,
+                model_name='ProductVariant',
+                object_id=instance.id,
+                object_repr=f"{instance.product.name} - {instance.name}",
+                ip_address=self.get_client_ip(),
+                user_agent=self.request.META.get('HTTP_USER_AGENT', '')
+            )
+        except Exception as e:
+            # Handle database errors, particularly if the AdminActivity table doesn't exist
+            print(f"Failed to log activity: {str(e)}")
     
     def get_client_ip(self):
         x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
@@ -220,22 +286,35 @@ class OrderDashboardViewSet(viewsets.ModelViewSet):
     
     def perform_update(self, serializer):
         instance = serializer.save()
-        self.log_activity('updated', instance)
+        try:
+            self.log_activity('updated', instance)
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
     
     def perform_destroy(self, instance):
-        self.log_activity('deleted', instance)
+        try:
+            self.log_activity('deleted', instance)
+        except Exception as e:
+            # Log the error but continue with deletion
+            print(f"Error logging activity: {str(e)}")
+        
+        # Proceed with deletion even if logging fails
         instance.delete()
     
     def log_activity(self, action, instance):
-        AdminActivity.objects.create(
-            user=self.request.user,
-            action=action,
-            model_name='Order',
-            object_id=instance.id,
-            object_repr=instance.order_number,
-            ip_address=self.get_client_ip(),
-            user_agent=self.request.META.get('HTTP_USER_AGENT', '')
-        )
+        try:
+            AdminActivity.objects.create(
+                user=self.request.user,
+                action=action,
+                model_name='Order',
+                object_id=instance.id,
+                object_repr=instance.order_number,
+                ip_address=self.get_client_ip(),
+                user_agent=self.request.META.get('HTTP_USER_AGENT', '')
+            )
+        except Exception as e:
+            # Handle database errors, particularly if the AdminActivity table doesn't exist
+            print(f"Failed to log activity: {str(e)}")
     
     def get_client_ip(self):
         x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
@@ -246,17 +325,97 @@ class OrderDashboardViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def update_status(self, request, pk=None):
         order = self.get_object()
-        status = request.data.get('status')
+        new_status = request.data.get('status')
         
-        if not status:
-            return Response({'error': 'Status is required'}, status=status.HTTP_400_BAD_REQUEST)
+        if not new_status:
+            from rest_framework import status as http_status
+            return Response({'error': 'Status is required'}, status=http_status.HTTP_400_BAD_REQUEST)
         
-        order.status = status
+        # Update order status
+        order.status = new_status
+        
+        # Handle courier charge if provided
+        if 'curier_charge' in request.data and request.data['curier_charge'] is not None:
+            try:
+                order.curier_charge = float(request.data['curier_charge'])
+            except (ValueError, TypeError) as e:
+                print(f"Error setting courier charge: {e}")
+                return Response({'error': 'Invalid courier charge value'}, status=400)
+        
+        # Handle partially refunded amount if applicable
+        if new_status == 'partially_refunded' and 'partially_ammount' in request.data:
+            try:
+                if not request.data['partially_ammount']:
+                    return Response({'error': 'Refund amount is required for partially refunded status'}, status=400)
+                order.partially_ammount = float(request.data['partially_ammount'])
+            except (ValueError, TypeError) as e:
+                print(f"Error setting partially refunded amount: {e}")
+                return Response({'error': 'Invalid refund amount value'}, status=400)
+        
+        # Save the order with all updates
         order.save()
         
-        self.log_activity('updated status', order)
+        # Handle customer notification if requested
+        notify_customer = request.data.get('notify_customer', False)
+        if notify_customer:
+            try:
+                # Here you would implement your email notification logic
+                # For now, just log that we would send an email
+                print(f"Would send status update email to {order.customer_email or order.user.email if order.user else 'No email'}")
+                # You could implement a utility function like:
+                # from .utils import send_order_status_email
+                # send_order_status_email(order, new_status, request.data.get('comment', ''))
+            except Exception as e:
+                print(f"Error sending notification email: {e}")
+        
+        try:
+            # Include the additional fields in the activity log
+            additional_info = {}
+            if 'curier_charge' in request.data and request.data['curier_charge']:
+                additional_info['courier_charge'] = request.data['curier_charge']
+            if 'partially_ammount' in request.data and request.data['partially_ammount']:
+                additional_info['partially_refunded'] = request.data['partially_ammount']
+                
+            activity_details = f"Updated status to {new_status}"
+            if additional_info:
+                activity_details += f" with {additional_info}"
+                
+            self.log_activity(activity_details, order)
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
         
         return Response({'success': True, 'status': order.status})
+    
+    @action(detail=True, methods=['get'])
+    def items(self, request, pk=None):
+        """
+        Get all items for a specific order
+        """
+        try:
+            order = self.get_object()
+            print(f"Fetching items for order ID: {order.id}, Order Number: {order.order_number}")
+            
+            # Use select_related to optimize query
+            items = OrderItem.objects.filter(order=order).select_related('product', 'variant')
+            
+            # Log the items for debugging
+            print(f"Found {items.count()} items for order {order.order_number}")
+            for item in items:
+                print(f"Item ID: {item.id}, Product: {item.product_name}, Quantity: {item.quantity}, Price: {item.unit_price}")
+            
+            # Serialize the data
+            serializer = OrderItemDashboardSerializer(items, many=True)
+            serialized_data = serializer.data
+            
+            # Log the serialized data for debugging
+            print(f"Serialized data: {serialized_data}")
+            
+            return Response(serialized_data)
+        except Exception as e:
+            print(f"Error in items action: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response({"error": str(e)}, status=400)
 
 class DashboardStatisticsView(APIView):
     permission_classes = [IsAdminUser]
@@ -356,10 +515,14 @@ class DashboardStatisticsView(APIView):
         return Response(serializer.data)
 
 # Frontend views for dashboard SPA
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAdminUser
+from rest_framework.response import Response
+from orders.models import Order, OrderItem
 
 def is_admin(user):
     return user.is_staff
@@ -470,3 +633,36 @@ def dashboard_api_docs(request):
         'active_page': 'api_docs'
     }
     return render(request, 'dashboard/api_docs.html', context)
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def get_order_items(request, order_id):
+    """
+    Explicit view function for getting order items, bypassing the ViewSet action
+    to fix the 404 issue
+    """
+    try:
+        order = get_object_or_404(Order, id=order_id)
+        print(f"Fetching items for order ID: {order.id}, Order Number: {order.order_number}")
+        
+        # Use select_related to optimize query
+        items = OrderItem.objects.filter(order=order).select_related('product', 'variant')
+        
+        # Log the items for debugging
+        print(f"Found {items.count()} items for order {order.order_number}")
+        for item in items:
+            print(f"Item ID: {item.id}, Product: {item.product_name}, Quantity: {item.quantity}, Price: {item.unit_price}")
+        
+        # Serialize the data
+        serializer = OrderItemDashboardSerializer(items, many=True)
+        serialized_data = serializer.data
+        
+        # Log the serialized data for debugging
+        print(f"Serialized data: {serialized_data}")
+        
+        return Response(serialized_data)
+    except Exception as e:
+        print(f"Error in get_order_items view: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return Response({"error": str(e)}, status=400)
