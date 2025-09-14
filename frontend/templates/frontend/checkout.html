@@ -1636,7 +1636,7 @@
             const orderData = {
                 shipping_address: {
                     first_name: formData.get('full_name') ? formData.get('full_name').split(' ')[0] || 'Customer' : 'Customer',
-                    last_name: formData.get('full_name') ? formData.get('full_name').split(' ').slice(1).join(' ') || 'Name' : 'Name',
+                    last_name: formData.get('full_name') ? formData.get('full_name').split(' ').slice(1).join(' ') || '' : '',
                     company: '',
                     address_line_1: formData.get('address') || 'Address not provided',
                     address_line_2: '',

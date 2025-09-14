@@ -12,6 +12,13 @@
         border-radius: var(--border-radius);
     }
     
+    .modal-header {
+        background-color: var(--secondary-color);
+        color: var(--white);
+        border-top-left-radius: var(--border-radius);
+        border-top-right-radius: var(--border-radius);
+    }
+    
     .modal-header .btn-close-white:focus {
         box-shadow: none;
     }
@@ -30,6 +37,15 @@
         letter-spacing: 0.3px;
         padding: 0.5rem 0.75rem;
         border-radius: 4px;
+    }
+    
+    /* Custom status badge colors */
+    .bg-indigo {
+        background-color: #6610f2;
+    }
+    
+    .bg-orange {
+        background-color: #fd7e14;
     }
     
     /* Custom table styling */
@@ -51,6 +67,10 @@
         margin-bottom: 1rem;
     }
     
+    .card-subtitle i {
+        color: var(--primary-color);
+    }
+    
     /* Action buttons */
     .btn-outline-primary {
         color: var(--primary-color);
@@ -61,6 +81,61 @@
         background-color: var(--primary-color);
         border-color: var(--primary-color);
         color: white;
+    }
+    
+    .btn-outline-secondary {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        opacity: 0.85;
+    }
+    
+    .btn-outline-secondary:hover {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+        opacity: 1;
+    }
+    
+    /* Modal buttons */
+    .modal .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    
+    .modal .btn-primary:hover {
+        background-color: var(--primary-color-dark, var(--primary-color));
+        border-color: var(--primary-color-dark, var(--primary-color));
+        opacity: 0.9;
+    }
+    
+    /* Copy functionality styles */
+    .copy-text {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .copy-icon {
+        cursor: pointer;
+        color: var(--primary-color);
+        opacity: 0.6;
+        transition: all 0.2s;
+    }
+    
+    .copy-icon:hover {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+    
+    .copy-success {
+        animation: pulse 1s;
+        color: var(--success-color, #28a745);
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
     }
 </style>
 {% endblock %}
@@ -86,9 +161,12 @@
                     <select class="form-select form-select-sm" id="statusFilter">
                         <option value="">All Statuses</option>
                         <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
                         <option value="processing">Processing</option>
                         <option value="shipped">Shipped</option>
                         <option value="delivered">Delivered</option>
+                        <option value="returned">Returned</option>
+                        <option value="partially_refunded">Partially Refunded</option>
                         <option value="cancelled">Cancelled</option>
                     </select>
                 </div>
@@ -155,7 +233,7 @@
 <div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-labelledby="orderDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content border-0 shadow">
-            <div class="modal-header" style="background-color: var(--secondary-color); color: var(--white); border-radius: var(--border-radius) var(--border-radius) 0 0;">
+            <div class="modal-header">
                 <h5 class="modal-title" id="orderDetailsModalLabel">
                     Order #<span id="orderNumberDisplay"></span>
                 </h5>
@@ -164,7 +242,7 @@
             <div class="modal-body p-4">
                 <!-- Order Status Badge -->
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div class="d-flex align-items-center">
+                    <div class="d-flex align-items-center" style="gap: 0.5rem;">
                         <span id="orderDetailStatus" class="badge me-2"></span>
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="changeStatusBtn" data-bs-toggle="dropdown" aria-expanded="false">
@@ -329,7 +407,7 @@
 <div class="modal fade" id="statusChangeModal" tabindex="-1" aria-labelledby="statusChangeModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header" style="background-color: var(--secondary-color); color: var(--white);">
+            <div class="modal-header">
                 <h5 class="modal-title" id="statusChangeModalLabel">Update Order Status</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -371,7 +449,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="confirmStatusChangeBtn" style="background-color: var(--primary-color); border-color: var(--primary-color);">Confirm Status Change</button>
+                <button type="button" class="btn btn-primary" id="confirmStatusChangeBtn">Confirm Status Change</button>
             </div>
         </div>
     </div>
@@ -384,6 +462,45 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentPage = 1;
     let currentOrderId = null;
     let orders = [];
+    
+    // Helper function to format status names (converting snake_case to Title Case)
+    function formatStatusName(status) {
+        if (!status) return '';
+        return status.split('_')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    }
+    
+    // Helper function to initialize copy functionality for dynamically added elements
+    function initCopyFunctionality() {
+        document.querySelectorAll('.copy-icon').forEach(icon => {
+            // Remove any existing listeners
+            icon.removeEventListener('click', copyToClipboard);
+            // Add fresh listener
+            icon.addEventListener('click', copyToClipboard);
+        });
+    }
+    
+    // Copy to clipboard function
+    function copyToClipboard(e) {
+        const textToCopy = this.parentElement.dataset.value;
+        navigator.clipboard.writeText(textToCopy)
+            .then(() => {
+                // Visual feedback
+                this.classList.add('copy-success');
+                this.classList.remove('fa-copy');
+                this.classList.add('fa-check');
+                setTimeout(() => {
+                    this.classList.remove('copy-success');
+                    this.classList.remove('fa-check');
+                    this.classList.add('fa-copy');
+                }, 1500);
+            })
+            .catch(err => {
+                console.error('Could not copy text: ', err);
+                alert('Failed to copy to clipboard');
+            });
+    }
     
     // Event listeners
     document.getElementById('refreshOrdersBtn').addEventListener('click', function() {
@@ -479,20 +596,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 case 'pending':
                     statusBadgeClass = 'bg-warning text-dark';
                     break;
+                case 'confirmed':
+                    statusBadgeClass = 'bg-info text-white';
+                    break;
                 case 'processing':
-                    statusBadgeClass = 'bg-info';
+                    statusBadgeClass = 'bg-primary text-white';
                     break;
                 case 'shipped':
-                    statusBadgeClass = 'bg-primary';
+                    statusBadgeClass = 'bg-indigo text-white';
                     break;
                 case 'delivered':
-                    statusBadgeClass = 'bg-success';
+                    statusBadgeClass = 'bg-success text-white';
+                    break;
+                case 'returned':
+                    statusBadgeClass = 'bg-orange text-white';
+                    break;
+                case 'partially_refunded':
+                    statusBadgeClass = 'bg-warning text-dark';
                     break;
                 case 'cancelled':
-                    statusBadgeClass = 'bg-danger';
+                    statusBadgeClass = 'bg-danger text-white';
                     break;
                 default:
-                    statusBadgeClass = 'bg-secondary';
+                    statusBadgeClass = 'bg-secondary text-white';
             }
             
             let paymentStatusBadgeClass;
@@ -518,7 +644,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>${order.total_items}</td>
                 <td>
                     <span class="badge ${statusBadgeClass}">
-                        ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                        ${formatStatusName(order.status)}
                     </span>
                 </td>
                 <td>
@@ -609,6 +735,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Show the modal after order data is loaded
                 const orderModal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
                 orderModal.show();
+                
+                // Initialize copy functionality after modal is shown
+                setTimeout(initCopyFunctionality, 200);
                 
                 // Then load order items with delay to ensure proper loading
                 setTimeout(() => {
@@ -706,7 +835,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Set order header details
         document.getElementById('orderNumberDisplay').textContent = order.order_number;
-        document.getElementById('orderDetailNumber').textContent = order.order_number;
+        document.getElementById('orderDetailNumber').innerHTML = `
+            <span class="copy-text" data-value="${order.order_number}">
+                ${order.order_number} <i class="fas fa-copy copy-icon" title="Copy order number"></i>
+            </span>
+        `;
         document.getElementById('orderDetailDate').textContent = new Date(order.created_at).toLocaleString();
         
         // Set order status with appropriate badge
@@ -716,14 +849,23 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'pending':
                 statusBadgeClass = 'bg-warning text-dark';
                 break;
-            case 'processing':
+            case 'confirmed':
                 statusBadgeClass = 'bg-info text-white';
                 break;
-            case 'shipped':
+            case 'processing':
                 statusBadgeClass = 'bg-primary text-white';
+                break;
+            case 'shipped':
+                statusBadgeClass = 'bg-indigo text-white';
                 break;
             case 'delivered':
                 statusBadgeClass = 'bg-success text-white';
+                break;
+            case 'returned':
+                statusBadgeClass = 'bg-orange text-white';
+                break;
+            case 'partially_refunded':
+                statusBadgeClass = 'bg-warning text-dark';
                 break;
             case 'cancelled':
                 statusBadgeClass = 'bg-danger text-white';
@@ -732,7 +874,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 statusBadgeClass = 'bg-secondary text-white';
         }
         statusElement.className = `badge ${statusBadgeClass}`;
-        statusElement.textContent = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+        statusElement.textContent = formatStatusName(order.status);
         
         // Set payment status with badge style
         const paymentStatusElement = document.getElementById('orderDetailPaymentStatus');
@@ -757,9 +899,27 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('orderDetailTotal').textContent = `$${order.total_amount}`;
         
         // Set customer information
-        document.getElementById('orderDetailCustomerName').textContent = order.user_name || 'Guest';
-        document.getElementById('orderDetailCustomerEmail').textContent = order.user_email || order.customer_email || 'N/A';
-        document.getElementById('orderDetailCustomerPhone').textContent = order.customer_phone || (order.shipping_address && order.shipping_address.phone) || 'N/A';
+        const customerName = order.user_name || 'Guest';
+        const customerEmail = order.user_email || order.customer_email || 'N/A';
+        const customerPhone = order.customer_phone || (order.shipping_address && order.shipping_address.phone) || 'N/A';
+        
+        document.getElementById('orderDetailCustomerName').innerHTML = `
+            <span class="copy-text" data-value="${customerName}">
+                ${customerName} <i class="fas fa-copy copy-icon" title="Copy name"></i>
+            </span>
+        `;
+        
+        document.getElementById('orderDetailCustomerEmail').innerHTML = `
+            <span class="copy-text" data-value="${customerEmail}">
+                ${customerEmail} <i class="fas fa-copy copy-icon" title="Copy email"></i>
+            </span>
+        `;
+        
+        document.getElementById('orderDetailCustomerPhone').innerHTML = `
+            <span class="copy-text" data-value="${customerPhone}">
+                ${customerPhone} <i class="fas fa-copy copy-icon" title="Copy phone"></i>
+            </span>
+        `;
         
         // Set shipping address
         let addressText = 'No shipping address available';
@@ -768,13 +928,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 const address = order.shipping_address;
                 console.log('Shipping address:', address);
                 
+                const fullName = `${address.first_name || ''} ${address.last_name || ''}`;
+                const addressLine1 = address.address_line_1 || '';
+                const addressLine2 = address.address_line_2 || '';
+                const cityStateZip = `${address.city || ''}, ${address.state || ''} ${address.postal_code || ''}`;
+                const country = address.country || '';
+                const phone = address.phone || '';
+                const sku = order.sku || order.order_number || '';
+                
                 addressText = `
-                    ${address.first_name || ''} ${address.last_name || ''}<br>
-                    ${address.address_line_1 || ''}<br>
-                    ${address.address_line_2 ? address.address_line_2 + '<br>' : ''}
-                    ${address.city || ''}, ${address.state || ''} ${address.postal_code || ''}<br>
-                    ${address.country || ''}<br>
-                    ${address.phone ? 'Phone: ' + address.phone : ''}
+                    <div class="copy-text" data-value="${fullName}">
+                        ${fullName} <i class="fas fa-copy copy-icon" title="Copy name"></i>
+                    </div><br>
+                    <div class="copy-text" data-value="${addressLine1}">
+                        ${addressLine1} <i class="fas fa-copy copy-icon" title="Copy address"></i>
+                    </div><br>
+                    ${phone ? `<div class="copy-text" data-value="${phone}">Phone: ${phone} <i class="fas fa-copy copy-icon" title="Copy phone"></i></div><br>` : ''}
+                    <div class="copy-text" data-value="${sku}">
+                        <strong>Order SKU:</strong> ${sku} <i class="fas fa-copy copy-icon" title="Copy SKU"></i>
+                    </div>
                 `;
             } catch (error) {
                 console.error('Error formatting shipping address:', error, order.shipping_address);
@@ -783,6 +955,9 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('No shipping address found in order data');
         }
         document.getElementById('orderDetailShippingAddress').innerHTML = addressText;
+        
+        // Initialize copy functionality for all copy buttons
+        initCopyFunctionality();
         
         // Set order instructions (if available)
         if (order.instructions || order.customer_notes) {
@@ -799,7 +974,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Set values for confirmation modal
                 document.getElementById('statusChangeOrderNumber').textContent = order.order_number;
-                document.getElementById('statusChangeNewStatus').textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1).replace('_', ' ');
+                document.getElementById('statusChangeNewStatus').textContent = formatStatusName(newStatus);
                 
                 // Reset form fields
                 document.getElementById('courierChargeInput').value = '';
