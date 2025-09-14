@@ -194,7 +194,6 @@
                 <thead>
                     <tr>
                         <th>Order #</th>
-                        <th>Customer</th>
                         <th>Date</th>
                         <th>Total</th>
                         <th>Items</th>
@@ -524,7 +523,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const paymentStatusFilter = document.getElementById('paymentStatusFilter').value;
         const dateFilter = document.getElementById('dateFilter').value;
         
-        let url = `/mb-admin/api/orders/?page=${page}`;
+        let url = `/mb-admin/api/orders/?page=${page}&include_shipping_address=true`;
         
         if (searchTerm) {
             url += `&search=${encodeURIComponent(searchTerm)}`;
@@ -545,7 +544,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show loading indicator
         document.getElementById('ordersTableBody').innerHTML = `
             <tr>
-                <td colspan="8" class="text-center py-4">
+                <td colspan="7" class="text-center py-4">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
@@ -566,7 +565,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error loading orders:', error);
                 document.getElementById('ordersTableBody').innerHTML = `
                     <tr>
-                        <td colspan="8" class="text-center py-4 text-danger">
+                        <td colspan="7" class="text-center py-4 text-danger">
                             <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
                             <p>Error loading orders. Please try again.</p>
                         </td>
@@ -582,7 +581,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!orders || orders.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="8" class="text-center py-4">No orders found.</td>
+                    <td colspan="7" class="text-center py-4">No orders found.</td>
                 </tr>
             `;
             return;
@@ -636,9 +635,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     paymentStatusBadgeClass = 'bg-secondary';
             }
             
+            // Get customer name from shipping address if available
+            let customerName = 'Guest';
+            if (order.shipping_address) {
+                const firstName = order.shipping_address.first_name || '';
+                const lastName = order.shipping_address.last_name || '';
+                customerName = `${firstName} ${lastName}`.trim() || 'Guest';
+            } else if (order.user_name) {
+                // Fallback to user_name if available
+                customerName = order.user_name;
+            }
+            
+            // Format order number with customer name
+            const formattedOrderNumber = `${order.order_number} (${customerName})`;
+            
             tr.innerHTML = `
-                <td>${order.order_number}</td>
-                <td>${order.user_name}</td>
+                <td>${formattedOrderNumber}</td>
                 <td>${new Date(order.created_at).toLocaleDateString()}</td>
                 <td>$${order.total_amount}</td>
                 <td>${order.total_items}</td>
@@ -899,13 +911,17 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('orderDetailTotal').textContent = `$${order.total_amount}`;
         
         // Set customer information
-        const customerName = order.user_name || 'Guest';
+        const orderSku = order.order_number || '';
+        const firstName = order.shipping_address ? order.shipping_address.first_name || '' : '';
+        const lastName = order.shipping_address ? order.shipping_address.last_name || '' : '';
+        const customerName = `${firstName} ${lastName}`.trim() || 'Guest';
+        const formattedName = `${orderSku} (${customerName})`.trim();
         const customerEmail = order.user_email || order.customer_email || 'N/A';
         const customerPhone = order.customer_phone || (order.shipping_address && order.shipping_address.phone) || 'N/A';
         
         document.getElementById('orderDetailCustomerName').innerHTML = `
-            <span class="copy-text" data-value="${customerName}">
-                ${customerName} <i class="fas fa-copy copy-icon" title="Copy name"></i>
+            <span class="copy-text" data-value="${formattedName}">
+                ${formattedName} <i class="fas fa-copy copy-icon" title="Copy name"></i>
             </span>
         `;
         
@@ -1050,6 +1066,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Default values if data is missing
                 const productName = item.product_name || 'Unknown Product';
                 const variantName = item.variant_name || 'N/A';
+                const variantSku = item.variant_sku || '';
                 const quantity = Number(item.quantity) || 0;
                 
                 // Handle price fields with multiple fallbacks
@@ -1075,7 +1092,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td class="align-middle">${productName}</td>
-                    <td class="align-middle">${variantName}</td>
+                    <td class="align-middle">
+                        ${variantName}
+                        ${variantSku ? `<br><small class="text-muted">SKU: ${variantSku}</small>` : ''}
+                    </td>
                     <td class="text-center align-middle">${quantity}</td>
                     <td class="text-end align-middle">$${formattedPrice}</td>
                     <td class="text-end align-middle">$${formattedTotal}</td>

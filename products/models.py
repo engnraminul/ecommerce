@@ -148,9 +148,6 @@ class Product(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
-        if not self.sku:
-            self.sku = f"PROD-{uuid.uuid4().hex[:8].upper()}"
-        super().save(*args, **kwargs)
     
     @property
     def is_available(self):
@@ -328,9 +325,6 @@ class ProductVariant(models.Model):
         return f"{self.product.name} - {self.name}"
     
     def save(self, *args, **kwargs):
-        if not self.sku:
-            self.sku = f"{self.product.sku}-{uuid.uuid4().hex[:4].upper()}"
-        
         # Ensure only one default variant per product
         if self.is_default:
             # Unset any existing default for this product

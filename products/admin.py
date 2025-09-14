@@ -23,7 +23,7 @@ class ProductVariantInline(admin.TabularInline):
     model = ProductVariant
     extra = 0
     fields = ('name', 'sku', 'size', 'color', 'price', 'stock_quantity', 'in_stock', 'is_default', 'is_active', 'image')
-    readonly_fields = ('sku',)
+    readonly_fields = ()
 
 
 @admin.register(Category)
@@ -73,7 +73,7 @@ class ProductAdmin(admin.ModelAdmin):
     )
     search_fields = ('name', 'sku', 'description', 'short_description')
     prepopulated_fields = {'slug': ('name',)}
-    readonly_fields = ('sku', 'created_at', 'updated_at', 'average_rating', 'review_count')
+    readonly_fields = ('created_at', 'updated_at', 'average_rating', 'review_count')
     
     inlines = [ProductImageInline, ProductVariantInline]
     
@@ -209,7 +209,7 @@ class ProductVariantAdmin(admin.ModelAdmin):
     list_display = ('product', 'name', 'sku', 'size', 'color', 'price', 'stock_quantity', 'in_stock', 'is_default', 'is_active')
     list_filter = ('is_active', 'is_default', 'in_stock', 'size', 'color', 'material')
     search_fields = ('product__name', 'name', 'sku')
-    readonly_fields = ('sku', 'created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at')
     
     actions = ['mark_as_default', 'mark_as_not_default', 'mark_as_in_stock', 'mark_as_out_of_stock']
     
