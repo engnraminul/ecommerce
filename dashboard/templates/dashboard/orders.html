@@ -166,7 +166,7 @@
                         <option value="shipped">Shipped</option>
                         <option value="delivered">Delivered</option>
                         <option value="returned">Returned</option>
-                        <option value="partially_refunded">Partially Refunded</option>
+                        <option value="partially_returned">Partially Returned</option>
                         <option value="cancelled">Cancelled</option>
                     </select>
                 </div>
@@ -194,17 +194,16 @@
                 <thead>
                     <tr>
                         <th>Order #</th>
+                        <th>Actions</th>
                         <th>Date</th>
                         <th>Total</th>
                         <th>Items</th>
                         <th>Status</th>
-                        <th>Payment</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="ordersTableBody">
                     <tr>
-                        <td colspan="8" class="text-center py-4">
+                        <td colspan="7" class="text-center py-4">
                             <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
@@ -254,7 +253,7 @@
                                 <li><a class="dropdown-item" data-status="shipped" href="#">Shipped</a></li>
                                 <li><a class="dropdown-item" data-status="delivered" href="#">Delivered</a></li>
                                 <li><a class="dropdown-item" data-status="returned" href="#">Returned</a></li>
-                                <li><a class="dropdown-item" data-status="partially_refunded" href="#">Partially Refunded</a></li>
+                                <li><a class="dropdown-item" data-status="partially_returned" href="#">Partially Returned</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" data-status="cancelled" href="#">Cancelled</a></li>
                             </ul>
@@ -431,7 +430,7 @@
                     <small class="text-muted">Leave empty to keep current charge</small>
                 </div>
                 
-                <!-- Partially Refunded Amount - shown only for partially_refunded status -->
+                <!-- Partially Returned Amount - shown only for partially_returned status -->
                 <div class="mb-3" id="partiallyRefundedFieldContainer" style="display: none;">
                     <label for="partiallyRefundedInput" class="form-label">Refund Amount <span class="text-danger">*</span></label>
                     <div class="input-group">
@@ -544,7 +543,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show loading indicator
         document.getElementById('ordersTableBody').innerHTML = `
             <tr>
-                <td colspan="7" class="text-center py-4">
+                <td colspan="6" class="text-center py-4">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
@@ -565,7 +564,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error loading orders:', error);
                 document.getElementById('ordersTableBody').innerHTML = `
                     <tr>
-                        <td colspan="7" class="text-center py-4 text-danger">
+                        <td colspan="6" class="text-center py-4 text-danger">
                             <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
                             <p>Error loading orders. Please try again.</p>
                         </td>
@@ -581,7 +580,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!orders || orders.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="7" class="text-center py-4">No orders found.</td>
+                    <td colspan="6" class="text-center py-4">No orders found.</td>
                 </tr>
             `;
             return;
@@ -610,7 +609,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 case 'returned':
                     statusBadgeClass = 'bg-orange text-white';
                     break;
-                case 'partially_refunded':
+                case 'partially_returned':
                     statusBadgeClass = 'bg-warning text-dark';
                     break;
                 case 'cancelled':
@@ -651,6 +650,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             tr.innerHTML = `
                 <td>${formattedOrderNumber}</td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-outline-primary view-order-btn" data-order-id="${order.id}">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </td>
                 <td>${new Date(order.created_at).toLocaleDateString()}</td>
                 <td>$${order.total_amount}</td>
                 <td>${order.total_items}</td>
@@ -658,16 +662,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     <span class="badge ${statusBadgeClass}">
                         ${formatStatusName(order.status)}
                     </span>
-                </td>
-                <td>
-                    <span class="badge ${paymentStatusBadgeClass}">
-                        ${order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)}
-                    </span>
-                </td>
-                <td>
-                    <button type="button" class="btn btn-sm btn-outline-primary view-order-btn" data-order-id="${order.id}">
-                        <i class="fas fa-eye"></i> View
-                    </button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -876,7 +870,7 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'returned':
                 statusBadgeClass = 'bg-orange text-white';
                 break;
-            case 'partially_refunded':
+            case 'partially_returned':
                 statusBadgeClass = 'bg-warning text-dark';
                 break;
             case 'cancelled':
@@ -999,7 +993,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Show/hide partially refunded amount field based on status
                 const partiallyRefundedContainer = document.getElementById('partiallyRefundedFieldContainer');
-                if (newStatus === 'partially_refunded') {
+                if (newStatus === 'partially_returned') {
                     partiallyRefundedContainer.style.display = 'block';
                 } else {
                     partiallyRefundedContainer.style.display = 'none';
@@ -1137,10 +1131,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Check if we need to validate the partially refunded amount
         let partiallyRefundedAmount = null;
-        if (newStatus === 'partially_refunded') {
+        if (newStatus === 'partially_returned') {
             partiallyRefundedAmount = document.getElementById('partiallyRefundedInput').value.trim();
             
-            // Validate that an amount is provided for partially_refunded status
+            // Validate that an amount is provided for partially_returned status
             if (!partiallyRefundedAmount) {
                 document.getElementById('partiallyRefundedError').style.display = 'block';
                 return; // Stop execution if validation fails
