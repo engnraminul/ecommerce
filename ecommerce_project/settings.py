@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'frontend.apps.FrontendConfig',
     'fraud_checker.apps.FraudCheckerConfig',
     'dashboard.apps.DashboardConfig',
+    'settings.apps.SettingsConfig',
 ]
 
 MIDDLEWARE = [

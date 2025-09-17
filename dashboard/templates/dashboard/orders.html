@@ -651,8 +651,11 @@ document.addEventListener('DOMContentLoaded', function() {
             tr.innerHTML = `
                 <td>${formattedOrderNumber}</td>
                 <td>
-                    <button type="button" class="btn btn-sm btn-outline-primary view-order-btn" data-order-id="${order.id}">
+                    <button type="button" class="btn btn-sm btn-outline-primary view-order-btn me-1" data-order-id="${order.id}">
                         <i class="fas fa-eye"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-success add-curier-btn" data-order-id="${order.id}" title="Add to Curier">
+                        <i class="fas fa-truck"></i>
                     </button>
                 </td>
                 <td>${new Date(order.created_at).toLocaleDateString()}</td>
@@ -673,6 +676,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 const orderId = this.dataset.orderId;
                 currentOrderId = orderId;
                 loadOrderDetails(orderId);
+            });
+        });
+        
+        // Add event listeners to add curier buttons
+        document.querySelectorAll('.add-curier-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const orderId = this.dataset.orderId;
+                addOrderToCurier(orderId);
             });
         });
     }
@@ -1366,6 +1377,41 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Helper functions
+    // Function to add order to curier service
+    function addOrderToCurier(orderId) {
+        console.log(`Adding order ${orderId} to curier service`);
+        
+        fetch(`/mb-admin/api/orders/${orderId}/add_to_curier/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            credentials: 'same-origin',
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`Failed to add order to curier service: ${text || response.statusText}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Order added to curier service:', data);
+            
+            // Show success message
+            showAlert('Order has been successfully added to curier service!', 'success');
+            
+            // Refresh orders list to update UI
+            loadOrders(currentPage);
+        })
+        .catch(error => {
+            console.error('Error adding order to curier service:', error);
+            showAlert(`Failed to add order to curier service: ${error.message}`, 'danger');
+        });
+    }
+    
     function showAlert(message, type) {
         // Create alert element
         const alertDiv = document.createElement('div');

@@ -15,8 +15,10 @@ app_name = 'dashboard'
 
 urlpatterns = [
     path('api/', include(router.urls)),
-    # Explicit URL pattern for order items to fix the 404 issue
+    # Explicit URL patterns for order-related actions
     path('api/orders/<int:order_id>/items/', order_views.get_order_items, name='order_items'),
+    # Add an explicit path for add_to_curier that matches the JavaScript URL
+    path('api/orders/<int:pk>/add_to_curier/', views.OrderDashboardViewSet.as_view({'post': 'add_to_curier'}), name='order_add_to_curier'),
     path('api/statistics/', views.DashboardStatisticsView.as_view(), name='statistics'),
     
     # Frontend views for the dashboard SPA

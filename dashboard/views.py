@@ -342,14 +342,14 @@ class OrderDashboardViewSet(viewsets.ModelViewSet):
                 print(f"Error setting courier charge: {e}")
                 return Response({'error': 'Invalid courier charge value'}, status=400)
         
-        # Handle partially refunded amount if applicable
-        if new_status == 'partially_refunded' and 'partially_ammount' in request.data:
+        # Handle partially returned amount if applicable
+        if new_status == 'partially_returned' and 'partially_ammount' in request.data:
             try:
                 if not request.data['partially_ammount']:
-                    return Response({'error': 'Refund amount is required for partially refunded status'}, status=400)
+                    return Response({'error': 'Refund amount is required for partially returned status'}, status=400)
                 order.partially_ammount = float(request.data['partially_ammount'])
             except (ValueError, TypeError) as e:
-                print(f"Error setting partially refunded amount: {e}")
+                print(f"Error setting partially returned amount: {e}")
                 return Response({'error': 'Invalid refund amount value'}, status=400)
         
         # Save the order with all updates
@@ -416,6 +416,84 @@ class OrderDashboardViewSet(viewsets.ModelViewSet):
             import traceback
             traceback.print_exc()
             return Response({"error": str(e)}, status=400)
+    
+    @action(detail=True, methods=['post'])
+    def add_to_curier(self, request, pk=None):
+        """Add order to curier service and save the consignment ID"""
+        try:
+            # Import the utility function here to avoid circular imports
+            from settings.utils import send_order_to_curier
+            
+            order = self.get_object()
+            
+            # Check if order already has a curier ID
+            if order.curier_id:
+                return Response({
+                    "success": False,
+                    "message": f"Order already has a curier ID: {order.curier_id}"
+                }, status=400)
+            
+            # Send order to curier service
+            success, result = send_order_to_curier(order)
+            
+            if success:
+                # Check if we got a consignment ID back based on the API documentation
+                consignment_id = None
+                
+                # Try to extract consignment ID from the SteadFast API response
+                if isinstance(result, dict):
+                    # SteadFast puts the data in a consignment object
+                    if 'consignment' in result and isinstance(result['consignment'], dict):
+                        consignment_data = result['consignment']
+                        # Try consignment_id first (primary identifier)
+                        if 'consignment_id' in consignment_data:
+                            consignment_id = consignment_data['consignment_id']
+                        # Try tracking_code as backup
+                        elif 'tracking_code' in consignment_data:
+                            consignment_id = consignment_data['tracking_code']
+                    # Log the entire result for debugging
+                    print(f"SteadFast API response: {result}")
+                
+                # Save consignment ID to order if found
+                if consignment_id:
+                    order.curier_id = consignment_id
+                    order.curier_status = 'submitted'
+                    order.save()
+                    
+                    # Log the action
+                    try:
+                        self.log_activity('added_to_curier', order)
+                    except Exception as e:
+                        print(f"Error logging activity: {str(e)}")
+                    
+                    return Response({
+                        "success": True,
+                        "message": "Order successfully added to curier service",
+                        "curier_id": consignment_id,
+                        "response": result
+                    })
+                else:
+                    return Response({
+                        "success": True,
+                        "message": "Order submitted to curier service, but no consignment ID was returned",
+                        "response": result
+                    })
+            else:
+                # Return error from curier service
+                return Response({
+                    "success": False,
+                    "message": "Failed to add order to curier service",
+                    "error": result.get("error", "Unknown error")
+                }, status=400)
+        
+        except Exception as e:
+            print(f"Error adding order to curier: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response({
+                "success": False,
+                "message": f"Error adding order to curier: {str(e)}"
+            }, status=500)
 
 class DashboardStatisticsView(APIView):
     permission_classes = [IsAdminUser]
