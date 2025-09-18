@@ -6,6 +6,8 @@
 {% block page_title %}Orders Management{% endblock %}
 
 {% block extra_css %}
+<!-- SweetAlert2 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <style>
     /* Order Details Modal Custom Styles */
     .modal-content {
@@ -455,6 +457,8 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     let currentPage = 1;
@@ -654,8 +658,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     <button type="button" class="btn btn-sm btn-outline-primary view-order-btn me-1" data-order-id="${order.id}">
                         <i class="fas fa-eye"></i>
                     </button>
-                    <button type="button" class="btn btn-sm btn-outline-success add-curier-btn" data-order-id="${order.id}" title="Add to Curier">
-                        <i class="fas fa-truck"></i>
+                    <button type="button" class="btn btn-sm ${order.curier_id ? 'btn-success' : 'btn-outline-success'} add-curier-btn" 
+                        data-order-id="${order.id}" 
+                        title="${order.curier_id ? 'Already added to curier (ID: ' + order.curier_id + ')' : 'Add to Curier'}"
+                        ${order.curier_id ? 'disabled' : ''}>
+                        <i class="fas fa-${order.curier_id ? 'check-circle' : 'truck'}" ${order.curier_id ? 'style="color: white;"' : ''}></i>
                     </button>
                 </td>
                 <td>${new Date(order.created_at).toLocaleDateString()}</td>
@@ -1034,18 +1041,38 @@ document.addEventListener('DOMContentLoaded', function() {
             window.open(`/orders/${order.id}/invoice/`, '_blank');
         };
         
-        // Set up send invoice button
+        // Set up send invoice button with SweetAlert2 confirmation
         document.getElementById('sendInvoiceBtn').onclick = function() {
-            if (confirm('Send invoice email to the customer?')) {
-                sendInvoiceEmail(order.id);
-            }
+            Swal.fire({
+                title: 'Send Invoice',
+                text: 'Send invoice email to the customer?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#007bff',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, send it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    sendInvoiceEmail(order.id);
+                }
+            });
         };
         
-        // Set up delete order button
+        // Set up delete order button with SweetAlert2 confirmation
         document.getElementById('deleteOrderBtn').onclick = function() {
-            if (confirm('Are you sure you want to delete this order? This action cannot be undone.')) {
-                deleteOrder(order.id);
-            }
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this deletion!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    deleteOrder(order.id);
+                }
+            });
         };
     }
     
@@ -1248,7 +1275,17 @@ document.addEventListener('DOMContentLoaded', function() {
             // Refresh orders list in background
             loadOrders(currentPage);
             
-            showAlert('Order status updated successfully!', 'success');
+            // Show success notification with SweetAlert2
+            Swal.fire({
+                title: 'Status Updated',
+                text: `Order status has been changed to ${formatStatusName(newStatus)}`,
+                icon: 'success',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 5000,
+                timerProgressBar: true
+            });
         })
         .catch(error => {
             console.error('Error updating order status:', error);
@@ -1273,11 +1310,21 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(data => {
-            showAlert('Invoice email sent successfully!', 'success');
+            Swal.fire({
+                title: 'Sent!',
+                text: 'Invoice email has been sent to the customer.',
+                icon: 'success',
+                confirmButtonColor: '#28a745'
+            });
         })
         .catch(error => {
             console.error('Error sending invoice email:', error);
-            showAlert('Failed to send invoice email.', 'danger');
+            Swal.fire({
+                title: 'Error!',
+                text: 'Failed to send invoice email. Please try again later.',
+                icon: 'error',
+                confirmButtonColor: '#dc3545'
+            });
         });
     }
     
@@ -1365,7 +1412,13 @@ document.addEventListener('DOMContentLoaded', function() {
             // Refresh orders list
             loadOrders(currentPage);
             
-            showAlert('Order deleted successfully!', 'success');
+            // Show success notification with SweetAlert2
+            Swal.fire({
+                title: 'Deleted!',
+                text: 'The order has been deleted successfully.',
+                icon: 'success',
+                confirmButtonColor: '#28a745'
+            });
         })
         .catch(error => {
             console.error('Error deleting order:', error);
@@ -1380,6 +1433,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to add order to curier service
     function addOrderToCurier(orderId) {
         console.log(`Adding order ${orderId} to curier service`);
+        
+        // Show loading indicator
+        Swal.fire({
+            title: 'Processing',
+            text: 'Adding order to courier service...',
+            icon: 'info',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
         
         fetch(`/mb-admin/api/orders/${orderId}/add_to_curier/`, {
             method: 'POST',
@@ -1400,38 +1465,65 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             console.log('Order added to curier service:', data);
             
-            // Show success message
-            showAlert('Order has been successfully added to curier service!', 'success');
+            // Extract consignment ID if available
+            const consignmentId = data.curier_id || 
+                (data.response && data.response.consignment && data.response.consignment.consignment_id) || 
+                'Generated';
+            
+            // Show success message with consignment ID
+            Swal.fire({
+                title: 'Success!',
+                text: `Order has been successfully added to courier service! Consignment ID: ${consignmentId}`,
+                icon: 'success',
+                confirmButtonColor: '#28a745',
+                confirmButtonText: 'Great!'
+            });
             
             // Refresh orders list to update UI
             loadOrders(currentPage);
         })
         .catch(error => {
             console.error('Error adding order to curier service:', error);
-            showAlert(`Failed to add order to curier service: ${error.message}`, 'danger');
+            
+            Swal.fire({
+                title: 'Error!',
+                text: `Failed to add order to courier service: ${error.message}`,
+                icon: 'error',
+                confirmButtonColor: '#dc3545',
+                confirmButtonText: 'OK'
+            });
         });
     }
     
     function showAlert(message, type) {
-        // Create alert element
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-        alertDiv.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        `;
+        // Map Bootstrap alert types to SweetAlert2 icons
+        const iconMap = {
+            'success': 'success',
+            'danger': 'error',
+            'warning': 'warning',
+            'info': 'info'
+        };
         
-        // Insert at the top of the content area
-        const container = document.querySelector('.container-fluid');
-        container.insertBefore(alertDiv, container.firstChild);
+        // Map Bootstrap colors to SweetAlert2 button colors
+        const buttonColorMap = {
+            'success': '#28a745',
+            'danger': '#dc3545',
+            'warning': '#ffc107',
+            'info': '#17a2b8'
+        };
         
-        // Auto dismiss after 5 seconds
-        setTimeout(() => {
-            if (alertDiv.parentNode) {
-                const bsAlert = bootstrap.Alert.getOrCreateInstance(alertDiv);
-                bsAlert.close();
-            }
-        }, 5000);
+        // Use SweetAlert2 for modern alerts
+        Swal.fire({
+            title: type.charAt(0).toUpperCase() + type.slice(1),
+            text: message,
+            icon: iconMap[type] || 'info',
+            confirmButtonColor: buttonColorMap[type] || '#6c757d',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 5000,
+            timerProgressBar: true
+        });
     }
     
     function getCookie(name) {

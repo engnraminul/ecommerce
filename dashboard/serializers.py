@@ -72,7 +72,8 @@ class OrderDashboardSerializer(serializers.ModelSerializer):
         model = Order
         fields = ['id', 'user', 'user_name', 'user_email', 'order_number', 'status', 'total_amount',
                   'payment_status', 'shipping_address', 'created_at', 'updated_at', 'total_items',
-                  'instructions', 'customer_email', 'customer_phone', 'customer_notes', 'shipping_cost', 'tax_amount']
+                  'instructions', 'customer_email', 'customer_phone', 'customer_notes', 'shipping_cost', 
+                  'tax_amount', 'curier_id', 'curier_status', 'curier_charge']
     
     def get_user_name(self, obj):
         if obj.user:
