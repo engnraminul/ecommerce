@@ -690,7 +690,22 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.add-curier-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const orderId = this.dataset.orderId;
-                addOrderToCurier(orderId);
+                
+                // Show confirmation popup
+                Swal.fire({
+                    title: 'Add to Courier Service',
+                    text: 'Do you want to add this order to courier service? Order status will be changed to "shipped".',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, add to courier',
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        addOrderToCurier(orderId);
+                    }
+                });
             });
         });
     }
@@ -947,6 +962,10 @@ document.addEventListener('DOMContentLoaded', function() {
             <span class="copy-text" data-value="${customerPhone}">
                 ${customerPhone} <i class="fas fa-copy copy-icon" title="Copy phone"></i>
             </span>
+            ${customerPhone !== 'N/A' ? `
+            <a href="tel:${customerPhone}" class="ms-2 text-primary" title="Call customer">
+                <i class="fas fa-phone-alt"></i>
+            </a>` : ''}
         `;
         
         // Set shipping address
@@ -971,7 +990,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="copy-text" data-value="${addressLine1}">
                         ${addressLine1} <i class="fas fa-copy copy-icon" title="Copy address"></i>
                     </div><br>
-                    ${phone ? `<div class="copy-text" data-value="${phone}">Phone: ${phone} <i class="fas fa-copy copy-icon" title="Copy phone"></i></div><br>` : ''}
+                    ${phone ? `<div class="copy-text" data-value="${phone}">Phone: ${phone} <i class="fas fa-copy copy-icon" title="Copy phone"></i>
+                        <a href="tel:${phone}" class="ms-2 text-primary" title="Call customer">
+                            <i class="fas fa-phone-alt"></i>
+                        </a></div><br>` : ''}
                     <div class="copy-text" data-value="${sku}">
                         <strong>Order SKU:</strong> ${sku} <i class="fas fa-copy copy-icon" title="Copy SKU"></i>
                     </div>

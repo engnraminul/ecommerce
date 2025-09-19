@@ -458,6 +458,8 @@ class OrderDashboardViewSet(viewsets.ModelViewSet):
                 if consignment_id:
                     order.curier_id = consignment_id
                     order.curier_status = 'submitted'
+                    # Change order status to shipped
+                    order.status = 'shipped'
                     order.save()
                     
                     # Log the action
