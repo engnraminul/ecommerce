@@ -289,8 +289,39 @@
                         </div>
                     </div>
                     
-                    <!-- Customer Info Card -->
+                    <!-- Shipping Address -->
                     <div class="col-md-6">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-3 text-muted">
+                                    <i class="fas fa-map-marker-alt me-2"></i>Shipping Address
+                                </h6>
+                                <p class="border rounded p-3 bg-light mb-0" id="orderDetailShippingAddress"></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+                
+                <!-- Order Instructions & Shipping Address -->
+
+                
+                <div class="row g-4 mb-4">
+                    <!-- Order Instructions - Only shown when there are instructions -->
+                    <div class="col-md-6" id="orderInstructionsContainer" style="display: none;">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-3 text-muted">
+                                    <i class="fas fa-clipboard-list me-2"></i>Order Instructions
+                                </h6>
+                                <p class="border rounded p-3 bg-light mb-0" id="orderDetailInstructions">No special instructions provided.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                    <!-- Customer Info Card -->
+                    <!-- <div class="col-md-6">
                         <div class="card h-100 border-0 shadow-sm">
                             <div class="card-body">
                                 <h6 class="card-subtitle mb-3 text-muted">
@@ -308,34 +339,7 @@
                                 </dl>
                             </div>
                         </div>
-                    </div>
-                </div>
-                
-                <!-- Order Instructions & Shipping Address -->
-                <div class="row g-4 mb-4">
-                    <!-- Order Instructions -->
-                    <div class="col-md-6">
-                        <div class="card h-100 border-0 shadow-sm">
-                            <div class="card-body">
-                                <h6 class="card-subtitle mb-3 text-muted">
-                                    <i class="fas fa-clipboard-list me-2"></i>Order Instructions
-                                </h6>
-                                <p class="border rounded p-3 bg-light mb-0" id="orderDetailInstructions">No special instructions provided.</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Shipping Address -->
-                    <div class="col-md-6">
-                        <div class="card h-100 border-0 shadow-sm">
-                            <div class="card-body">
-                                <h6 class="card-subtitle mb-3 text-muted">
-                                    <i class="fas fa-map-marker-alt me-2"></i>Shipping Address
-                                </h6>
-                                <p class="border rounded p-3 bg-light mb-0" id="orderDetailShippingAddress"></p>
-                            </div>
-                        </div>
-                    </div>
+                    </div> -->
                 </div>
                 
                 <!-- Order Items -->
@@ -385,8 +389,8 @@
                         <button class="btn btn-outline-secondary me-2" id="printOrderBtn">
                             <i class="fas fa-print me-1"></i> Print Order
                         </button>
-                        <button class="btn btn-outline-primary" id="sendInvoiceBtn">
-                            <i class="fas fa-envelope me-1"></i> Send Invoice
+                        <button class="btn btn-outline-success" id="modalAddToCurierBtn">
+                            <i class="fas fa-truck me-1"></i> Add to Courier
                         </button>
                     </div>
                     <div>
@@ -605,10 +609,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     statusBadgeClass = 'bg-primary text-white';
                     break;
                 case 'shipped':
-                    statusBadgeClass = 'bg-indigo text-white';
+                    statusBadgeClass = 'bg-success  text-white';
                     break;
                 case 'delivered':
-                    statusBadgeClass = 'bg-success text-white';
+                    statusBadgeClass = 'bg-indigo text-white';
                     break;
                 case 'returned':
                     statusBadgeClass = 'bg-orange text-white';
@@ -895,10 +899,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 statusBadgeClass = 'bg-primary text-white';
                 break;
             case 'shipped':
-                statusBadgeClass = 'bg-indigo text-white';
+                statusBadgeClass = 'bg-success  text-white';
                 break;
             case 'delivered':
-                statusBadgeClass = 'bg-success text-white';
+                statusBadgeClass = 'bg-indigo text-white';
                 break;
             case 'returned':
                 statusBadgeClass = 'bg-orange text-white';
@@ -938,35 +942,35 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('orderDetailTotal').textContent = `$${order.total_amount}`;
         
         // Set customer information
-        const orderSku = order.order_number || '';
-        const firstName = order.shipping_address ? order.shipping_address.first_name || '' : '';
-        const lastName = order.shipping_address ? order.shipping_address.last_name || '' : '';
-        const customerName = `${firstName} ${lastName}`.trim() || 'Guest';
-        const formattedName = `${orderSku} (${customerName})`.trim();
-        const customerEmail = order.user_email || order.customer_email || 'N/A';
-        const customerPhone = order.customer_phone || (order.shipping_address && order.shipping_address.phone) || 'N/A';
+        // const orderSku = order.order_number || '';
+        // const firstName = order.shipping_address ? order.shipping_address.first_name || '' : '';
+        // const lastName = order.shipping_address ? order.shipping_address.last_name || '' : '';
+        // const customerName = `${firstName} ${lastName}`.trim() || 'Guest';
+        // const formattedName = `${orderSku} (${customerName})`.trim();
+        // const customerEmail = order.user_email || order.customer_email || 'N/A';
+        // const customerPhone = order.customer_phone || (order.shipping_address && order.shipping_address.phone) || 'N/A';
         
-        document.getElementById('orderDetailCustomerName').innerHTML = `
-            <span class="copy-text" data-value="${formattedName}">
-                ${formattedName} <i class="fas fa-copy copy-icon" title="Copy name"></i>
-            </span>
-        `;
+        // document.getElementById('orderDetailCustomerName').innerHTML = `
+        //     <span class="copy-text" data-value="${formattedName}">
+        //         ${formattedName} <i class="fas fa-copy copy-icon" title="Copy name"></i>
+        //     </span>
+        // `;
         
-        document.getElementById('orderDetailCustomerEmail').innerHTML = `
-            <span class="copy-text" data-value="${customerEmail}">
-                ${customerEmail} <i class="fas fa-copy copy-icon" title="Copy email"></i>
-            </span>
-        `;
+        // document.getElementById('orderDetailCustomerEmail').innerHTML = `
+        //     <span class="copy-text" data-value="${customerEmail}">
+        //         ${customerEmail} <i class="fas fa-copy copy-icon" title="Copy email"></i>
+        //     </span>
+        // `;
         
-        document.getElementById('orderDetailCustomerPhone').innerHTML = `
-            <span class="copy-text" data-value="${customerPhone}">
-                ${customerPhone} <i class="fas fa-copy copy-icon" title="Copy phone"></i>
-            </span>
-            ${customerPhone !== 'N/A' ? `
-            <a href="tel:${customerPhone}" class="ms-2 text-primary" title="Call customer">
-                <i class="fas fa-phone-alt"></i>
-            </a>` : ''}
-        `;
+        // document.getElementById('orderDetailCustomerPhone').innerHTML = `
+        //     <span class="copy-text" data-value="${customerPhone}">
+        //         ${customerPhone} <i class="fas fa-copy copy-icon" title="Copy phone"></i>
+        //     </span>
+        //     ${customerPhone !== 'N/A' ? `
+        //     <a href="tel:${customerPhone}" class="ms-2 text-primary" title="Call customer">
+        //         <i class="fas fa-phone-alt"></i>
+        //     </a>` : ''}
+        // `;
         
         // Set shipping address
         let addressText = 'No shipping address available';
@@ -1010,10 +1014,13 @@ document.addEventListener('DOMContentLoaded', function() {
         initCopyFunctionality();
         
         // Set order instructions (if available)
+        const orderInstructionsContainer = document.getElementById('orderInstructionsContainer');
         if (order.instructions || order.customer_notes) {
             document.getElementById('orderDetailInstructions').textContent = order.instructions || order.customer_notes;
+            orderInstructionsContainer.style.display = 'block'; // Show the container
         } else {
             document.getElementById('orderDetailInstructions').textContent = 'No special instructions provided.';
+            orderInstructionsContainer.style.display = 'none'; // Hide the container
         }
         
         // Set up status change dropdown
@@ -1063,21 +1070,32 @@ document.addEventListener('DOMContentLoaded', function() {
             window.open(`/orders/${order.id}/invoice/`, '_blank');
         };
         
-        // Set up send invoice button with SweetAlert2 confirmation
-        document.getElementById('sendInvoiceBtn').onclick = function() {
-            Swal.fire({
-                title: 'Send Invoice',
-                text: 'Send invoice email to the customer?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#007bff',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Yes, send it!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    sendInvoiceEmail(order.id);
-                }
-            });
+        // Set up add to courier button with SweetAlert2 confirmation
+        document.getElementById('modalAddToCurierBtn').onclick = function() {
+            // Check if order already has a courier ID
+            if (order.curier_id) {
+                Swal.fire({
+                    title: 'Already Added to Courier',
+                    text: `This order has already been added to courier service with ID: ${order.curier_id}`,
+                    icon: 'info',
+                    confirmButtonColor: '#28a745'
+                });
+            } else {
+                Swal.fire({
+                    title: 'Add to Courier Service',
+                    text: 'Do you want to add this order to courier service? Order status will be changed to "shipped".',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, add to courier',
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        addOrderToCurier(order.id);
+                    }
+                });
+            }
         };
         
         // Set up delete order button with SweetAlert2 confirmation
@@ -1318,37 +1336,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    function sendInvoiceEmail(orderId) {
-        fetch(`/orders/${orderId}/send-invoice/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': getCookie('csrftoken')
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to send invoice');
-            }
-            return response.json();
-        })
-        .then(data => {
-            Swal.fire({
-                title: 'Sent!',
-                text: 'Invoice email has been sent to the customer.',
-                icon: 'success',
-                confirmButtonColor: '#28a745'
-            });
-        })
-        .catch(error => {
-            console.error('Error sending invoice email:', error);
-            Swal.fire({
-                title: 'Error!',
-                text: 'Failed to send invoice email. Please try again later.',
-                icon: 'error',
-                confirmButtonColor: '#dc3545'
-            });
-        });
-    }
+    // Function removed: sendInvoiceEmail
     
     // Helper function to properly clean up a modal
     function cleanupModal(modalElement) {
