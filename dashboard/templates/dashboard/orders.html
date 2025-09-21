@@ -196,8 +196,8 @@
                 <thead>
                     <tr>
                         <th>Order #</th>
-                        <th>Actions</th>
                         <th>Date</th>
+                        <th>Actions</th>
                         <th>Total</th>
                         <th>Items</th>
                         <th>Status</th>
@@ -477,6 +477,25 @@ document.addEventListener('DOMContentLoaded', function() {
             .join(' ');
     }
     
+    // Helper function to format relative time (x min ago, x hours ago, or date)
+    function formatRelativeTime(dateString) {
+        const now = new Date();
+        const date = new Date(dateString);
+        const diffMs = now - date;
+        const diffMinutes = Math.floor(diffMs / (1000 * 60));
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        
+        if (diffMinutes < 60) {
+            return `${diffMinutes} min ago`;
+        } else if (diffHours < 24) {
+            return `${diffHours} hours ago`;
+        } else {
+            // Format as "Sep 21, 2025"
+            const options = { month: 'short', day: 'numeric', year: 'numeric' };
+            return date.toLocaleDateString('en-US', options);
+        }
+    }
+    
     // Helper function to initialize copy functionality for dynamically added elements
     function initCopyFunctionality() {
         document.querySelectorAll('.copy-icon').forEach(icon => {
@@ -657,7 +676,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const formattedOrderNumber = `${order.order_number} (${customerName})`;
             
             tr.innerHTML = `
-                <td>${formattedOrderNumber}</td>
+                <td><span>${customerName}</span><br><span style="font-size: 0.8rem;">#${order.order_number}</span> </td>
+                <td>${formatRelativeTime(order.created_at)}</td>
                 <td>
                     <button type="button" class="btn btn-sm btn-outline-primary view-order-btn me-1" data-order-id="${order.id}">
                         <i class="fas fa-eye"></i>
@@ -669,7 +689,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         <i class="fas fa-${order.curier_id ? 'check-circle' : 'truck'}" ${order.curier_id ? 'style="color: white;"' : ''}></i>
                     </button>
                 </td>
-                <td>${new Date(order.created_at).toLocaleDateString()}</td>
                 <td>$${order.total_amount}</td>
                 <td>${order.total_items}</td>
                 <td>

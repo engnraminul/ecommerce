@@ -47,7 +47,7 @@
                             </div>
                             <div class="info-item">
                                 <span class="label">Total Amount:</span>
-                                <span class="value total-amount">${{ order.total_amount }}</span>
+                                <span class="value order-total-amount">${{ order.total_amount|floatformat:2 }}</span>
                             </div>
                         </div>
 
@@ -91,7 +91,7 @@
                         <div class="order-totals">
                             <div class="total-line">
                                 <span>Subtotal:</span>
-                                <span>${{ order.subtotal }}</span>
+                                <span>${{ order.subtotal|floatformat:2 }}</span>
                             </div>
                             <div class="total-line">
                                 <span>Shipping:</span>
@@ -100,7 +100,7 @@
                             <div class="total-divider"></div>
                             <div class="total-line grand-total">
                                 <span>Total:</span>
-                                <span>${{ order.total_amount }}</span>
+                                <span class="order-total-amount">${{ order.total_amount|floatformat:2 }}</span>
                             </div>
                         </div>
 
