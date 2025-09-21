@@ -17,6 +17,7 @@ urlpatterns = [
     path('api/', include(router.urls)),
     # Explicit URL patterns for order-related actions
     path('api/orders/<int:order_id>/items/', order_views.get_order_items, name='order_items'),
+    path('api/orders/<int:order_id>/restock/', order_views.restock_order_items, name='restock_order_items'),
     # Add an explicit path for add_to_curier that matches the JavaScript URL
     path('api/orders/<int:pk>/add_to_curier/', views.OrderDashboardViewSet.as_view({'post': 'add_to_curier'}), name='order_add_to_curier'),
     path('api/statistics/', views.DashboardStatisticsView.as_view(), name='statistics'),

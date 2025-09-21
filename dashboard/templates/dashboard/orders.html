@@ -1331,6 +1331,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Clean up the modal properly using our helper function
             cleanupModal(statusChangeModalElement);
             
+            // Handle inventory restocking for returned, partially returned, or cancelled orders
+            if (['returned', 'partially_returned', 'cancelled'].includes(newStatus)) {
+                // Call the restock function
+                restockOrderItems(orderId, newStatus);
+            }
+            
             // Refresh orders list in background
             loadOrders(currentPage);
             
@@ -1356,6 +1362,52 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Function removed: sendInvoiceEmail
+    
+    // Helper function to restock items when order is returned, partially returned, or cancelled
+    function restockOrderItems(orderId, statusType) {
+        console.log(`Restocking items for order ${orderId} due to ${statusType} status`);
+        
+        // Make API call to restock items
+        fetch(`/mb-admin/api/orders/${orderId}/restock/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ 
+                status_type: statusType,
+                // For partially_returned, we'd need to specify which items are returned
+                // This simple implementation restocks all items
+                restock_all: (statusType === 'returned' || statusType === 'cancelled')
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`Failed to restock items: ${text || response.statusText}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Restock successful:', data);
+            // Show a notification about restocked items
+            Swal.fire({
+                title: 'Items Restocked',
+                text: `Inventory has been updated for returned/cancelled items.`,
+                icon: 'info',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 4000
+            });
+        })
+        .catch(error => {
+            console.error('Error restocking items:', error);
+            showAlert(`Failed to restock items: ${error.message}`, 'warning');
+        });
+    }
     
     // Helper function to properly clean up a modal
     function cleanupModal(modalElement) {
