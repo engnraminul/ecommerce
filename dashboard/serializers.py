@@ -93,10 +93,28 @@ class OrderDashboardSerializer(serializers.ModelSerializer):
 
 class OrderItemDashboardSerializer(serializers.ModelSerializer):
     """Serializer for order items in the dashboard"""
+    variant_sku = serializers.SerializerMethodField()
+    variant_display_name = serializers.SerializerMethodField()
     
     class Meta:
         model = OrderItem
-        fields = ['id', 'order', 'product_name', 'variant_name', 'quantity', 'unit_price']
+        fields = ['id', 'order', 'product_name', 'variant_name', 'variant_sku', 'variant_display_name', 'quantity', 'unit_price']
+    
+    def get_variant_sku(self, obj):
+        """Get the full variant SKU"""
+        if obj.variant:
+            return obj.variant.sku or f"{obj.product_sku}-{obj.variant.name}"
+        return obj.product_sku
+    
+    def get_variant_display_name(self, obj):
+        """Get the full variant display name (SKU or full name)"""
+        if obj.variant:
+            # If variant has a proper SKU, use it; otherwise use the full variant name
+            if obj.variant.sku:
+                return obj.variant.sku
+            else:
+                return obj.variant.name  # This should be "MW02 Black"
+        return obj.product_name
         
     def to_representation(self, instance):
         """Override to customize response data"""

@@ -139,6 +139,185 @@
         50% { transform: scale(1.2); }
         100% { transform: scale(1); }
     }
+    
+    /* Courier Sticker Styles */
+    .courier-sticker {
+        width: 288px; /* 2 inches at 144 DPI */
+        height: 144px; /* 1 inch at 144 DPI */
+        background: white;
+        border: 2px solid #333;
+        border-radius: 4px;
+        display: flex;
+        flex-direction: column;
+        font-family: Arial, sans-serif;
+        font-size: 8px;
+        line-height: 1.1;
+        overflow: hidden;
+        padding: 4px;
+    }
+    
+    .sticker-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 4px;
+        height: 30px;
+    }
+    
+    .logo-section {
+        flex: 1;
+    }
+    
+    .sticker-logo {
+        max-width: 60px;
+        max-height: 25px;
+        object-fit: contain;
+    }
+    
+    .logo-fallback {
+        font-weight: bold;
+        font-size: 12px;
+        color: #333;
+        background: #f0f0f0;
+        border-radius: 50%;
+        width: 25px;
+        height: 25px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .barcode-section {
+        text-align: right;
+        flex: 1;
+    }
+    
+    .barcode-canvas {
+        max-width: 80px;
+        height: 20px;
+        border: 1px solid #ccc;
+        display: block;
+        margin-left: auto;
+    }
+    
+    .courier-id-small {
+        font-size: 6px;
+        font-weight: bold;
+        color: #333;
+        text-align: right;
+        margin-top: 2px;
+    }
+    
+    .sticker-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+    
+    .customer-name {
+        font-size: 14px;
+        font-weight: bold;
+        color: #333;
+        line-height: 1.1;
+    }
+    
+    .courier-id-main {
+        font-size: 12px;
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .products-list {
+        font-size: 10px;
+        color: #555;
+        line-height: 1.2;
+        flex: 1;
+    }
+    
+    .sticker-footer {
+        margin-top: auto;
+        padding-top: 2px;
+        border-top: 1px solid #eee;
+    }
+    
+    .contact-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 6px;
+        color: #666;
+        line-height: 1.1;
+    }
+    
+    .website, .phone {
+        flex: 1;
+    }
+    
+    .phone {
+        text-align: right;
+    }
+    
+    /* Print styles for courier sticker */
+    @media print {
+        .courier-sticker-print {
+            width: 2in !important;
+            height: 1in !important;
+            margin: 0 !important;
+            padding: 4px !important;
+            border: 1px solid #000 !important;
+            page-break-inside: avoid !important;
+            display: flex !important;
+            flex-direction: column !important;
+            font-family: Arial, sans-serif !important;
+            font-size: 8px !important;
+        }
+        
+        .courier-sticker-print .sticker-header {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: flex-start !important;
+            margin-bottom: 4px !important;
+            height: 0.2in !important;
+        }
+        
+        .courier-sticker-print .sticker-content {
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 2px !important;
+        }
+        
+        .courier-sticker-print .sticker-footer {
+            margin-top: auto !important;
+            padding-top: 2px !important;
+            border-top: 1px solid #000 !important;
+        }
+        
+        .courier-sticker-print .contact-row {
+            display: flex !important;
+            justify-content: space-between !important;
+            font-size: 6px !important;
+        }
+        
+        .courier-sticker-print * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        
+        body * {
+            visibility: hidden;
+        }
+        
+        .courier-sticker-print, .courier-sticker-print * {
+            visibility: visible;
+        }
+        
+        .courier-sticker-print {
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -458,16 +637,94 @@
         </div>
     </div>
 </div>
+
+<!-- Courier Sticker Modal -->
+<div class="modal fade" id="courierStickerModal" tabindex="-1" aria-labelledby="courierStickerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title" id="courierStickerModalLabel">
+                    <i class="fas fa-tag me-2"></i>Courier Sticker Preview
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <p class="text-muted">Preview of the 2" × 1" courier sticker for order #<span id="stickerOrderNumber"></span></p>
+                </div>
+                
+                <!-- Sticker Preview -->
+                <div class="d-flex justify-content-center mb-4">
+                    <div id="courierSticker" class="courier-sticker border shadow-sm">
+                        <!-- Top row: Logo and Barcode -->
+                        <div class="sticker-header">
+                            <div class="logo-section">
+                                <img src="https://manobbazar.com/wp-content/uploads/2025/03/MB-logo-768x187.png" alt="Logo" class="sticker-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                <div class="logo-fallback" style="display: none;">MB</div>
+                            </div>
+                            <div class="barcode-section">
+                                <canvas id="stickerBarcodeCanvas" class="barcode-canvas"></canvas>
+                                <div class="courier-id-small" id="stickerCourierIdSmall">ID: 12345</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Content section -->
+                        <div class="sticker-content">
+                            <div class="customer-name" id="stickerCustomerName">John Doe</div>
+                            <div class="courier-id-main" id="stickerCourierId">ID: 12345</div>
+                            <div class="products-list" id="stickerProducts">
+                                T-SHIRT-BLK-M × 2<br>
+                                JEANS-BLU-L × 1
+                            </div>
+                        </div>
+                        
+                        <!-- Footer -->
+                        <div class="sticker-footer">
+                            <div class="contact-row">
+                                <span class="website">🌐 www.manobbazar.com</span>
+                                <span class="phone">📞 01777173040</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Print Instructions -->
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Print Instructions:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Set paper size to 2" × 1" (50.8mm × 25.4mm)</li>
+                        <li>Use label printer or cut regular paper to size</li>
+                        <li>Ensure high quality print for barcode readability</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="printStickerBtn">
+                    <i class="fas fa-print me-2"></i>Print Sticker
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <!-- SweetAlert2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<!-- JsBarcode for generating proper barcodes -->
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     let currentPage = 1;
     let currentOrderId = null;
     let orders = [];
+    
+    // Print Sticker Event Listener
+    document.getElementById('printStickerBtn').addEventListener('click', function() {
+        printCourierSticker();
+    });
     
     // Helper function to format status names (converting snake_case to Title Case)
     function formatStatusName(status) {
@@ -682,11 +939,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     <button type="button" class="btn btn-sm btn-outline-primary view-order-btn me-1" data-order-id="${order.id}">
                         <i class="fas fa-eye"></i>
                     </button>
-                    <button type="button" class="btn btn-sm ${order.curier_id ? 'btn-success' : 'btn-outline-success'} add-curier-btn" 
+                    <button type="button" class="btn btn-sm ${order.curier_id ? 'btn-success' : 'btn-outline-success'} add-curier-btn me-1" 
                         data-order-id="${order.id}" 
                         title="${order.curier_id ? 'Already added to curier (ID: ' + order.curier_id + ')' : 'Add to Curier'}"
                         ${order.curier_id ? 'disabled' : ''}>
                         <i class="fas fa-${order.curier_id ? 'check-circle' : 'truck'}" ${order.curier_id ? 'style="color: white;"' : ''}></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-warning courier-sticker-btn" 
+                        data-order-id="${order.id}" 
+                        title="Print Courier Sticker"
+                        ${!order.curier_id ? 'disabled' : ''}>
+                        <i class="fas fa-tag"></i>
                     </button>
                 </td>
                 <td>$${order.total_amount}</td>
@@ -729,6 +992,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         addOrderToCurier(orderId);
                     }
                 });
+            });
+        });
+        
+        // Add event listeners to courier sticker buttons
+        document.querySelectorAll('.courier-sticker-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const orderId = this.dataset.orderId;
+                showCourierStickerModal(orderId);
             });
         });
     }
@@ -1218,6 +1489,376 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('orderDetailShipping').textContent = `$${shipping.toFixed(2)}`;
         document.getElementById('orderDetailTax').textContent = `$${tax.toFixed(2)}`;
         document.getElementById('orderDetailGrandTotal').textContent = `$${(subtotal + shipping + tax).toFixed(2)}`;
+    }
+    
+    // Courier Sticker Functions
+    function showCourierStickerModal(orderId) {
+        console.log(`Showing courier sticker for order ID: ${orderId}`);
+        
+        // Find the order data
+        const order = orders.find(o => o.id == orderId);
+        if (!order) {
+            console.error('Order not found:', orderId);
+            showAlert('Order not found', 'danger');
+            return;
+        }
+        
+        if (!order.curier_id) {
+            showAlert('This order has not been added to courier service yet.', 'warning');
+            return;
+        }
+        
+        // Set order number in modal
+        document.getElementById('stickerOrderNumber').textContent = order.order_number;
+        
+        // Get customer name from shipping address
+        let customerName = 'Guest Customer';
+        if (order.shipping_address) {
+            const firstName = order.shipping_address.first_name || '';
+            const lastName = order.shipping_address.last_name || '';
+            customerName = `Name: ${firstName} ${lastName}`.trim() || 'Guest Customer';
+        }
+        document.getElementById('stickerCustomerName').textContent = customerName;
+        
+        // Set courier ID and generate barcode
+        document.getElementById('stickerCourierId').textContent = `ID: ${order.curier_id}`;
+        document.getElementById('stickerCourierIdSmall').textContent = `ID: ${order.curier_id}`;
+        
+        // Generate real barcode using JsBarcode
+        generateRealBarcode(order.curier_id);
+        
+        // Load order items to populate products list
+        loadOrderItemsForSticker(orderId);
+        
+        // Show the modal
+        const modal = new bootstrap.Modal(document.getElementById('courierStickerModal'));
+        modal.show();
+    }
+    
+    function loadOrderItemsForSticker(orderId) {
+        // Show loading text
+        document.getElementById('stickerProducts').innerHTML = '<small>Loading products...</small>';
+        
+        fetch(`/mb-admin/api/orders/${orderId}/items/`)
+            .then(response => response.json())
+            .then(items => {
+                if (Array.isArray(items) && items.length > 0) {
+                    const productLines = items.map(item => {
+                        // Extended debug logging to see all available fields
+                        console.log('FULL Item data for sticker:', item);
+                        console.log('Available fields:', Object.keys(item));
+                        console.log('Specific fields:', {
+                            variant_sku: item.variant_sku,
+                            variant_name: item.variant_name,
+                            product_name: item.product_name,
+                            sku: item.sku,
+                            variant: item.variant,
+                            product_variant_sku: item.product_variant_sku
+                        });
+                        
+                        // Try multiple possible field names for the SKU
+                        let displayName;
+                        
+                        // Check all possible SKU field names
+                        const possibleSkuFields = [
+                            'variant_display_name',  // New field with full SKU or variant name
+                            'variant_sku',
+                            'sku', 
+                            'product_variant_sku',
+                            'variant_code'
+                        ];
+                        
+                        let skuFound = false;
+                        for (let field of possibleSkuFields) {
+                            if (item[field] && typeof item[field] === 'string' && item[field].trim() !== '') {
+                                displayName = item[field].trim();
+                                console.log(`Using ${field}:`, displayName);
+                                skuFound = true;
+                                break;
+                            }
+                        }
+                        
+                        // If no SKU found, try variant_name
+                        if (!skuFound && item.variant_name && typeof item.variant_name === 'string' && item.variant_name.trim() !== '') {
+                            displayName = item.variant_name.trim();
+                            console.log('Using variant_name:', displayName);
+                        } 
+                        // If still no luck, try product_name
+                        else if (!skuFound && item.product_name && typeof item.product_name === 'string' && item.product_name.trim() !== '') {
+                            displayName = item.product_name.trim();
+                            console.log('Using product_name:', displayName);
+                        } 
+                        // Last resort
+                        else if (!skuFound) {
+                            displayName = 'UNKNOWN';
+                            console.log('Using fallback: UNKNOWN');
+                        }
+                        
+                        const quantity = item.quantity || 1;
+                        return `${displayName} × ${quantity}`;
+                    });
+                    document.getElementById('stickerProducts').innerHTML = productLines.join('<br>');
+                } else {
+                    document.getElementById('stickerProducts').innerHTML = '<small>No products found</small>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading order items for sticker:', error);
+                document.getElementById('stickerProducts').innerHTML = '<small>Error loading products</small>';
+            });
+    }
+    
+    function generateRealBarcode(courierId) {
+        try {
+            const canvas = document.getElementById('stickerBarcodeCanvas');
+            if (canvas && window.JsBarcode) {
+                // Generate Code128 barcode
+                JsBarcode(canvas, courierId.toString(), {
+                    format: "CODE128",
+                    width: 1,
+                    height: 20,
+                    displayValue: false,
+                    background: "#ffffff",
+                    lineColor: "#000000",
+                    margin: 2
+                });
+            } else {
+                console.warn('JsBarcode library not loaded or canvas not found');
+                // Fallback to simple text representation
+                document.getElementById('stickerBarcodeCanvas').style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Error generating barcode:', error);
+            // Hide canvas on error
+            document.getElementById('stickerBarcodeCanvas').style.display = 'none';
+        }
+    }
+    
+    function generateBarcode(courierId) {
+        // Fallback function for old-style barcode (kept for compatibility)
+        const barcodeChars = courierId.toString().split('');
+        let barcode = '';
+        
+        // Add start pattern
+        barcode += '|| ';
+        
+        // Convert each digit to barcode pattern
+        barcodeChars.forEach(char => {
+            switch(char) {
+                case '0': barcode += '||| '; break;
+                case '1': barcode += '||  '; break;
+                case '2': barcode += '| | '; break;
+                case '3': barcode += '|  |'; break;
+                case '4': barcode += ' |||'; break;
+                case '5': barcode += ' || '; break;
+                case '6': barcode += ' | |'; break;
+                case '7': barcode += '  ||'; break;
+                case '8': barcode += '|||  '; break;
+                case '9': barcode += '|| | '; break;
+                default: barcode += '| | '; break;
+            }
+        });
+        
+        // Add end pattern
+        barcode += ' ||';
+        
+        return barcode;
+    }
+    
+    function printCourierSticker() {
+        // Clone the sticker element
+        const originalSticker = document.getElementById('courierSticker');
+        const stickerClone = originalSticker.cloneNode(true);
+        
+        // Add print class
+        stickerClone.classList.add('courier-sticker-print');
+        stickerClone.removeAttribute('id');
+        
+        // Update barcode canvas ID to avoid conflicts
+        const barcodeCanvas = stickerClone.querySelector('#stickerBarcodeCanvas');
+        if (barcodeCanvas) {
+            barcodeCanvas.id = 'printBarcodeCanvas';
+        }
+        
+        // Create a new window for printing
+        const printWindow = window.open('', '_blank', 'width=400,height=200');
+        
+        // Write the content to print window
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Courier Sticker</title>
+                <style>
+                    @page {
+                        size: 2in 1in;
+                        margin: 0;
+                    }
+                    
+                    body {
+                        margin: 0;
+                        padding: 0;
+                        font-family: Arial, sans-serif;
+                    }
+                    
+                    .courier-sticker-print {
+                        width: 2in !important;
+                        height: 1in !important;
+                        background: white;
+                        border: 2px solid #333;
+                        border-radius: 4px;
+                        display: flex;
+                        flex-direction: column;
+                        font-size: 8px;
+                        line-height: 1.1;
+                        overflow: hidden;
+                        padding: 4px;
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+                    
+                    .sticker-header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: flex-start;
+                        margin-bottom: 4px;
+                        height: 0.2in;
+                    }
+                    
+                    .logo-section {
+                        flex: 1;
+                    }
+                    
+                    .sticker-logo {
+                        max-width: 55px;
+                        max-height: 23px;
+                        object-fit: contain;
+                    }
+                    
+                    .logo-fallback {
+                        font-weight: bold;
+                        font-size: 12px;
+                        color: #333;
+                        background: #f0f0f0;
+                        border-radius: 50%;
+                        width: 25px;
+                        height: 25px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    
+                    .barcode-section {
+                        text-align: right;
+                        flex: 1;
+                    }
+                    
+                    .barcode-canvas {
+                        max-width: 80px;
+                        height: 15px;
+                        border: 1px solid #ccc;
+                        display: block;
+                        margin-left: auto;
+                    }
+                    
+                    .courier-id-small {
+                        font-size: 6px;
+                        font-weight: bold;
+                        color: #333;
+                        text-align: right;
+                        margin-top: 2px;
+                    }
+                    
+                    .sticker-content {
+                        flex: 1;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 2px;
+                    }
+                    
+                    .customer-name {
+                        font-size: 10px;
+                        font-weight: bold;
+                        color: #333;
+                        line-height: 1.1;
+                    }
+                    
+                    .courier-id-main {
+                        font-size: 10px;
+                        font-weight: bold;
+                        color: #333;
+                    }
+                    
+                    .products-list {
+                        font-size: 8px;
+                        color: #555;
+                        line-height: 1.2;
+                        flex: 1;
+                    }
+                    
+                    .sticker-footer {
+                        margin-top: auto;
+                        padding-top: 1px;
+                        border-top: 1px solid #000;
+                    }
+                    
+                    .contact-row {
+                        display: flex;
+                        justify-content: space-between;
+                        font-size: 6px;
+                        color: #666;
+                        line-height: 1.1;
+                    }
+                    
+                    .website, .phone {
+                        flex: 1;
+                    }
+                    
+                    .phone {
+                        text-align: right;
+                    }
+                </style>
+            </head>
+            <body>
+                ${stickerClone.outerHTML}
+            </body>
+            </html>
+        `);
+        
+        printWindow.document.close();
+        
+        // Wait for content to load, then regenerate barcode and print
+        printWindow.onload = function() {
+            // Regenerate barcode in print window if JsBarcode is available
+            if (window.JsBarcode) {
+                const printCanvas = printWindow.document.getElementById('printBarcodeCanvas');
+                const originalCanvas = document.getElementById('stickerBarcodeCanvas');
+                if (printCanvas && originalCanvas) {
+                    // Copy the barcode from original canvas
+                    const originalData = originalCanvas.toDataURL();
+                    const img = new Image();
+                    img.onload = function() {
+                        const ctx = printCanvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, printCanvas.width, printCanvas.height);
+                        setTimeout(() => {
+                            printWindow.print();
+                            printWindow.close();
+                        }, 100);
+                    };
+                    img.src = originalData;
+                } else {
+                    setTimeout(() => {
+                        printWindow.print();
+                        printWindow.close();
+                    }, 250);
+                }
+            } else {
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            }
+        };
     }
     
     // Order actions
