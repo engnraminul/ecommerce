@@ -193,8 +193,8 @@
     }
     
     .barcode-canvas {
-        max-width: 80px;
-        height: 20px;
+        max-width: 150px;
+        height: 30px;
         border: 1px solid #ccc;
         display: block;
         margin-left: auto;
@@ -261,42 +261,54 @@
     @media print {
         .courier-sticker-print {
             width: 2in !important;
-            height: 1in !important;
+            height: 0.95in !important;
             margin: 0 !important;
-            padding: 4px !important;
+            padding: 3px !important;
             border: 1px solid #000 !important;
             page-break-inside: avoid !important;
             display: flex !important;
             flex-direction: column !important;
             font-family: Arial, sans-serif !important;
             font-size: 8px !important;
+            line-height: 1.0 !important;
         }
         
         .courier-sticker-print .sticker-header {
             display: flex !important;
             justify-content: space-between !important;
             align-items: flex-start !important;
-            margin-bottom: 4px !important;
-            height: 0.2in !important;
+            margin-bottom: 3px !important;
+            height: 0.18in !important;
+            min-height: 0.18in !important;
+            flex-shrink: 0 !important;
         }
         
         .courier-sticker-print .sticker-content {
             flex: 1 !important;
             display: flex !important;
             flex-direction: column !important;
-            gap: 2px !important;
+            gap: 1px !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
         }
         
         .courier-sticker-print .sticker-footer {
             margin-top: auto !important;
-            padding-top: 2px !important;
+            padding-top: 1px !important;
             border-top: 1px solid #000 !important;
+            flex-shrink: 0 !important;
+            min-height: 0.12in !important;
+            max-height: 0.12in !important;
         }
         
         .courier-sticker-print .contact-row {
             display: flex !important;
             justify-content: space-between !important;
-            font-size: 6px !important;
+            font-size: 5px !important;
+            color: #333 !important;
+            line-height: 1.0 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
         }
         
         .courier-sticker-print * {
@@ -671,7 +683,8 @@
                         <!-- Content section -->
                         <div class="sticker-content">
                             <div class="customer-name" id="stickerCustomerName">John Doe</div>
-                            <div class="courier-id-main" id="stickerCourierId">ID: 12345</div>
+                            <!-- <div class="courier-id-main" id="stickerCourierId">ID: 12345</div> -->
+                            <div style="font-weight: bold; font-size: 7px;">Products: </div>
                             <div class="products-list" id="stickerProducts">
                                 T-SHIRT-BLK-M × 2<br>
                                 JEANS-BLU-L × 1
@@ -1521,7 +1534,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('stickerCustomerName').textContent = customerName;
         
         // Set courier ID and generate barcode
-        document.getElementById('stickerCourierId').textContent = `ID: ${order.curier_id}`;
+        // document.getElementById('stickerCourierId').textContent = `ID: ${order.curier_id}`;
         document.getElementById('stickerCourierIdSmall').textContent = `ID: ${order.curier_id}`;
         
         // Generate real barcode using JsBarcode
@@ -1597,7 +1610,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const quantity = item.quantity || 1;
                         return `${displayName} × ${quantity}`;
                     });
-                    document.getElementById('stickerProducts').innerHTML = productLines.join('<br>');
+                    document.getElementById('stickerProducts').innerHTML = productLines.join(', ');
                 } else {
                     document.getElementById('stickerProducts').innerHTML = '<small>No products found</small>';
                 }
@@ -1691,7 +1704,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <title>Courier Sticker</title>
                 <style>
                     @page {
-                        size: 2in 1in;
+                        size: 2in 0.95in;
                         margin: 0;
                     }
                     
@@ -1703,26 +1716,28 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     .courier-sticker-print {
                         width: 2in !important;
-                        height: 1in !important;
+                        height: 0.9in !important;
                         background: white;
-                        border: 2px solid #333;
+                        border: 1px solid #333;
                         border-radius: 4px;
                         display: flex;
                         flex-direction: column;
                         font-size: 8px;
-                        line-height: 1.1;
+                        line-height: 1.0;
                         overflow: hidden;
-                        padding: 4px;
+                        padding: 3px;
                         -webkit-print-color-adjust: exact;
                         print-color-adjust: exact;
+                        page-break-inside: avoid;
                     }
                     
                     .sticker-header {
                         display: flex;
                         justify-content: space-between;
                         align-items: flex-start;
-                        margin-bottom: 4px;
-                        height: 0.2in;
+                        margin-bottom: 2px;
+                        height: 0.18in;
+                        min-height: 0.18in;
                     }
                     
                     .logo-section {
@@ -1730,8 +1745,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     .sticker-logo {
-                        max-width: 55px;
-                        max-height: 23px;
+                        max-width: 80px;
+                        max-height: 25px;
                         object-fit: contain;
                     }
                     
@@ -1754,15 +1769,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     .barcode-canvas {
-                        max-width: 80px;
-                        height: 15px;
+                        max-width: 150px;
+                        height: 18px;
                         border: 1px solid #ccc;
                         display: block;
                         margin-left: auto;
                     }
                     
                     .courier-id-small {
-                        font-size: 6px;
+                        font-size: 10px;
                         font-weight: bold;
                         color: #333;
                         text-align: right;
@@ -1773,12 +1788,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         flex: 1;
                         display: flex;
                         flex-direction: column;
-                        gap: 2px;
+                        gap: 1px;
+                        min-height: 0;
+                        overflow: hidden;
+                        margin-top: 12px;
                     }
                     
                     .customer-name {
                         font-size: 10px;
-                        font-weight: bold;
+                        font-weight: 400;
                         color: #333;
                         line-height: 1.1;
                     }
@@ -1790,7 +1808,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     .products-list {
-                        font-size: 8px;
+                        font-size: 7px;
                         color: #555;
                         line-height: 1.2;
                         flex: 1;
@@ -1799,13 +1817,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     .sticker-footer {
                         margin-top: auto;
                         padding-top: 1px;
-                        border-top: 1px solid #000;
+                        border-top: 0.5px solid #000;
+                        flex-shrink: 0;
+                        min-height: 0.12in;
+                        max-height: 0.12in;
                     }
                     
                     .contact-row {
                         display: flex;
                         justify-content: space-between;
-                        font-size: 6px;
+                        font-size: 7px;
+                        color: #333;
+                        line-height: 1.0;
+                        white-space: nowrap;
+                        overflow: hidden;
+                    }
                         color: #666;
                         line-height: 1.1;
                     }
