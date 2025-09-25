@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import DashboardSetting, AdminActivity
-from products.models import Product, ProductVariant, Category
+from products.models import Product, ProductVariant, ProductImage, Category
 from orders.models import Order, OrderItem, ShippingAddress
 from users.models import User
 
@@ -104,6 +104,32 @@ class ProductVariantDashboardSerializer(serializers.ModelSerializer):
         model = ProductVariant
         fields = ['id', 'product', 'product_name', 'sku', 'name', 'color', 'size', 'material', 
                  'price', 'stock_quantity', 'is_active', 'image']
+
+class ProductImageDashboardSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductImage
+        fields = ['id', 'product', 'image', 'alt_text', 'is_primary', 'created_at']
+        read_only_fields = ['created_at']
+    
+    def validate(self, data):
+        # Handle primary image logic
+        if 'is_primary' in data:
+            product = data.get('product') or (self.instance.product if self.instance else None)
+            if product:
+                if data.get('is_primary', False):
+                    # Setting as primary - ensure only one primary image per product
+                    if self.instance:
+                        # Editing existing image
+                        ProductImage.objects.filter(
+                            product=product, is_primary=True
+                        ).exclude(id=self.instance.id).update(is_primary=False)
+                    else:
+                        # Creating new image
+                        ProductImage.objects.filter(
+                            product=product, is_primary=True
+                        ).update(is_primary=False)
+                # If setting to False, no additional logic needed - just update this image
+        return data
 
 class ShippingAddressDashboardSerializer(serializers.ModelSerializer):
     class Meta:

@@ -10,6 +10,7 @@ router.register(r'users', views.UserDashboardViewSet)
 router.register(r'categories', views.CategoryDashboardViewSet)
 router.register(r'products', views.ProductDashboardViewSet)
 router.register(r'variants', views.ProductVariantDashboardViewSet)
+router.register(r'product-images', views.ProductImageDashboardViewSet)
 router.register(r'orders', views.OrderDashboardViewSet)
 app_name = 'dashboard'
 

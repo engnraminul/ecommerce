@@ -403,18 +403,28 @@
 
                             <!-- Product Images -->
                             <div class="card mb-3">
-                                <div class="card-header">
+                                <div class="card-header d-flex justify-content-between align-items-center">
                                     <h6 class="mb-0"><i class="fas fa-images me-2"></i>Product Images</h6>
+                                    <small class="text-muted">Drag to reorder • First image is primary</small>
                                 </div>
                                 <div class="card-body">
                                     <div class="mb-3">
                                         <label for="productImages" class="form-label">Upload Images</label>
                                         <input type="file" class="form-control" id="productImages" name="images" multiple accept="image/*">
-                                        <small class="text-muted">Select multiple images. First image will be the main image.</small>
+                                        <small class="text-muted">Select multiple images (JPG, PNG, WebP). Maximum 10 images per product.</small>
                                     </div>
                                     
                                     <div id="imagePreview" class="row g-2" style="display: none;">
                                         <!-- Image previews will be shown here -->
+                                    </div>
+                                    
+                                    <!-- Image Management Container -->
+                                    <div id="imageManagementContainer" style="display: none;">
+                                        <hr>
+                                        <h6 class="mb-3">Image Management</h6>
+                                        <div id="imageManagementList" class="row g-3">
+                                            <!-- Dynamic image management cards will be inserted here -->
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -448,7 +458,7 @@
             </div>
             <div class="modal-body">
                 <form id="editProductForm" enctype="multipart/form-data">
-                    <input type="hidden" id="editProductId">
+                    <input type="hidden" id="editProductId" name="id">
                     <div class="row">
                         <!-- Left Column -->
                         <div class="col-md-8">
@@ -715,18 +725,24 @@
 
                             <!-- Product Images -->
                             <div class="card mb-3">
-                                <div class="card-header">
+                                <div class="card-header d-flex justify-content-between align-items-center">
                                     <h6 class="mb-0"><i class="fas fa-images me-2"></i>Product Images</h6>
+                                    <small class="text-muted">Drag to reorder • Click star for primary</small>
                                 </div>
                                 <div class="card-body">
-                                    <div id="editCurrentImages" class="mb-3">
-                                        <!-- Current images will be shown here -->
+                                    <!-- Current Images Management -->
+                                    <div id="editCurrentImagesContainer" class="mb-3" style="display: none;">
+                                        <label class="form-label">Current Images</label>
+                                        <div id="editCurrentImages" class="row g-2">
+                                            <!-- Current images will be shown here -->
+                                        </div>
                                     </div>
                                     
+                                    <!-- Add New Images -->
                                     <div class="mb-3">
                                         <label for="editProductImages" class="form-label">Upload New Images</label>
                                         <input type="file" class="form-control" id="editProductImages" name="images" multiple accept="image/*">
-                                        <small class="text-muted">Select new images to add to the product.</small>
+                                        <small class="text-muted">Select new images to add (JPG, PNG, WebP). Maximum 10 images total.</small>
                                     </div>
                                     
                                     <div id="editImagePreview" class="row g-2" style="display: none;">
@@ -1316,6 +1332,28 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
+        // Store images separately (they'll be uploaded after product creation)
+        const imageFiles = document.getElementById('productImages').files;
+        const imageData = [];
+        
+        // Get alt text and primary info from preview cards
+        document.querySelectorAll('.image-preview-card').forEach(card => {
+            const fileIndex = parseInt(card.dataset.fileIndex);
+            const altTextInput = card.querySelector('input[type="text"]');
+            const isPrimary = card.querySelector('.primary-image-btn').classList.contains('btn-warning');
+            
+            if (imageFiles[fileIndex]) {
+                imageData.push({
+                    file: imageFiles[fileIndex],
+                    alt_text: altTextInput ? altTextInput.value : '',
+                    is_primary: isPrimary
+                });
+            }
+        });
+
+        // Remove images from formData for product creation
+        formData.delete('images');
+
         fetch('/mb-admin/api/products/', {
             method: 'POST',
             headers: {
@@ -1331,6 +1369,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             return response.json();
         })
+        .then(product => {
+            // Upload images after product creation
+            if (imageData.length > 0) {
+                return uploadProductImages(product.id, imageData).then(() => product);
+            }
+            return product;
+        })
         .then(data => {
             // Close modal and refresh product list
             const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
@@ -1338,6 +1383,7 @@ document.addEventListener('DOMContentLoaded', function() {
             form.reset();
             document.getElementById('imagePreview').style.display = 'none';
             document.getElementById('imagePreview').innerHTML = '';
+            document.getElementById('imageManagementContainer').style.display = 'none';
             loadProducts();
             showAlert('Product added successfully!', 'success');
         })
@@ -1345,6 +1391,26 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error saving product:', error);
             showAlert('Failed to add product. ' + error.message, 'danger');
         });
+    }
+    
+    function uploadProductImages(productId, imageData) {
+        const uploadPromises = imageData.map((imageInfo, index) => {
+            const formData = new FormData();
+            formData.append('product', productId);
+            formData.append('image', imageInfo.file);
+            formData.append('alt_text', imageInfo.alt_text);
+            formData.append('is_primary', imageInfo.is_primary);
+            
+            return fetch('/mb-admin/api/product-images/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData
+            });
+        });
+        
+        return Promise.all(uploadPromises);
     }
     
     function loadProductDetails(productId) {
@@ -1438,6 +1504,28 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
+        // Store new images separately (they'll be uploaded after product update)
+        const imageFiles = document.getElementById('editProductImages').files;
+        const imageData = [];
+        
+        // Get alt text and primary info from preview cards
+        document.querySelectorAll('#editImagePreview .image-preview-card').forEach(card => {
+            const fileIndex = parseInt(card.dataset.fileIndex);
+            const altTextInput = card.querySelector('input[type="text"]');
+            const isPrimary = card.querySelector('.primary-image-btn').classList.contains('btn-warning');
+            
+            if (imageFiles[fileIndex]) {
+                imageData.push({
+                    file: imageFiles[fileIndex],
+                    alt_text: altTextInput ? altTextInput.value : '',
+                    is_primary: isPrimary
+                });
+            }
+        });
+
+        // Remove images from formData for product update
+        formData.delete('images');
+
         fetch(`/mb-admin/api/products/${productId}/`, {
             method: 'PUT',
             headers: {
@@ -1452,6 +1540,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
             return response.json();
+        })
+        .then(product => {
+            // Upload new images after product update
+            if (imageData.length > 0) {
+                return uploadProductImages(product.id, imageData).then(() => product);
+            }
+            return product;
         })
         .then(data => {
             // Close modal and refresh product list
@@ -1821,12 +1916,27 @@ document.addEventListener('DOMContentLoaded', function() {
                     const col = document.createElement('div');
                     col.className = 'col-6 col-md-4 col-lg-3';
                     col.innerHTML = `
-                        <div class="card">
-                            <img src="${e.target.result}" class="card-img-top" style="height: 100px; object-fit: cover;">
+                        <div class="card image-preview-card" data-file-index="${index}">
+                            <div class="position-relative">
+                                <img src="${e.target.result}" class="card-img-top" style="height: 100px; object-fit: cover;">
+                                <div class="position-absolute top-0 end-0 p-1">
+                                    <button type="button" class="btn btn-sm btn-danger remove-image-btn" data-file-index="${index}">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div class="position-absolute top-0 start-0 p-1">
+                                    <button type="button" class="btn btn-sm ${index === 0 ? 'btn-warning' : 'btn-outline-warning'} primary-image-btn" data-file-index="${index}" title="Set as primary">
+                                        <i class="fas fa-star"></i>
+                                    </button>
+                                </div>
+                            </div>
                             <div class="card-body p-2">
-                                <small class="text-muted">${index === 0 ? 'Main Image' : `Image ${index + 1}`}</small>
-                                <div>
+                                <small class="text-muted">${index === 0 ? 'Primary Image' : `Image ${index + 1}`}</small>
+                                <div class="mb-2">
                                     <small class="text-muted">${(file.size / 1024).toFixed(1)} KB</small>
+                                </div>
+                                <div class="mb-2">
+                                    <input type="text" class="form-control form-control-sm" placeholder="Alt text" data-file-index="${index}" maxlength="200">
                                 </div>
                             </div>
                         </div>
@@ -1836,18 +1946,246 @@ document.addEventListener('DOMContentLoaded', function() {
                 reader.readAsDataURL(file);
             }
         });
+        
+        // Show image management container for add modal
+        if (containerId === 'imagePreview') {
+            document.getElementById('imageManagementContainer').style.display = 'block';
+        }
+        
+        // Add event listeners after a short delay to ensure DOM is ready
+        setTimeout(() => {
+            addImagePreviewListeners();
+        }, 100);
     }
     
     function loadCurrentProductImages(productId) {
-        // This function would load current product images if the API supports it
-        // For now, we'll show a placeholder
         const container = document.getElementById('editCurrentImages');
-        container.innerHTML = `
-            <div class="text-muted">
-                <i class="fas fa-images me-2"></i>
-                Current images will be displayed here when image management is implemented.
-            </div>
-        `;
+        const containerDiv = document.getElementById('editCurrentImagesContainer');
+        
+        fetch(`/mb-admin/api/product-images/?product=${productId}`)
+            .then(response => response.json())
+            .then(data => {
+                const images = data.results || data;
+                container.innerHTML = '';
+                
+                if (images.length === 0) {
+                    containerDiv.style.display = 'none';
+                    return;
+                }
+                
+                containerDiv.style.display = 'block';
+                
+                images.forEach((image, index) => {
+                    const col = document.createElement('div');
+                    col.className = 'col-6';
+                    col.innerHTML = `
+                        <div class="card current-image-card" data-image-id="${image.id}">
+                            <div class="position-relative">
+                                <img src="${image.image}" class="card-img-top" style="height: 100px; object-fit: cover;">
+                                <div class="position-absolute top-0 end-0 p-1">
+                                    <button type="button" class="btn btn-sm btn-danger delete-current-image-btn" data-image-id="${image.id}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                <div class="position-absolute top-0 start-0 p-1">
+                                    <button type="button" class="btn btn-sm ${image.is_primary ? 'btn-warning' : 'btn-outline-warning'} toggle-primary-btn" 
+                                            data-image-id="${image.id}" 
+                                            title="${image.is_primary ? 'Click to remove as primary' : 'Click to set as primary'}">
+                                        <i class="fas ${image.is_primary ? 'fa-star' : 'fa-star'}"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-star text-warning me-1" style="${image.is_primary ? '' : 'display:none;'}"></i>
+                                    ${image.is_primary ? 'Primary Image' : 'Additional Image'}
+                                </small>
+                                <div class="mb-2">
+                                    <input type="text" class="form-control form-control-sm alt-text-input" 
+                                           value="${image.alt_text || ''}" 
+                                           placeholder="Alt text" 
+                                           data-image-id="${image.id}" 
+                                           maxlength="200">
+                                </div>
+                                <div class="d-grid">
+                                    <button type="button" class="btn btn-sm btn-outline-primary update-alt-text-btn" data-image-id="${image.id}">
+                                        <i class="fas fa-save me-1"></i>Update Alt Text
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(col);
+                });
+                
+                // Add event listeners
+                addCurrentImageListeners();
+            })
+            .catch(error => {
+                console.error('Error loading product images:', error);
+                containerDiv.style.display = 'none';
+            });
+    }
+    
+    function addImagePreviewListeners() {
+        // Remove image from preview
+        document.querySelectorAll('.remove-image-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const fileIndex = parseInt(this.dataset.fileIndex);
+                removeImageFromPreview(fileIndex);
+            });
+        });
+        
+        // Set primary image
+        document.querySelectorAll('.primary-image-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const fileIndex = parseInt(this.dataset.fileIndex);
+                setPrimaryImageInPreview(fileIndex);
+            });
+        });
+    }
+    
+    function addCurrentImageListeners() {
+        // Delete current image
+        document.querySelectorAll('.delete-current-image-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const imageId = this.dataset.imageId;
+                if (confirm('Are you sure you want to delete this image?')) {
+                    deleteProductImage(imageId);
+                }
+            });
+        });
+        
+        // Toggle primary image
+        document.querySelectorAll('.toggle-primary-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const imageId = this.dataset.imageId;
+                togglePrimaryImage(imageId);
+            });
+        });
+        
+        // Update alt text
+        document.querySelectorAll('.update-alt-text-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const imageId = this.dataset.imageId;
+                const altTextInput = document.querySelector(`.alt-text-input[data-image-id="${imageId}"]`);
+                updateImageAltText(imageId, altTextInput.value);
+            });
+        });
+    }
+    
+    function removeImageFromPreview(fileIndex) {
+        // Remove the preview card
+        const card = document.querySelector(`.image-preview-card[data-file-index="${fileIndex}"]`);
+        if (card) {
+            card.parentElement.remove();
+        }
+        
+        // Update the file input (this is complex as we can't directly modify FileList)
+        // For now, we'll handle this in the form submission by checking which previews exist
+    }
+    
+    function setPrimaryImageInPreview(fileIndex) {
+        // Update all primary buttons
+        document.querySelectorAll('.primary-image-btn').forEach(btn => {
+            const btnIndex = parseInt(btn.dataset.fileIndex);
+            if (btnIndex === fileIndex) {
+                btn.className = 'btn btn-sm btn-warning primary-image-btn';
+            } else {
+                btn.className = 'btn btn-sm btn-outline-warning primary-image-btn';
+            }
+        });
+        
+        // Update labels
+        document.querySelectorAll('.image-preview-card').forEach(card => {
+            const cardIndex = parseInt(card.dataset.fileIndex);
+            const label = card.querySelector('small');
+            if (cardIndex === fileIndex) {
+                label.textContent = 'Primary Image';
+            } else {
+                label.textContent = `Image ${cardIndex + 1}`;
+            }
+        });
+    }
+    
+    function deleteProductImage(imageId) {
+        fetch(`/mb-admin/api/product-images/${imageId}/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                showAlert('Image deleted successfully!', 'success');
+                // Reload current images
+                const editProductId = document.getElementById('editProductId');
+                if (editProductId && editProductId.value) {
+                    loadCurrentProductImages(editProductId.value);
+                }
+            } else {
+                showAlert('Failed to delete image.', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting image:', error);
+            showAlert('Error deleting image.', 'danger');
+        });
+    }
+    
+    function togglePrimaryImage(imageId) {
+        // Get the current state of the image
+        const currentImageCard = document.querySelector(`.current-image-card[data-image-id="${imageId}"]`);
+        const toggleBtn = currentImageCard?.querySelector('.toggle-primary-btn');
+        const isPrimary = toggleBtn?.classList.contains('btn-warning');
+        
+        // Toggle the primary state
+        const newPrimaryState = !isPrimary;
+        
+        fetch(`/mb-admin/api/product-images/${imageId}/`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ is_primary: newPrimaryState })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (newPrimaryState) {
+                showAlert('Image set as primary!', 'success');
+            } else {
+                showAlert('Primary status removed!', 'success');
+            }
+            // Reload current images to reflect the changes
+            const editProductId = document.getElementById('editProductId');
+            if (editProductId && editProductId.value) {
+                loadCurrentProductImages(editProductId.value);
+            }
+        })
+        .catch(error => {
+            console.error('Error updating primary image:', error);
+            showAlert('Error updating primary image.', 'danger');
+        });
+    }
+    
+    function updateImageAltText(imageId, altText) {
+        fetch(`/mb-admin/api/product-images/${imageId}/`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ alt_text: altText })
+        })
+        .then(response => response.json())
+        .then(data => {
+            showAlert('Alt text updated!', 'success');
+        })
+        .catch(error => {
+            console.error('Error updating alt text:', error);
+            showAlert('Error updating alt text.', 'danger');
+        });
     }
     
     function handleVariantImagePreview(input, containerId, imgId) {

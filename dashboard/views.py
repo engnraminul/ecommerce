@@ -17,10 +17,10 @@ from .models import DashboardSetting, AdminActivity
 from .serializers import (
     DashboardSettingSerializer, AdminActivitySerializer, UserDashboardSerializer,
     CategoryDashboardSerializer, ProductDashboardSerializer, ProductDetailSerializer, ProductVariantDashboardSerializer,
-    OrderDashboardSerializer, OrderItemDashboardSerializer, DashboardStatisticsSerializer,
+    ProductImageDashboardSerializer, OrderDashboardSerializer, OrderItemDashboardSerializer, DashboardStatisticsSerializer,
     ShippingAddressDashboardSerializer
 )
-from products.models import Product, ProductVariant, Category
+from products.models import Product, ProductVariant, ProductImage, Category
 from orders.models import Order, OrderItem
 from users.models import User
 
@@ -285,6 +285,86 @@ class ProductVariantDashboardViewSet(viewsets.ModelViewSet):
         if x_forwarded_for:
             return x_forwarded_for.split(',')[0]
         return self.request.META.get('REMOTE_ADDR')
+
+class ProductImageDashboardViewSet(viewsets.ModelViewSet):
+    queryset = ProductImage.objects.all()
+    serializer_class = ProductImageDashboardSerializer
+    permission_classes = [IsAdminUser]
+    filterset_fields = ['product', 'is_primary']
+    ordering_fields = ['created_at', 'is_primary']
+    ordering = ['-is_primary', 'created_at']
+    
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        try:
+            self.log_activity('created', instance)
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
+        
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        try:
+            self.log_activity('updated', instance)
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
+        
+    def perform_destroy(self, instance):
+        try:
+            self.log_activity('deleted', instance)
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
+        instance.delete()
+    
+    def log_activity(self, action, instance):
+        try:
+            AdminActivity.objects.create(
+                user=self.request.user,
+                action=action,
+                model_name='ProductImage',
+                object_id=instance.id,
+                object_repr=f"Image for {instance.product.name}",
+                ip_address=self.get_client_ip(),
+                user_agent=self.request.META.get('HTTP_USER_AGENT', '')
+            )
+        except Exception as e:
+            # Handle database errors
+            print(f"Failed to log activity: {str(e)}")
+    
+    def get_client_ip(self):
+        x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            return x_forwarded_for.split(',')[0]
+        return self.request.META.get('REMOTE_ADDR')
+    
+    @action(detail=False, methods=['post'])
+    def reorder_images(self, request):
+        """Reorder product images based on provided order"""
+        try:
+            image_ids = request.data.get('image_ids', [])
+            product_id = request.data.get('product_id')
+            
+            if not image_ids or not product_id:
+                return Response({'error': 'image_ids and product_id are required'}, 
+                              status=status.HTTP_400_BAD_REQUEST)
+            
+            # Update the order by updating created_at (since we order by created_at)
+            # In a real implementation, you'd add an 'order' field to the model
+            from datetime import datetime, timedelta
+            base_time = datetime.now()
+            
+            for i, image_id in enumerate(image_ids):
+                try:
+                    image = ProductImage.objects.get(id=image_id, product_id=product_id)
+                    # Simulate ordering by updating created_at with incremental timestamps
+                    image.created_at = base_time + timedelta(seconds=i)
+                    image.save(update_fields=['created_at'])
+                except ProductImage.DoesNotExist:
+                    continue
+            
+            return Response({'success': True}, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class OrderDashboardViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
