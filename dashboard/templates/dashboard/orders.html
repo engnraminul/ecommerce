@@ -671,7 +671,7 @@
                         <!-- Top row: Logo and Barcode -->
                         <div class="sticker-header">
                             <div class="logo-section">
-                                <img src="https://manobbazar.com/wp-content/uploads/2025/03/MB-logo-768x187.png" alt="Logo" class="sticker-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                <img src="{% static 'images/MB-logo.png' %}" alt="Logo" class="sticker-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                                 <div class="logo-fallback" style="display: none;">MB</div>
                             </div>
                             <div class="barcode-section">
@@ -684,10 +684,10 @@
                         <div class="sticker-content">
                             <div class="customer-name" id="stickerCustomerName">John Doe</div>
                             <!-- <div class="courier-id-main" id="stickerCourierId">ID: 12345</div> -->
-                            <div style="font-weight: bold; font-size: 7px;">Products: </div>
+                            <div style="font-weight: bold; font-size: 8px; margin-bottom: 1px; color: #333;">Products:</div>
                             <div class="products-list" id="stickerProducts">
-                                T-SHIRT-BLK-M × 2<br>
-                                JEANS-BLU-L × 1
+                                MW02-Black × 2<br>
+                                MW02-Chocolate × 1
                             </div>
                         </div>
                         
@@ -1021,7 +1021,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const pagination = document.getElementById('ordersPagination');
         pagination.innerHTML = '';
         
-        const totalPages = Math.ceil(data.count / data.results.length);
+        // Try to get page size from API response, fallback to default
+        let pageSize = 20; // default page size
+        
+        // Check if API provides pagination metadata
+        if (data.page_size) {
+            pageSize = data.page_size;
+        } else if (data.results && data.results.length > 0 && currentPage === 1) {
+            // On first page, if we have less than 20 items and it's the total count, use that
+            if (data.count <= 20) {
+                pageSize = data.count;
+            }
+        }
+        
+        const totalPages = Math.ceil(data.count / pageSize);
+        
+        console.log(`Pagination: Total items: ${data.count}, Page size: ${pageSize}, Total pages: ${totalPages}, Current page: ${currentPage}`);
+        
         if (totalPages <= 1) return;
         
         // Previous button
@@ -1056,7 +1072,14 @@ document.addEventListener('DOMContentLoaded', function() {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
                 const page = parseInt(this.dataset.page);
-                loadOrders(page);
+                
+                // Add validation to prevent invalid page requests
+                if (page >= 1 && page <= totalPages && page !== currentPage) {
+                    console.log(`Loading page ${page} of ${totalPages}`);
+                    loadOrders(page);
+                } else {
+                    console.warn(`Invalid page request: ${page} (current: ${currentPage}, max: ${totalPages})`);
+                }
             });
         });
     }
@@ -1301,8 +1324,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <a href="tel:${phone}" class="ms-2 text-primary" title="Call customer">
                             <i class="fas fa-phone-alt"></i>
                         </a></div><br>` : ''}
-                    <div class="copy-text" data-value="${sku}">
-                        <strong>Order SKU:</strong> ${sku} <i class="fas fa-copy copy-icon" title="Copy SKU"></i>
+                    <div id="orderProductsList">
+                        <strong>Products:</strong> <span id="orderProductsText">Loading products...</span>
                     </div>
                 `;
             } catch (error) {
@@ -1502,6 +1525,45 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('orderDetailShipping').textContent = `$${shipping.toFixed(2)}`;
         document.getElementById('orderDetailTax').textContent = `$${tax.toFixed(2)}`;
         document.getElementById('orderDetailGrandTotal').textContent = `$${(subtotal + shipping + tax).toFixed(2)}`;
+        
+        // Update products list in the shipping address section
+        const productsListElement = document.getElementById('orderProductsText');
+        if (productsListElement && items && items.length > 0) {
+            const productsList = items.map(item => {
+                const quantity = Number(item.quantity) || 0;
+                
+                // Use the same logic as the sticker to get the display name
+                let displayName;
+                const possibleSkuFields = [
+                    'variant_display_name',
+                    'variant_sku', 
+                    'sku',
+                    'product_variant_sku',
+                    'variant_code'
+                ];
+                
+                let skuFound = false;
+                for (let field of possibleSkuFields) {
+                    if (item[field] && typeof item[field] === 'string' && item[field].trim() !== '') {
+                        displayName = item[field].trim();
+                        skuFound = true;
+                        break;
+                    }
+                }
+                
+                if (!skuFound && item.variant_name && typeof item.variant_name === 'string' && item.variant_name.trim() !== '') {
+                    displayName = item.variant_name.trim();
+                } else if (!skuFound && item.product_name && typeof item.product_name === 'string' && item.product_name.trim() !== '') {
+                    displayName = item.product_name.trim();
+                } else if (!skuFound) {
+                    displayName = 'Unknown Product';
+                }
+                
+                return `${displayName} × ${quantity}`;
+            });
+            
+            productsListElement.textContent = productsList.join(', ');
+        }
     }
     
     // Courier Sticker Functions
@@ -1608,9 +1670,19 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         
                         const quantity = item.quantity || 1;
-                        return `${displayName} × ${quantity}`;
+                        
+                        // Format the product line with better display
+                        if (displayName.includes('-') || displayName.includes(' ')) {
+                            // If it's a proper SKU format, use it as is
+                            return `${displayName} × ${quantity}`;
+                        } else {
+                            // If it's just a name, add some context
+                            return `${item.product_name || displayName} (${displayName}) × ${quantity}`;
+                        }
                     });
-                    document.getElementById('stickerProducts').innerHTML = productLines.join(', ');
+                    
+                    // Join with line breaks for better readability in the sticker
+                    document.getElementById('stickerProducts').innerHTML = productLines.join('<br>');
                 } else {
                     document.getElementById('stickerProducts').innerHTML = '<small>No products found</small>';
                 }
