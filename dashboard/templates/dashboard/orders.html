@@ -330,6 +330,76 @@
             top: 0;
         }
     }
+    
+    /* Fraud Check Progress Bar Styles */
+    .fraud-check-container {
+        position: relative;
+        width: 120px;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    
+    .fraud-check-container:hover {
+        transform: scale(1.05);
+    }
+    
+    .fraud-progress-bar {
+        height: 20px;
+        border-radius: 10px;
+        background-color: #e9ecef;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid #dee2e6;
+    }
+    
+    .fraud-progress-fill {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: bold;
+        color: white;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        position: relative;
+        transition: width 0.3s ease;
+    }
+    
+    .fraud-delivered-fill {
+        background: linear-gradient(90deg, #28a745, #20c997);
+    }
+    
+    .fraud-cancelled-fill {
+        background: linear-gradient(90deg, #dc3545, #e74c3c);
+    }
+    
+    .fraud-count-label {
+        font-size: 9px;
+        color: #6c757d;
+        margin-top: 2px;
+        text-align: center;
+    }
+    
+    .fraud-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6c757d;
+        font-size: 11px;
+    }
+    
+    .fraud-loading .spinner-border {
+        width: 16px;
+        height: 16px;
+        border-width: 2px;
+    }
+    
+    .fraud-error {
+        color: #dc3545;
+        font-size: 10px;
+        text-align: center;
+        cursor: help;
+    }
 </style>
 {% endblock %}
 
@@ -389,6 +459,7 @@
                         <th>Order #</th>
                         <th>Date</th>
                         <th>Actions</th>
+                        <th>Fraud Check</th>
                         <th>Total</th>
                         <th>Items</th>
                         <th>Status</th>
@@ -840,7 +911,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show loading indicator
         document.getElementById('ordersTableBody').innerHTML = `
             <tr>
-                <td colspan="6" class="text-center py-4">
+                <td colspan="7" class="text-center py-4">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
@@ -861,7 +932,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error loading orders:', error);
                 document.getElementById('ordersTableBody').innerHTML = `
                     <tr>
-                        <td colspan="6" class="text-center py-4 text-danger">
+                        <td colspan="7" class="text-center py-4 text-danger">
                             <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
                             <p>Error loading orders. Please try again.</p>
                         </td>
@@ -877,7 +948,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!orders || orders.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="text-center py-4">No orders found.</td>
+                    <td colspan="7" class="text-center py-4">No orders found.</td>
                 </tr>
             `;
             return;
@@ -1009,6 +1080,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         <i class="fas fa-tag"></i>
                     </button>
                 </td>
+                <td>
+                    <div class="fraud-check-container" data-phone="${customerPhone || ''}" data-order-id="${order.id}">
+                        <div class="fraud-loading">
+                            <span class="spinner-border spinner-border-sm me-1"></span>
+                            Loading...
+                        </div>
+                    </div>
+                </td>
                 <td>$${order.total_amount}</td>
                 <td>${order.total_items}</td>
                 <td>
@@ -1059,6 +1138,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 showCourierStickerModal(orderId);
             });
         });
+        
+        // Initialize fraud checks for all orders
+        performFraudChecks(orders);
     }
     
     function updatePagination(data) {
@@ -2291,6 +2373,248 @@ document.addEventListener('DOMContentLoaded', function() {
             // Ensure modal is closed properly even on error
             cleanupModal(orderModalElement);
         });
+    }
+    
+    // Fraud Check Functions
+    function performFraudChecks(orders) {
+        // Create a map to track unique phone numbers to avoid duplicate API calls
+        const phoneNumberMap = new Map();
+        const fraudContainers = document.querySelectorAll('.fraud-check-container');
+        
+        fraudContainers.forEach(container => {
+            const phone = container.dataset.phone;
+            const orderId = container.dataset.orderId;
+            
+            if (phone && phone.trim()) {
+                const cleanPhone = phone.trim();
+                if (!phoneNumberMap.has(cleanPhone)) {
+                    phoneNumberMap.set(cleanPhone, []);
+                }
+                phoneNumberMap.get(cleanPhone).push({container, orderId});
+            } else {
+                // Show no phone available
+                container.innerHTML = `
+                    <div class="fraud-error" title="No phone number available">
+                        <i class="fas fa-exclamation-circle"></i>
+                        No phone
+                    </div>
+                `;
+            }
+        });
+        
+        // Perform fraud checks for unique phone numbers
+        phoneNumberMap.forEach((containers, phone) => {
+            performFraudCheck(phone, containers);
+        });
+    }
+    
+    async function performFraudCheck(phoneNumber, containers) {
+        try {
+            const response = await fetch('/mb-admin/api/fraud-check/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    phone_number: phoneNumber
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success && data.summary) {
+                // Update all containers with the same phone number
+                containers.forEach(({container, orderId}) => {
+                    updateFraudDisplay(container, data, phoneNumber);
+                });
+            } else {
+                containers.forEach(({container}) => {
+                    container.innerHTML = `
+                        <div class="fraud-error" title="${data.error || 'Failed to check fraud status'}">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Check failed
+                        </div>
+                    `;
+                });
+            }
+        } catch (error) {
+            console.error('Fraud check error:', error);
+            containers.forEach(({container}) => {
+                container.innerHTML = `
+                    <div class="fraud-error" title="Network error occurred">
+                        <i class="fas fa-wifi" style="text-decoration: line-through;"></i>
+                        Network error
+                    </div>
+                `;
+            });
+        }
+    }
+    
+    function updateFraudDisplay(container, fraudData, phoneNumber) {
+        const summary = fraudData.summary;
+        const totalParcels = summary.total_parcels || 0;
+        const totalDelivered = summary.total_delivered || 0;
+        const totalCancelled = summary.total_cancelled || 0;
+        
+        if (totalParcels === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; color: #6c757d; font-size: 10px;">
+                    <i class="fas fa-info-circle"></i>
+                    <div>No history</div>
+                </div>
+            `;
+            return;
+        }
+        
+        const deliveredPercentage = Math.round((totalDelivered / totalParcels) * 100);
+        const cancelledPercentage = Math.round((totalCancelled / totalParcels) * 100);
+        
+        container.innerHTML = `
+            <div class="fraud-progress-bar">
+                <div class="fraud-delivered-fill" style="width: ${deliveredPercentage}%; position: absolute; left: 0; top: 0; height: 100%; display: flex; align-items: center; padding-left: 4px;">
+                    ${deliveredPercentage > 15 ? deliveredPercentage + '%' : ''}
+                </div>
+                <div class="fraud-cancelled-fill" style="width: ${cancelledPercentage}%; position: absolute; right: 0; top: 0; height: 100%; display: flex; align-items: center; justify-content: end; padding-right: 4px;">
+                    ${cancelledPercentage > 15 ? cancelledPercentage + '%' : ''}
+                </div>
+            </div>
+            <div class="fraud-count-label">${totalDelivered}D / ${totalCancelled}C (${totalParcels})</div>
+        `;
+        
+        // Add click handler to show detailed popup
+        container.style.cursor = 'pointer';
+        container.addEventListener('click', function() {
+            showFraudDetailsModal(fraudData, phoneNumber);
+        });
+    }
+    
+    function showFraudDetailsModal(fraudData, phoneNumber) {
+        // Create a modal to show detailed fraud information
+        const modalHtml = `
+            <div class="modal fade" id="fraudDetailsModal" tabindex="-1" aria-labelledby="fraudDetailsModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="fraudDetailsModalLabel">
+                                <i class="fas fa-shield-alt me-2"></i>Fraud Check Details - ${phoneNumber}
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            ${generateFraudDetailsContent(fraudData)}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove any existing fraud modal
+        const existingModal = document.getElementById('fraudDetailsModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Add the modal to the page
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Show the modal
+        const modal = new bootstrap.Modal(document.getElementById('fraudDetailsModal'));
+        modal.show();
+        
+        // Clean up modal when hidden
+        document.getElementById('fraudDetailsModal').addEventListener('hidden.bs.modal', function() {
+            this.remove();
+        });
+    }
+    
+    function generateFraudDetailsContent(fraudData) {
+        const summary = fraudData.summary;
+        const couriers = fraudData.couriers;
+        
+        let content = `
+            <div class="mb-4">
+                <h6 class="text-primary"><i class="fas fa-chart-bar me-2"></i>Summary</h6>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h4 class="text-primary mb-1">${summary.total_parcels || 0}</h4>
+                            <small class="text-muted">Total Parcels</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h4 class="text-success mb-1">${summary.total_delivered || 0}</h4>
+                            <small class="text-muted">Delivered</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h4 class="text-danger mb-1">${summary.total_cancelled || 0}</h4>
+                            <small class="text-muted">Cancelled</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h4 class="text-warning mb-1">${summary.cancellation_rate || 0}%</h4>
+                            <small class="text-muted">Cancel Rate</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <h6 class="text-primary"><i class="fas fa-truck me-2"></i>Courier Details</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Courier</th>
+                                <th>Status</th>
+                                <th>Total Parcels</th>
+                                <th>Delivered</th>
+                                <th>Cancelled</th>
+                                <th>Risk Level</th>
+                                <th>Fraud Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+        
+        // Add courier details
+        Object.entries(couriers).forEach(([courierKey, courierData]) => {
+            const statusBadge = courierData.success 
+                ? '<span class="badge bg-success">Success</span>'
+                : '<span class="badge bg-danger">Failed</span>';
+            
+            const riskBadge = courierData.success 
+                ? `<span class="badge bg-${courierData.risk_color || 'secondary'}">${courierData.risk_level || 'Unknown'}</span>`
+                : '<span class="badge bg-secondary">N/A</span>';
+            
+            content += `
+                <tr>
+                    <td><strong>${courierData.courier_name || courierKey.charAt(0).toUpperCase() + courierKey.slice(1)}</strong></td>
+                    <td>${statusBadge}</td>
+                    <td>${courierData.total_parcels || 0}</td>
+                    <td class="text-success">${courierData.total_delivered || 0}</td>
+                    <td class="text-danger">${courierData.total_cancelled || 0}</td>
+                    <td>${riskBadge}</td>
+                    <td>${courierData.fraud_score || 0}</td>
+                </tr>
+            `;
+        });
+        
+        content += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+        
+        return content;
     }
     
     // Helper functions

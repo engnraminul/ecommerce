@@ -21,6 +21,8 @@ urlpatterns = [
     # Add an explicit path for add_to_curier that matches the JavaScript URL
     path('api/orders/<int:pk>/add_to_curier/', views.OrderDashboardViewSet.as_view({'post': 'add_to_curier'}), name='order_add_to_curier'),
     path('api/statistics/', views.DashboardStatisticsView.as_view(), name='statistics'),
+    # Fraud check API endpoint
+    path('api/fraud-check/', views.fraud_check_api, name='fraud_check_api'),
     
     # Frontend views for the dashboard SPA
     path('', views.dashboard_home, name='home'),

@@ -4,9 +4,14 @@ from django.utils import timezone
 from datetime import timedelta
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAdminUser
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth import authenticate, login, logout
+from django.urls import reverse
+from django.http import JsonResponse
 
 from .models import DashboardSetting, AdminActivity
 from .serializers import (
@@ -746,3 +751,39 @@ def get_order_items(request, order_id):
         import traceback
         traceback.print_exc()
         return Response({"error": str(e)}, status=400)
+
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def fraud_check_api(request):
+    """
+    API endpoint for fraud checking in dashboard
+    """
+    try:
+        import json
+        from fraud_checker.combined_service import CombinedFraudChecker
+        
+        phone_number = request.data.get('phone_number', '').strip()
+        
+        if not phone_number:
+            return Response({
+                'success': False,
+                'error': 'Phone number is required'
+            }, status=400)
+        
+        # Initialize combined fraud checker service
+        fraud_service = CombinedFraudChecker()
+        
+        # Perform fraud check across all couriers
+        result = fraud_service.check_fraud_all_couriers(phone_number)
+        
+        return Response(result)
+        
+    except Exception as e:
+        print(f"Dashboard fraud check API error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return Response({
+            'success': False,
+            'error': 'Internal server error'
+        }, status=500)
