@@ -41,19 +41,69 @@ class ProductDashboardSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Product
-        fields = ['id', 'name', 'slug', 'description', 'category', 'category_name', 
-                  'base_price', 'is_active', 'created_at', 'updated_at', 'variant_count']
+        fields = [
+            'id', 'name', 'slug', 'description', 'short_description', 'category', 'category_name', 
+            'sku', 'barcode', 'price', 'base_price', 'compare_price', 'cost_price',
+            'stock_quantity', 'low_stock_threshold', 'track_inventory',
+            'is_active', 'is_featured', 'is_digital',
+            'weight', 'dimensions', 'shipping_type', 'has_express_shipping',
+            'custom_shipping_dhaka', 'custom_shipping_outside', 'custom_express_shipping',
+            'meta_title', 'meta_description', 'youtube_video_url',
+            'created_at', 'updated_at', 'variant_count'
+        ]
     
     def get_variant_count(self, obj):
         return obj.variants.count()
+
+class ProductDetailSerializer(serializers.ModelSerializer):
+    """Detailed serializer for creating and updating products"""
+    category_name = serializers.ReadOnlyField(source='category.name')
+    
+    class Meta:
+        model = Product
+        fields = [
+            'id', 'name', 'slug', 'description', 'short_description', 'category', 'category_name',
+            'sku', 'barcode', 'price', 'compare_price', 'cost_price',
+            'stock_quantity', 'low_stock_threshold', 'track_inventory',
+            'is_active', 'is_featured', 'is_digital',
+            'weight', 'dimensions', 'shipping_type', 'has_express_shipping',
+            'custom_shipping_dhaka', 'custom_shipping_outside', 'custom_express_shipping',
+            'meta_title', 'meta_description', 'youtube_video_url',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at']
+    
+    def validate_slug(self, value):
+        """Ensure slug uniqueness"""
+        if self.instance:
+            # Editing existing product
+            if Product.objects.filter(slug=value).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError("A product with this slug already exists.")
+        else:
+            # Creating new product
+            if Product.objects.filter(slug=value).exists():
+                raise serializers.ValidationError("A product with this slug already exists.")
+        return value
+    
+    def validate_sku(self, value):
+        """Ensure SKU uniqueness"""
+        if self.instance:
+            # Editing existing product
+            if Product.objects.filter(sku=value).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError("A product with this SKU already exists.")
+        else:
+            # Creating new product
+            if Product.objects.filter(sku=value).exists():
+                raise serializers.ValidationError("A product with this SKU already exists.")
+        return value
 
 class ProductVariantDashboardSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
     
     class Meta:
         model = ProductVariant
-        fields = ['id', 'product', 'product_name', 'sku', 'name', 'price', 
-                 'stock_quantity', 'is_active', 'image']
+        fields = ['id', 'product', 'product_name', 'sku', 'name', 'color', 'size', 'material', 
+                 'price', 'stock_quantity', 'is_active', 'image']
 
 class ShippingAddressDashboardSerializer(serializers.ModelSerializer):
     class Meta:

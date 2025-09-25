@@ -16,7 +16,7 @@ from django.http import JsonResponse
 from .models import DashboardSetting, AdminActivity
 from .serializers import (
     DashboardSettingSerializer, AdminActivitySerializer, UserDashboardSerializer,
-    CategoryDashboardSerializer, ProductDashboardSerializer, ProductVariantDashboardSerializer,
+    CategoryDashboardSerializer, ProductDashboardSerializer, ProductDetailSerializer, ProductVariantDashboardSerializer,
     OrderDashboardSerializer, OrderItemDashboardSerializer, DashboardStatisticsSerializer,
     ShippingAddressDashboardSerializer
 )
@@ -187,6 +187,12 @@ class ProductDashboardViewSet(viewsets.ModelViewSet):
     filterset_fields = ['category', 'is_active', 'is_featured', 'is_digital', 'shipping_type']
     search_fields = ['name', 'description', 'short_description', 'sku', 'barcode']
     ordering_fields = ['name', 'created_at', 'price', 'stock_quantity']
+    
+    def get_serializer_class(self):
+        """Use detailed serializer for create/update operations"""
+        if self.action in ['create', 'update', 'partial_update', 'retrieve']:
+            return ProductDetailSerializer
+        return ProductDashboardSerializer
     
     def perform_create(self, serializer):
         instance = serializer.save()
