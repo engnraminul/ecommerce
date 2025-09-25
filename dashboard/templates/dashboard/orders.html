@@ -883,6 +883,36 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Count orders by phone number for each customer
+        const phoneNumberCounts = {};
+        const customerPhoneMap = {};
+        
+        orders.forEach(order => {
+            let phone = null;
+            let customerName = 'Guest';
+            
+            // Get phone number and customer name
+            if (order.shipping_address) {
+                phone = order.shipping_address.phone;
+                const firstName = order.shipping_address.first_name || '';
+                const lastName = order.shipping_address.last_name || '';
+                customerName = `${firstName} ${lastName}`.trim() || 'Guest';
+            } else if (order.customer_phone) {
+                phone = order.customer_phone;
+                customerName = order.user_name || 'Guest';
+            }
+            
+            // Count orders by phone number if phone exists
+            if (phone && phone.trim()) {
+                const cleanPhone = phone.trim();
+                if (!phoneNumberCounts[cleanPhone]) {
+                    phoneNumberCounts[cleanPhone] = 0;
+                    customerPhoneMap[cleanPhone] = customerName;
+                }
+                phoneNumberCounts[cleanPhone]++;
+            }
+        });
+        
         orders.forEach(order => {
             const tr = document.createElement('tr');
             
@@ -933,20 +963,34 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Get customer name from shipping address if available
             let customerName = 'Guest';
+            let customerPhone = null;
+            
             if (order.shipping_address) {
                 const firstName = order.shipping_address.first_name || '';
                 const lastName = order.shipping_address.last_name || '';
                 customerName = `${firstName} ${lastName}`.trim() || 'Guest';
+                customerPhone = order.shipping_address.phone;
             } else if (order.user_name) {
                 // Fallback to user_name if available
                 customerName = order.user_name;
+                customerPhone = order.customer_phone;
+            }
+            
+            // Add order count to customer name if they have multiple orders with same phone
+            let displayCustomerName = customerName;
+            if (customerPhone && customerPhone.trim()) {
+                const cleanPhone = customerPhone.trim();
+                const orderCount = phoneNumberCounts[cleanPhone];
+                if (orderCount && orderCount > 1) {
+                    displayCustomerName = `${customerName} (${orderCount})`;
+                }
             }
             
             // Format order number with customer name
-            const formattedOrderNumber = `${order.order_number} (${customerName})`;
+            const formattedOrderNumber = `${order.order_number} (${displayCustomerName})`;
             
             tr.innerHTML = `
-                <td><span>${customerName}</span><br><span style="font-size: 0.8rem;">#${order.order_number}</span> </td>
+                <td><span>${displayCustomerName}</span><br><span style="font-size: 0.8rem;">#${order.order_number}</span> </td>
                 <td>${formatRelativeTime(order.created_at)}</td>
                 <td>
                     <button type="button" class="btn btn-sm btn-outline-primary view-order-btn me-1" data-order-id="${order.id}">
