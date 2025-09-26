@@ -366,7 +366,7 @@
     }
     
     .fraud-delivered-fill {
-        background: linear-gradient(90deg, #28a745, #20c997);
+        background: #198754;
     }
     
     .fraud-cancelled-fill {
@@ -2472,14 +2472,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         container.innerHTML = `
             <div class="fraud-progress-bar">
-                <div class="fraud-delivered-fill" style="width: ${deliveredPercentage}%; position: absolute; left: 0; top: 0; height: 100%; display: flex; align-items: center; padding-left: 4px;">
+                <div class="fraud-delivered-fill" style="width: ${deliveredPercentage}%; color:white; position: absolute; left: 0; top: 0; height: 100%; display: flex; align-items: center; padding-left: 4px;">
                     ${deliveredPercentage > 15 ? deliveredPercentage + '%' : ''}
                 </div>
                 <div class="fraud-cancelled-fill" style="width: ${cancelledPercentage}%; position: absolute; right: 0; top: 0; height: 100%; display: flex; align-items: center; justify-content: end; padding-right: 4px;">
                     ${cancelledPercentage > 15 ? cancelledPercentage + '%' : ''}
                 </div>
             </div>
-            <div class="fraud-count-label">${totalDelivered}D / ${totalCancelled}C (${totalParcels})</div>
+            <div class="fraud-count-label"><span style="color: green;">${totalDelivered}</span> / <span style="color: red;">${totalCancelled}</span> (${totalParcels})</div>
         `;
         
         // Add click handler to show detailed popup

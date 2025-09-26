@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import DashboardSetting, AdminActivity
+from .models import DashboardSetting, AdminActivity, Expense
 from products.models import Product, ProductVariant, ProductImage, Category
 from orders.models import Order, OrderItem, ShippingAddress
 from users.models import User
@@ -208,3 +208,17 @@ class DashboardStatisticsSerializer(serializers.Serializer):
     recent_orders = OrderDashboardSerializer(many=True)
     popular_products = serializers.ListSerializer(child=serializers.DictField())
     sales_by_period = serializers.ListSerializer(child=serializers.DictField())
+
+class ExpenseDashboardSerializer(serializers.ModelSerializer):
+    expense_type_display = serializers.CharField(source='get_expense_type_display', read_only=True)
+    created_by_name = serializers.CharField(source='created_by.username', read_only=True)
+    
+    class Meta:
+        model = Expense
+        fields = ['id', 'expense_type', 'expense_type_display', 'amount', 'description', 
+                 'created_by', 'created_by_name', 'created_at', 'updated_at']
+        read_only_fields = ['created_by', 'created_at', 'updated_at']
+    
+    def create(self, validated_data):
+        validated_data['created_by'] = self.context['request'].user
+        return super().create(validated_data)

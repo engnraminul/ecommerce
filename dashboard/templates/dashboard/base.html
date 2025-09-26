@@ -219,6 +219,11 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{% url 'dashboard:expenses' %}" class="{% if active_page == 'expenses' %}active{% endif %}">
+                        <i class="fas fa-money-bill-wave"></i> Expenses
+                    </a>
+                </li>
+                <li>
                     <a href="{% url 'dashboard:statistics' %}" class="{% if active_page == 'statistics' %}active{% endif %}">
                         <i class="fas fa-chart-bar"></i> Statistics
                     </a>

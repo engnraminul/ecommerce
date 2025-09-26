@@ -13,12 +13,12 @@ from django.contrib.auth import authenticate, login, logout
 from django.urls import reverse
 from django.http import JsonResponse
 
-from .models import DashboardSetting, AdminActivity
+from .models import DashboardSetting, AdminActivity, Expense
 from .serializers import (
     DashboardSettingSerializer, AdminActivitySerializer, UserDashboardSerializer,
     CategoryDashboardSerializer, ProductDashboardSerializer, ProductDetailSerializer, ProductVariantDashboardSerializer,
     ProductImageDashboardSerializer, OrderDashboardSerializer, OrderItemDashboardSerializer, DashboardStatisticsSerializer,
-    ShippingAddressDashboardSerializer
+    ShippingAddressDashboardSerializer, ExpenseDashboardSerializer
 )
 from products.models import Product, ProductVariant, ProductImage, Category
 from orders.models import Order, OrderItem
@@ -805,6 +805,14 @@ def dashboard_api_docs(request):
     }
     return render(request, 'dashboard/api_docs.html', context)
 
+@login_required
+@user_passes_test(is_admin)
+def dashboard_expenses(request):
+    context = {
+        'active_page': 'expenses'
+    }
+    return render(request, 'dashboard/expenses.html', context)
+
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
 def get_order_items(request, order_id):
@@ -873,3 +881,141 @@ def fraud_check_api(request):
             'success': False,
             'error': 'Internal server error'
         }, status=500)
+
+class ExpenseDashboardViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing expenses in the dashboard."""
+    queryset = Expense.objects.all()
+    serializer_class = ExpenseDashboardSerializer
+    permission_classes = [IsAdminUser]
+    
+    def get_queryset(self):
+        queryset = Expense.objects.all()
+        
+        # Filter by expense type
+        expense_type = self.request.query_params.get('expense_type')
+        if expense_type:
+            queryset = queryset.filter(expense_type=expense_type)
+        
+        # Filter by date range
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+        if start_date:
+            queryset = queryset.filter(created_at__date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(created_at__date__lte=end_date)
+        
+        # Filter by month and year
+        month = self.request.query_params.get('month')
+        year = self.request.query_params.get('year')
+        if month:
+            queryset = queryset.filter(created_at__month=month)
+        if year:
+            queryset = queryset.filter(created_at__year=year)
+        
+        return queryset.order_by('-created_at')
+    
+    def perform_create(self, serializer):
+        # Log admin activity
+        expense = serializer.save(created_by=self.request.user)
+        try:
+            AdminActivity.objects.create(
+                user=self.request.user,
+                action='CREATE',
+                model_name='Expense',
+                object_id=expense.id,
+                object_repr=str(expense),
+                ip_address=self.request.META.get('REMOTE_ADDR'),
+                user_agent=self.request.META.get('HTTP_USER_AGENT', '')[:500]
+            )
+        except Exception as e:
+            # Handle database errors, particularly if the AdminActivity table doesn't exist
+            print(f"Could not log admin activity: {e}")
+    
+    def perform_update(self, serializer):
+        # Log admin activity
+        old_instance = self.get_object()
+        expense = serializer.save()
+        try:
+            AdminActivity.objects.create(
+                user=self.request.user,
+                action='UPDATE',
+                model_name='Expense',
+                object_id=expense.id,
+                object_repr=str(expense),
+                ip_address=self.request.META.get('REMOTE_ADDR'),
+                user_agent=self.request.META.get('HTTP_USER_AGENT', '')[:500]
+            )
+        except Exception as e:
+            # Handle database errors, particularly if the AdminActivity table doesn't exist
+            print(f"Could not log admin activity: {e}")
+    
+    def perform_destroy(self, instance):
+        # Log admin activity
+        try:
+            AdminActivity.objects.create(
+                user=self.request.user,
+                action='DELETE',
+                model_name='Expense',
+                object_id=instance.id,
+                object_repr=str(instance),
+                ip_address=self.request.META.get('REMOTE_ADDR'),
+                user_agent=self.request.META.get('HTTP_USER_AGENT', '')[:500]
+            )
+        except Exception as e:
+            # Handle database errors, particularly if the AdminActivity table doesn't exist
+            print(f"Could not log admin activity: {e}")
+        instance.delete()
+    
+    @action(detail=False, methods=['get'])
+    def statistics(self, request):
+        """Get expense statistics for charts and reports."""
+        queryset = self.get_queryset()
+        
+        # Total expenses
+        total_expenses = queryset.aggregate(total=Sum('amount'))['total'] or 0
+        
+        # Monthly expenses for the last 12 months
+        from django.utils import timezone
+        from datetime import datetime, timedelta
+        import calendar
+        
+        now = timezone.now()
+        monthly_expenses = []
+        
+        for i in range(12):
+            month_date = now.replace(day=1) - timedelta(days=30*i)
+            month_expenses = queryset.filter(
+                created_at__year=month_date.year,
+                created_at__month=month_date.month
+            ).aggregate(total=Sum('amount'))['total'] or 0
+            
+            monthly_expenses.insert(0, {
+                'month': calendar.month_name[month_date.month],
+                'year': month_date.year,
+                'total': float(month_expenses),
+                'date': f"{month_date.year}-{month_date.month:02d}"
+            })
+        
+        # Expenses by type for pie chart
+        expense_by_type = []
+        expense_types = Expense.EXPENSE_TYPE_CHOICES
+        
+        for expense_type, display_name in expense_types:
+            type_total = queryset.filter(expense_type=expense_type).aggregate(
+                total=Sum('amount')
+            )['total'] or 0
+            
+            if type_total > 0:
+                expense_by_type.append({
+                    'type': expense_type,
+                    'name': display_name,
+                    'total': float(type_total),
+                    'percentage': round((float(type_total) / float(total_expenses)) * 100, 2) if total_expenses > 0 else 0
+                })
+        
+        return Response({
+            'total_expenses': float(total_expenses),
+            'monthly_expenses': monthly_expenses,
+            'expense_by_type': expense_by_type,
+            'total_count': queryset.count()
+        })
