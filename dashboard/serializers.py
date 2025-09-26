@@ -210,11 +210,21 @@ class OrderItemDashboardSerializer(serializers.ModelSerializer):
 class DashboardStatisticsSerializer(serializers.Serializer):
     total_sales = serializers.DecimalField(max_digits=14, decimal_places=2)
     orders_count = serializers.IntegerField()
+    total_expenses = serializers.DecimalField(max_digits=14, decimal_places=2)
+    dashboard_expenses = serializers.DecimalField(max_digits=14, decimal_places=2)
+    courier_expenses = serializers.DecimalField(max_digits=14, decimal_places=2)
+    total_product_cost = serializers.DecimalField(max_digits=14, decimal_places=2)
+    total_revenue = serializers.DecimalField(max_digits=14, decimal_places=2)
+    profit_margin = serializers.DecimalField(max_digits=5, decimal_places=2)
     products_count = serializers.IntegerField()
     customers_count = serializers.IntegerField()
     recent_orders = OrderDashboardSerializer(many=True)
     popular_products = serializers.ListSerializer(child=serializers.DictField())
     sales_by_period = serializers.ListSerializer(child=serializers.DictField())
+    sales_by_category = serializers.ListSerializer(child=serializers.DictField())
+    orders_by_status = serializers.ListSerializer(child=serializers.DictField())
+    analytics = serializers.DictField()
+    recommendations = serializers.ListSerializer(child=serializers.DictField())
 
 class ExpenseDashboardSerializer(serializers.ModelSerializer):
     expense_type_display = serializers.CharField(source='get_expense_type_display', read_only=True)

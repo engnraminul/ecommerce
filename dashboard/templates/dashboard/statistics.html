@@ -28,10 +28,11 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h3 class="mb-0" id="total-sales-stat">$0.00</h3>
-                        <p class="text-white mb-0">Total Sales</p>
+                        <p class="text-white mb-0">Total Sales Amount</p>
+                        <small class="text-muted">Delivered + Shipped + Partial Returns</small>
                     </div>
                     <div>
-                        <i class="fas fa-money-bill-wave fa-2x"></i>
+                        <i class="fas fa-money-bill-wave fa-2x text-success"></i>
                     </div>
                 </div>
             </div>
@@ -45,9 +46,10 @@
                     <div>
                         <h3 class="mb-0" id="total-orders-stat">0</h3>
                         <p class="text-white mb-0">Total Orders</p>
+                        <small class="text-muted">All order count</small>
                     </div>
                     <div>
-                        <i class="fas fa-shopping-cart fa-2x"></i>
+                        <i class="fas fa-shopping-cart fa-2x text-primary"></i>
                     </div>
                 </div>
             </div>
@@ -59,11 +61,12 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h3 class="mb-0" id="avg-order-value-stat">$0.00</h3>
-                        <p class="text-white mb-0">Average Order Value</p>
+                        <h3 class="mb-0" id="total-expenses-stat">$0.00</h3>
+                        <p class="text-white mb-0">Total Expenses</p>
+                        <small class="text-muted">Business expenses + Courier charges</small>
                     </div>
                     <div>
-                        <i class="fas fa-receipt fa-2x"></i>
+                        <i class="fas fa-receipt fa-2x text-warning"></i>
                     </div>
                 </div>
             </div>
@@ -75,13 +78,64 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h3 class="mb-0" id="customer-count-stat">0</h3>
-                        <p class="text-white mb-0">Total Customers</p>
+                        <h3 class="mb-0" id="total-revenue-stat">$0.00</h3>
+                        <p class="text-white mb-0">Total Revenue</p>
+                        <small class="text-muted">Sales - (Expenses + Product Cost)</small>
                     </div>
                     <div>
-                        <i class="fas fa-users fa-2x"></i>
+                        <i class="fas fa-chart-line fa-2x text-info"></i>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-left-primary h-100">
+            <div class="card-body">
+                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                    Total Courier Charge
+                </div>
+                <div class="h5 mb-0 font-weight-bold" id="total-courier-charge-stat">$0.00</div>
+                <small class="text-muted">Delivered + Shipped + Returned + Partially Returned</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card border-left-info h-100">
+            <div class="card-body">
+                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                    Dashboard Expenses
+                </div>
+                <div class="h5 mb-0 font-weight-bold" id="dashboard-expenses-stat">$0.00</div>
+                <small class="text-muted">Business operational expenses</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card border-left-success h-100">
+            <div class="card-body">
+                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                    Product Cost
+                </div>
+                <div class="h5 mb-0 font-weight-bold" id="product-cost-stat">$0.00</div>
+                <small class="text-muted">Cost of goods for delivered & shipped orders</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card border-left-warning h-100">
+            <div class="card-body">
+                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                    Profit Margin
+                </div>
+                <div class="h5 mb-0 font-weight-bold" id="profit-margin-stat">0%</div>
+                <small class="text-muted">Revenue as % of sales</small>
             </div>
         </div>
     </div>
@@ -347,8 +401,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to load statistics for the selected period
     function loadStatistics(period) {
-        fetch(`/mb-admin/api/statistics/?period=${period}`)
-            .then(response => response.json())
+        fetch(`/mb-admin/api/statistics/?period=${period}`, {
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 // Update summary statistics
                 updateSummaryStats(data);
@@ -378,11 +441,37 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateSummaryStats(data) {
         document.getElementById('total-sales-stat').textContent = `$${data.total_sales.toFixed(2)}`;
         document.getElementById('total-orders-stat').textContent = data.orders_count;
-        document.getElementById('customer-count-stat').textContent = data.customers_count;
+        document.getElementById('total-expenses-stat').textContent = `$${data.total_expenses.toFixed(2)}`;
+        document.getElementById('total-revenue-stat').textContent = `$${data.total_revenue.toFixed(2)}`;
         
-        // Calculate average order value
-        const avgOrderValue = data.orders_count > 0 ? data.total_sales / data.orders_count : 0;
-        document.getElementById('avg-order-value-stat').textContent = `$${avgOrderValue.toFixed(2)}`;
+        // Update detailed expense breakdown
+        document.getElementById('total-courier-charge-stat').textContent = `$${data.courier_expenses.toFixed(2)}`;
+        document.getElementById('dashboard-expenses-stat').textContent = `$${data.dashboard_expenses.toFixed(2)}`;
+        document.getElementById('product-cost-stat').textContent = `$${data.total_product_cost.toFixed(2)}`;
+        document.getElementById('profit-margin-stat').textContent = `${data.profit_margin}%`;
+        
+        // Update revenue color based on positive/negative value
+        const revenueElement = document.getElementById('total-revenue-stat');
+        const revenueCard = revenueElement.closest('.card');
+        const revenueIcon = revenueCard.querySelector('i');
+        
+        if (data.total_revenue < 0) {
+            revenueElement.style.color = '#dc3545'; // Red for negative
+            revenueIcon.className = 'fas fa-chart-line-down fa-2x text-danger';
+        } else {
+            revenueElement.style.color = '#28a745'; // Green for positive
+            revenueIcon.className = 'fas fa-chart-line fa-2x text-success';
+        }
+        
+        // Update profit margin color based on percentage
+        const profitMarginElement = document.getElementById('profit-margin-stat');
+        if (data.profit_margin < 0) {
+            profitMarginElement.style.color = '#dc3545'; // Red for negative
+        } else if (data.profit_margin < 10) {
+            profitMarginElement.style.color = '#ffc107'; // Yellow for low margin
+        } else {
+            profitMarginElement.style.color = '#28a745'; // Green for healthy margin
+        }
     }
     
     // Update sales chart
@@ -722,6 +811,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 bsAlert.close();
             }
         }, 5000);
+    }
+    
+    // Helper function to get CSRF cookie
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
     }
 });
 </script>

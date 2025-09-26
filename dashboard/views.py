@@ -12,6 +12,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import authenticate, login, logout
 from django.urls import reverse
 from django.http import JsonResponse
+from decimal import Decimal
 
 from .models import DashboardSetting, AdminActivity, Expense
 from .serializers import (
@@ -589,101 +590,117 @@ class OrderDashboardViewSet(viewsets.ModelViewSet):
             }, status=500)
 
 class DashboardStatisticsView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated]
     
     def get(self, request):
-        # Get query parameters for date filtering
-        period = request.query_params.get('period', 'week')
+        # Check if user is staff (admin user)
+        if not request.user.is_staff:
+            return Response({'error': 'Admin access required'}, status=403)
         
-        # Define time periods
-        now = timezone.now()
-        if period == 'day':
-            start_date = now - timedelta(days=1)
-        elif period == 'month':
-            start_date = now - timedelta(days=30)
-        elif period == 'year':
-            start_date = now - timedelta(days=365)
-        else:  # default to week
-            start_date = now - timedelta(days=7)
-        
-        # Get statistics data
-        total_sales = Order.objects.filter(
-            created_at__gte=start_date
-        ).aggregate(total=Sum('total_amount'))['total'] or 0
-        
-        orders_count = Order.objects.filter(created_at__gte=start_date).count()
-        products_count = Product.objects.filter(is_active=True).count()
-        customers_count = User.objects.filter(is_active=True).count()
-        
-        # Get recent orders
-        recent_orders = Order.objects.filter(
-            created_at__gte=start_date
-        ).order_by('-created_at')[:5]
-        
-        # Get popular products based on order items
-        popular_products = list(OrderItem.objects.filter(
-            order__created_at__gte=start_date
-        ).values('product_variant__product__name')
-        .annotate(count=Count('id'))
-        .order_by('-count')[:5])
-        
-        # Sales by period (daily for week, weekly for month, monthly for year)
-        sales_by_period = []
-        if period == 'week':
-            # Daily sales for the past week
-            for i in range(7):
-                day = now - timedelta(days=i)
-                day_sales = Order.objects.filter(
-                    created_at__date=day.date()
-                ).aggregate(total=Sum('total_amount'))['total'] or 0
-                sales_by_period.append({
-                    'date': day.date().strftime('%Y-%m-%d'),
-                    'sales': day_sales
-                })
-        elif period == 'month':
-            # Weekly sales for the past month
-            for i in range(4):
-                week_start = now - timedelta(days=(i+1)*7)
-                week_end = now - timedelta(days=i*7)
-                week_sales = Order.objects.filter(
-                    created_at__gte=week_start,
-                    created_at__lt=week_end
-                ).aggregate(total=Sum('total_amount'))['total'] or 0
-                sales_by_period.append({
-                    'week': f'Week {i+1}',
-                    'sales': week_sales
-                })
-        elif period == 'year':
-            # Monthly sales for the past year
-            for i in range(12):
-                month = now.month - i
-                year = now.year
-                if month <= 0:
-                    month += 12
-                    year -= 1
-                month_sales = Order.objects.filter(
-                    created_at__month=month,
-                    created_at__year=year
-                ).aggregate(total=Sum('total_amount'))['total'] or 0
-                sales_by_period.append({
-                    'month': month,
-                    'year': year,
-                    'sales': month_sales
-                })
-        
-        # Prepare the response data
-        data = {
-            'total_sales': total_sales,
-            'orders_count': orders_count,
-            'products_count': products_count,
-            'customers_count': customers_count,
-            'recent_orders': OrderDashboardSerializer(recent_orders, many=True).data,
-            'popular_products': popular_products,
-            'sales_by_period': sales_by_period
-        }
-        
-        serializer = DashboardStatisticsSerializer(data)
-        return Response(serializer.data)
+        try:
+            # Get query parameters for date filtering
+            period = request.query_params.get('period', 'week')
+            
+            # Define time periods
+            now = timezone.now()
+            if period == 'day':
+                start_date = now - timedelta(days=1)
+            elif period == 'month':
+                start_date = now - timedelta(days=30)
+            elif period == 'year':
+                start_date = now - timedelta(days=365)
+            elif period == 'all':
+                start_date = None
+            else:  # default to week
+                start_date = now - timedelta(days=7)
+            
+            # Build base query filter
+            date_filter = Q()
+            if start_date:
+                date_filter = Q(created_at__gte=start_date)
+            
+            # Calculate Total Sales Amount based on order status
+            delivered_shipped_sales = Order.objects.filter(
+                date_filter & Q(status__in=['delivered', 'shipped'])
+            ).aggregate(total=Sum('total_amount'))['total'] or 0
+            
+            partially_returned_sales = Order.objects.filter(
+                date_filter & Q(status='partially_returned')
+            ).aggregate(total=Sum('partially_ammount'))['total'] or 0
+            
+            total_sales = delivered_shipped_sales + partially_returned_sales
+            
+            # Total Orders Count
+            orders_count = Order.objects.filter(date_filter).count()
+            
+            # Calculate Total Expenses
+            dashboard_expenses = Expense.objects.filter(
+                Q(created_at__gte=start_date) if start_date else Q()
+            ).aggregate(total=Sum('amount'))['total'] or 0
+            
+            courier_expenses = Order.objects.filter(
+                date_filter & Q(status__in=['delivered', 'shipped', 'returned', 'partially_returned'])
+            ).aggregate(total=Sum('curier_charge'))['total'] or 0
+            
+            total_expenses = dashboard_expenses + courier_expenses
+            
+            # Calculate Product Cost (only for delivered and shipped orders)
+            delivered_shipped_orders = Order.objects.filter(
+                date_filter & Q(status__in=['delivered', 'shipped'])
+            )
+            
+            total_product_cost = Decimal('0')
+            for order in delivered_shipped_orders:
+                if order.cost_price:
+                    # Use stored cost_price if available
+                    total_product_cost += order.cost_price
+                else:
+                    # Calculate from order items if cost_price is not stored
+                    for item in order.items.all():
+                        if item.variant and item.variant.effective_cost_price:
+                            total_product_cost += item.variant.effective_cost_price * item.quantity
+                        elif item.product and item.product.cost_price:
+                            total_product_cost += item.product.cost_price * item.quantity
+            
+            # Calculate Total Revenue (Total Sales - (Expenses + Product Cost))
+            total_revenue = total_sales - (total_expenses + total_product_cost)
+            
+            # Calculate profit margin percentage
+            profit_margin = 0
+            if total_sales > 0:
+                profit_margin = (total_revenue / total_sales) * 100
+            
+            products_count = Product.objects.filter(is_active=True).count()
+            customers_count = User.objects.filter(is_active=True).count()
+            
+            # Prepare response data with simple defaults for now
+            data = {
+                'total_sales': float(total_sales),
+                'orders_count': orders_count,
+                'total_expenses': float(total_expenses),
+                'dashboard_expenses': float(dashboard_expenses),
+                'courier_expenses': float(courier_expenses),
+                'total_product_cost': float(total_product_cost),
+                'total_revenue': float(total_revenue),
+                'profit_margin': round(profit_margin, 2),
+                'products_count': products_count,
+                'customers_count': customers_count,
+                'recent_orders': [],
+                'popular_products': [],
+                'sales_by_period': [],
+                'sales_by_category': [],
+                'orders_by_status': [],
+                'analytics': {},
+                'recommendations': []
+            }
+            
+            return Response(data)
+            
+        except Exception as e:
+            print(f"Error in statistics view: {e}")
+            import traceback
+            traceback.print_exc()
+            return Response({'error': str(e)}, status=500)
 
 # Frontend views for dashboard SPA
 from django.shortcuts import render, redirect, get_object_or_404
