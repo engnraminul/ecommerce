@@ -176,6 +176,13 @@ class Product(models.Model):
         return 0
     
     @property
+    def savings_amount(self):
+        """Calculate savings amount if compare_price is set"""
+        if self.compare_price and self.compare_price > self.price:
+            return self.compare_price - self.price
+        return 0
+    
+    @property
     def average_rating(self):
         """Calculate average rating from reviews"""
         reviews = self.reviews.filter(is_approved=True)
@@ -300,6 +307,8 @@ class ProductVariant(models.Model):
     
     # Pricing (can override main product price)
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
+    compare_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
+    cost_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
     
     # Inventory for this variant
     stock_quantity = models.PositiveIntegerField(default=0)
@@ -339,6 +348,47 @@ class ProductVariant(models.Model):
     def effective_price(self):
         """Return variant price or fall back to product price"""
         return self.price or self.product.price
+    
+    @property
+    def effective_compare_price(self):
+        """Return variant compare price or fall back to product compare price"""
+        return self.compare_price or self.product.compare_price
+    
+    @property
+    def effective_cost_price(self):
+        """Return variant cost price or fall back to product cost price"""
+        return self.cost_price or self.product.cost_price
+    
+    @property
+    def discount_percentage(self):
+        """Calculate discount percentage based on variant or product pricing"""
+        effective_price = self.effective_price
+        effective_compare_price = self.effective_compare_price
+        
+        if effective_compare_price and effective_compare_price > effective_price:
+            return int(((effective_compare_price - effective_price) / effective_compare_price) * 100)
+        return 0
+    
+    @property
+    def profit_margin(self):
+        """Calculate profit margin if cost price is available"""
+        effective_price = self.effective_price
+        effective_cost_price = self.effective_cost_price
+        
+        if effective_cost_price and effective_cost_price > 0:
+            profit = effective_price - effective_cost_price
+            return (profit / effective_price) * 100 if effective_price > 0 else 0
+        return None
+    
+    @property
+    def savings_amount(self):
+        """Calculate savings amount if compare price is available"""
+        effective_price = self.effective_price
+        effective_compare_price = self.effective_compare_price
+        
+        if effective_compare_price and effective_compare_price > effective_price:
+            return effective_compare_price - effective_price
+        return 0
     
     @property
     def color_name(self):

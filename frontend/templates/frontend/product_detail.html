@@ -97,21 +97,25 @@
                         <!-- Product Price -->
                         <div class="product-pricing">
                             <div class="price-container">
+                                {% if product.default_variant %}
+                                <span class="current-price" id="variant-current-price">${{ product.default_variant.effective_price }}</span>
+                                {% if product.default_variant.effective_compare_price and product.default_variant.effective_compare_price > product.default_variant.effective_price %}
+                                <span class="original-price" id="variant-original-price">${{ product.default_variant.effective_compare_price }}</span>
+                                <span class="discount-badge" id="variant-discount-badge">{{ product.default_variant.discount_percentage }}% OFF</span>
+                                {% endif %}
+                                {% else %}
                                 <span class="current-price" id="variant-current-price">${{ product.price }}</span>
                                 {% if product.compare_price and product.compare_price > product.price %}
                                 <span class="original-price" id="variant-original-price">${{ product.compare_price }}</span>
-                                <span class="discount-badge" id="variant-discount-badge">
-                                    <script>
-                                        document.write(Math.round(({{ product.compare_price }} - {{ product.price }}) / {{ product.compare_price }} * 100) + '% OFF');
-                                    </script>
-                                </span>
+                                <span class="discount-badge" id="variant-discount-badge">{{ product.discount_percentage }}% OFF</span>
+                                {% endif %}
                                 {% endif %}
                             </div>
                             <div class="savings" id="variant-savings">
-                                {% if product.compare_price and product.compare_price > product.price %}
-                                <script>
-                                    document.write('You save $' + ({{ product.compare_price }} - {{ product.price }}).toFixed(2));
-                                </script>
+                                {% if product.default_variant and product.default_variant.effective_compare_price and product.default_variant.effective_compare_price > product.default_variant.effective_price %}
+                                    You save ${{ product.default_variant.savings_amount|floatformat:2 }}
+                                {% elif product.compare_price and product.compare_price > product.price %}
+                                    You save ${{ product.savings_amount|floatformat:2 }}
                                 {% endif %}
                             </div>
                             <div class="price-note" id="variant-price-note" style="display: none;">
@@ -209,7 +213,10 @@
                                 "colorName": "{% for word in variant.name.split %}{% if forloop.first %}{{ word }}{% endif %}{% endfor %}",
                                 "size": "{{ variant.size|default:""|escapejs }}",
                                 "price": "{{ variant.effective_price }}",
-                                "comparePrice": "{{ product.compare_price|default:0 }}",
+                                "comparePrice": "{{ variant.effective_compare_price|default:0 }}",
+                                "costPrice": "{{ variant.effective_cost_price|default:0 }}",
+                                "discountPercentage": "{{ variant.discount_percentage }}",
+                                "profitMargin": "{{ variant.profit_margin|default:0 }}",
                                 "stock": {{ variant.stock_quantity }},
                                 "inStock": {{ variant.in_stock|yesno:"true,false" }},
                                 "sku": "{{ variant.sku|escapejs }}",
@@ -4191,7 +4198,7 @@
                 }
                 if (discountBadgeElement) {
                     discountBadgeElement.style.display = 'inline';
-                    const discount = Math.round((price / comparePrice) * 100);
+                    const discount = Math.round(((comparePrice - price) / comparePrice) * 100);
                     discountBadgeElement.textContent = discount + '% OFF';
                 }
                 if (savingsElement) {

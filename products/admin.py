@@ -22,7 +22,7 @@ class ProductVariantInline(admin.TabularInline):
     """Inline for product variants"""
     model = ProductVariant
     extra = 0
-    fields = ('name', 'sku', 'size', 'color', 'price', 'stock_quantity', 'in_stock', 'is_default', 'is_active', 'image')
+    fields = ('name', 'sku', 'size', 'color', 'price', 'compare_price', 'cost_price', 'stock_quantity', 'in_stock', 'is_default', 'is_active', 'image')
     readonly_fields = ()
 
 

@@ -99,11 +99,18 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
 class ProductVariantDashboardSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
+    effective_price = serializers.ReadOnlyField()
+    effective_compare_price = serializers.ReadOnlyField()
+    effective_cost_price = serializers.ReadOnlyField()
+    discount_percentage = serializers.ReadOnlyField()
+    profit_margin = serializers.ReadOnlyField()
     
     class Meta:
         model = ProductVariant
         fields = ['id', 'product', 'product_name', 'sku', 'name', 'color', 'size', 'material', 
-                 'price', 'stock_quantity', 'is_active', 'image']
+                 'price', 'compare_price', 'cost_price', 'stock_quantity', 'is_active', 'image',
+                 'effective_price', 'effective_compare_price', 'effective_cost_price', 
+                 'discount_percentage', 'profit_margin']
 
 class ProductImageDashboardSerializer(serializers.ModelSerializer):
     class Meta:
