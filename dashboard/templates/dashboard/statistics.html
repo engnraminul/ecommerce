@@ -143,22 +143,74 @@
 
 <div class="row mb-4">
     <div class="col-md-8">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Sales Over Time</h5>
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="salesChartDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        Chart Type
-                    </button>
-                    <ul class="dropdown-menu" aria-labelledby="salesChartDropdown">
-                        <li><a class="dropdown-item chart-type-option active" data-type="line" href="#">Line Chart</a></li>
-                        <li><a class="dropdown-item chart-type-option" data-type="bar" href="#">Bar Chart</a></li>
-                    </ul>
+        <div class="card h-100 shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center bg-gradient-primary text-white">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-chart-line me-2"></i>
+                    <h5 class="mb-0">Financial Performance Overview</h5>
+                </div>
+                <div class="d-flex gap-2">
+                    <!-- Year Filter -->
+                    <select class="form-select form-select-sm" id="year-filter" style="width: auto; min-width: 120px;">
+                        <option value="2025">2025</option>
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                        <option value="all">All Years</option>
+                    </select>
+                    
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="salesChartDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-cog me-1"></i> Options
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="salesChartDropdown">
+                            <li><h6 class="dropdown-header">Chart Type</h6></li>
+                            <li><a class="dropdown-item chart-type-option active" data-type="line" href="#">
+                                <i class="fas fa-chart-line me-2"></i> Line Chart
+                            </a></li>
+                            <li><a class="dropdown-item chart-type-option" data-type="bar" href="#">
+                                <i class="fas fa-chart-bar me-2"></i> Bar Chart
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">View Options</h6></li>
+                            <li><a class="dropdown-item" href="#" id="toggle-grid">
+                                <i class="fas fa-border-all me-2"></i> Toggle Grid
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" id="toggle-animation">
+                                <i class="fas fa-play me-2"></i> Toggle Animation
+                            </a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
-            <div class="card-body">
-                <div style="height: 350px;">
+            <div class="card-body p-3">
+                <!-- Legend with custom styling -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="d-flex flex-wrap justify-content-center gap-3">
+                            <div class="legend-item d-flex align-items-center">
+                                <div class="legend-color" style="background: linear-gradient(45deg, #28a745, #20c997); width: 16px; height: 16px; border-radius: 50%; margin-right: 8px; box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);"></div>
+                                <span class="badge bg-success-subtle text-success fw-medium">Sales Revenue</span>
+                            </div>
+                            <div class="legend-item d-flex align-items-center">
+                                <div class="legend-color" style="background: linear-gradient(45deg, #dc3545, #fd7e14); width: 16px; height: 16px; border-radius: 50%; margin-right: 8px; box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);"></div>
+                                <span class="badge bg-danger-subtle text-danger fw-medium">Total Expenses</span>
+                            </div>
+                            <div class="legend-item d-flex align-items-center">
+                                <div class="legend-color" style="background: linear-gradient(45deg, #007bff, #6f42c1); width: 16px; height: 16px; border-radius: 50%; margin-right: 8px; box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);"></div>
+                                <span class="badge bg-primary-subtle text-primary fw-medium">Net Revenue</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="height: 400px; position: relative;">
                     <canvas id="salesChart"></canvas>
+                    <!-- Loading overlay -->
+                    <div id="chart-loading" class="position-absolute top-50 start-50 translate-middle d-none">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading chart data...</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -346,6 +398,115 @@
 </div>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Custom styles for the financial chart */
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #007bff 0%, #6f42c1 100%) !important;
+    }
+    
+    .legend-item {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .legend-item:hover {
+        transform: translateY(-2px);
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.5em 0.75em;
+        border-radius: 0.5rem;
+    }
+    
+    .bg-success-subtle {
+        background-color: rgba(40, 167, 69, 0.1) !important;
+    }
+    
+    .bg-danger-subtle {
+        background-color: rgba(220, 53, 69, 0.1) !important;
+    }
+    
+    .bg-primary-subtle {
+        background-color: rgba(0, 123, 255, 0.1) !important;
+    }
+    
+    .text-success {
+        color: #28a745 !important;
+    }
+    
+    .text-danger {
+        color: #dc3545 !important;
+    }
+    
+    .text-primary {
+        color: #007bff !important;
+    }
+    
+    .shadow-sm {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+    }
+    
+    .card-header {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .dropdown-menu {
+        border: none;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        border-radius: 0.5rem;
+    }
+    
+    .dropdown-item {
+        padding: 0.5rem 1rem;
+        transition: all 0.2s ease;
+    }
+    
+    .dropdown-item:hover {
+        background-color: rgba(0, 123, 255, 0.1);
+        color: #007bff;
+    }
+    
+    .dropdown-header {
+        color: #6c757d;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    #chart-loading {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 0.5rem;
+        padding: 2rem;
+        text-align: center;
+        backdrop-filter: blur(5px);
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .legend-item {
+            margin-bottom: 0.5rem;
+        }
+        
+        .d-flex.flex-wrap.justify-content-center {
+            justify-content: flex-start !important;
+        }
+    }
+    
+    /* Animation for chart container */
+    .card {
+        transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+</style>
+{% endblock %}
+
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -354,6 +515,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Current period selection
     let currentPeriod = 'week';
+    let currentYear = new Date().getFullYear().toString();
+    
+    // Set current year as default in dropdown
+    document.getElementById('year-filter').value = currentYear;
     
     // Load initial data
     loadStatistics(currentPeriod);
@@ -371,7 +536,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Set up event listeners for chart type options
+    // Set up event listener for year filter
+    document.getElementById('year-filter').addEventListener('change', function() {
+        currentYear = this.value;
+        loadStatistics(currentPeriod);
+    });
+    
+    // Set up event listeners for chart options
     document.querySelectorAll('.chart-type-option').forEach(option => {
         option.addEventListener('click', function(e) {
             e.preventDefault();
@@ -384,6 +555,26 @@ document.addEventListener('DOMContentLoaded', function() {
             const chartType = this.dataset.type;
             updateSalesChartType(chartType);
         });
+    });
+    
+    // Chart view options
+    document.getElementById('toggle-grid').addEventListener('click', function(e) {
+        e.preventDefault();
+        if (salesChart) {
+            const gridDisplay = salesChart.options.scales.x.grid.display;
+            salesChart.options.scales.x.grid.display = !gridDisplay;
+            salesChart.options.scales.y.grid.display = !gridDisplay;
+            salesChart.update();
+        }
+    });
+    
+    document.getElementById('toggle-animation').addEventListener('click', function(e) {
+        e.preventDefault();
+        if (salesChart) {
+            const animationEnabled = salesChart.options.animation.duration > 0;
+            salesChart.options.animation.duration = animationEnabled ? 0 : 1000;
+            salesChart.update();
+        }
     });
     
     // Set up event listeners for report download buttons
@@ -416,8 +607,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Update summary statistics
                 updateSummaryStats(data);
                 
-                // Update charts
-                updateSalesChart(data.sales_by_period, period);
+                // Update charts with real data
+                updateSalesChart(data, period);
                 updateCategoryChart(data.sales_by_category || []);
                 updateOrderStatusChart(data.orders_by_status || []);
                 
@@ -474,76 +665,191 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Update sales chart
-    function updateSalesChart(salesData, period) {
+    // Update financial comparison chart - ONLY REAL DATA
+    function updateSalesChart(statisticsData, period) {
         const ctx = document.getElementById('salesChart').getContext('2d');
         
-        // Determine labels and format based on period
-        let labels = [];
-        let tooltipFormat = '';
+        // Show loading
+        document.getElementById('chart-loading').classList.remove('d-none');
         
-        switch(period) {
-            case 'week':
-                labels = salesData.map(item => {
-                    const date = new Date(item.date);
-                    return date.toLocaleDateString('en-US', { weekday: 'short' });
-                });
-                tooltipFormat = 'MMM D';
-                break;
-            case 'month':
-                labels = salesData.map(item => `Week ${item.week}`);
-                tooltipFormat = 'Week W';
-                break;
-            case 'year':
-                labels = salesData.map(item => {
-                    const date = new Date(item.year, item.month - 1);
-                    return date.toLocaleDateString('en-US', { month: 'short' });
-                });
-                tooltipFormat = 'MMMM YYYY';
-                break;
-            case 'all':
-                labels = salesData.map(item => item.period);
-                tooltipFormat = 'YYYY';
-                break;
+        // Use ONLY real data from API
+        const currentSales = statisticsData.total_sales || 0;
+        const currentExpenses = statisticsData.total_expenses || 0;
+        const currentRevenue = statisticsData.total_revenue || 0;
+        
+        // For now, show only current period data (no historical mock data)
+        const currentDate = new Date();
+        let chartLabel = '';
+        
+        // Determine the appropriate label based on selected year and current date
+        if (currentYear === 'all') {
+            chartLabel = 'All Time';
+        } else {
+            const selectedYearInt = parseInt(currentYear);
+            if (selectedYearInt === currentDate.getFullYear()) {
+                chartLabel = `Current (${currentDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })})`;
+            } else {
+                chartLabel = `Year ${currentYear}`;
+            }
         }
         
+        // Single data point with actual API data
+        const periods = [chartLabel];
+        const salesValues = [Math.round(currentSales)];
+        const expenseValues = [Math.round(currentExpenses)];
+        const revenueValues = [Math.round(currentRevenue)];
+        
         const chartData = {
-            labels: labels,
-            datasets: [{
-                label: 'Sales',
-                data: salesData.map(item => item.sales),
-                backgroundColor: 'rgba(52, 152, 219, 0.2)',
-                borderColor: 'rgba(52, 152, 219, 1)',
-                borderWidth: 2,
-                tension: 0.3,
-                pointBackgroundColor: 'rgba(52, 152, 219, 1)',
-                pointRadius: 4
-            }]
+            labels: periods,
+            datasets: [
+                {
+                    label: 'Sales Revenue',
+                    data: salesValues,
+                    borderColor: 'rgba(40, 167, 69, 1)',
+                    backgroundColor: 'rgba(40, 167, 69, 0.3)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    pointBackgroundColor: 'rgba(40, 167, 69, 1)',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 3,
+                    pointRadius: 8,
+                    pointHoverRadius: 12,
+                    pointHoverBackgroundColor: 'rgba(40, 167, 69, 1)',
+                    pointHoverBorderColor: '#ffffff',
+                    pointHoverBorderWidth: 4,
+                    fill: false
+                },
+                {
+                    label: 'Total Expenses',
+                    data: expenseValues,
+                    borderColor: 'rgba(220, 53, 69, 1)',
+                    backgroundColor: 'rgba(220, 53, 69, 0.3)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    pointBackgroundColor: 'rgba(220, 53, 69, 1)',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 3,
+                    pointRadius: 8,
+                    pointHoverRadius: 12,
+                    pointHoverBackgroundColor: 'rgba(220, 53, 69, 1)',
+                    pointHoverBorderColor: '#ffffff',
+                    pointHoverBorderWidth: 4,
+                    fill: false,
+                    borderDash: [5, 5]
+                },
+                {
+                    label: 'Net Revenue',
+                    data: revenueValues,
+                    borderColor: currentRevenue >= 0 ? 'rgba(0, 123, 255, 1)' : 'rgba(255, 99, 132, 1)',
+                    backgroundColor: currentRevenue >= 0 ? 'rgba(0, 123, 255, 0.3)' : 'rgba(255, 99, 132, 0.3)',
+                    borderWidth: 4,
+                    tension: 0.4,
+                    pointBackgroundColor: currentRevenue >= 0 ? 'rgba(0, 123, 255, 1)' : 'rgba(255, 99, 132, 1)',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 3,
+                    pointRadius: 10,
+                    pointHoverRadius: 14,
+                    pointHoverBackgroundColor: currentRevenue >= 0 ? 'rgba(0, 123, 255, 1)' : 'rgba(255, 99, 132, 1)',
+                    pointHoverBorderColor: '#ffffff',
+                    pointHoverBorderWidth: 4,
+                    fill: false
+                }
+            ]
         };
         
         const chartOptions = {
             responsive: true,
             maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return '$' + value;
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                legend: {
+                    display: false // We're using custom legend
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    titleColor: '#333',
+                    bodyColor: '#666',
+                    borderColor: 'rgba(0, 0, 0, 0.1)',
+                    borderWidth: 1,
+                    cornerRadius: 12,
+                    displayColors: true,
+                    usePointStyle: true,
+                    padding: 12,
+                    titleFont: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    callbacks: {
+                        title: function(context) {
+                            return `Current Data: ${context[0].label}`;
+                        },
+                        label: function(context) {
+                            const value = context.parsed.y;
+                            const label = context.dataset.label;
+                            return `${label}: $${value.toLocaleString()}`;
+                        },
+                        afterLabel: function(context) {
+                            if (context.datasetIndex === 2) { // Revenue
+                                const salesValue = chartData.datasets[0].data[context.dataIndex];
+                                if (salesValue > 0) {
+                                    const margin = ((context.parsed.y / salesValue) * 100).toFixed(1);
+                                    return `Profit Margin: ${margin}%`;
+                                }
+                            }
+                            return null;
                         }
                     }
                 }
             },
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return '$' + context.parsed.y.toFixed(2);
+            scales: {
+                x: {
+                    grid: {
+                        display: true,
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        lineWidth: 1
+                    },
+                    ticks: {
+                        color: '#666',
+                        font: {
+                            size: 12,
+                            weight: '500'
                         }
                     }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        display: true,
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        lineWidth: 1
+                    },
+                    ticks: {
+                        color: '#666',
+                        font: {
+                            size: 11
+                        },
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            },
+            animation: {
+                duration: 1000,
+                easing: 'easeInOutQuart'
+            },
+            elements: {
+                line: {
+                    tension: 0.4
+                },
+                point: {
+                    hoverRadius: 12
                 }
             }
         };
@@ -553,18 +859,37 @@ document.addEventListener('DOMContentLoaded', function() {
             salesChart.destroy();
         }
         
-        // Create new chart
-        salesChart = new Chart(ctx, {
-            type: 'line',
-            data: chartData,
-            options: chartOptions
-        });
+        // Create new chart with a slight delay for smooth transition
+        setTimeout(() => {
+            salesChart = new Chart(ctx, {
+                type: 'bar', // Use bar chart for single data points
+                data: chartData,
+                options: chartOptions
+            });
+            
+            // Hide loading
+            document.getElementById('chart-loading').classList.add('d-none');
+        }, 300);
     }
     
-    // Update chart type (line or bar)
+    // Update chart type (line or bar) 
     function updateSalesChartType(chartType) {
         if (salesChart) {
             salesChart.config.type = chartType;
+            
+            // Adjust styling for different chart types
+            if (chartType === 'bar') {
+                // For bar chart, increase background opacity
+                salesChart.data.datasets.forEach(dataset => {
+                    dataset.backgroundColor = dataset.backgroundColor.replace('0.3', '0.7');
+                });
+            } else {
+                // For line chart, reduce background opacity  
+                salesChart.data.datasets.forEach(dataset => {
+                    dataset.backgroundColor = dataset.backgroundColor.replace('0.7', '0.3');
+                });
+            }
+            
             salesChart.update();
         }
     }
