@@ -72,6 +72,7 @@ class Product(models.Model):
     is_active = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)
     is_digital = models.BooleanField(default=False)
+    in_stock = models.BooleanField(default=True, help_text="Indicates if this product is currently in stock and available for ordering")
     
     # Physical attributes
     weight = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
@@ -148,6 +149,7 @@ class Product(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
     
     @property
     def is_available(self):
@@ -180,6 +182,25 @@ class Product(models.Model):
         """Calculate savings amount if compare_price is set"""
         if self.compare_price and self.compare_price > self.price:
             return self.compare_price - self.price
+        return 0
+    
+    @property
+    def savings_percentage(self):
+        """Calculate savings percentage if compare_price is set"""
+        if self.compare_price and self.compare_price > self.price:
+            return int(((self.compare_price - self.price) / self.compare_price) * 100)
+        return 0
+    
+    @property
+    def effective_price(self):
+        """Get the effective selling price (same as price for products)"""
+        return self.price
+    
+    @property 
+    def profit_margin(self):
+        """Calculate profit margin if cost_price is set"""
+        if self.cost_price and self.price > self.cost_price:
+            return round(((self.price - self.cost_price) / self.price) * 100, 2)
         return 0
     
     @property
