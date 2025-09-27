@@ -678,6 +678,20 @@ class DashboardStatisticsView(APIView):
             products_count = Product.objects.filter(is_active=True).count()
             customers_count = User.objects.filter(is_active=True).count()
             
+            # Calculate orders by status breakdown
+            orders_by_status = Order.objects.filter(date_filter).values('status').annotate(
+                count=Count('id')
+            ).order_by('-count')
+            
+            # Convert to list format for frontend
+            orders_status_list = [
+                {
+                    'status': status_data['status'],
+                    'count': status_data['count']
+                }
+                for status_data in orders_by_status
+            ]
+            
             # Prepare response data with simple defaults for now
             data = {
                 'total_sales': float(total_sales),
@@ -694,7 +708,7 @@ class DashboardStatisticsView(APIView):
                 'popular_products': [],
                 'sales_by_period': [],
                 'sales_by_category': [],
-                'orders_by_status': [],
+                'orders_by_status': orders_status_list,
                 'analytics': {},
                 'recommendations': []
             }

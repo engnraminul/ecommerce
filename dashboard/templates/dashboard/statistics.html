@@ -324,25 +324,66 @@
     </div>
     
     <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-header">
-                <h5 class="mb-0">Order Status Breakdown</h5>
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-gradient-info text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>Order Status Breakdown
+                    </h5>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="statusChartDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="statusChartDropdown">
+                            <li><a class="dropdown-item status-chart-type" data-type="pie" href="#">
+                                <i class="fas fa-chart-pie me-2"></i>Pie Chart
+                            </a></li>
+                            <li><a class="dropdown-item status-chart-type active" data-type="doughnut" href="#">
+                                <i class="fas fa-dot-circle me-2"></i>Doughnut Chart
+                            </a></li>
+                            <li><a class="dropdown-item status-chart-type" data-type="bar" href="#">
+                                <i class="fas fa-chart-bar me-2"></i>Bar Chart
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
             </div>
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <div style="height: 250px;">
+                        <div class="chart-container position-relative" style="height: 280px;">
                             <canvas id="orderStatusChart"></canvas>
+                            <!-- Loading overlay for chart -->
+                            <div id="status-chart-loading" class="position-absolute top-50 start-50 translate-middle d-none">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
+                        <!-- Status Summary Cards -->
+                        <div class="mb-3">
+                            <div class="row g-2" id="status-summary-cards">
+                                <div class="col-12">
+                                    <div class="text-center py-3">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-2 mb-0 text-muted">Loading status summary...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Detailed Status Table -->
+                        <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-dark sticky-top">
                                     <tr>
-                                        <th>Status</th>
-                                        <th>Count</th>
-                                        <th>Percentage</th>
+                                        <th><i class="fas fa-tag me-1"></i>Status</th>
+                                        <th class="text-center"><i class="fas fa-hashtag me-1"></i>Count</th>
+                                        <th class="text-end"><i class="fas fa-percentage me-1"></i>%</th>
                                     </tr>
                                 </thead>
                                 <tbody id="order-status-table">
@@ -356,6 +397,26 @@
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Additional Status Insights -->
+                <div class="row mt-3 pt-3 border-top">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>
+                                Last updated: <span id="status-last-updated">-</span>
+                            </small>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="refresh-status" title="Refresh Data">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-success btn-sm" id="export-status" title="Export Status Data">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -493,6 +554,10 @@
         background: linear-gradient(135deg, #007bff 0%, #6f42c1 100%) !important;
     }
     
+    .bg-gradient-info {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%) !important;
+    }
+    
     .legend-item {
         transition: all 0.3s ease;
         cursor: pointer;
@@ -564,12 +629,119 @@
         letter-spacing: 0.5px;
     }
     
-    #chart-loading {
+    #chart-loading, #status-chart-loading {
         background: rgba(255, 255, 255, 0.9);
         border-radius: 0.5rem;
         padding: 2rem;
         text-align: center;
         backdrop-filter: blur(5px);
+    }
+    
+    /* Order Status specific styles */
+    .status-summary-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 250, 0.9) 100%);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .status-summary-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+    }
+    
+    .status-summary-card.pending {
+        border-left: 4px solid #ffc107;
+    }
+    
+    .status-summary-card.processing {
+        border-left: 4px solid #17a2b8;
+    }
+    
+    .status-summary-card.shipped {
+        border-left: 4px solid #20c997;
+    }
+    
+    .status-summary-card.delivered {
+        border-left: 4px solid #28a745;
+    }
+    
+    .status-summary-card.cancelled {
+        border-left: 4px solid #dc3545;
+    }
+    
+    .status-summary-card.returned {
+        border-left: 4px solid #6c757d;
+    }
+    
+    .status-summary-card.partial_return {
+        border-left: 4px solid #fd7e14;
+    }
+    
+    .status-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.75rem;
+        font-size: 0.9rem;
+    }
+    
+    .status-icon.pending {
+        background: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+    }
+    
+    .status-icon.processing {
+        background: rgba(23, 162, 184, 0.2);
+        color: #17a2b8;
+    }
+    
+    .status-icon.shipped {
+        background: rgba(32, 201, 151, 0.2);
+        color: #20c997;
+    }
+    
+    .status-icon.delivered {
+        background: rgba(40, 167, 69, 0.2);
+        color: #28a745;
+    }
+    
+    .status-icon.cancelled {
+        background: rgba(220, 53, 69, 0.2);
+        color: #dc3545;
+    }
+    
+    .status-icon.returned {
+        background: rgba(108, 117, 125, 0.2);
+        color: #6c757d;
+    }
+    
+    .status-icon.partial_return {
+        background: rgba(253, 126, 20, 0.2);
+        color: #fd7e14;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .legend-item {
+            margin-bottom: 0.5rem;
+        }
+        
+        .d-flex.flex-wrap.justify-content-center {
+            justify-content: flex-start !important;
+        }
+        
+        .status-summary-card {
+            margin-bottom: 0.5rem;
+        }
     }
     
     /* Responsive adjustments */
@@ -714,6 +886,30 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('year-filter').addEventListener('change', function() {
         currentYear = this.value;
         loadStatistics(currentPeriod);
+    });
+    
+    // Set up event listeners for status chart options
+    document.querySelectorAll('.status-chart-type').forEach(option => {
+        option.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Update active class
+            document.querySelectorAll('.status-chart-type').forEach(o => o.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Update chart type
+            const chartType = this.dataset.type;
+            updateOrderStatusChartType(chartType);
+        });
+    });
+    
+    // Status chart refresh and export
+    document.getElementById('refresh-status').addEventListener('click', function() {
+        loadStatistics(currentPeriod);
+    });
+    
+    document.getElementById('export-status').addEventListener('click', function() {
+        exportOrderStatusData();
     });
     
     // Set up event listeners for chart options
@@ -1187,31 +1383,82 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateOrderStatusChart(statusData) {
         const ctx = document.getElementById('orderStatusChart').getContext('2d');
         
+        // Show loading
+        document.getElementById('status-chart-loading').classList.remove('d-none');
+        
+        // Define status colors and icons
+        const statusConfig = {
+            'pending': { color: 'rgba(255, 193, 7, 0.8)', icon: 'fas fa-clock' },
+            'processing': { color: 'rgba(23, 162, 184, 0.8)', icon: 'fas fa-cog' },
+            'shipped': { color: 'rgba(32, 201, 151, 0.8)', icon: 'fas fa-shipping-fast' },
+            'delivered': { color: 'rgba(40, 167, 69, 0.8)', icon: 'fas fa-check-circle' },
+            'cancelled': { color: 'rgba(220, 53, 69, 0.8)', icon: 'fas fa-times-circle' },
+            'returned': { color: 'rgba(108, 117, 125, 0.8)', icon: 'fas fa-undo' },
+            'partial_return': { color: 'rgba(253, 126, 20, 0.8)', icon: 'fas fa-exclamation-triangle' },
+            'partially_returned': { color: 'rgba(253, 126, 20, 0.8)', icon: 'fas fa-exclamation-triangle' }
+        };
+        
         const chartData = {
-            labels: statusData.map(item => item.status.charAt(0).toUpperCase() + item.status.slice(1)),
+            labels: statusData.map(item => item.status.charAt(0).toUpperCase() + item.status.slice(1).replace('_', ' ')),
             datasets: [{
                 data: statusData.map(item => item.count),
-                backgroundColor: [
-                    'rgba(241, 196, 15, 0.7)',
-                    'rgba(52, 152, 219, 0.7)',
-                    'rgba(46, 204, 113, 0.7)',
-                    'rgba(231, 76, 60, 0.7)',
-                    'rgba(52, 73, 94, 0.7)'
-                ],
-                borderWidth: 1
+                backgroundColor: statusData.map(item => {
+                    const config = statusConfig[item.status] || statusConfig['pending'];
+                    return config.color;
+                }),
+                borderColor: statusData.map(item => {
+                    const config = statusConfig[item.status] || statusConfig['pending'];
+                    return config.color.replace('0.8', '1');
+                }),
+                borderWidth: 2,
+                hoverBorderWidth: 3,
+                hoverBorderColor: '#ffffff'
             }]
         };
         
         const chartOptions = {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+                intersect: false
+            },
             plugins: {
                 legend: {
-                    position: 'right',
+                    position: 'bottom',
                     labels: {
-                        boxWidth: 15
+                        boxWidth: 12,
+                        padding: 15,
+                        font: {
+                            size: 11
+                        },
+                        usePointStyle: true,
+                        pointStyle: 'circle'
                     }
-                }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    titleColor: '#333',
+                    bodyColor: '#666',
+                    borderColor: 'rgba(0, 0, 0, 0.1)',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    displayColors: true,
+                    usePointStyle: true,
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+                            return `${label}: ${value} orders (${percentage}%)`;
+                        }
+                    }
+                },
+                datalabels: false
+            },
+            animation: {
+                duration: 1000,
+                easing: 'easeInOutQuart'
             }
         };
         
@@ -1220,12 +1467,20 @@ document.addEventListener('DOMContentLoaded', function() {
             orderStatusChart.destroy();
         }
         
-        // Create new chart
-        orderStatusChart = new Chart(ctx, {
-            type: 'pie',
-            data: chartData,
-            options: chartOptions
-        });
+        // Create new chart with a slight delay for smooth transition
+        setTimeout(() => {
+            orderStatusChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: chartData,
+                options: chartOptions
+            });
+            
+            // Hide loading
+            document.getElementById('status-chart-loading').classList.add('d-none');
+            
+            // Update last updated timestamp
+            document.getElementById('status-last-updated').textContent = new Date().toLocaleString();
+        }, 300);
     }
     
     // Load products with filters
@@ -1752,29 +2007,227 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Update order status table
+    // Update order status table with enhanced styling and summary cards
     function updateOrderStatusTable(statusData) {
         const tbody = document.getElementById('order-status-table');
+        const summaryContainer = document.getElementById('status-summary-cards');
+        
         tbody.innerHTML = '';
+        summaryContainer.innerHTML = '';
         
         if (statusData.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" class="text-center">No status data available</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">No status data available</td></tr>';
+            summaryContainer.innerHTML = `
+                <div class="col-12">
+                    <div class="text-center py-3 text-muted">
+                        <i class="fas fa-info-circle me-2"></i>No order status data available
+                    </div>
+                </div>
+            `;
             return;
         }
         
         // Calculate total
         const totalOrders = statusData.reduce((sum, item) => sum + item.count, 0);
         
+        // Status configuration for icons and colors
+        const statusConfig = {
+            'pending': { icon: 'fas fa-clock', class: 'pending', label: 'Pending' },
+            'processing': { icon: 'fas fa-cog fa-spin', class: 'processing', label: 'Processing' },
+            'shipped': { icon: 'fas fa-shipping-fast', class: 'shipped', label: 'Shipped' },
+            'delivered': { icon: 'fas fa-check-circle', class: 'delivered', label: 'Delivered' },
+            'cancelled': { icon: 'fas fa-times-circle', class: 'cancelled', label: 'Cancelled' },
+            'returned': { icon: 'fas fa-undo', class: 'returned', label: 'Returned' },
+            'partial_return': { icon: 'fas fa-exclamation-triangle', class: 'partial_return', label: 'Partial Return' },
+            'partially_returned': { icon: 'fas fa-exclamation-triangle', class: 'partial_return', label: 'Partially Returned' }
+        };
+        
+        // Create summary cards for top statuses
+        const topStatuses = statusData.slice(0, 3); // Show top 3 statuses
+        topStatuses.forEach(status => {
+            const config = statusConfig[status.status] || statusConfig['pending'];
+            const percentage = totalOrders > 0 ? ((status.count / totalOrders) * 100).toFixed(1) : 0;
+            
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'col-12 mb-2';
+            cardDiv.innerHTML = `
+                <div class="status-summary-card ${config.class}" data-status="${status.status}">
+                    <div class="status-icon ${config.class}">
+                        <i class="${config.icon}"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="fw-bold text-dark" style="font-size: 0.9rem;">${config.label}</div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">${status.count} orders</small>
+                            <span class="badge bg-secondary">${percentage}%</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            summaryContainer.appendChild(cardDiv);
+        });
+        
+        // Add total summary if there are more than 3 statuses
+        if (statusData.length > 3) {
+            const otherCount = statusData.slice(3).reduce((sum, item) => sum + item.count, 0);
+            if (otherCount > 0) {
+                const otherPercentage = ((otherCount / totalOrders) * 100).toFixed(1);
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'col-12 mb-2';
+                cardDiv.innerHTML = `
+                    <div class="status-summary-card" style="border-left: 4px solid #6c757d;">
+                        <div class="status-icon" style="background: rgba(108, 117, 125, 0.2); color: #6c757d;">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold text-dark" style="font-size: 0.9rem;">Others</div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">${otherCount} orders</small>
+                                <span class="badge bg-secondary">${otherPercentage}%</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                summaryContainer.appendChild(cardDiv);
+            }
+        }
+        
+        // Populate detailed table
         statusData.forEach(status => {
+            const config = statusConfig[status.status] || statusConfig['pending'];
             const percentage = totalOrders > 0 ? ((status.count / totalOrders) * 100).toFixed(1) : 0;
             
             const tr = document.createElement('tr');
+            tr.className = 'table-row-hover';
             tr.innerHTML = `
-                <td>${status.status.charAt(0).toUpperCase() + status.status.slice(1)}</td>
-                <td>${status.count}</td>
-                <td>${percentage}%</td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <i class="${config.icon} me-2 text-muted" style="width: 16px;"></i>
+                        <span class="fw-medium">${config.label}</span>
+                    </div>
+                </td>
+                <td class="text-center">
+                    <span class="badge bg-light text-dark">${status.count}</span>
+                </td>
+                <td class="text-end">
+                    <div class="d-flex align-items-center justify-content-end">
+                        <div class="progress me-2" style="width: 50px; height: 8px;">
+                            <div class="progress-bar bg-info" style="width: ${percentage}%"></div>
+                        </div>
+                        <small class="fw-bold text-info">${percentage}%</small>
+                    </div>
+                </td>
             `;
             tbody.appendChild(tr);
         });
+        
+        // Add total row
+        if (statusData.length > 1) {
+            const totalTr = document.createElement('tr');
+            totalTr.className = 'table-info fw-bold';
+            totalTr.innerHTML = `
+                <td>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-calculator me-2"></i>
+                        <span>Total Orders</span>
+                    </div>
+                </td>
+                <td class="text-center">
+                    <span class="badge bg-primary">${totalOrders}</span>
+                </td>
+                <td class="text-end">
+                    <span class="fw-bold">100%</span>
+                </td>
+            `;
+            tbody.appendChild(totalTr);
+        }
+        
+        // Add click events to summary cards for filtering/highlighting
+        summaryContainer.querySelectorAll('.status-summary-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const statusName = this.dataset.status;
+                highlightStatusInChart(statusName);
+            });
+        });
+    }
+    
+    // Add helper functions for the enhanced order status features
+    function updateOrderStatusChartType(chartType) {
+        if (orderStatusChart) {
+            orderStatusChart.config.type = chartType;
+            
+            // Adjust options based on chart type
+            if (chartType === 'bar') {
+                orderStatusChart.options.plugins.legend.position = 'top';
+                orderStatusChart.options.scales = {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                };
+            } else {
+                orderStatusChart.options.plugins.legend.position = 'bottom';
+                if (orderStatusChart.options.scales) {
+                    delete orderStatusChart.options.scales;
+                }
+            }
+            
+            orderStatusChart.update();
+        }
+    }
+    
+    function highlightStatusInChart(statusName) {
+        if (orderStatusChart && orderStatusChart.data.labels) {
+            // Find the index of the status
+            const statusIndex = orderStatusChart.data.labels.findIndex(label => 
+                label.toLowerCase().replace(' ', '_') === statusName
+            );
+            
+            if (statusIndex !== -1) {
+                // Temporarily highlight the segment
+                const originalColors = [...orderStatusChart.data.datasets[0].backgroundColor];
+                const highlightColors = originalColors.map((color, index) => 
+                    index === statusIndex ? color : color.replace('0.8', '0.3')
+                );
+                
+                orderStatusChart.data.datasets[0].backgroundColor = highlightColors;
+                orderStatusChart.update();
+                
+                // Restore original colors after 2 seconds
+                setTimeout(() => {
+                    orderStatusChart.data.datasets[0].backgroundColor = originalColors;
+                    orderStatusChart.update();
+                }, 2000);
+            }
+        }
+    }
+    
+    function exportOrderStatusData() {
+        if (!orderStatusChart || !orderStatusChart.data.labels) {
+            showAlert('No status data available to export', 'warning');
+            return;
+        }
+        
+        const csvContent = "data:text/csv;charset=utf-8," + 
+            "Status,Count,Percentage\n" +
+            orderStatusChart.data.labels.map((label, index) => {
+                const count = orderStatusChart.data.datasets[0].data[index];
+                const total = orderStatusChart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : '0';
+                return `${label},${count},${percentage}%`;
+            }).join("\n");
+            
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `order_status_breakdown_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showAlert('Order status data exported successfully!', 'success');
     }
     
     // Update analytics metrics
