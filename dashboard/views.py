@@ -683,13 +683,22 @@ class DashboardStatisticsView(APIView):
                 count=Count('id')
             ).order_by('-count')
             
+            # Normalize status values and consolidate duplicates (e.g., "Pending" and "pending")
+            status_consolidation = {}
+            for status_data in orders_by_status:
+                normalized_status = status_data['status'].lower()
+                if normalized_status in status_consolidation:
+                    status_consolidation[normalized_status] += status_data['count']
+                else:
+                    status_consolidation[normalized_status] = status_data['count']
+            
             # Convert to list format for frontend
             orders_status_list = [
                 {
-                    'status': status_data['status'],
-                    'count': status_data['count']
+                    'status': status,
+                    'count': count
                 }
-                for status_data in orders_by_status
+                for status, count in sorted(status_consolidation.items(), key=lambda x: x[1], reverse=True)
             ]
             
             # Prepare response data with simple defaults for now

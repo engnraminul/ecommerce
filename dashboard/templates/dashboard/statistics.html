@@ -376,7 +376,9 @@
                             </div>
                         </div>
                         
-                        <!-- Detailed Status Table -->
+                        
+                    </div>
+                    <!-- Detailed Status Table -->
                         <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
                             <table class="table table-sm table-hover">
                                 <thead class="table-dark sticky-top">
@@ -398,7 +400,6 @@
                                 </tbody>
                             </table>
                         </div>
-                    </div>
                 </div>
                 
                 <!-- Additional Status Insights -->
@@ -2032,14 +2033,62 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Status configuration for icons and colors
         const statusConfig = {
-            'pending': { icon: 'fas fa-clock', class: 'pending', label: 'Pending' },
-            'processing': { icon: 'fas fa-cog fa-spin', class: 'processing', label: 'Processing' },
-            'shipped': { icon: 'fas fa-shipping-fast', class: 'shipped', label: 'Shipped' },
-            'delivered': { icon: 'fas fa-check-circle', class: 'delivered', label: 'Delivered' },
-            'cancelled': { icon: 'fas fa-times-circle', class: 'cancelled', label: 'Cancelled' },
-            'returned': { icon: 'fas fa-undo', class: 'returned', label: 'Returned' },
-            'partial_return': { icon: 'fas fa-exclamation-triangle', class: 'partial_return', label: 'Partial Return' },
-            'partially_returned': { icon: 'fas fa-exclamation-triangle', class: 'partial_return', label: 'Partially Returned' }
+            'pending': { 
+                icon: 'fas fa-clock', 
+                class: 'pending', 
+                label: 'Pending',
+                iconColor: '#ffc107',
+                textColor: '#856404'
+            },
+            'processing': { 
+                icon: 'fas fa-cog fa-spin', 
+                class: 'processing', 
+                label: 'Processing',
+                iconColor: '#17a2b8',
+                textColor: '#0c5460'
+            },
+            'shipped': { 
+                icon: 'fas fa-shipping-fast', 
+                class: 'shipped', 
+                label: 'Shipped',
+                iconColor: '#20c997',
+                textColor: '#0a3622'
+            },
+            'delivered': { 
+                icon: 'fas fa-check-circle', 
+                class: 'delivered', 
+                label: 'Delivered',
+                iconColor: '#28a745',
+                textColor: '#155724'
+            },
+            'cancelled': { 
+                icon: 'fas fa-times-circle', 
+                class: 'cancelled', 
+                label: 'Cancelled',
+                iconColor: '#dc3545',
+                textColor: '#721c24'
+            },
+            'returned': { 
+                icon: 'fas fa-undo', 
+                class: 'returned', 
+                label: 'Returned',
+                iconColor: '#6c757d',
+                textColor: '#383d41'
+            },
+            'partial_return': { 
+                icon: 'fas fa-exclamation-triangle', 
+                class: 'partial_return', 
+                label: 'Partial Return',
+                iconColor: '#fd7e14',
+                textColor: '#7a3e0d'
+            },
+            'partially_returned': { 
+                icon: 'fas fa-exclamation-triangle', 
+                class: 'partial_return', 
+                label: 'Partially Returned',
+                iconColor: '#fd7e14',
+                textColor: '#7a3e0d'
+            }
         };
         
         // Create summary cards for top statuses
@@ -2102,8 +2151,8 @@ document.addEventListener('DOMContentLoaded', function() {
             tr.innerHTML = `
                 <td>
                     <div class="d-flex align-items-center">
-                        <i class="${config.icon} me-2 text-muted" style="width: 16px;"></i>
-                        <span class="fw-medium">${config.label}</span>
+                        <i class="${config.icon} me-2" style="width: 16px; color: ${config.iconColor};"></i>
+                        <span class="fw-medium" style="color: ${config.textColor};">${config.label}</span>
                     </div>
                 </td>
                 <td class="text-center">
@@ -2112,9 +2161,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td class="text-end">
                     <div class="d-flex align-items-center justify-content-end">
                         <div class="progress me-2" style="width: 50px; height: 8px;">
-                            <div class="progress-bar bg-info" style="width: ${percentage}%"></div>
+                            <div class="progress-bar" style="width: ${percentage}%; background-color: ${config.iconColor};"></div>
                         </div>
-                        <small class="fw-bold text-info">${percentage}%</small>
+                        <small class="fw-bold" style="color: ${config.textColor};">${percentage}%</small>
                     </div>
                 </td>
             `;

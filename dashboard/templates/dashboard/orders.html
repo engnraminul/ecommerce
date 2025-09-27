@@ -996,7 +996,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const tr = document.createElement('tr');
             
             let statusBadgeClass;
-            switch (order.status) {
+            switch (order.status.toLowerCase()) {
                 case 'pending':
                     statusBadgeClass = 'bg-warning text-dark';
                     break;
@@ -1348,7 +1348,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Set order status with appropriate badge
         const statusElement = document.getElementById('orderDetailStatus');
         let statusBadgeClass;
-        switch (order.status) {
+        switch (order.status.toLowerCase()) {
             case 'pending':
                 statusBadgeClass = 'bg-warning text-dark';
                 break;
@@ -2180,7 +2180,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Update status badge class
             const statusElement = document.getElementById('orderDetailStatus');
             let statusBadgeClass;
-            switch (newStatus) {
+            switch (newStatus.toLowerCase()) {
                 case 'pending':
                     statusBadgeClass = 'bg-warning text-dark';
                     break;
