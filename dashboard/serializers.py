@@ -38,6 +38,8 @@ class ProductDashboardSerializer(serializers.ModelSerializer):
     category_name = serializers.ReadOnlyField(source='category.name')
     variant_count = serializers.SerializerMethodField()
     base_price = serializers.ReadOnlyField(source='price')  # Map 'base_price' to 'price'
+    variants = serializers.SerializerMethodField()
+    image_url = serializers.SerializerMethodField()
     
     class Meta:
         model = Product
@@ -49,15 +51,40 @@ class ProductDashboardSerializer(serializers.ModelSerializer):
             'weight', 'dimensions', 'shipping_type', 'has_express_shipping',
             'custom_shipping_dhaka', 'custom_shipping_outside', 'custom_express_shipping',
             'meta_title', 'meta_description', 'youtube_video_url',
-            'created_at', 'updated_at', 'variant_count'
+            'created_at', 'updated_at', 'variant_count', 'variants', 'image_url'
         ]
     
     def get_variant_count(self, obj):
         return obj.variants.count()
+    
+    def get_variants(self, obj):
+        variants = obj.variants.all()
+        return [{
+            'id': variant.id,
+            'name': variant.name or 'Default',
+            'size': variant.size,
+            'color': variant.color,
+            'price': float(variant.price) if variant.price else float(obj.price or 0),
+            'cost_price': float(variant.cost_price) if variant.cost_price else float(obj.cost_price or 0),
+            'stock_quantity': variant.stock_quantity or 0,
+            'is_active': variant.is_active,
+            'image_url': variant.image.url if variant.image else None
+        } for variant in variants]
+    
+    def get_image_url(self, obj):
+        # Try to get the first image from productimage_set
+        if hasattr(obj, 'productimage_set') and obj.productimage_set.exists():
+            first_image = obj.productimage_set.first()
+            if first_image and first_image.image:
+                return first_image.image.url
+        return None
 
 class ProductDetailSerializer(serializers.ModelSerializer):
     """Detailed serializer for creating and updating products"""
     category_name = serializers.ReadOnlyField(source='category.name')
+    variant_count = serializers.SerializerMethodField()
+    variants = serializers.SerializerMethodField()
+    image_url = serializers.SerializerMethodField()
     
     class Meta:
         model = Product
@@ -69,9 +96,51 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'weight', 'dimensions', 'shipping_type', 'has_express_shipping',
             'custom_shipping_dhaka', 'custom_shipping_outside', 'custom_express_shipping',
             'meta_title', 'meta_description', 'youtube_video_url',
-            'created_at', 'updated_at'
+            'created_at', 'updated_at', 'variant_count', 'variants', 'image_url'
         ]
         read_only_fields = ['created_at', 'updated_at']
+    
+    def get_variant_count(self, obj):
+        return obj.variants.count()
+    
+    def get_variants(self, obj):
+        from orders.models import OrderItem
+        from django.db.models import Sum
+        
+        variants = obj.variants.all()
+        variants_data = []
+        
+        for variant in variants:
+            # Calculate sales count for this variant
+            sales_count = OrderItem.objects.filter(
+                variant=variant,
+                order__status__in=['delivered', 'shipped']
+            ).aggregate(
+                total_sold=Sum('quantity')
+            )['total_sold'] or 0
+            
+            variants_data.append({
+                'id': variant.id,
+                'name': variant.name or 'Default',
+                'size': variant.size,
+                'color': variant.color,
+                'price': float(variant.price) if variant.price else float(obj.price or 0),
+                'cost_price': float(variant.cost_price) if variant.cost_price else float(obj.cost_price or 0),
+                'stock_quantity': variant.stock_quantity or 0,
+                'sales_count': sales_count,
+                'is_active': variant.is_active,
+                'image_url': variant.image.url if variant.image else None
+            })
+        
+        return variants_data
+    
+    def get_image_url(self, obj):
+        # Try to get the first image from productimage_set
+        if hasattr(obj, 'productimage_set') and obj.productimage_set.exists():
+            first_image = obj.productimage_set.first()
+            if first_image and first_image.image:
+                return first_image.image.url
+        return None
     
     def validate_slug(self, value):
         """Ensure slug uniqueness"""

@@ -25,6 +25,11 @@ from products.models import Product, ProductVariant, ProductImage, Category
 from orders.models import Order, OrderItem
 from users.models import User
 
+class IsStaffUser(permissions.BasePermission):
+    """Custom permission to match dashboard view requirements"""
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated and request.user.is_staff
+
 class DashboardSettingViewSet(viewsets.ModelViewSet):
     queryset = DashboardSetting.objects.all()
     serializer_class = DashboardSettingSerializer
@@ -184,7 +189,7 @@ class CategoryDashboardViewSet(viewsets.ModelViewSet):
 class ProductDashboardViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductDashboardSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsStaffUser]
     filterset_fields = ['category', 'is_active', 'is_featured', 'is_digital', 'shipping_type']
     search_fields = ['name', 'description', 'short_description', 'sku', 'barcode']
     ordering_fields = ['name', 'created_at', 'price', 'stock_quantity']
@@ -1036,3 +1041,226 @@ class ExpenseDashboardViewSet(viewsets.ModelViewSet):
             'expense_by_type': expense_by_type,
             'total_count': queryset.count()
         })
+
+
+class ProductPerformanceView(APIView):
+    """
+    API endpoint for detailed product performance data with filtering and sorting
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        # Check if user is staff (admin user)
+        if not request.user.is_staff:
+            return Response({'error': 'Admin access required'}, status=403)
+        
+        try:
+            # Get query parameters
+            period = request.query_params.get('period', 'all')
+            date_from = request.query_params.get('date_from')
+            date_to = request.query_params.get('date_to')
+            search = request.query_params.get('search', '').strip()
+            sort_by = request.query_params.get('sort', 'orders')
+            sort_order = request.query_params.get('order', 'desc')
+            
+            # Define time periods if no specific dates provided
+            now = timezone.now()
+            if not date_from and not date_to:
+                if period == 'day':
+                    start_date = now - timedelta(days=1)
+                elif period == 'week':
+                    start_date = now - timedelta(days=7)
+                elif period == 'month':
+                    start_date = now - timedelta(days=30)
+                elif period == 'year':
+                    start_date = now - timedelta(days=365)
+                else:  # 'all'
+                    start_date = None
+            else:
+                start_date = None
+            
+            # Build date filter for orders
+            order_date_filter = Q()
+            if date_from:
+                try:
+                    from_date = timezone.datetime.strptime(date_from, '%Y-%m-%d').date()
+                    order_date_filter &= Q(created_at__date__gte=from_date)
+                except ValueError:
+                    pass
+                    
+            if date_to:
+                try:
+                    to_date = timezone.datetime.strptime(date_to, '%Y-%m-%d').date()
+                    order_date_filter &= Q(created_at__date__lte=to_date)
+                except ValueError:
+                    pass
+                    
+            if start_date and not (date_from or date_to):
+                order_date_filter = Q(created_at__gte=start_date)
+            
+            # Get all active products
+            products_query = Product.objects.filter(is_active=True)
+            
+            # Apply search filter
+            if search:
+                products_query = products_query.filter(
+                    Q(name__icontains=search) | 
+                    Q(category__name__icontains=search)
+                )
+            
+            products_data = []
+            
+            for product in products_query:
+                # Get all orders for this product within date range
+                product_orders = Order.objects.filter(
+                    order_date_filter,
+                    items__product=product
+                ).distinct()
+                
+                # Count total orders
+                orders_count = product_orders.count()
+                
+                # Calculate delivered quantity
+                delivered_orders = product_orders.filter(status__in=['delivered', 'shipped'])
+                delivered_quantity = OrderItem.objects.filter(
+                    order__in=delivered_orders,
+                    product=product
+                ).aggregate(total=Sum('quantity'))['total'] or 0
+                
+                # Calculate revenue (from delivered and shipped orders + partial returns)
+                delivered_shipped_revenue = Order.objects.filter(
+                    order_date_filter &
+                    Q(status__in=['delivered', 'shipped']) &
+                    Q(items__product=product)
+                ).aggregate(total=Sum('total_amount'))['total'] or 0
+                
+                partial_return_revenue = Order.objects.filter(
+                    order_date_filter &
+                    Q(status='partially_returned') &
+                    Q(items__product=product)
+                ).aggregate(total=Sum('partially_ammount'))['total'] or 0
+                
+                total_revenue = delivered_shipped_revenue + partial_return_revenue
+                
+                # Get category name
+                category_name = product.category.name if product.category else 'Uncategorized'
+                
+                # Get product image URL
+                image_url = None
+                if hasattr(product, 'images') and product.images.exists():
+                    first_image = product.images.first()
+                    if first_image and first_image.image:
+                        image_url = first_image.image.url
+                elif hasattr(product, 'productimage_set') and product.productimage_set.exists():
+                    first_image = product.productimage_set.first()
+                    if first_image and first_image.image:
+                        image_url = first_image.image.url
+                
+                product_data = {
+                    'id': product.id,
+                    'product_name': product.name,
+                    'category': category_name,
+                    'orders': orders_count,
+                    'delivered_quantity': int(delivered_quantity),
+                    'revenue': float(total_revenue),
+                    'price': float(product.price) if product.price else 0,
+                    'cost_price': float(product.cost_price) if product.cost_price else 0,
+                    'stock': product.stock_quantity if hasattr(product, 'stock_quantity') else 0,
+                    'image_url': image_url
+                }
+                
+                products_data.append(product_data)
+            
+            # Sort the data
+            reverse_sort = sort_order.lower() == 'desc'
+            
+            if sort_by == 'name':
+                products_data.sort(key=lambda x: x['product_name'].lower(), reverse=reverse_sort)
+            elif sort_by == 'orders':
+                products_data.sort(key=lambda x: x['orders'], reverse=reverse_sort)
+            elif sort_by == 'delivered':
+                products_data.sort(key=lambda x: x['delivered_quantity'], reverse=reverse_sort)
+            elif sort_by == 'revenue':
+                products_data.sort(key=lambda x: x['revenue'], reverse=reverse_sort)
+            else:
+                products_data.sort(key=lambda x: x['orders'], reverse=reverse_sort)
+            
+            return Response({
+                'products': products_data,
+                'total_count': len(products_data),
+                'filters': {
+                    'period': period,
+                    'date_from': date_from,
+                    'date_to': date_to,
+                    'search': search,
+                    'sort_by': sort_by,
+                    'sort_order': sort_order
+                }
+            })
+            
+        except Exception as e:
+            return Response({
+                'error': 'Failed to load product performance data',
+                'detail': str(e)
+            }, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def export_products_performance(request):
+    """
+    Export product performance data as CSV
+    """
+    if not request.user.is_staff:
+        return Response({'error': 'Admin access required'}, status=403)
+    
+    try:
+        import csv
+        from django.http import HttpResponse
+        
+        # Get the same data as the API
+        view = ProductPerformanceView()
+        view.request = request
+        response_data = view.get(request).data
+        
+        if 'error' in response_data:
+            return Response(response_data, status=500)
+        
+        # Create CSV response
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="products_performance.csv"'
+        
+        writer = csv.writer(response)
+        
+        # Write header
+        writer.writerow([
+            'Product Name',
+            'Category', 
+            'Total Orders',
+            'Delivered Quantity',
+            'Revenue ($)',
+            'Price ($)',
+            'Cost Price ($)',
+            'Stock'
+        ])
+        
+        # Write data rows
+        for product in response_data['products']:
+            writer.writerow([
+                product['product_name'],
+                product['category'],
+                product['orders'],
+                product['delivered_quantity'],
+                f"{product['revenue']:.2f}",
+                f"{product['price']:.2f}",
+                f"{product['cost_price']:.2f}",
+                product['stock']
+            ])
+        
+        return response
+        
+    except Exception as e:
+        return Response({
+            'error': 'Failed to export data',
+            'detail': str(e)
+        }, status=500)
