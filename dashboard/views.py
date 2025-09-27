@@ -730,6 +730,91 @@ class DashboardStatisticsView(APIView):
             traceback.print_exc()
             return Response({'error': str(e)}, status=500)
 
+class OrderStatusBreakdownView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        # Check if user is staff (admin user)
+        if not request.user.is_staff:
+            return Response({'error': 'Admin access required'}, status=403)
+        
+        try:
+            # Get query parameters for date filtering
+            period = request.GET.get('period', 'week')
+            date_from = request.GET.get('date_from')
+            date_to = request.GET.get('date_to')
+            
+            # Build date filter based on parameters
+            date_filter = Q()
+            
+            if date_from and date_to:
+                # Use custom date range if provided
+                from datetime import datetime
+                try:
+                    start_date = datetime.strptime(date_from, '%Y-%m-%d').date()
+                    end_date = datetime.strptime(date_to, '%Y-%m-%d').date()
+                    date_filter = Q(created_at__date__gte=start_date, created_at__date__lte=end_date)
+                except ValueError:
+                    return Response({'error': 'Invalid date format. Use YYYY-MM-DD'}, status=400)
+            else:
+                # Use period-based filtering as fallback
+                now = timezone.now()
+                if period == 'day':
+                    start_date = now - timedelta(days=1)
+                elif period == 'month':
+                    start_date = now - timedelta(days=30)
+                elif period == 'year':
+                    start_date = now - timedelta(days=365)
+                elif period == 'all':
+                    start_date = None
+                else:  # default to week
+                    start_date = now - timedelta(days=7)
+                
+                if start_date:
+                    date_filter = Q(created_at__gte=start_date)
+            
+            # Calculate orders by status breakdown
+            orders_by_status = Order.objects.filter(date_filter).values('status').annotate(
+                count=Count('id')
+            ).order_by('-count')
+            
+            # Normalize status values and consolidate duplicates
+            status_consolidation = {}
+            for status_data in orders_by_status:
+                normalized_status = status_data['status'].lower()
+                if normalized_status in status_consolidation:
+                    status_consolidation[normalized_status] += status_data['count']
+                else:
+                    status_consolidation[normalized_status] = status_data['count']
+            
+            # Convert to list format for frontend
+            orders_status_list = [
+                {
+                    'status': status,
+                    'count': count
+                }
+                for status, count in sorted(status_consolidation.items(), key=lambda x: x[1], reverse=True)
+            ]
+            
+            # Prepare response data
+            data = {
+                'orders_by_status': orders_status_list,
+                'total_orders': sum(status_consolidation.values()),
+                'date_range': {
+                    'from': date_from,
+                    'to': date_to,
+                    'period': period
+                }
+            }
+            
+            return Response(data)
+            
+        except Exception as e:
+            print(f"Error in order status breakdown view: {e}")
+            import traceback
+            traceback.print_exc()
+            return Response({'error': str(e)}, status=500)
+
 # Frontend views for dashboard SPA
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
