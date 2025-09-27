@@ -2,14 +2,26 @@
 
 {% block title %}Statistics - MB Admin{% endblock %}
 
-{% block page_title %}Sales & Performance Statistics{% endblock %}
+{% block page_title %}
+    Sales & Performance Statistics 
+    <small class="text-muted">
+        <i class="fas fa-clock me-1"></i>
+        Dhaka, Bangladesh Time (UTC +6)
+    </small>
+{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Time Period</h5>
+                <div>
+                    <h5 class="mb-0">Time Period</h5>
+                    <small class="text-muted">
+                        <i class="fas fa-globe-asia me-1"></i>
+                        All times shown in Dhaka timezone
+                    </small>
+                </div>
                 <div class="btn-group" role="group">
                     <button type="button" class="btn btn-sm btn-outline-primary period-btn active" data-period="week">Week</button>
                     <button type="button" class="btn btn-sm btn-outline-primary period-btn" data-period="month">Month</button>
@@ -942,12 +954,46 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Timezone utility functions for Dhaka, Bangladesh (UTC +6)
+    const DHAKA_TIMEZONE_OFFSET = 6 * 60; // 6 hours in minutes
+    
+    function getDhakaTime() {
+        const now = new Date();
+        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const dhakaTime = new Date(utc + (DHAKA_TIMEZONE_OFFSET * 60000));
+        return dhakaTime;
+    }
+    
+    function formatDhakaDate(date) {
+        if (!date) date = getDhakaTime();
+        return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+    }
+    
+    function formatDhakaDateTime(date) {
+        if (!date) date = getDhakaTime();
+        return date.toLocaleString('en-US', {
+            timeZone: 'Asia/Dhaka',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        });
+    }
+    
+    function getFirstDayOfMonth(date) {
+        if (!date) date = getDhakaTime();
+        return new Date(date.getFullYear(), date.getMonth(), 1);
+    }
+    
     // Initialize chart objects
     let salesChart, categoryChart, orderStatusChart;
     
     // Current period selection
     let currentPeriod = 'week';
-    let currentYear = new Date().getFullYear().toString();
+    let currentYear = getDhakaTime().getFullYear().toString();
     
     // Products filtering and pagination
     let productsCurrentPage = 1;
@@ -960,15 +1006,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set current year as default in dropdown
     document.getElementById('year-filter').value = currentYear;
     
-    // Set default date range (current month)
-    const today = new Date();
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    document.getElementById('products-date-from').value = firstDayOfMonth.toISOString().split('T')[0];
-    document.getElementById('products-date-to').value = today.toISOString().split('T')[0];
+    // Set default date range (current month) using Dhaka timezone
+    const today = getDhakaTime();
+    const firstDayOfMonth = getFirstDayOfMonth(today);
+    document.getElementById('products-date-from').value = formatDhakaDate(firstDayOfMonth);
+    document.getElementById('products-date-to').value = formatDhakaDate(today);
     
-    // Set default date range for status section (current month)
-    document.getElementById('status-date-from').value = firstDayOfMonth.toISOString().split('T')[0];
-    document.getElementById('status-date-to').value = today.toISOString().split('T')[0];
+    // Set default date range for status section (current month) using Dhaka timezone
+    document.getElementById('status-date-from').value = formatDhakaDate(firstDayOfMonth);
+    document.getElementById('status-date-to').value = formatDhakaDate(today);
     
     // Load initial data
     loadStatistics(currentPeriod);
@@ -1022,11 +1068,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     document.getElementById('status-clear-filter').addEventListener('click', function() {
-        // Reset date filters to current month
-        const today = new Date();
-        const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        document.getElementById('status-date-from').value = firstDayOfMonth.toISOString().split('T')[0];
-        document.getElementById('status-date-to').value = today.toISOString().split('T')[0];
+        // Reset date filters to current month using Dhaka timezone
+        const today = getDhakaTime();
+        const firstDayOfMonth = getFirstDayOfMonth(today);
+        document.getElementById('status-date-from').value = formatDhakaDate(firstDayOfMonth);
+        document.getElementById('status-date-to').value = formatDhakaDate(today);
         loadOrderStatusWithDateFilter();
     });
     
@@ -1106,10 +1152,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('products-clear-filters').addEventListener('click', function() {
         document.getElementById('products-search').value = '';
         document.getElementById('products-sort').value = 'orders';
-        const today = new Date();
-        const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        document.getElementById('products-date-from').value = firstDayOfMonth.toISOString().split('T')[0];
-        document.getElementById('products-date-to').value = today.toISOString().split('T')[0];
+        const today = getDhakaTime();
+        const firstDayOfMonth = getFirstDayOfMonth(today);
+        document.getElementById('products-date-from').value = formatDhakaDate(firstDayOfMonth);
+        document.getElementById('products-date-to').value = formatDhakaDate(today);
         productsSortBy = 'orders';
         productsCurrentPage = 1;
         loadProductsWithFilters();
@@ -1225,7 +1271,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const currentRevenue = statisticsData.total_revenue || 0;
         
         // For now, show only current period data (no historical mock data)
-        const currentDate = new Date();
+        const currentDate = getDhakaTime();
         let chartLabel = '';
         
         // Determine the appropriate label based on selected year and current date
@@ -1234,7 +1280,11 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             const selectedYearInt = parseInt(currentYear);
             if (selectedYearInt === currentDate.getFullYear()) {
-                chartLabel = `Current (${currentDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })})`;
+                chartLabel = `Current (${currentDate.toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    year: 'numeric',
+                    timeZone: 'Asia/Dhaka'
+                })})`;
             } else {
                 chartLabel = `Year ${currentYear}`;
             }
@@ -1597,8 +1647,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Hide loading
             document.getElementById('status-chart-loading').classList.add('d-none');
             
-            // Update last updated timestamp
-            document.getElementById('status-last-updated').textContent = new Date().toLocaleString();
+            // Update last updated timestamp using Dhaka timezone
+            document.getElementById('status-last-updated').textContent = formatDhakaDateTime();
         }, 300);
     }
     
@@ -2434,7 +2484,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `order_status_breakdown_${new Date().toISOString().split('T')[0]}.csv`);
+        link.setAttribute("download", `order_status_breakdown_${formatDhakaDate()}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

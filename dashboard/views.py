@@ -604,7 +604,7 @@ class DashboardStatisticsView(APIView):
         
         try:
             # Get query parameters for date filtering
-            period = request.query_params.get('period', 'week')
+            period = request.GET.get('period', 'week')
             
             # Define time periods
             now = timezone.now()
@@ -1164,12 +1164,12 @@ class ProductPerformanceView(APIView):
         
         try:
             # Get query parameters
-            period = request.query_params.get('period', 'all')
-            date_from = request.query_params.get('date_from')
-            date_to = request.query_params.get('date_to')
-            search = request.query_params.get('search', '').strip()
-            sort_by = request.query_params.get('sort', 'orders')
-            sort_order = request.query_params.get('order', 'desc')
+            period = request.GET.get('period', 'all')
+            date_from = request.GET.get('date_from')
+            date_to = request.GET.get('date_to')
+            search = request.GET.get('search', '').strip()
+            sort_by = request.GET.get('sort', 'orders')
+            sort_order = request.GET.get('order', 'desc')
             
             # Define time periods if no specific dates provided
             now = timezone.now()
