@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.db.models import Sum, Count, Q, F
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, datetime
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view, permission_classes
@@ -605,24 +605,55 @@ class DashboardStatisticsView(APIView):
         try:
             # Get query parameters for date filtering
             period = request.GET.get('period', 'week')
+            date_from = request.GET.get('date_from')
+            date_to = request.GET.get('date_to')
             
-            # Define time periods
-            now = timezone.now()
-            if period == 'day':
-                start_date = now - timedelta(days=1)
+            # Define time periods using Dhaka timezone (UTC +6)
+            dhaka_tz = timezone.get_fixed_timezone(6 * 60)  # +6 hours in minutes
+            now = timezone.now().astimezone(dhaka_tz)
+            
+            if period == 'custom' and date_from and date_to:
+                # Custom date range
+                try:
+                    start_date = datetime.strptime(date_from, '%Y-%m-%d').replace(tzinfo=dhaka_tz)
+                    end_date = datetime.strptime(date_to, '%Y-%m-%d').replace(tzinfo=dhaka_tz) + timedelta(days=1) - timedelta(seconds=1)
+                except ValueError:
+                    return Response({'error': 'Invalid date format. Use YYYY-MM-DD'}, status=400)
+            elif period == 'day':
+                start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+                end_date = now
+            elif period == 'week':
+                # This week (Monday to Sunday in Dhaka time)
+                days_since_monday = now.weekday()
+                start_date = (now - timedelta(days=days_since_monday)).replace(hour=0, minute=0, second=0, microsecond=0)
+                end_date = now
             elif period == 'month':
-                start_date = now - timedelta(days=30)
+                # This month in Dhaka timezone
+                start_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+                end_date = now
+            elif period == 'last_month':
+                # Last month in Dhaka timezone
+                first_day_this_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+                end_date = first_day_this_month - timedelta(seconds=1)
+                start_date = end_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             elif period == 'year':
-                start_date = now - timedelta(days=365)
+                # This year in Dhaka timezone
+                start_date = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+                end_date = now
             elif period == 'all':
                 start_date = None
+                end_date = None
             else:  # default to week
-                start_date = now - timedelta(days=7)
+                days_since_monday = now.weekday()
+                start_date = (now - timedelta(days=days_since_monday)).replace(hour=0, minute=0, second=0, microsecond=0)
+                end_date = now
             
             # Build base query filter
             date_filter = Q()
-            if start_date:
-                date_filter = Q(created_at__gte=start_date)
+            if start_date and end_date:
+                date_filter = Q(created_at__gte=start_date.astimezone(timezone.timezone.utc), created_at__lte=end_date.astimezone(timezone.timezone.utc))
+            elif start_date:
+                date_filter = Q(created_at__gte=start_date.astimezone(timezone.timezone.utc))
             
             # Calculate Total Sales Amount based on order status
             delivered_shipped_sales = Order.objects.filter(
@@ -639,9 +670,13 @@ class DashboardStatisticsView(APIView):
             orders_count = Order.objects.filter(date_filter).count()
             
             # Calculate Total Expenses
-            dashboard_expenses = Expense.objects.filter(
-                Q(created_at__gte=start_date) if start_date else Q()
-            ).aggregate(total=Sum('amount'))['total'] or 0
+            expense_date_filter = Q()
+            if start_date and end_date:
+                expense_date_filter = Q(created_at__gte=start_date.astimezone(timezone.timezone.utc), created_at__lte=end_date.astimezone(timezone.timezone.utc))
+            elif start_date:
+                expense_date_filter = Q(created_at__gte=start_date.astimezone(timezone.timezone.utc))
+                
+            dashboard_expenses = Expense.objects.filter(expense_date_filter).aggregate(total=Sum('amount'))['total'] or 0
             
             courier_expenses = Order.objects.filter(
                 date_filter & Q(status__in=['delivered', 'shipped', 'returned', 'partially_returned'])
