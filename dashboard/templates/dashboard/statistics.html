@@ -14,45 +14,54 @@
 <div class="row mb-4">
     <div class="col-md-12">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="mb-0">Time Period</h5>
-                    <small class="text-muted">
-                        <i class="fas fa-globe-asia me-1"></i>
-                        All times shown in Dhaka timezone
-                    </small>
-                </div>
-                <div class="d-flex align-items-center gap-3">
-                    <div class="dropdown">
-                        <select class="form-select form-select-sm" id="period-filter" style="width: auto; min-width: 150px;">
-                            <option value="week" selected>This Week</option>
-                            <option value="month">This Month</option>
-                            <option value="last_month">Last Month</option>
-                            <option value="year">This Year</option>
-                            <option value="custom">Custom Range</option>
-                        </select>
+            <div class="card-header">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
+                    <div>
+                        <h5 class="mb-0">Time Period</h5>
+                        <small class="text-muted">
+                            <i class="fas fa-globe-asia me-1"></i>
+                            All times shown in Dhaka timezone
+                        </small>
                     </div>
-                    <!-- Custom Date Range Picker (initially hidden) -->
-                    <div id="custom-date-range" class="d-flex align-items-center gap-2" style="display: none;">
-                        <div class="input-group input-group-sm" style="width: auto;">
-                            <span class="input-group-text bg-light">
-                                <i class="fas fa-calendar text-muted" style="font-size: 0.75rem;"></i>
-                            </span>
-                            <input type="date" class="form-control" id="custom-date-from" style="width: 140px;" title="From Date">
+                    <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-2 gap-sm-3 w-sm-auto">
+                        <div class="dropdown w-100 w-sm-auto">
+                            <select class="form-select form-select-sm" id="period-filter" style="min-width: 150px;">
+                                <option value="week">This Week</option>
+                                <option value="month" selected>This Month</option>
+                                <option value="last_month">Last Month</option>
+                                <option value="year">This Year</option>
+                                <option value="custom">Custom Range</option>
+                            </select>
                         </div>
-                        <span class="text-muted">to</span>
-                        <div class="input-group input-group-sm" style="width: auto;">
-                            <span class="input-group-text bg-light">
-                                <i class="fas fa-calendar text-muted" style="font-size: 0.75rem;"></i>
-                            </span>
-                            <input type="date" class="form-control" id="custom-date-to" style="width: 140px;" title="To Date">
+                        <!-- Custom Date Range Picker (initially hidden) -->
+                        <div id="custom-date-range" class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-2 w-100 w-sm-auto" style="display: none;">
+                            <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-2 w-100 w-sm-auto">
+                                <div class="input-group input-group-sm w-100" style="max-width: 140px;">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-calendar text-muted" style="font-size: 0.75rem;"></i>
+                                    </span>
+                                    <input type="date" class="form-control" id="custom-date-from" title="From Date">
+                                </div>
+                                <span class="text-muted d-none d-sm-inline">to</span>
+                                <span class="text-muted d-sm-none small">to</span>
+                                <div class="input-group input-group-sm w-100" style="max-width: 140px;">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-calendar text-muted" style="font-size: 0.75rem;"></i>
+                                    </span>
+                                    <input type="date" class="form-control" id="custom-date-to" title="To Date">
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2 w-100 w-sm-auto">
+                                <button class="btn btn-sm btn-primary flex-fill flex-sm-grow-0" id="apply-custom-range" title="Apply Custom Range">
+                                    <i class="fas fa-check"></i>
+                                    <span class="d-sm-none ms-1">Apply</span>
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary flex-fill flex-sm-grow-0" id="cancel-custom-range" title="Cancel">
+                                    <i class="fas fa-times"></i>
+                                    <span class="d-sm-none ms-1">Cancel</span>
+                                </button>
+                            </div>
                         </div>
-                        <button class="btn btn-sm btn-primary" id="apply-custom-range" title="Apply Custom Range">
-                            <i class="fas fa-check"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary" id="cancel-custom-range" title="Cancel">
-                            <i class="fas fa-times"></i>
-                        </button>
                     </div>
                 </div>
             </div>
@@ -61,69 +70,133 @@
 </div>
 
 <div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card card-stats h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h3 class="mb-0" id="total-sales-stat">$0.00</h3>
-                        <p class="text-white mb-0">Total Sales Amount</p>
-                        <small class="text-muted">Delivered + Shipped + Partial Returns</small>
+    <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 mb-3">
+        <div class="card stat-card h-100 border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="flex-grow-1">
+                        <div class="stat-icon-wrapper sales mb-3">
+                            <i class="fas fa-money-bill-wave fa-lg"></i>
+                        </div>
+                        <h2 class="stat-value mb-1" id="total-sales-stat">$0.00</h2>
+                        <h6 class="stat-title mb-2">Total Sales Amount</h6>
+                        <div class="stat-description">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Delivered + Shipped + Partial Returns
+                            </small>
+                        </div>
                     </div>
-                    <div>
-                        <i class="fas fa-money-bill-wave fa-2x text-success"></i>
+                    <div class="stat-trend">
+                        <span class="trend-indicator trend-up" id="sales-trend">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>12.5%</span>
+                        </span>
                     </div>
+                </div>
+            </div>
+            <div class="card-footer stat-footer sales-footer">
+                <div class="progress" style="height: 3px;">
+                    <div class="progress-bar" role="progressbar" style="width: 75%"></div>
                 </div>
             </div>
         </div>
     </div>
     
-    <div class="col-md-3">
-        <div class="card card-stats h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h3 class="mb-0" id="total-orders-stat">0</h3>
-                        <p class="text-white mb-0">Total Orders</p>
-                        <small class="text-muted">All order count</small>
+    <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 mb-3">
+        <div class="card stat-card h-100 border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="flex-grow-1">
+                        <div class="stat-icon-wrapper orders mb-3">
+                            <i class="fas fa-shopping-cart fa-lg"></i>
+                        </div>
+                        <h2 class="stat-value mb-1" id="total-orders-stat">0</h2>
+                        <h6 class="stat-title mb-2">Total Orders</h6>
+                        <div class="stat-description">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                All order count
+                            </small>
+                        </div>
                     </div>
-                    <div>
-                        <i class="fas fa-shopping-cart fa-2x text-primary"></i>
+                    <div class="stat-trend">
+                        <span class="trend-indicator trend-up" id="orders-trend">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>8.3%</span>
+                        </span>
                     </div>
+                </div>
+            </div>
+            <div class="card-footer stat-footer orders-footer">
+                <div class="progress" style="height: 3px;">
+                    <div class="progress-bar" role="progressbar" style="width: 60%"></div>
                 </div>
             </div>
         </div>
     </div>
     
-    <div class="col-md-3">
-        <div class="card card-stats h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h3 class="mb-0" id="total-expenses-stat">$0.00</h3>
-                        <p class="text-white mb-0">Total Expenses</p>
-                        <small class="text-muted">Business expenses + Courier charges</small>
+    <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 mb-3">
+        <div class="card stat-card h-100 border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="flex-grow-1">
+                        <div class="stat-icon-wrapper expenses mb-3">
+                            <i class="fas fa-receipt fa-lg"></i>
+                        </div>
+                        <h2 class="stat-value mb-1" id="total-expenses-stat">$0.00</h2>
+                        <h6 class="stat-title mb-2">Total Expenses</h6>
+                        <div class="stat-description">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Business expenses + Courier charges
+                            </small>
+                        </div>
                     </div>
-                    <div>
-                        <i class="fas fa-receipt fa-2x text-warning"></i>
+                    <div class="stat-trend">
+                        <span class="trend-indicator trend-down" id="expenses-trend">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>3.2%</span>
+                        </span>
                     </div>
+                </div>
+            </div>
+            <div class="card-footer stat-footer expenses-footer">
+                <div class="progress" style="height: 3px;">
+                    <div class="progress-bar" role="progressbar" style="width: 45%"></div>
                 </div>
             </div>
         </div>
     </div>
     
-    <div class="col-md-3">
-        <div class="card card-stats h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h3 class="mb-0" id="total-revenue-stat">$0.00</h3>
-                        <p class="text-white mb-0">Total Revenue</p>
-                        <small class="text-muted">Sales - (Expenses + Product Cost)</small>
+    <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 mb-3">
+        <div class="card stat-card h-100 border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="flex-grow-1">
+                        <div class="stat-icon-wrapper revenue mb-3">
+                            <i class="fas fa-chart-line fa-lg"></i>
+                        </div>
+                        <h2 class="stat-value mb-1" id="total-revenue-stat">$0.00</h2>
+                        <h6 class="stat-title mb-2">Total Revenue</h6>
+                        <div class="stat-description">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Sales - (Expenses + Product Cost)
+                            </small>
+                        </div>
                     </div>
-                    <div>
-                        <i class="fas fa-chart-line fa-2x text-info"></i>
+                    <div class="stat-trend">
+                        <span class="trend-indicator trend-up" id="revenue-trend">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>15.7%</span>
+                        </span>
                     </div>
+                </div>
+            </div>
+            <div class="card-footer stat-footer revenue-footer">
+                <div class="progress" style="height: 3px;">
+                    <div class="progress-bar" role="progressbar" style="width: 85%"></div>
                 </div>
             </div>
         </div>
@@ -131,50 +204,126 @@
 </div>
 
 <div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card border-left-primary h-100">
-            <div class="card-body">
-                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                    Total Courier Charge
+    <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 mb-3">
+        <div class="card detail-stat-card h-100 border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-start">
+                    <div class="detail-stat-icon courier me-3">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="detail-stat-title mb-0">Total Courier Charge</h6>
+                            <span class="badge bg-primary-subtle text-primary rounded-pill">Active</span>
+                        </div>
+                        <h3 class="detail-stat-value mb-2" id="total-courier-charge-stat">$0.00</h3>
+                        <div class="detail-stat-description">
+                            <small class="text-muted d-block">
+                                <i class="fas fa-box me-1"></i>
+                                Delivered + Shipped + Returned + Partially Returned
+                            </small>
+                        </div>
+                        <div class="mt-3">
+                            <div class="progress" style="height: 4px; border-radius: 2px;">
+                                <div class="progress-bar bg-primary" style="width: 68%"></div>
+                            </div>
+                            <small class="text-muted mt-1 d-block">68% of total expenses</small>
+                        </div>
+                    </div>
                 </div>
-                <div class="h5 mb-0 font-weight-bold" id="total-courier-charge-stat">$0.00</div>
-                <small class="text-muted">Delivered + Shipped + Returned + Partially Returned</small>
             </div>
         </div>
     </div>
     
-    <div class="col-md-3">
-        <div class="card border-left-info h-100">
-            <div class="card-body">
-                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                    Dashboard Expenses
+    <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 mb-3">
+        <div class="card detail-stat-card h-100 border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-start">
+                    <div class="detail-stat-icon dashboard me-3">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="detail-stat-title mb-0">Dashboard Expenses</h6>
+                            <span class="badge bg-info-subtle text-info rounded-pill">Operational</span>
+                        </div>
+                        <h3 class="detail-stat-value mb-2" id="dashboard-expenses-stat">$0.00</h3>
+                        <div class="detail-stat-description">
+                            <small class="text-muted d-block">
+                                <i class="fas fa-building me-1"></i>
+                                Business operational expenses
+                            </small>
+                        </div>
+                        <div class="mt-3">
+                            <div class="progress" style="height: 4px; border-radius: 2px;">
+                                <div class="progress-bar bg-info" style="width: 32%"></div>
+                            </div>
+                            <small class="text-muted mt-1 d-block">32% of total expenses</small>
+                        </div>
+                    </div>
                 </div>
-                <div class="h5 mb-0 font-weight-bold" id="dashboard-expenses-stat">$0.00</div>
-                <small class="text-muted">Business operational expenses</small>
             </div>
         </div>
     </div>
     
-    <div class="col-md-3">
-        <div class="card border-left-success h-100">
-            <div class="card-body">
-                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                    Product Cost
+    <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 mb-3">
+        <div class="card detail-stat-card h-100 border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-start">
+                    <div class="detail-stat-icon product me-3">
+                        <i class="fas fa-box-open"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="detail-stat-title mb-0">Product Cost</h6>
+                            <span class="badge bg-success-subtle text-success rounded-pill">Cost of Goods</span>
+                        </div>
+                        <h3 class="detail-stat-value mb-2" id="product-cost-stat">$0.00</h3>
+                        <div class="detail-stat-description">
+                            <small class="text-muted d-block">
+                                <i class="fas fa-tags me-1"></i>
+                                Cost of goods for delivered & shipped orders
+                            </small>
+                        </div>
+                        <div class="mt-3">
+                            <div class="progress" style="height: 4px; border-radius: 2px;">
+                                <div class="progress-bar bg-success" style="width: 55%"></div>
+                            </div>
+                            <small class="text-muted mt-1 d-block">55% of total revenue</small>
+                        </div>
+                    </div>
                 </div>
-                <div class="h5 mb-0 font-weight-bold" id="product-cost-stat">$0.00</div>
-                <small class="text-muted">Cost of goods for delivered & shipped orders</small>
             </div>
         </div>
     </div>
     
-    <div class="col-md-3">
-        <div class="card border-left-warning h-100">
-            <div class="card-body">
-                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                    Profit Margin
+    <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 mb-3">
+        <div class="card detail-stat-card h-100 border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-start">
+                    <div class="detail-stat-icon margin me-3">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="detail-stat-title mb-0">Profit Margin</h6>
+                            <span class="badge bg-warning-subtle text-warning rounded-pill" id="margin-status-badge">Healthy</span>
+                        </div>
+                        <h3 class="detail-stat-value mb-2" id="profit-margin-stat">0%</h3>
+                        <div class="detail-stat-description">
+                            <small class="text-muted d-block">
+                                <i class="fas fa-chart-pie me-1"></i>
+                                Revenue as % of sales
+                            </small>
+                        </div>
+                        <div class="mt-3">
+                            <div class="progress" style="height: 4px; border-radius: 2px;">
+                                <div class="progress-bar bg-warning" style="width: 0%" id="margin-progress"></div>
+                            </div>
+                            <small class="text-muted mt-1 d-block" id="margin-indicator">Target: 15-25%</small>
+                        </div>
+                    </div>
                 </div>
-                <div class="h5 mb-0 font-weight-bold" id="profit-margin-stat">0%</div>
-                <small class="text-muted">Revenue as % of sales</small>
             </div>
         </div>
     </div>
@@ -623,405 +772,736 @@
 
 {% block extra_css %}
 <style>
+    /* Professional Statistics Cards Design */
+    :root {
+        --primary-color: #930000;
+        --secondary-color: #334155;
+        --dark-color: #1e293b;
+        --light-color: #f8fafc;
+        --white: #ffffff;
+        --border-color: #e2e8f0;
+        --success-color: #059669;
+        --danger-color: #dc2626;
+        --warning-color: #d97706;
+        --info-color: #0284c7;
+        --border-radius: 12px;
+        --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.05);
+        --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.1);
+        --shadow-heavy: 0 8px 25px rgba(0, 0, 0, 0.15);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Modern Statistics Cards */
+    .stat-card {
+        background: linear-gradient(135deg, #ffffff 0%, #fefefe 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: var(--border-radius);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .text-muted {
+        color: #7e8188 !important;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-color) 0%, #b91c1c 100%);
+        opacity: 0;
+        transition: var(--transition);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-8px);
+        box-shadow: var(--shadow-heavy) !important;
+        border-color: rgba(147, 0, 0, 0.2);
+    }
+
+    .stat-card:hover::before {
+        opacity: 1;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1f2937;
+        line-height: 1.1;
+        margin: 0;
+    }
+
+    .stat-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #d39090;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin: 0;
+    }
+
+    .stat-description {
+        font-size: 0.8rem;
+        line-height: 1.4;
+        color: #9ca3af;
+    }
+
+    /* Icon Wrappers with Theme Colors */
+    .stat-icon-wrapper {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-icon-wrapper::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: currentColor;
+        opacity: 0.12;
+        border-radius: inherit;
+    }
+
+    .stat-icon-wrapper.sales {
+        color: #059669;
+        background: rgba(5, 150, 105, 0.08);
+    }
+
+    .stat-icon-wrapper.orders {
+        color: #930000;
+        background: rgba(147, 0, 0, 0.08);
+    }
+
+    .stat-icon-wrapper.expenses {
+        color: #d97706;
+        background: rgba(217, 119, 6, 0.08);
+    }
+
+    .stat-icon-wrapper.revenue {
+        color: #0284c7;
+        background: rgba(2, 132, 199, 0.08);
+    }
+
+    /* Trend Indicators */
+    .trend-indicator {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        transition: var(--transition);
+    }
+
+    .trend-up {
+        background: rgba(34, 197, 94, 0.15);
+        color: #16a34a;
+        border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    .trend-down {
+        background: rgba(239, 68, 68, 0.15);
+        color: #dc2626;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    /* Progress Bars in Card Footers */
+    .stat-footer {
+        padding: 0;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border: none;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .stat-footer .progress {
+        border-radius: 0;
+        height: 4px;
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    .sales-footer .progress-bar {
+        background: linear-gradient(90deg, #059669, #10b981);
+        box-shadow: 0 2px 4px rgba(5, 150, 105, 0.3);
+    }
+
+    .orders-footer .progress-bar {
+        background: linear-gradient(90deg, #930000, #b91c1c);
+        box-shadow: 0 2px 4px rgba(147, 0, 0, 0.3);
+    }
+
+    .expenses-footer .progress-bar {
+        background: linear-gradient(90deg, #d97706, #f59e0b);
+        box-shadow: 0 2px 4px rgba(217, 119, 6, 0.3);
+    }
+
+    .revenue-footer .progress-bar {
+        background: linear-gradient(90deg, #0284c7, #0ea5e9);
+        box-shadow: 0 2px 4px rgba(2, 132, 199, 0.3);
+    }
+
+    /* Detailed Statistics Cards */
+    .detail-stat-card {
+        background: linear-gradient(135deg, #ffffff 0%, #fefefe 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: var(--border-radius);
+        transition: var(--transition);
+        border-left: 4px solid #e5e7eb;
+    }
+
+    .detail-stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-medium);
+        border-left-color: #930000;
+        border-color: rgba(147, 0, 0, 0.2);
+    }
+
+    .detail-stat-icon {
+        width: 45px;
+        height: 45px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        position: relative;
+        border: 1px solid currentColor;
+    }
+
+    .detail-stat-icon::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: currentColor;
+        opacity: 0.08;
+        border-radius: inherit;
+    }
+
+    .detail-stat-icon.courier {
+        color: #930000;
+        border-color: rgba(147, 0, 0, 0.3);
+    }
+
+    .detail-stat-icon.dashboard {
+        color: #0284c7;
+        border-color: rgba(2, 132, 199, 0.3);
+    }
+
+    .detail-stat-icon.product {
+        color: #059669;
+        border-color: rgba(5, 150, 105, 0.3);
+    }
+
+    .detail-stat-icon.margin {
+        color: #d97706;
+        border-color: rgba(217, 119, 6, 0.3);
+    }
+
+    .detail-stat-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #d39090;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .detail-stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #1f2937;
+        line-height: 1.1;
+    }
+
+    .detail-stat-description {
+        line-height: 1.4;
+        color: #9ca3af;
+    }
+
+    /* Modern Badges */
+    .bg-primary-subtle {
+        background-color: rgba(147, 0, 0, 0.12) !important;
+        border: 1px solid rgba(147, 0, 0, 0.2) !important;
+    }
+
+    .text-primary {
+        color: #930000 !important;
+        font-weight: 600;
+    }
+
+    .bg-success-subtle {
+        background-color: rgba(5, 150, 105, 0.12) !important;
+        border: 1px solid rgba(5, 150, 105, 0.2) !important;
+    }
+
+    .text-success {
+        color: #059669 !important;
+        font-weight: 600;
+    }
+
+    .bg-info-subtle {
+        background-color: rgba(2, 132, 199, 0.12) !important;
+        border: 1px solid rgba(2, 132, 199, 0.2) !important;
+    }
+
+    .text-info {
+        color: #0284c7 !important;
+        font-weight: 600;
+    }
+
+    .bg-warning-subtle {
+        background-color: rgba(217, 119, 6, 0.12) !important;
+        border: 1px solid rgba(217, 119, 6, 0.2) !important;
+    }
+
+    .text-warning {
+        color: #d97706 !important;
+        font-weight: 600;
+    }
+
     /* Custom styles for the financial chart */
     .bg-gradient-primary {
-        background: linear-gradient(135deg, #007bff 0%, #6f42c1 100%) !important;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--dark-color) 100%) !important;
     }
     
     .bg-gradient-info {
-        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%) !important;
+        background: linear-gradient(135deg, var(--info-color) 0%, #0369a1 100%) !important;
     }
     
     .legend-item {
-        transition: all 0.3s ease;
+        transition: var(--transition);
         cursor: pointer;
+        padding: 8px 12px;
+        border-radius: 8px;
     }
     
     .legend-item:hover {
         transform: translateY(-2px);
+        background-color: rgba(147, 0, 0, 0.05);
     }
     
     .badge {
         font-size: 0.75rem;
         padding: 0.5em 0.75em;
         border-radius: 0.5rem;
-    }
-    
-    .bg-success-subtle {
-        background-color: rgba(40, 167, 69, 0.1) !important;
-    }
-    
-    .bg-danger-subtle {
-        background-color: rgba(220, 53, 69, 0.1) !important;
-    }
-    
-    .bg-primary-subtle {
-        background-color: rgba(0, 123, 255, 0.1) !important;
-    }
-    
-    .text-success {
-        color: #28a745 !important;
-    }
-    
-    .text-danger {
-        color: #dc3545 !important;
-    }
-    
-    .text-primary {
-        color: #007bff !important;
+        font-weight: 500;
     }
     
     .shadow-sm {
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+        box-shadow: var(--shadow-light) !important;
     }
     
     .card-header {
         border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
     }
     
     .dropdown-menu {
         border: none;
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-        border-radius: 0.5rem;
+        box-shadow: var(--shadow-medium);
+        border-radius: var(--border-radius);
     }
     
     .dropdown-item {
-        padding: 0.5rem 1rem;
-        transition: all 0.2s ease;
+        padding: 0.75rem 1.25rem;
+        transition: var(--transition);
+        border-radius: 8px;
+        margin: 2px 8px;
     }
     
     .dropdown-item:hover {
-        background-color: rgba(0, 123, 255, 0.1);
-        color: #007bff;
+        background-color: rgba(147, 0, 0, 0.1);
+        color: var(--primary-color);
     }
     
     .dropdown-header {
-        color: #6c757d;
+        color: var(--secondary-color);
         font-size: 0.75rem;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        padding: 0.75rem 1.25rem 0.5rem;
     }
     
     /* Custom date range picker styles */
     #custom-date-range {
         background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.95) 100%);
-        border: 1px solid rgba(0, 123, 255, 0.2);
-        border-radius: 0.5rem;
-        padding: 0.5rem 0.75rem;
-        margin-left: 0.5rem;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        animation: slideIn 0.3s ease-out;
+        border: 1px solid rgba(147, 0, 0, 0.2);
+        border-radius: var(--border-radius);
+        padding: 0.75rem 1rem;
+        margin-left: 0.75rem;
+        box-shadow: var(--shadow-light);
+        animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
     @keyframes slideIn {
         from {
             opacity: 0;
-            transform: translateX(-10px);
+            transform: translateX(-10px) scale(0.95);
         }
         to {
             opacity: 1;
-            transform: translateX(0);
+            transform: translateX(0) scale(1);
         }
     }
     
     #custom-date-range .input-group-text {
         background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         border: 1px solid #ced4da;
-        color: #6c757d;
+        color: var(--secondary-color);
         font-size: 0.75rem;
+        border-radius: 8px 0 0 8px;
     }
     
     #custom-date-range .form-control {
         border-left: none;
-        font-size: 0.8rem;
-        transition: all 0.2s ease;
+        font-size: 0.85rem;
+        transition: var(--transition);
+        border-radius: 0 8px 8px 0;
     }
     
     #custom-date-range .form-control:focus {
-        border-color: #007bff;
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(147, 0, 0, 0.15);
     }
     
     #custom-date-range .btn {
-        font-size: 0.8rem;
-        padding: 0.375rem 0.5rem;
-        transition: all 0.2s ease;
-        border-radius: 0.375rem;
-        min-width: 32px;
+        font-size: 0.85rem;
+        padding: 0.5rem 0.75rem;
+        transition: var(--transition);
+        border-radius: 8px;
+        min-width: 40px;
+        font-weight: 500;
     }
     
     #custom-date-range .btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-light);
     }
     
     #period-filter {
-        transition: all 0.2s ease;
+        transition: var(--transition);
         border: 1px solid #ced4da;
-        border-radius: 0.375rem;
+        border-radius: 8px;
         background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        font-weight: 500;
     }
     
     #period-filter:focus {
-        border-color: #007bff;
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(147, 0, 0, 0.15);
     }
     
     /* Responsive adjustments for date picker */
     @media (max-width: 768px) {
         #custom-date-range {
-            flex-direction: column;
-            gap: 0.5rem;
+            width: 100% !important;
             margin-left: 0;
-            margin-top: 0.5rem;
-            width: 100%;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 249, 250, 0.98) 100%);
+            border: 1px solid rgba(147, 0, 0, 0.2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
         }
         
         #custom-date-range .input-group {
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.75rem;
+            width: 100% !important;
+            max-width: none !important;
+        }
+        
+        #custom-date-range .d-flex.gap-2 {
+            width: 100%;
+            margin-top: 0.75rem;
         }
         
         .card-header .d-flex {
-            flex-direction: column;
             align-items: flex-start !important;
-            gap: 1rem;
+        }
+
+        .stat-card {
+            margin-bottom: 1rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+        }
+        
+        /* Make the period filter full width on mobile */
+        #period-filter {
+            width: 100% !important;
+            min-width: unset !important;
+        }
+        
+        /* Improve spacing for mobile */
+        .card-header {
+            padding: 1rem;
+        }
+        
+        .card-header h5 {
+            font-size: 1.1rem;
+        }
+        
+        .card-header small {
+            font-size: 0.8rem;
+        }
+
+       
+    }
+    
+    /* Responsive for tablets */
+    @media (max-width: 992px) and (min-width: 769px) {
+        .stat-value {
+            font-size: 2.2rem;
+        }
+        
+        .detail-stat-value {
+            font-size: 1.6rem;
         }
     }
     
     #chart-loading, #status-chart-loading {
-        background: rgba(255, 255, 255, 0.9);
-        border-radius: 0.5rem;
-        padding: 2rem;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: var(--border-radius);
+        padding: 3rem;
         text-align: center;
-        backdrop-filter: blur(5px);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(147, 0, 0, 0.1);
     }
     
     /* Order Status specific styles */
     .status-summary-card {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 250, 0.9) 100%);
-        border: 1px solid rgba(0, 0, 0, 0.05);
-        border-radius: 0.5rem;
-        padding: 0.75rem;
-        transition: all 0.3s ease;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        transition: var(--transition);
         cursor: pointer;
-        min-height: 60px;
+        min-height: 70px;
         display: flex;
         align-items: center;
     }
     
     .status-summary-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-medium);
+        border-color: rgba(147, 0, 0, 0.2);
     }
     
     .status-summary-card.pending {
-        border-left: 4px solid #ffc107;
+        border-left: 4px solid #f59e0b;
+        background: linear-gradient(135deg, rgba(251, 191, 36, 0.08) 0%, rgba(255, 255, 255, 0.98) 100%);
     }
     
     .status-summary-card.confirmed {
-        border-left: 4px solid #007bff;
+        border-left: 4px solid #930000;
+        background: linear-gradient(135deg, rgba(147, 0, 0, 0.08) 0%, rgba(255, 255, 255, 0.98) 100%);
     }
     
     .status-summary-card.processing {
-        border-left: 4px solid #17a2b8;
+        border-left: 4px solid #0284c7;
+        background: linear-gradient(135deg, rgba(2, 132, 199, 0.08) 0%, rgba(255, 255, 255, 0.98) 100%);
     }
     
     .status-summary-card.shipped {
-        border-left: 4px solid #20c997;
+        border-left: 4px solid #10b981;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(255, 255, 255, 0.98) 100%);
     }
     
     .status-summary-card.delivered {
-        border-left: 4px solid #28a745;
+        border-left: 4px solid #059669;
+        background: linear-gradient(135deg, rgba(5, 150, 105, 0.08) 0%, rgba(255, 255, 255, 0.98) 100%);
     }
     
     .status-summary-card.cancelled {
-        border-left: 4px solid #dc3545;
+        border-left: 4px solid #dc2626;
+        background: linear-gradient(135deg, rgba(220, 38, 38, 0.08) 0%, rgba(255, 255, 255, 0.98) 100%);
     }
     
     .status-summary-card.returned {
-        border-left: 4px solid #6c757d;
+        border-left: 4px solid #6b7280;
+        background: linear-gradient(135deg, rgba(107, 114, 128, 0.08) 0%, rgba(255, 255, 255, 0.98) 100%);
     }
     
     .status-summary-card.partial_return {
-        border-left: 4px solid #fd7e14;
+        border-left: 4px solid #f97316;
+        background: linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(255, 255, 255, 0.98) 100%);
     }
     
     .status-icon {
-        width: 32px;
-        height: 32px;
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         margin-right: 0.75rem;
-        font-size: 0.9rem;
+        font-size: 1rem;
+        position: relative;
+        overflow: hidden;
+        border: 2px solid currentColor;
+    }
+
+    .status-icon::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: currentColor;
+        opacity: 0.12;
+        border-radius: inherit;
     }
     
     .status-icon.pending {
-        background: rgba(255, 193, 7, 0.2);
-        color: #ffc107;
+        color: #f59e0b;
     }
     
     .status-icon.confirmed {
-        background: rgba(0, 123, 255, 0.2);
-        color: #007bff;
+        color: #930000;
     }
     
     .status-icon.processing {
-        background: rgba(23, 162, 184, 0.2);
-        color: #17a2b8;
+        color: #0284c7;
     }
     
     .status-icon.shipped {
-        background: rgba(32, 201, 151, 0.2);
-        color: #20c997;
+        color: #10b981;
     }
     
     .status-icon.delivered {
-        background: rgba(40, 167, 69, 0.2);
-        color: #28a745;
+        color: #059669;
     }
     
     .status-icon.cancelled {
-        background: rgba(220, 53, 69, 0.2);
-        color: #dc3545;
+        color: #dc2626;
     }
     
     .status-icon.returned {
-        background: rgba(108, 117, 125, 0.2);
-        color: #6c757d;
+        color: #6b7280;
     }
     
     .status-icon.partial_return {
-        background: rgba(253, 126, 20, 0.2);
-        color: #fd7e14;
-    }
-    
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        .legend-item {
-            margin-bottom: 0.5rem;
-        }
-        
-        .d-flex.flex-wrap.justify-content-center {
-            justify-content: flex-start !important;
-        }
-        
-        .status-summary-card {
-            margin-bottom: 0.5rem;
-        }
-    }
-    
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        .legend-item {
-            margin-bottom: 0.5rem;
-        }
-        
-        .d-flex.flex-wrap.justify-content-center {
-            justify-content: flex-start !important;
-        }
+        color: #f97316;
     }
     
     /* Animation for chart container */
     .card {
-        transition: all 0.3s ease;
+        transition: var(--transition);
+        border-radius: var(--border-radius);
+        border: 1px solid rgba(226, 232, 240, 0.8);
     }
     
     .card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        box-shadow: var(--shadow-medium) !important;
     }
     
     /* Product table enhancements */
     .table-dark th {
-        background-color: #343a40 !important;
-        border-color: #454d55 !important;
+        background: linear-gradient(135deg, #1f2937 0%, #374151 100%) !important;
+        border-color: rgba(255, 255, 255, 0.15) !important;
         font-weight: 600;
         font-size: 0.85rem;
+        color: #f9fafb !important;
     }
     
     .table-hover tbody tr:hover {
-        background-color: rgba(0, 123, 255, 0.05);
+        background-color: rgba(147, 0, 0, 0.08);
+        color: #1f2937;
+    }
+    
+    .table tbody td {
+        color: #374151;
+        border-color: #e5e7eb;
     }
     
     .btn-xs {
-        padding: 0.2rem 0.4rem;
-        font-size: 0.7rem;
-        border-radius: 0.2rem;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        border-radius: 6px;
+        font-weight: 500;
     }
     
     .input-group-sm .input-group-text {
-        font-size: 0.8rem;
-        padding: 0.25rem 0.5rem;
+        font-size: 0.85rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 8px 0 0 8px;
     }
     
     /* Status date filter controls */
     .status-filter-controls {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 250, 0.9) 100%);
-        border: 1px solid rgba(23, 162, 184, 0.2);
-        border-radius: 0.5rem;
-        padding: 0.75rem;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.95) 100%);
+        border: 1px solid rgba(2, 132, 199, 0.2);
+        border-radius: var(--border-radius);
+        padding: 1rem;
         margin-bottom: 1rem;
     }
     
     .status-filter-controls .input-group-sm {
-        border-radius: 0.375rem;
+        border-radius: 8px;
         overflow: hidden;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow-light);
     }
     
     .status-filter-controls .input-group-text {
         background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         border: 1px solid #ced4da;
-        color: #6c757d;
-        font-size: 0.75rem;
+        color: var(--secondary-color);
+        font-size: 0.8rem;
     }
     
     .status-filter-controls .form-control {
         border-left: none;
-        font-size: 0.8rem;
-        transition: all 0.2s ease;
+        font-size: 0.85rem;
+        transition: var(--transition);
     }
     
     .status-filter-controls .form-control:focus {
-        border-color: #17a2b8;
-        box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+        border-color: var(--info-color);
+        box-shadow: 0 0 0 0.2rem rgba(2, 132, 199, 0.15);
     }
     
     .status-filter-controls .btn {
-        font-size: 0.8rem;
-        padding: 0.375rem 0.75rem;
-        transition: all 0.2s ease;
-        border-radius: 0.375rem;
+        font-size: 0.85rem;
+        padding: 0.5rem 1rem;
+        transition: var(--transition);
+        border-radius: 8px;
+        font-weight: 500;
     }
     
     .status-filter-controls .btn:hover {
         transform: translateY(-1px);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    
-    @media (max-width: 768px) {
-        .status-filter-controls .d-flex {
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        
-        .status-filter-controls .input-group-sm {
-            margin-bottom: 0.5rem;
-        }
+        box-shadow: var(--shadow-light);
     }
     
     .pagination-sm .page-link {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.8rem;
+        padding: 0.375rem 0.75rem;
+        font-size: 0.85rem;
+        border-radius: 6px;
+        margin: 0 2px;
+        border: 1px solid #dee2e6;
+        transition: var(--transition);
+    }
+
+    .pagination-sm .page-link:hover {
+        background-color: rgba(147, 0, 0, 0.1);
+        border-color: var(--primary-color);
+        color: var(--primary-color);
     }
     
     /* Sort icons */
     th[data-sort] {
         user-select: none;
-        transition: background-color 0.2s ease;
+        transition: var(--transition);
+        cursor: pointer;
     }
     
     th[data-sort]:hover {
@@ -1030,7 +1510,8 @@
     
     /* Product image and modal styles */
     .product-thumbnail {
-        transition: transform 0.2s ease;
+        transition: var(--transition);
+        border-radius: 6px;
     }
     
     .product-thumbnail:hover {
@@ -1038,12 +1519,13 @@
     }
     
     .product-name-link {
-        color: #495057;
-        transition: color 0.2s ease;
+        color: var(--dark-color);
+        transition: var(--transition);
+        font-weight: 500;
     }
     
     .product-name-link:hover {
-        color: #007bff !important;
+        color: var(--primary-color) !important;
         text-decoration: underline !important;
     }
     
@@ -1052,14 +1534,56 @@
     }
     
     .modal-body .table th {
-        background-color: #f8f9fa;
+        background-color: var(--light-color);
         border-top: none;
         font-weight: 600;
         font-size: 0.85rem;
+        color: var(--dark-color);
     }
     
     .modal-body .badge {
         font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    /* Loading states */
+    .spinner-border {
+        width: 2rem;
+        height: 2rem;
+        border-width: 3px;
+    }
+
+    .spinner-border-sm {
+        width: 1.5rem;
+        height: 1.5rem;
+        border-width: 2px;
+    }
+
+    /* Accessibility improvements */
+    .btn:focus-visible,
+    .form-control:focus-visible,
+    .form-select:focus-visible {
+        outline: 2px solid var(--primary-color);
+        outline-offset: 2px;
+    }
+
+    /* Dark mode support (if needed in future) */
+    @media (prefers-color-scheme: dark) {
+        .stat-card {
+            background: rgba(30, 41, 59, 0.9);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-value,
+        .detail-stat-value {
+            color: var(--white);
+        }
+
+        .stat-title,
+        .detail-stat-title {
+        color: #d39090;
+;
+        }
     }
 </style>
 {% endblock %}
@@ -1105,7 +1629,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let salesChart, categoryChart, orderStatusChart;
     
     // Current period selection
-    let currentPeriod = 'week';
+    let currentPeriod = 'month';
     let currentYear = getDhakaTime().getFullYear().toString();
     let customDateRange = { from: null, to: null };
     
