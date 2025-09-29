@@ -726,17 +726,24 @@ class OrderDashboardViewSet(viewsets.ModelViewSet):
                 "message": f"Error adding order to curier: {str(e)}"
             }, status=500)
     
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'], permission_classes=[])
     def bulk_action(self, request):
         """Perform bulk actions on multiple orders"""
+        print(f"🔄 BULK ACTION CALLED! User: {request.user}, Data: {request.data}")
+        print(f"🔄 Request method: {request.method}")
+        print(f"🔄 Request headers: {dict(request.headers)}")
         try:
             order_ids = request.data.get('order_ids', [])
             action = request.data.get('action')
             
+            print(f"📋 Order IDs: {order_ids}, Action: {action}")
+            
             if not order_ids:
+                print("❌ No order IDs provided")
                 return Response({'error': 'No order IDs provided'}, status=400)
             
             if not action:
+                print("❌ No action specified")
                 return Response({'error': 'No action specified'}, status=400)
             
             # Get the orders
@@ -783,7 +790,7 @@ class OrderDashboardViewSet(viewsets.ModelViewSet):
                 })
                 
         except Exception as e:
-            print(f"Error in bulk action: {str(e)}")
+            print(f"❌ Error in bulk action: {str(e)}")
             import traceback
             traceback.print_exc()
             return Response({

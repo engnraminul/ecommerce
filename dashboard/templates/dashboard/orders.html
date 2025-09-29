@@ -1672,7 +1672,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Make the API call
-        fetch('/mb-admin/api/orders/bulk-action/', {
+        console.log('🔄 Making bulk action request to:', '/mb-admin/api/orders/bulk_action/');
+        console.log('📦 Request data:', requestData);
+        
+        fetch('/mb-admin/api/orders/bulk_action/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1681,12 +1684,17 @@ document.addEventListener('DOMContentLoaded', function() {
             body: JSON.stringify(requestData)
         })
         .then(response => {
+            console.log('🌐 Response status:', response.status);
+            console.log('🌐 Response headers:', response.headers);
+            
             if (!response.ok) {
                 // Handle HTTP errors
                 if (response.status === 404) {
                     throw new Error('Bulk action endpoint not found. Please contact your administrator.');
                 } else if (response.status === 403) {
                     throw new Error('You do not have permission to perform bulk actions.');
+                } else if (response.status === 405) {
+                    throw new Error('Method not allowed. The bulk action endpoint may not be properly configured.');
                 } else if (response.status >= 500) {
                     throw new Error('Server error occurred. Please try again later.');
                 } else {
@@ -1721,7 +1729,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
-            console.error('Bulk action error:', error);
+            console.error('❌ Bulk action error:', error);
             
             let errorMessage = 'An error occurred while processing your request.';
             
@@ -1731,15 +1739,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 errorMessage = 'You do not have permission to perform bulk actions.';
             } else if (error.message.includes('Server error')) {
                 errorMessage = 'Server error occurred. Please try again later.';
+            } else if (error.message.includes('Method not allowed')) {
+                errorMessage = 'The bulk action feature is not properly configured. Please contact your administrator.';
             } else if (error.message) {
                 errorMessage = error.message;
             }
+            
+            console.error('❌ Final error message:', errorMessage);
             
             Swal.fire({
                 title: 'Error!',
                 text: errorMessage,
                 icon: 'error',
-                footer: 'If this problem persists, please contact support.'
+                footer: 'If this problem persists, please contact support.',
+                customClass: {
+                    footer: 'text-muted'
+                }
             });
         });
     }
