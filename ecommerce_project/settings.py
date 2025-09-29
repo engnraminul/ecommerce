@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'products.apps.ProductsConfig',
     'cart.apps.CartConfig',
     'orders.apps.OrdersConfig',
+    'incomplete_orders.apps.IncompleteOrdersConfig',
     'frontend.apps.FrontendConfig',
     'fraud_checker.apps.FraudCheckerConfig',
     'dashboard.apps.DashboardConfig',
