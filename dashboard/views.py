@@ -797,6 +797,143 @@ class OrderDashboardViewSet(viewsets.ModelViewSet):
                 'error': f'An error occurred: {str(e)}'
             }, status=500)
 
+    @action(detail=True, methods=['post'])
+    def update_courier_status(self, request, pk=None):
+        """Update courier status for an order"""
+        try:
+            order = self.get_object()
+            new_courier_status = request.data.get('curier_status')
+            courier_data = request.data.get('courier_data', {})
+            
+            if not new_courier_status:
+                return Response({'error': 'Courier status is required'}, status=400)
+            
+            # Update courier status
+            order.curier_status = new_courier_status
+            order.save()
+            
+            # Log the activity
+            try:
+                self.log_activity(f'updated_courier_status_to_{new_courier_status}', order)
+            except Exception as e:
+                print(f"Error logging activity: {str(e)}")
+            
+            return Response({
+                'success': True,
+                'curier_status': order.curier_status,
+                'order_id': order.id
+            })
+            
+        except Exception as e:
+            print(f"Error updating courier status: {str(e)}")
+            return Response({
+                'error': f'An error occurred: {str(e)}'
+            }, status=500)
+
+    @action(detail=True, methods=['post'])
+    def check_courier_status(self, request, pk=None):
+        """Check courier status using stored API credentials"""
+        try:
+            import requests
+            from settings.models import Curier
+            
+            order = self.get_object()
+            
+            if not order.curier_id:
+                return Response({'error': 'Order has no courier ID'}, status=400)
+            
+            # Get SteadFast courier configuration
+            steadfast = Curier.objects.filter(name__icontains='steadfast', is_active=True).first()
+            if not steadfast:
+                return Response({'error': 'SteadFast courier configuration not found'}, status=400)
+            
+            # Use the status checking endpoint
+            status_url = f"https://portal.packzy.com/api/v1/status_by_cid/{order.curier_id}"
+            
+            # Prepare headers with authentication
+            headers = {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Api-Key': steadfast.api_key,
+                'Secret-Key': steadfast.secret_key
+            }
+            
+            print(f"Checking courier status for order {order.order_number} with courier ID: {order.curier_id}")
+            print(f"Using URL: {status_url}")
+            
+            # Make API request
+            response = requests.get(status_url, headers=headers, timeout=30)
+            
+            print(f"API Response Status: {response.status_code}")
+            print(f"API Response: {response.text}")
+            
+            if response.status_code == 200:
+                courier_data = response.json()
+                
+                # Check if delivered
+                status = str(courier_data.get('status', '')).lower()
+                delivery_status = str(courier_data.get('delivery_status', '')).lower()
+                order_status = str(courier_data.get('order_status', '')).lower()
+                
+                # Combine all status fields for checking
+                combined_status = f"{status} {delivery_status} {order_status}".lower()
+                
+                is_delivered = any(keyword in combined_status for keyword in [
+                    'delivered', 'delivery_completed', 'completed', 'success'
+                ])
+                
+                print(f"Status fields: status={status}, delivery_status={delivery_status}, order_status={order_status}")
+                print(f"Combined status: {combined_status}")
+                print(f"Is delivered: {is_delivered}")
+                
+                # Update courier status
+                order.curier_status = courier_data.get('status', 'unknown')
+                
+                # Auto-update to delivered if detected
+                if is_delivered and order.status == 'shipped':
+                    order.status = 'delivered'
+                    print(f"Auto-updated order {order.order_number} to delivered")
+                
+                order.save()
+                
+                # Log activity
+                try:
+                    self.log_activity(f'checked_courier_status', order)
+                except Exception as e:
+                    print(f"Error logging activity: {str(e)}")
+                
+                return Response({
+                    'success': True,
+                    'courier_data': courier_data,
+                    'is_delivered': is_delivered,
+                    'order_status': order.status,
+                    'courier_status': order.curier_status
+                })
+            else:
+                error_message = f"API returned status {response.status_code}"
+                try:
+                    error_data = response.json()
+                    error_message = error_data.get('message', error_message)
+                except:
+                    error_message = response.text or error_message
+                
+                return Response({
+                    'error': f'Courier API error: {error_message}',
+                    'status_code': response.status_code
+                }, status=400)
+                
+        except requests.exceptions.Timeout:
+            return Response({'error': 'Courier API timeout'}, status=408)
+        except requests.exceptions.RequestException as e:
+            return Response({'error': f'Network error: {str(e)}'}, status=500)
+        except Exception as e:
+            print(f"Error checking courier status: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response({
+                'error': f'An error occurred: {str(e)}'
+            }, status=500)
+
 class DashboardStatisticsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     

@@ -148,6 +148,54 @@
         100% { transform: scale(1); }
     }
     
+    /* Courier Monitoring Status Indicator */
+    .courier-monitor-status {
+        font-size: 0.875rem;
+    }
+    
+    .courier-monitor-indicator {
+        position: relative;
+    }
+    
+    .courier-monitor-indicator.active i {
+        color: #28a745 !important;
+        animation: pulse 2s infinite;
+    }
+    
+    .courier-monitor-indicator.paused i {
+        color: #ffc107 !important;
+    }
+    
+    .courier-monitor-indicator.error i {
+        color: #dc3545 !important;
+    }
+    
+    .courier-monitor-text {
+        font-weight: 500;
+    }
+    
+    .courier-stats {
+        background: rgba(0, 123, 255, 0.1);
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+    
+    .courier-monitor-controls .btn {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    /* Animate courier status updates */
+    @keyframes courierUpdate {
+        0% { background-color: transparent; }
+        50% { background-color: rgba(40, 167, 69, 0.2); }
+        100% { background-color: transparent; }
+    }
+    
+    .courier-status-updated {
+        animation: courierUpdate 1s ease-in-out;
+    }
+    
     /* Courier Sticker Styles */
     .courier-sticker {
         width: 288px; /* 2 inches at 144 DPI */
@@ -705,12 +753,13 @@
                 Cancelled <span class="badge bg-primary-subtle text-primary rounded-pill" id="cancelledOrdersCount">0</span>
             </button>
         </div>
+        
     </div>
     <div class="card-body">
         <div class="mb-3">
             <div class="row g-2 align-items-center">
                 <!-- Left side: Bulk Actions -->
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <select class="form-select form-select-sm" id="bulkActionSelect" disabled>
                         <option value="">Bulk Actions</option>
                         <option value="pending">Change to Pending</option>
@@ -731,7 +780,7 @@
                 </div>
                 
                 <!-- Right side: Search and Filters -->
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="input-group input-group-sm position-relative">
                         <span class="input-group-text">
                             <i class="fas fa-search"></i>
@@ -763,6 +812,31 @@
                         </button>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Courier Monitoring Status Indicator -->
+        <div class="justify-content-between p-3 align-items-center bg-light border-bottom" style="display: flex; align-items: center;">
+            <div class="align-items-center gap-2" style="display: flex;">
+                <div class="flex-column" style="padding: 0px!important;">
+                    <div class="d-flex align-items-center">
+                        <div class="courier-monitor-indicator me-2" id="courierMonitorIndicator">
+                            <i class="fas fa-circle text-secondary"></i>
+                        </div>
+                        <span class="courier-monitor-text small" id="courierMonitorText">Courier Monitoring: Initializing...</span>
+                    </div>
+                </div>
+                <div class="courier-stats small text-muted" id="courierStats" style="display: none;">
+                    <span id="shippedOrdersBeingMonitored">0</span> shipped orders being monitored
+                </div>
+            </div>
+            <div class="courier-monitor-controls">
+                <button class="btn btn-outline-secondary btn-sm" id="toggleCourierMonitoring" onclick="toggleCourierMonitoring()">
+                    <i class="fas fa-pause me-1"></i> Pause Monitoring
+                </button>
+                <button class="btn btn-outline-warning btn-sm ms-1" onclick="manualMonitorCheck()">
+                    <i class="fas fa-play me-1"></i> Manual Check
+                </button>
             </div>
         </div>
         
@@ -1768,6 +1842,15 @@ document.addEventListener('DOMContentLoaded', function() {
     loadOrders(1);
     loadOrderCounts(); // Load order counts for filter buttons
     
+    // Start automatic courier status monitoring after page loads
+    setTimeout(() => {
+        startCourierMonitoring();
+        console.log('🚀 Automatic courier status monitoring initialized');
+    }, 5000); // Wait 5 seconds for initial orders to load
+    
+    // Initialize monitoring status
+    updateMonitoringStatus('initializing');
+    
     // Load orders with pagination and filtering
     function loadOrders(page = 1) {
         currentPage = page;
@@ -1861,6 +1944,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 // This happens for any status filter on page 1 to keep counts synchronized
                 if (page === 1) {
                     setTimeout(() => loadOrderCounts(), 100);
+                }
+                
+                // Monitor courier status for shipped orders automatically
+                if (orders && orders.length > 0) {
+                    setTimeout(() => monitorCourierStatus(orders), 2000); // Wait 2 seconds after loading
                 }
             })
             .catch(error => {
@@ -3812,6 +3900,486 @@ document.addEventListener('DOMContentLoaded', function() {
         
         return content;
     }
+    
+    // ============================================
+    // AUTOMATIC COURIER STATUS MONITORING SYSTEM
+    // ============================================
+    
+    // Monitor shipped orders for status updates
+    function monitorCourierStatus(orders) {
+        console.log('🚚 Starting courier status monitoring...');
+        
+        // Filter orders that are shipped and have courier IDs
+        const shippedOrders = orders.filter(order => 
+            order.status === 'shipped' && 
+            order.curier_id && 
+            order.curier_id.trim() !== ''
+        );
+        
+        console.log(`📦 Found ${shippedOrders.length} shipped orders with courier IDs`);
+        
+        // Update monitoring status
+        updateMonitoringStatus('active', shippedOrders.length);
+        
+        // Check status for each shipped order
+        shippedOrders.forEach(order => {
+            checkCourierStatusForOrder(order);
+        });
+    }
+    
+    async function checkCourierStatusForOrder(order) {
+        const courierId = order.curier_id;
+        console.log(`🔍 Checking courier status for order ${order.order_number} with courier ID: ${courierId}`);
+        
+        try {
+            // Use the backend API endpoint that handles authentication
+            const response = await fetch(`/mb-admin/api/orders/${order.id}/check_courier_status/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            });
+            
+            console.log(`📡 Backend API Response Status: ${response.status} for order ${order.order_number}`);
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.warn(`⚠️ Failed to check courier status for order ${order.order_number}: ${errorData.error}`);
+                
+                if (response.status === 400 && errorData.error.includes('API')) {
+                    console.warn(`� Courier API issue: ${errorData.error}`);
+                } else {
+                    console.warn(`⚠️ Backend error: ${errorData.error}`);
+                }
+                return;
+            }
+            
+            const result = await response.json();
+            console.log(`📋 Courier check result for order ${order.order_number}:`, result);
+            
+            // Update local order data if status changed
+            if (result.order_status !== order.status) {
+                console.log(`✅ Order ${order.order_number} status updated: ${order.status} → ${result.order_status}`);
+                order.status = result.order_status;
+                
+                // Show success notification if delivered
+                if (result.is_delivered) {
+                    showNotification('success', `Order ${order.order_number} automatically updated to delivered!`);
+                    
+                    // Refresh the orders table to show updated status
+                    setTimeout(() => {
+                        loadOrders(currentPage);
+                        loadOrderCounts();
+                    }, 1000);
+                }
+            }
+            
+            // Update courier status
+            if (result.courier_status && result.courier_status !== order.curier_status) {
+                console.log(`� Courier status updated for order ${order.order_number}: ${order.curier_status} → ${result.courier_status}`);
+                order.curier_status = result.courier_status;
+            }
+            
+        } catch (error) {
+            console.error(`❌ Error checking courier status for order ${order.order_number}:`, error);
+            
+            // Provide helpful debug information
+            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                console.error(`🌐 Network error - check internet connection`);
+            } else if (error.name === 'SyntaxError') {
+                console.error(`📝 JSON parsing error - backend response may not be valid JSON`);
+            }
+        }
+    }
+    
+    async function processCourierStatus(order, courierData) {
+        // Check if the courier status indicates delivery
+        const isDelivered = checkIfDelivered(courierData);
+        
+        if (isDelivered && order.status === 'shipped') {
+            console.log(`✅ Order ${order.order_number} has been delivered according to courier. Updating status...`);
+            
+            // Update order status to delivered
+            await updateOrderStatusToDelivered(order.id, courierData);
+        } else {
+            console.log(`📊 Order ${order.order_number} courier status: ${getCourierStatusDescription(courierData)}`);
+            
+            // Update courier status in the order record
+            await updateCourierStatus(order.id, courierData);
+        }
+    }
+    
+    function checkIfDelivered(courierData) {
+        console.log(`🔍 Checking if delivered with data:`, courierData);
+        
+        // Check various possible fields that might indicate delivery
+        const status = courierData.status || courierData.delivery_status || courierData.order_status;
+        const statusText = (status || '').toString().toLowerCase();
+        
+        console.log(`📊 Status value: "${status}", Status text: "${statusText}"`);
+        
+        // Common delivery status indicators
+        const deliveryKeywords = [
+            'delivered',
+            'delivery_completed',
+            'completed',
+            'success',
+            'delivered_successfully'
+        ];
+        
+        const isDelivered = deliveryKeywords.some(keyword => {
+            const matches = statusText.includes(keyword);
+            if (matches) {
+                console.log(`✅ Found delivery keyword: "${keyword}" in "${statusText}"`);
+            }
+            return matches;
+        });
+        
+        console.log(`🎯 Final delivery decision: ${isDelivered}`);
+        return isDelivered;
+    }
+    
+    function getCourierStatusDescription(courierData) {
+        return courierData.status || 
+               courierData.delivery_status || 
+               courierData.order_status || 
+               'Unknown status';
+    }
+    
+    async function updateOrderStatusToDelivered(orderId, courierData) {
+        try {
+            console.log(`🔄 Updating order ${orderId} status to delivered...`);
+            
+            const response = await fetch(`/mb-admin/api/orders/${orderId}/update_status/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    status: 'delivered',
+                    notify_customer: true,
+                    comment: `Automatically updated to delivered based on courier status: ${getCourierStatusDescription(courierData)}`
+                })
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                console.log(`✅ Successfully updated order ${orderId} to delivered:`, result);
+                
+                // Show success notification
+                showNotification('success', `Order automatically updated to delivered based on courier status!`);
+                
+                // Refresh the orders table to show updated status
+                setTimeout(() => {
+                    loadOrders(currentPage);
+                    loadOrderCounts();
+                }, 1000);
+                
+            } else {
+                const errorData = await response.json();
+                console.error(`❌ Failed to update order ${orderId} status:`, errorData);
+                showNotification('error', `Failed to auto-update order status: ${errorData.error || 'Unknown error'}`);
+            }
+            
+        } catch (error) {
+            console.error(`❌ Error updating order ${orderId} status:`, error);
+            showNotification('error', `Error auto-updating order status: ${error.message}`);
+        }
+    }
+    
+    async function updateCourierStatus(orderId, courierData) {
+        try {
+            const newCourierStatus = getCourierStatusDescription(courierData);
+            console.log(`📝 Updating courier status for order ${orderId} to: ${newCourierStatus}`);
+            
+            // Call the backend API to update courier status
+            const response = await fetch(`/mb-admin/api/orders/${orderId}/update_courier_status/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    curier_status: newCourierStatus,
+                    courier_data: courierData
+                })
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                console.log(`📊 Successfully updated courier status for order ${orderId}:`, result);
+            } else {
+                console.warn(`⚠️ Failed to update courier status for order ${orderId}`);
+            }
+            
+        } catch (error) {
+            console.error(`❌ Error updating courier status for order ${orderId}:`, error);
+        }
+    }
+    
+    function showNotification(type, message) {
+        // Use SweetAlert2 for notifications
+        const icon = type === 'success' ? 'success' : 'error';
+        const title = type === 'success' ? 'Success!' : 'Error!';
+        
+        Swal.fire({
+            title: title,
+            text: message,
+            icon: icon,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 5000,
+            timerProgressBar: true
+        });
+    }
+    
+    // Auto-monitor courier status every 30 seconds for shipped orders
+    let courierMonitoringInterval;
+    
+    function startCourierMonitoring() {
+        console.log('🚀 Starting automatic courier status monitoring (30-second intervals)...');
+        
+        // Update status to initializing
+        updateMonitoringStatus('initializing');
+        
+        // Clear any existing interval
+        if (courierMonitoringInterval) {
+            clearInterval(courierMonitoringInterval);
+        }
+        
+        // Start monitoring
+        courierMonitoringInterval = setInterval(() => {
+            // Only monitor if we have orders loaded and there are shipped orders
+            if (orders && orders.length > 0) {
+                const shippedOrders = orders.filter(order => 
+                    order.status === 'shipped' && order.curier_id
+                );
+                
+                if (shippedOrders.length > 0) {
+                    console.log(`🔄 Auto-checking ${shippedOrders.length} shipped orders...`);
+                    monitorCourierStatus(orders);
+                } else {
+                    // No shipped orders to monitor
+                    updateMonitoringStatus('active', 0);
+                }
+            } else {
+                updateMonitoringStatus('active', 0);
+            }
+        }, 30000); // 30 seconds
+        
+        // Update toggle button
+        const toggleBtn = document.getElementById('toggleCourierMonitoring');
+        if (toggleBtn) {
+            toggleBtn.innerHTML = '<i class="fas fa-pause me-1"></i> Pause Monitoring';
+            toggleBtn.classList.remove('btn-outline-success');
+            toggleBtn.classList.add('btn-outline-warning');
+        }
+    }
+    
+    function stopCourierMonitoring() {
+        if (courierMonitoringInterval) {
+            console.log('⏹️ Stopping courier status monitoring...');
+            clearInterval(courierMonitoringInterval);
+            courierMonitoringInterval = null;
+            updateMonitoringStatus('stopped');
+        }
+    }
+    
+    // Toggle courier monitoring on/off
+    function toggleCourierMonitoring() {
+        const toggleBtn = document.getElementById('toggleCourierMonitoring');
+        
+        if (courierMonitoringInterval) {
+            // Currently running, so stop it
+            stopCourierMonitoring();
+            toggleBtn.innerHTML = '<i class="fas fa-play me-1"></i> Start Monitoring';
+            toggleBtn.classList.remove('btn-outline-warning');
+            toggleBtn.classList.add('btn-outline-success');
+        } else {
+            // Currently stopped, so start it
+            startCourierMonitoring();
+            toggleBtn.innerHTML = '<i class="fas fa-pause me-1"></i> Pause Monitoring';
+            toggleBtn.classList.remove('btn-outline-success');
+            toggleBtn.classList.add('btn-outline-warning');
+        }
+    }
+    
+    // Update monitoring status indicator
+    function updateMonitoringStatus(status, shippedCount = 0) {
+        const indicator = document.getElementById('courierMonitorIndicator');
+        const text = document.getElementById('courierMonitorText');
+        const stats = document.getElementById('courierStats');
+        const shippedCountSpan = document.getElementById('shippedOrdersBeingMonitored');
+        
+        // Remove all status classes
+        indicator.classList.remove('active', 'paused', 'error');
+        
+        switch (status) {
+            case 'active':
+                indicator.classList.add('active');
+                text.textContent = 'Courier Monitoring: Active';
+                text.style.color = '#28a745';
+                stats.style.display = 'inline-block';
+                shippedCountSpan.textContent = shippedCount;
+                break;
+                
+            case 'paused':
+                indicator.classList.add('paused');
+                text.textContent = 'Courier Monitoring: Paused';
+                text.style.color = '#ffc107';
+                stats.style.display = 'none';
+                break;
+                
+            case 'stopped':
+                text.textContent = 'Courier Monitoring: Stopped';
+                text.style.color = '#6c757d';
+                stats.style.display = 'none';
+                break;
+                
+            case 'error':
+                indicator.classList.add('error');
+                text.textContent = 'Courier Monitoring: Error';
+                text.style.color = '#dc3545';
+                stats.style.display = 'none';
+                break;
+                
+            case 'initializing':
+            default:
+                text.textContent = 'Courier Monitoring: Initializing...';
+                text.style.color = '#6c757d';
+                stats.style.display = 'none';
+                break;
+        }
+    }
+    
+    // ============================================
+    // COURIER MONITORING DEBUG FUNCTIONS
+    // ============================================
+    
+    // Manual test function for debugging courier status
+    async function testCourierStatus(courierId) {
+        console.log(`🧪 Testing courier status for ID: ${courierId}`);
+        
+        try {
+            const response = await fetch(`https://portal.packzy.com/api/v1/status_by_cid/${courierId}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            console.log(`📡 API Response Status: ${response.status}`);
+            
+            if (!response.ok) {
+                console.warn(`⚠️ API returned error status: ${response.status}`);
+                const errorText = await response.text();
+                console.warn(`⚠️ Error response: ${errorText}`);
+                return { error: true, status: response.status, message: errorText };
+            }
+            
+            const courierData = await response.json();
+            console.log(`📋 Courier data:`, courierData);
+            
+            // Check if this indicates delivery
+            const isDelivered = checkIfDelivered(courierData);
+            console.log(`✅ Is delivered: ${isDelivered}`);
+            
+            return { error: false, data: courierData, isDelivered };
+            
+        } catch (error) {
+            console.error(`❌ Error testing courier status:`, error);
+            return { error: true, message: error.message };
+        }
+    }
+    
+    // Enhanced delivery detection with more logging
+    function checkIfDelivered(courierData) {
+        console.log(`🔍 Checking if delivered with data:`, courierData);
+        
+        // Check various possible fields that might indicate delivery
+        const status = courierData.status || courierData.delivery_status || courierData.order_status;
+        const statusText = (status || '').toString().toLowerCase();
+        
+        console.log(`📊 Status value: "${status}", Status text: "${statusText}"`);
+        
+        // Common delivery status indicators
+        const deliveryKeywords = [
+            'delivered',
+            'delivery_completed',
+            'completed',
+            'success',
+            'delivered_successfully'
+        ];
+        
+        const isDelivered = deliveryKeywords.some(keyword => {
+            const matches = statusText.includes(keyword);
+            if (matches) {
+                console.log(`✅ Found delivery keyword: "${keyword}" in "${statusText}"`);
+            }
+            return matches;
+        });
+        
+        console.log(`🎯 Final delivery decision: ${isDelivered}`);
+        return isDelivered;
+    }
+    
+    // Add to window for browser console access
+    window.testCourierStatus = testCourierStatus;
+    
+    // Manual check function for button
+    function manualMonitorCheck() {
+        console.log('🧪 Manual courier monitoring check triggered...');
+        if (orders && orders.length > 0) {
+            monitorCourierStatus(orders);
+        } else {
+            console.warn('⚠️ No orders loaded for monitoring check');
+        }
+    }
+    
+    // Add to window for button access
+    window.manualMonitorCheck = manualMonitorCheck;
+    window.toggleCourierMonitoring = toggleCourierMonitoring;
+    
+    // Manual override function for testing delivery status update
+    async function manualDeliveryTest(orderNumber) {
+        console.log(`🧪 Manual delivery test for order ${orderNumber}`);
+        
+        const order = orders.find(o => o.order_number === orderNumber);
+        if (!order) {
+            console.error(`❌ Order ${orderNumber} not found`);
+            return;
+        }
+        
+        // Simulate delivered courier data
+        const mockCourierData = {
+            status: 'delivered',
+            delivery_status: 'completed',
+            message: 'Package delivered successfully (MANUAL TEST)'
+        };
+        
+        console.log(`📦 Simulating delivery for order ${orderNumber}...`);
+        
+        // Test the delivery detection
+        const isDelivered = checkIfDelivered(mockCourierData);
+        
+        if (isDelivered && order.status === 'shipped') {
+            console.log(`✅ Delivery detected! Updating order status...`);
+            await updateOrderStatusToDelivered(order.id, mockCourierData);
+        } else {
+            console.warn(`⚠️ Delivery not detected or order not in shipped status. Order status: ${order.status}`);
+        }
+    }
+    
+    // Add to window for console access
+    window.manualDeliveryTest = manualDeliveryTest;
+    
+    // ============================================
+    // END COURIER MONITORING DEBUG FUNCTIONS
+    // ============================================
     
     // Helper functions
     // Function to add order to curier service
