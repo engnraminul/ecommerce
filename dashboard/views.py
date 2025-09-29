@@ -377,9 +377,141 @@ class OrderDashboardViewSet(viewsets.ModelViewSet):
     serializer_class = OrderDashboardSerializer
     permission_classes = [IsAdminUser]
     filterset_fields = ['status', 'payment_status', 'created_at']
-    search_fields = ['order_number', 'user__username', 'user__email']
+    search_fields = ['order_number', 'user__username', 'user__email', 'shipping_address__first_name', 'shipping_address__last_name', 'shipping_address__phone']
     ordering_fields = ['created_at', 'total_amount', 'status']
     ordering = ['-created_at']
+    
+    def get_queryset(self):
+        """Enhanced queryset with better search and filtering"""
+        queryset = Order.objects.select_related(
+            'user', 'shipping_address'
+        ).prefetch_related('items__product')
+        
+        # Search functionality
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(order_number__icontains=search) |
+                Q(user__username__icontains=search) |
+                Q(user__email__icontains=search) |
+                Q(user__first_name__icontains=search) |
+                Q(user__last_name__icontains=search) |
+                Q(shipping_address__first_name__icontains=search) |
+                Q(shipping_address__last_name__icontains=search) |
+                Q(shipping_address__phone__icontains=search) |
+                Q(shipping_address__email__icontains=search) |
+                Q(customer_phone__icontains=search) |
+                Q(guest_email__icontains=search)
+            )
+        
+        # Date filtering
+        created_at_gte = self.request.query_params.get('created_at__date__gte')
+        created_at_lte = self.request.query_params.get('created_at__date__lte')
+        
+        if created_at_gte:
+            try:
+                from datetime import datetime
+                start_date = datetime.strptime(created_at_gte, '%Y-%m-%d')
+                queryset = queryset.filter(created_at__date__gte=start_date.date())
+            except ValueError:
+                pass  # Ignore invalid date format
+        
+        if created_at_lte:
+            try:
+                from datetime import datetime
+                end_date = datetime.strptime(created_at_lte, '%Y-%m-%d')
+                queryset = queryset.filter(created_at__date__lte=end_date.date())
+            except ValueError:
+                pass  # Ignore invalid date format
+        
+        # Status filtering
+        status_filter = self.request.query_params.get('status')
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        
+        # Count by status feature
+        count_by_status = self.request.query_params.get('count_by_status')
+        if count_by_status:
+            # This is handled in the list method below
+            pass
+        
+        return queryset
+    
+    def list(self, request, *args, **kwargs):
+        """Enhanced list method with status counts"""
+        # Check if this is a count_by_status request
+        count_by_status = request.query_params.get('count_by_status')
+        if count_by_status:
+            # Return status counts
+            from django.db.models import Count
+            
+            # Get all orders and count by status
+            status_counts = {}
+            total_count = 0
+            
+            # Count each status
+            all_orders = Order.objects.all()
+            status_counts = dict(all_orders.values('status').annotate(count=Count('status')).values_list('status', 'count'))
+            total_count = all_orders.count()
+            
+            return Response({
+                'status_counts': status_counts,
+                'total_count': total_count
+            })
+        
+        # Include shipping address in serialization
+        include_shipping = request.query_params.get('include_shipping_address')
+        if include_shipping:
+            # Override the serializer context to include shipping address
+            queryset = self.filter_queryset(self.get_queryset())
+            page = self.paginate_queryset(queryset)
+            
+            if page is not None:
+                # Use enhanced serializer
+                orders_data = []
+                for order in page:
+                    # Get shipping address data
+                    shipping_address = None
+                    if hasattr(order, 'shipping_address') and order.shipping_address:
+                        shipping_address = {
+                            'first_name': order.shipping_address.first_name,
+                            'last_name': order.shipping_address.last_name,
+                            'phone': order.shipping_address.phone,
+                            'email': order.shipping_address.email,
+                            'address_line_1': order.shipping_address.address_line_1,
+                            'address_line_2': order.shipping_address.address_line_2,
+                            'city': order.shipping_address.city,
+                            'state': order.shipping_address.state,
+                            'postal_code': order.shipping_address.postal_code,
+                            'country': order.shipping_address.country,
+                        }
+                    
+                    orders_data.append({
+                        'id': order.id,
+                        'order_number': order.order_number,
+                        'created_at': order.created_at.isoformat(),
+                        'status': order.status,
+                        'payment_status': order.payment_status,
+                        'total_amount': str(order.total_amount),
+                        'items_count': order.items.count(),
+                        'user': {
+                            'id': order.user.id if order.user else None,
+                            'username': order.user.username if order.user else None,
+                            'email': order.user.email if order.user else order.guest_email,
+                            'first_name': order.user.first_name if order.user else None,
+                            'last_name': order.user.last_name if order.user else None,
+                        } if order.user else None,
+                        'shipping_address': shipping_address,
+                        'customer_phone': order.customer_phone,
+                        'guest_email': order.guest_email,
+                        'curier_id': order.curier_id,
+                        'curier_status': order.curier_status,
+                    })
+                
+                return self.get_paginated_response(orders_data)
+        
+        # Default behavior
+        return super().list(request, *args, **kwargs)
     
     def perform_update(self, serializer):
         instance = serializer.save()
@@ -592,6 +724,70 @@ class OrderDashboardViewSet(viewsets.ModelViewSet):
             return Response({
                 "success": False,
                 "message": f"Error adding order to curier: {str(e)}"
+            }, status=500)
+    
+    @action(detail=False, methods=['post'])
+    def bulk_action(self, request):
+        """Perform bulk actions on multiple orders"""
+        try:
+            order_ids = request.data.get('order_ids', [])
+            action = request.data.get('action')
+            
+            if not order_ids:
+                return Response({'error': 'No order IDs provided'}, status=400)
+            
+            if not action:
+                return Response({'error': 'No action specified'}, status=400)
+            
+            # Get the orders
+            orders = Order.objects.filter(id__in=order_ids)
+            
+            if not orders.exists():
+                return Response({'error': 'No orders found with the provided IDs'}, status=404)
+            
+            updated_count = 0
+            
+            if action == 'delete':
+                # Delete orders
+                deleted_count = orders.count()
+                orders.delete()
+                return Response({
+                    'success': True,
+                    'message': f'Successfully deleted {deleted_count} order(s)'
+                })
+            else:
+                # Update status
+                new_status = request.data.get('new_status', action)
+                
+                for order in orders:
+                    order.status = new_status
+                    
+                    # Handle special cases for partially returned status
+                    if new_status == 'partially_returned':
+                        partially_amount = request.data.get('partially_amount')
+                        if partially_amount:
+                            order.partially_ammount = float(partially_amount)
+                    
+                    order.save()
+                    updated_count += 1
+                    
+                    # Log activity for each order
+                    try:
+                        self.log_activity(f'bulk_updated_to_{new_status}', order)
+                    except Exception as e:
+                        print(f"Error logging activity: {str(e)}")
+                
+                return Response({
+                    'success': True,
+                    'message': f'Successfully updated {updated_count} order(s) to {new_status}'
+                })
+                
+        except Exception as e:
+            print(f"Error in bulk action: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response({
+                'error': f'An error occurred: {str(e)}'
             }, status=500)
 
 class DashboardStatisticsView(APIView):

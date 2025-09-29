@@ -278,7 +278,7 @@ class CreateOrderSerializer(serializers.Serializer):
         
         # For COD orders, mark as confirmed
         order.payment_status = 'cod_confirmed'
-        order.status = 'Pending'
+        order.status = 'pending'
         order.confirmed_at = timezone.now()
         order.save()
         

@@ -408,6 +408,259 @@
         text-align: center;
         cursor: help;
     }
+    
+    /* Status Filter Buttons */
+    .status-filter-btn {
+        transition: all 0.3s ease;
+        border-radius: 25px;
+        font-weight: 500;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .status-filter-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .status-filter-btn.active {
+        background-color: var(--primary-color) !important;
+        border-color: var(--primary-color) !important;
+        color: white !important;
+        box-shadow: 0 4px 12px rgba(147, 0, 0, 0.3);
+    }
+    
+    .status-filter-btn.active .badge {
+        background-color: rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+    }
+    
+    .status-filter-btn .badge {
+        font-size: 0.7rem;
+        margin-left: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    /* Filter with status list container */
+    .filter-with-status-list {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-radius: 0;
+    }
+    
+    .filter-with-status-list .d-flex {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        margin: 0.5rem;
+        padding: 1rem !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Responsive improvements for status filters */
+    @media (max-width: 768px) {
+        .status-filter-btn {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .status-filter-btn .badge {
+            font-size: 0.65rem;
+            margin-left: 0.3rem;
+        }
+        
+        .filter-with-status-list .d-flex {
+            padding: 0.75rem !important;
+            gap: 0.5rem !important;
+        }
+    }
+    
+    /* Bulk Actions Styles */
+    .bulk-actions-row {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    #bulkActionSelect:disabled,
+    #applyBulkActionBtn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    #applyBulkActionBtn:not(:disabled) {
+        background-color: #ffc107;
+        border-color: #ffc107;
+        color: #000;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    #applyBulkActionBtn:not(:disabled):hover {
+        background-color: #ffca2c;
+        border-color: #ffca2c;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+    }
+    
+    /* Checkbox styles */
+    .form-check-input:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    
+    .form-check-input:focus {
+        border-color: var(--primary-color);
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(147, 0, 0, 0.25);
+    }
+    
+    /* Selected row highlighting */
+    tr.selected-row {
+        background-color: rgba(147, 0, 0, 0.1) !important;
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    /* Selection counter */
+    .selection-counter {
+        background: var(--primary-color);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        margin-left: 0.5rem;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: scale(0.8); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    
+    /* Search Suggestions Styles */
+    .search-suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 0.375rem 0.375rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .search-suggestion-item {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #f8f9fa;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .search-suggestion-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .search-suggestion-item:last-child {
+        border-bottom: none;
+    }
+    
+    .search-suggestion-item.active {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    .suggestion-main {
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+    
+    .suggestion-details {
+        font-size: 0.8rem;
+        color: #6c757d;
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .search-suggestion-item.active .suggestion-details {
+        color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .search-loading {
+        padding: 1rem;
+        text-align: center;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .search-no-results {
+        padding: 1rem;
+        text-align: center;
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-style: italic;
+    }
+    
+    /* Enhanced input group for search */
+    .input-group-sm .input-group-text {
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+        color: #6c757d;
+    }
+    
+    .input-group-sm .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(147, 0, 0, 0.25);
+    }
+    
+    .input-group-sm .form-control:focus + .search-suggestions {
+        border-color: var(--primary-color);
+    }
+    
+    /* Live search loading indicator */
+    .search-loading-inline {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 10;
+        color: var(--primary-color);
+    }
+    
+    /* Clear filters button */
+    #clearFiltersBtn {
+        border-color: #dee2e6;
+        color: #6c757d;
+        transition: all 0.2s;
+    }
+    
+    #clearFiltersBtn:hover {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: white;
+    }
+    
+    /* Custom date inputs animation */
+    #customDateStart, #customDateEnd {
+        transition: all 0.3s ease;
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    
+    #customDateStart.show, #customDateEnd.show {
+        display: block !important;
+        opacity: 1;
+        transform: scale(1);
+    }
 </style>
 {% endblock %}
 
@@ -422,40 +675,93 @@
             <i class="fas fa-sync-alt me-1"></i> Refresh
         </button>
     </div>
+    <div class="filter-with-status-list">
+        <div class="d-flex flex-wrap gap-2 p-3 border-bottom">
+            <button class="btn btn-primary btn-sm status-filter-btn active" data-status="">
+                All <span class="badge bg-primary-subtle text-primary rounded-pill" id="allOrdersCount">0</span>
+            </button>
+            <button class="btn btn-outline-primary btn-sm status-filter-btn" data-status="pending">
+                Pending <span class="badge bg-primary-subtle text-primary rounded-pill" id="pendingOrdersCount">0</span>
+            </button>
+            <button class="btn btn-outline-primary btn-sm status-filter-btn" data-status="confirmed">
+                Confirmed <span class="badge bg-primary-subtle text-primary rounded-pill" id="confirmedOrdersCount">0</span>
+            </button>
+            <button class="btn btn-outline-primary btn-sm status-filter-btn" data-status="processing">
+                Processing <span class="badge bg-primary-subtle text-primary rounded-pill" id="processingOrdersCount">0</span>
+            </button>
+            <button class="btn btn-outline-primary btn-sm status-filter-btn" data-status="shipped">
+                Shipped <span class="badge bg-primary-subtle text-primary rounded-pill" id="shippedOrdersCount">0</span>
+            </button>
+            <button class="btn btn-outline-primary btn-sm status-filter-btn" data-status="delivered">
+                Delivered <span class="badge bg-primary-subtle text-primary rounded-pill" id="deliveredOrdersCount">0</span>
+            </button>
+            <button class="btn btn-outline-primary btn-sm status-filter-btn" data-status="returned">
+                Returned <span class="badge bg-primary-subtle text-primary rounded-pill" id="returnedOrdersCount">0</span>
+            </button>
+            <button class="btn btn-outline-primary btn-sm status-filter-btn" data-status="partially_returned">
+                Partially Returned <span class="badge bg-primary-subtle text-primary rounded-pill" id="partiallyReturnedOrdersCount">0</span>
+            </button>
+            <button class="btn btn-outline-primary btn-sm status-filter-btn" data-status="cancelled">
+                Cancelled <span class="badge bg-primary-subtle text-primary rounded-pill" id="cancelledOrdersCount">0</span>
+            </button>
+        </div>
+    </div>
     <div class="card-body">
         <div class="mb-3">
-            <div class="row g-2">
+            <div class="row g-2 align-items-center">
+                <!-- Left side: Bulk Actions -->
                 <div class="col-md-3">
-                    <input type="text" class="form-control form-control-sm" id="orderSearchInput" placeholder="Search by order # or customer...">
-                </div>
-                <div class="col-md-3">
-                    <select class="form-select form-select-sm" id="statusFilter">
-                        <option value="">All Statuses</option>
-                        <option value="pending">Pending</option>
-                        <option value="confirmed">Confirmed</option>
-                        <option value="processing">Processing</option>
-                        <option value="shipped">Shipped</option>
-                        <option value="delivered">Delivered</option>
-                        <option value="returned">Returned</option>
-                        <option value="partially_returned">Partially Returned</option>
-                        <option value="cancelled">Cancelled</option>
+                    <select class="form-select form-select-sm" id="bulkActionSelect" disabled>
+                        <option value="">Bulk Actions</option>
+                        <option value="pending">Change to Pending</option>
+                        <option value="confirmed">Change to Confirmed</option>
+                        <option value="processing">Change to Processing</option>
+                        <option value="shipped">Change to Shipped</option>
+                        <option value="delivered">Change to Delivered</option>
+                        <option value="returned">Change to Returned</option>
+                        <option value="partially_returned">Change to Partially Returned</option>
+                        <option value="cancelled">Change to Cancelled</option>
+                        <option value="delete">Delete Selected</option>
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <select class="form-select form-select-sm" id="paymentStatusFilter">
-                        <option value="">All Payment Statuses</option>
-                        <option value="paid">Paid</option>
-                        <option value="unpaid">Unpaid</option>
-                        <option value="refunded">Refunded</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <input type="date" class="form-control form-control-sm" id="dateFilter">
-                </div>
-                <div class="col-md-2">
-                    <button class="btn btn-primary btn-sm w-100" id="applyOrderFiltersBtn">
-                        <i class="fas fa-filter me-1"></i> Apply Filters
+                <div class="col-md-1">
+                    <button class="btn btn-warning btn-sm w-100" id="applyBulkActionBtn" disabled>
+                        <i class="fas fa-check me-1"></i> Apply
                     </button>
+                </div>
+                
+                <!-- Right side: Search and Filters -->
+                <div class="col-md-4">
+                    <div class="input-group input-group-sm position-relative">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="orderSearchInput" 
+                               placeholder="Search by customer name, order ID, phone number, or address..." 
+                               autocomplete="off">
+                        <div id="searchSuggestions" class="search-suggestions" style="display: none;"></div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select form-select-sm" id="dateFilter">
+                        <option value="">All Dates</option>
+                        <option value="today">Today</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="this_week">This Week</option>
+                        <option value="this_month">This Month</option>
+                        <option value="custom">Custom Date</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <div class="d-flex gap-1">
+                        <input type="date" class="form-control form-control-sm" id="customDateStart" 
+                               style="display: none;" title="Start Date">
+                        <input type="date" class="form-control form-control-sm" id="customDateEnd" 
+                               style="display: none;" title="End Date">
+                        <button class="btn btn-outline-secondary btn-sm" id="clearFiltersBtn" title="Clear all filters">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -464,6 +770,12 @@
             <table class="table table-striped table-hover">
                 <thead>
                     <tr>
+                        <th width="50">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="selectAllOrders" title="Select/Deselect All">
+                                <label class="form-check-label" for="selectAllOrders"></label>
+                            </div>
+                        </th>
                         <th>Order #</th>
                         <th>Date</th>
                         <th>Actions</th>
@@ -475,7 +787,7 @@
                 </thead>
                 <tbody id="ordersTableBody">
                     <tr>
-                        <td colspan="7" class="text-center py-4">
+                        <td colspan="8" class="text-center py-4">
                             <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
@@ -813,6 +1125,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentOrderId = null;
     let orders = [];
     
+    // Initialize status filter
+    window.currentStatusFilter = ''; // Empty means "All"
+    
     // Print Sticker Event Listener
     document.getElementById('printStickerBtn').addEventListener('click', function() {
         printCourierSticker();
@@ -879,47 +1194,627 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event listeners
     document.getElementById('refreshOrdersBtn').addEventListener('click', function() {
         loadOrders(1);
+        loadOrderCounts(); // Also refresh counts
     });
     
-    document.getElementById('applyOrderFiltersBtn').addEventListener('click', function() {
+    // Clear filters button
+    document.getElementById('clearFiltersBtn').addEventListener('click', function() {
+        // Clear search input
+        document.getElementById('orderSearchInput').value = '';
+        
+        // Reset date filter
+        document.getElementById('dateFilter').value = '';
+        
+        // Hide custom date inputs
+        document.getElementById('customDateStart').style.display = 'none';
+        document.getElementById('customDateEnd').style.display = 'none';
+        document.getElementById('customDateStart').value = '';
+        document.getElementById('customDateEnd').value = '';
+        
+        // Reset status filter to "All"
+        document.querySelectorAll('.status-filter-btn').forEach(button => {
+            button.classList.remove('active');
+            button.classList.remove('btn-primary');
+            button.classList.add('btn-outline-primary');
+        });
+        
+        // Set "All" button as active
+        document.querySelector('.status-filter-btn[data-status=""]').classList.add('active');
+        document.querySelector('.status-filter-btn[data-status=""]').classList.remove('btn-outline-primary');
+        document.querySelector('.status-filter-btn[data-status=""]').classList.add('btn-primary');
+        
+        // Reset global status filter
+        window.currentStatusFilter = '';
+        
+        // Hide suggestions
+        hideSuggestions();
+        
+        // Reload orders
         loadOrders(1);
     });
     
+    // Date filter change handler
+    document.getElementById('dateFilter').addEventListener('change', function() {
+        const selectedValue = this.value;
+        const customDateStart = document.getElementById('customDateStart');
+        const customDateEnd = document.getElementById('customDateEnd');
+        
+        if (selectedValue === 'custom') {
+            customDateStart.style.display = 'block';
+            customDateEnd.style.display = 'block';
+            setTimeout(() => {
+                customDateStart.classList.add('show');
+                customDateEnd.classList.add('show');
+            }, 10);
+        } else {
+            customDateStart.classList.remove('show');
+            customDateEnd.classList.remove('show');
+            setTimeout(() => {
+                customDateStart.style.display = 'none';
+                customDateEnd.style.display = 'none';
+                customDateStart.value = '';
+                customDateEnd.value = '';
+            }, 300);
+            
+            // Load orders immediately for predefined date filters
+            loadOrders(1);
+        }
+    });
+    
+    // Custom date inputs change handlers
+    document.getElementById('customDateStart').addEventListener('change', function() {
+        if (this.value && document.getElementById('customDateEnd').value) {
+            loadOrders(1);
+        }
+    });
+    
+    document.getElementById('customDateEnd').addEventListener('change', function() {
+        if (this.value && document.getElementById('customDateStart').value) {
+            loadOrders(1);
+        }
+    });
+    
+    // Status filter button event listeners
+    document.querySelectorAll('.status-filter-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.status-filter-btn').forEach(button => {
+                button.classList.remove('active');
+                button.classList.remove('btn-primary');
+                button.classList.add('btn-outline-primary');
+            });
+            
+            // Add active class to clicked button
+            this.classList.add('active');
+            this.classList.remove('btn-outline-primary');
+            this.classList.add('btn-primary');
+            
+            // Get the status from data attribute
+            const selectedStatus = this.dataset.status;
+            
+            // Store the current status filter
+            window.currentStatusFilter = selectedStatus;
+            
+            // Load orders with the selected status filter
+            loadOrdersWithStatus(1, selectedStatus);
+        });
+    });
+
+    // Enhanced Live Search Functionality
+    let searchTimeout;
+    let currentSearchTerm = '';
+    let selectedSuggestionIndex = -1;
+    let isSearching = false;
+    
+    document.getElementById('orderSearchInput').addEventListener('input', function() {
+        const searchTerm = this.value.trim();
+        const suggestionsContainer = document.getElementById('searchSuggestions');
+        
+        // Clear previous timeout
+        clearTimeout(searchTimeout);
+        
+        if (searchTerm.length === 0) {
+            hideSuggestions();
+            currentSearchTerm = '';
+            // Load all orders when search is cleared
+            loadOrders(1);
+            return;
+        }
+        
+        if (searchTerm.length < 2) {
+            hideSuggestions();
+            return;
+        }
+        
+        // Show loading indicator in input field
+        showSearchLoading();
+        
+        // Debounce search requests
+        searchTimeout = setTimeout(() => {
+            if (searchTerm !== currentSearchTerm) {
+                currentSearchTerm = searchTerm;
+                performLiveSearch(searchTerm);
+            }
+        }, 300);
+    });
+    
+    function showSearchLoading() {
+        const inputGroup = document.getElementById('orderSearchInput').closest('.input-group');
+        let loadingIndicator = inputGroup.querySelector('.search-loading-inline');
+        
+        if (!loadingIndicator) {
+            loadingIndicator = document.createElement('div');
+            loadingIndicator.className = 'search-loading-inline';
+            loadingIndicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            inputGroup.style.position = 'relative';
+            inputGroup.appendChild(loadingIndicator);
+        }
+        
+        loadingIndicator.style.display = 'block';
+    }
+    
+    function hideSearchLoading() {
+        const inputGroup = document.getElementById('orderSearchInput').closest('.input-group');
+        const loadingIndicator = inputGroup.querySelector('.search-loading-inline');
+        
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+        }
+    }
+    
+    function performLiveSearch(searchTerm) {
+        isSearching = true;
+        
+        // Immediately load orders with search term (live results)
+        loadOrders(1);
+        
+        // Also fetch suggestions for dropdown
+        fetchSearchSuggestions(searchTerm);
+    }
+    
+    // Handle keyboard navigation in search suggestions
+    document.getElementById('orderSearchInput').addEventListener('keydown', function(e) {
+        const suggestionsContainer = document.getElementById('searchSuggestions');
+        const suggestions = suggestionsContainer.querySelectorAll('.search-suggestion-item');
+        
+        if (suggestions.length === 0) return;
+        
+        switch(e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestions.length - 1);
+                updateSuggestionSelection(suggestions);
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
+                updateSuggestionSelection(suggestions);
+                break;
+            case 'Enter':
+                e.preventDefault();
+                if (selectedSuggestionIndex >= 0) {
+                    selectSuggestion(suggestions[selectedSuggestionIndex]);
+                } else {
+                    loadOrders(1);
+                    hideSuggestions();
+                }
+                break;
+            case 'Escape':
+                hideSuggestions();
+                break;
+        }
+    });
+    
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.input-group')) {
+            hideSuggestions();
+        }
+    });
+    
+    function fetchSearchSuggestions(searchTerm) {
+        const suggestionsContainer = document.getElementById('searchSuggestions');
+        
+        // Show loading in suggestions
+        suggestionsContainer.innerHTML = '<div class="search-loading"><i class="fas fa-spinner fa-spin me-2"></i>Searching...</div>';
+        suggestionsContainer.style.display = 'block';
+        
+        // Fetch suggestions from API - for now we'll simulate this since the endpoint might not exist
+        // In production, replace this with the actual API call
+        setTimeout(() => {
+            hideSearchLoading();
+            
+            // Simulate API response - in production, replace with actual fetch call
+            // fetch(`/mb-admin/api/orders/search-suggestions/?q=${encodeURIComponent(searchTerm)}`)
+            //     .then(response => response.json())
+            //     .then(data => {
+            //         displaySearchSuggestions(data.results || []);
+            //     })
+            //     .catch(error => {
+            //         console.error('Search suggestions error:', error);
+            //         suggestionsContainer.innerHTML = '<div class="search-no-results">Search suggestions temporarily unavailable</div>';
+            //     });
+            
+            // For now, hide suggestions since we have live search in the main table
+            hideSuggestions();
+        }, 300);
+    }
+    
+    function displaySearchSuggestions(suggestions) {
+        const suggestionsContainer = document.getElementById('searchSuggestions');
+        selectedSuggestionIndex = -1;
+        
+        if (suggestions.length === 0) {
+            suggestionsContainer.innerHTML = '<div class="search-no-results">No matching orders found</div>';
+            return;
+        }
+        
+        const suggestionsHtml = suggestions.map((suggestion, index) => {
+            const customerName = suggestion.customer_name || 'Guest';
+            const phone = suggestion.phone || 'No phone';
+            const orderDate = new Date(suggestion.created_at).toLocaleDateString();
+            
+            return `
+                <div class="search-suggestion-item" data-order-id="${suggestion.id}" data-index="${index}">
+                    <div class="suggestion-main">${customerName} - Order #${suggestion.order_number}</div>
+                    <div class="suggestion-details">
+                        <span>📞 ${phone}</span>
+                        <span>📅 ${orderDate}</span>
+                        <span>💰 $${suggestion.total_amount}</span>
+                        <span class="badge badge-sm ${getStatusBadgeClass(suggestion.status)}">${suggestion.status}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        suggestionsContainer.innerHTML = suggestionsHtml;
+        
+        // Add click event listeners
+        suggestionsContainer.querySelectorAll('.search-suggestion-item').forEach(item => {
+            item.addEventListener('click', () => selectSuggestion(item));
+        });
+    }
+    
+    function updateSuggestionSelection(suggestions) {
+        suggestions.forEach((item, index) => {
+            item.classList.toggle('active', index === selectedSuggestionIndex);
+        });
+    }
+    
+    function selectSuggestion(suggestionItem) {
+        const orderId = suggestionItem.dataset.orderId;
+        const orderText = suggestionItem.querySelector('.suggestion-main').textContent;
+        
+        // Set the search input to the selected order
+        document.getElementById('orderSearchInput').value = orderText;
+        
+        // Load orders with this specific search
+        loadOrders(1);
+        hideSuggestions();
+    }
+    
+    function hideSuggestions() {
+        document.getElementById('searchSuggestions').style.display = 'none';
+        selectedSuggestionIndex = -1;
+    }
+    
+    function getStatusBadgeClass(status) {
+        const statusClasses = {
+            'pending': 'bg-warning text-dark',
+            'confirmed': 'bg-info text-white',
+            'processing': 'bg-primary text-white',
+            'shipped': 'bg-indigo text-white',
+            'delivered': 'bg-success text-white',
+            'returned': 'bg-brown text-white',
+            'partially_returned': 'bg-orange text-white',
+            'cancelled': 'bg-danger text-white'
+        };
+        return statusClasses[status] || 'bg-secondary text-white';
+    }
+
+    // Bulk Actions Event Listeners
+    
+    // Select/Deselect All checkbox
+    document.getElementById('selectAllOrders').addEventListener('change', function() {
+        const isChecked = this.checked;
+        const checkboxes = document.querySelectorAll('.order-checkbox');
+        
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = isChecked;
+            toggleRowSelection(checkbox.closest('tr'), isChecked);
+        });
+        
+        updateBulkActionControls();
+    });
+    
+    // Function to handle individual checkbox changes
+    function handleOrderCheckboxChange() {
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('order-checkbox')) {
+                const isChecked = e.target.checked;
+                const row = e.target.closest('tr');
+                toggleRowSelection(row, isChecked);
+                updateBulkActionControls();
+                updateSelectAllCheckbox();
+            }
+        });
+    }
+    
+    // Function to toggle row selection styling
+    function toggleRowSelection(row, isSelected) {
+        if (isSelected) {
+            row.classList.add('selected-row');
+        } else {
+            row.classList.remove('selected-row');
+        }
+    }
+    
+    // Function to update bulk action controls
+    function updateBulkActionControls() {
+        const selectedCheckboxes = document.querySelectorAll('.order-checkbox:checked');
+        const bulkActionSelect = document.getElementById('bulkActionSelect');
+        const applyBulkActionBtn = document.getElementById('applyBulkActionBtn');
+        
+        const hasSelection = selectedCheckboxes.length > 0;
+        
+        bulkActionSelect.disabled = !hasSelection;
+        applyBulkActionBtn.disabled = !hasSelection || !bulkActionSelect.value;
+        
+        // Update button text with selection count
+        if (hasSelection) {
+            applyBulkActionBtn.innerHTML = `
+                <i class="fas fa-check me-1"></i> Apply (${selectedCheckboxes.length})
+            `;
+        } else {
+            applyBulkActionBtn.innerHTML = `
+                <i class="fas fa-check me-1"></i> Apply
+            `;
+        }
+    }
+    
+    // Function to update select all checkbox state
+    function updateSelectAllCheckbox() {
+        const allCheckboxes = document.querySelectorAll('.order-checkbox');
+        const checkedCheckboxes = document.querySelectorAll('.order-checkbox:checked');
+        const selectAllCheckbox = document.getElementById('selectAllOrders');
+        
+        if (checkedCheckboxes.length === 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        } else if (checkedCheckboxes.length === allCheckboxes.length) {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.indeterminate = false;
+        } else {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = true;
+        }
+    }
+    
+    // Bulk action dropdown change
+    document.getElementById('bulkActionSelect').addEventListener('change', function() {
+        updateBulkActionControls();
+    });
+    
+    // Apply bulk action button
+    document.getElementById('applyBulkActionBtn').addEventListener('click', function() {
+        const selectedCheckboxes = document.querySelectorAll('.order-checkbox:checked');
+        const selectedOrderIds = Array.from(selectedCheckboxes).map(cb => cb.dataset.orderId);
+        const action = document.getElementById('bulkActionSelect').value;
+        
+        if (selectedOrderIds.length === 0) {
+            Swal.fire({
+                title: 'No Orders Selected',
+                text: 'Please select at least one order to perform bulk action.',
+                icon: 'warning'
+            });
+            return;
+        }
+        
+        if (!action) {
+            Swal.fire({
+                title: 'No Action Selected',
+                text: 'Please select an action to perform.',
+                icon: 'warning'
+            });
+            return;
+        }
+        
+        // Show confirmation popup
+        let actionText = '';
+        let warningText = '';
+        
+        if (action === 'delete') {
+            actionText = 'Delete';
+            warningText = 'This action cannot be undone!';
+        } else {
+            actionText = `Change status to "${action.charAt(0).toUpperCase() + action.slice(1).replace('_', ' ')}"`;
+            warningText = 'All selected orders will be updated.';
+        }
+        
+        Swal.fire({
+            title: `${actionText} Selected Orders?`,
+            text: `Are you sure you want to ${actionText.toLowerCase()} ${selectedOrderIds.length} order(s)? ${warningText}`,
+            icon: action === 'delete' ? 'error' : 'question',
+            showCancelButton: true,
+            confirmButtonColor: action === 'delete' ? '#dc3545' : '#930000',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: `Yes, ${actionText}!`,
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                performBulkAction(selectedOrderIds, action);
+            }
+        });
+    });
+    
+    // Function to perform bulk action
+    function performBulkAction(orderIds, action) {
+        // Show loading
+        Swal.fire({
+            title: 'Processing...',
+            text: 'Please wait while we process your request.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        // Prepare the request based on action
+        let requestData = {
+            order_ids: orderIds,
+            action: action
+        };
+        
+        if (action !== 'delete') {
+            requestData.new_status = action;
+        }
+        
+        // Make the API call
+        fetch('/mb-admin/api/orders/bulk-action/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                // Handle HTTP errors
+                if (response.status === 404) {
+                    throw new Error('Bulk action endpoint not found. Please contact your administrator.');
+                } else if (response.status === 403) {
+                    throw new Error('You do not have permission to perform bulk actions.');
+                } else if (response.status >= 500) {
+                    throw new Error('Server error occurred. Please try again later.');
+                } else {
+                    throw new Error(`HTTP Error: ${response.status}`);
+                }
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    title: 'Success!',
+                    text: data.message || `Successfully processed ${orderIds.length} order(s).`,
+                    icon: 'success'
+                }).then(() => {
+                    // Refresh the orders list and counts
+                    loadOrders(currentPage);
+                    loadOrderCounts();
+                    
+                    // Reset bulk action controls
+                    document.getElementById('bulkActionSelect').value = '';
+                    document.getElementById('selectAllOrders').checked = false;
+                    document.getElementById('selectAllOrders').indeterminate = false;
+                    updateBulkActionControls();
+                });
+            } else {
+                Swal.fire({
+                    title: 'Error!',
+                    text: data.message || 'An error occurred while processing your request.',
+                    icon: 'error'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Bulk action error:', error);
+            
+            let errorMessage = 'An error occurred while processing your request.';
+            
+            if (error.message.includes('endpoint not found')) {
+                errorMessage = 'Bulk actions feature is not yet implemented on the server. Please contact your administrator.';
+            } else if (error.message.includes('permission')) {
+                errorMessage = 'You do not have permission to perform bulk actions.';
+            } else if (error.message.includes('Server error')) {
+                errorMessage = 'Server error occurred. Please try again later.';
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            Swal.fire({
+                title: 'Error!',
+                text: errorMessage,
+                icon: 'error',
+                footer: 'If this problem persists, please contact support.'
+            });
+        });
+    }
+    
+    // Initialize checkbox handling
+    handleOrderCheckboxChange();
+
     // Modal is handled by Bootstrap
     
     // Initial data loading
     loadOrders(1);
+    loadOrderCounts(); // Load order counts for filter buttons
     
     // Load orders with pagination and filtering
     function loadOrders(page = 1) {
         currentPage = page;
         const searchTerm = document.getElementById('orderSearchInput').value.trim();
-        const statusFilter = document.getElementById('statusFilter').value;
-        const paymentStatusFilter = document.getElementById('paymentStatusFilter').value;
         const dateFilter = document.getElementById('dateFilter').value;
+        const customDateStart = document.getElementById('customDateStart').value;
+        const customDateEnd = document.getElementById('customDateEnd').value;
         
         let url = `/mb-admin/api/orders/?page=${page}&include_shipping_address=true`;
         
+        console.log('🔍 Loading orders with:', {
+            page,
+            searchTerm,
+            dateFilter,
+            customDateStart,
+            customDateEnd,
+            currentStatusFilter: window.currentStatusFilter
+        });
+        
         if (searchTerm) {
             url += `&search=${encodeURIComponent(searchTerm)}`;
+            console.log('🔍 Search term added:', searchTerm);
         }
         
-        if (statusFilter) {
-            url += `&status=${statusFilter}`;
-        }
-        
-        if (paymentStatusFilter) {
-            url += `&payment_status=${paymentStatusFilter}`;
-        }
-        
+        // Handle date filtering
         if (dateFilter) {
-            url += `&created_at__date=${dateFilter}`;
+            console.log('📅 Processing date filter:', dateFilter);
+            if (dateFilter === 'custom') {
+                if (customDateStart && customDateEnd) {
+                    url += `&created_at__date__gte=${customDateStart}`;
+                    url += `&created_at__date__lte=${customDateEnd}`;
+                    console.log('📅 Custom date range applied:', customDateStart, 'to', customDateEnd);
+                } else {
+                    console.log('⚠️ Custom date filter selected but dates not provided');
+                }
+            } else {
+                // Calculate date range for predefined filters
+                const dateRange = getDateRange(dateFilter);
+                console.log('📅 Calculated date range:', dateRange);
+                if (dateRange.start) {
+                    url += `&created_at__date__gte=${dateRange.start}`;
+                }
+                if (dateRange.end) {
+                    url += `&created_at__date__lte=${dateRange.end}`;
+                }
+            }
         }
+        
+        // Apply current status filter if exists
+        if (window.currentStatusFilter !== undefined) {
+            if (window.currentStatusFilter) {
+                url += `&status=${window.currentStatusFilter}`;
+                console.log('📊 Status filter applied:', window.currentStatusFilter);
+            }
+        }
+        
+        console.log('🌐 Final API URL:', url);
         
         // Show loading indicator
         document.getElementById('ordersTableBody').innerHTML = `
             <tr>
-                <td colspan="7" class="text-center py-4">
+                <td colspan="8" class="text-center py-4">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
@@ -929,23 +1824,286 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         
         fetch(url)
-            .then(response => response.json())
+            .then(response => {
+                console.log('🌐 API Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log('📦 API Response data:', data);
                 orders = data.results || [];
+                console.log('📋 Orders count:', orders.length);
                 displayOrders(orders);
                 updatePagination(data);
                 document.getElementById('ordersTotalCount').textContent = data.count || 0;
+                
+                // Hide search loading indicator
+                hideSearchLoading();
+                
+                // Refresh order counts when loading the first page to ensure they stay accurate
+                // This happens for any status filter on page 1 to keep counts synchronized
+                if (page === 1) {
+                    setTimeout(() => loadOrderCounts(), 100);
+                }
             })
             .catch(error => {
-                console.error('Error loading orders:', error);
+                console.error('❌ Error loading orders:', error);
+                hideSearchLoading();
                 document.getElementById('ordersTableBody').innerHTML = `
                     <tr>
-                        <td colspan="7" class="text-center py-4 text-danger">
+                        <td colspan="8" class="text-center py-4 text-danger">
                             <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
-                            <p>Error loading orders. Please try again.</p>
+                            <p>Error loading orders: ${error.message}</p>
+                            <button class="btn btn-outline-primary btn-sm" onclick="loadOrders(${page})">
+                                <i class="fas fa-retry me-1"></i> Retry
+                            </button>
                         </td>
                     </tr>
                 `;
+            });
+    }
+    
+    // Helper function to get date ranges for predefined filters
+    function getDateRange(filterType) {
+        const today = new Date();
+        const result = { start: null, end: null };
+        
+        console.log('📅 getDateRange called with:', filterType, 'Today:', today.toISOString().split('T')[0]);
+        
+        switch (filterType) {
+            case 'today':
+                result.start = today.toISOString().split('T')[0];
+                result.end = today.toISOString().split('T')[0];
+                break;
+                
+            case 'yesterday':
+                const yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
+                result.start = yesterday.toISOString().split('T')[0];
+                result.end = yesterday.toISOString().split('T')[0];
+                break;
+                
+            case 'this_week':
+                const startOfWeek = new Date(today);
+                const day = startOfWeek.getDay();
+                const diff = startOfWeek.getDate() - day; // First day is Sunday (0)
+                startOfWeek.setDate(diff);
+                result.start = startOfWeek.toISOString().split('T')[0];
+                result.end = today.toISOString().split('T')[0];
+                break;
+                
+            case 'this_month':
+                const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                result.start = startOfMonth.toISOString().split('T')[0];
+                result.end = today.toISOString().split('T')[0];
+                break;
+        }
+        
+        console.log('📅 getDateRange result:', result);
+        return result;
+    }
+    
+    // Load orders with specific status filter
+    function loadOrdersWithStatus(page = 1, status = '') {
+        currentPage = page;
+        const searchTerm = document.getElementById('orderSearchInput').value.trim();
+        const dateFilter = document.getElementById('dateFilter').value;
+        const customDateStart = document.getElementById('customDateStart').value;
+        const customDateEnd = document.getElementById('customDateEnd').value;
+        
+        let url = `/mb-admin/api/orders/?page=${page}&include_shipping_address=true`;
+        
+        console.log('🔍 Loading orders with status:', {
+            page,
+            status,
+            searchTerm,
+            dateFilter,
+            customDateStart,
+            customDateEnd
+        });
+        
+        if (searchTerm) {
+            url += `&search=${encodeURIComponent(searchTerm)}`;
+            console.log('🔍 Search term added:', searchTerm);
+        }
+        
+        if (status) {
+            url += `&status=${status}`;
+            console.log('📊 Status filter applied:', status);
+        }
+        
+        // Handle date filtering
+        if (dateFilter) {
+            console.log('📅 Processing date filter:', dateFilter);
+            if (dateFilter === 'custom') {
+                if (customDateStart && customDateEnd) {
+                    url += `&created_at__date__gte=${customDateStart}`;
+                    url += `&created_at__date__lte=${customDateEnd}`;
+                    console.log('📅 Custom date range applied:', customDateStart, 'to', customDateEnd);
+                } else {
+                    console.log('⚠️ Custom date filter selected but dates not provided');
+                }
+            } else {
+                // Calculate date range for predefined filters
+                const dateRange = getDateRange(dateFilter);
+                console.log('📅 Calculated date range:', dateRange);
+                if (dateRange.start) {
+                    url += `&created_at__date__gte=${dateRange.start}`;
+                }
+                if (dateRange.end) {
+                    url += `&created_at__date__lte=${dateRange.end}`;
+                }
+            }
+        }
+        
+        console.log('🌐 Final API URL:', url);
+        
+        // Show loading indicator
+        document.getElementById('ordersTableBody').innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading orders...</p>
+                </td>
+            </tr>
+        `;
+        
+        fetch(url)
+            .then(response => {
+                console.log('🌐 API Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('📦 API Response data:', data);
+                orders = data.results || [];
+                console.log('📋 Orders count:', orders.length);
+                displayOrders(orders);
+                updatePagination(data);
+                document.getElementById('ordersTotalCount').textContent = data.count || 0;
+                
+                // Hide search loading indicator
+                hideSearchLoading();
+                
+                // Refresh order counts when loading the first page to ensure they stay accurate
+                if (page === 1) {
+                    setTimeout(() => loadOrderCounts(), 100);
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error loading orders:', error);
+                hideSearchLoading();
+                document.getElementById('ordersTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-danger">
+                            <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                            <p>Error loading orders: ${error.message}</p>
+                            <button class="btn btn-outline-primary btn-sm" onclick="loadOrdersWithStatus(${page}, '${status}')">
+                                <i class="fas fa-retry me-1"></i> Retry
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+    
+    // Load order counts for filter buttons
+    function loadOrderCounts() {
+        console.log('Loading order counts...');
+        // Fetch order counts for each status
+        fetch('/mb-admin/api/orders/?count_by_status=true')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Order counts data received:', data);
+                // Update count badges
+                if (data.status_counts) {
+                    console.log('Using API status_counts:', data.status_counts);
+                    // Update all orders count
+                    document.getElementById('allOrdersCount').textContent = data.total_count || 0;
+                    
+                    // Create a mapping between status names and element IDs
+                    const statusElementMapping = {
+                        'pending': 'pendingOrdersCount',
+                        'confirmed': 'confirmedOrdersCount',
+                        'processing': 'processingOrdersCount',
+                        'shipped': 'shippedOrdersCount',
+                        'delivered': 'deliveredOrdersCount',
+                        'returned': 'returnedOrdersCount',
+                        'partially_returned': 'partiallyReturnedOrdersCount',
+                        'cancelled': 'cancelledOrdersCount'
+                    };
+                    
+                    // Update individual status counts using the mapping
+                    Object.keys(data.status_counts).forEach(status => {
+                        const elementId = statusElementMapping[status];
+                        if (elementId) {
+                            const countElement = document.getElementById(elementId);
+                            if (countElement) {
+                                console.log(`Updating ${status} count to ${data.status_counts[status]}`);
+                                countElement.textContent = data.status_counts[status];
+                            } else {
+                                console.warn(`Element not found for status: ${status} (${elementId})`);
+                            }
+                        } else {
+                            console.warn(`No mapping found for status: ${status}`);
+                        }
+                    });
+                } else {
+                    // Fallback: count orders manually if API doesn't support count_by_status
+                    console.log('Using fallback manual counting method');
+                    const statusCounts = {
+                        pending: 0,
+                        confirmed: 0,
+                        processing: 0,
+                        shipped: 0,
+                        delivered: 0,
+                        returned: 0,
+                        partially_returned: 0,
+                        cancelled: 0
+                    };
+                    
+                    // If we have orders data, count them
+                    if (data.results) {
+                        console.log('Counting orders from results:', data.results.length);
+                        data.results.forEach(order => {
+                            if (statusCounts.hasOwnProperty(order.status)) {
+                                statusCounts[order.status]++;
+                            }
+                        });
+                        
+                        console.log('Status counts calculated:', statusCounts);
+                        
+                        // Update count badges
+                        document.getElementById('allOrdersCount').textContent = data.count || 0;
+                        document.getElementById('pendingOrdersCount').textContent = statusCounts.pending;
+                        document.getElementById('confirmedOrdersCount').textContent = statusCounts.confirmed;
+                        document.getElementById('processingOrdersCount').textContent = statusCounts.processing;
+                        document.getElementById('shippedOrdersCount').textContent = statusCounts.shipped;
+                        document.getElementById('deliveredOrdersCount').textContent = statusCounts.delivered;
+                        document.getElementById('returnedOrdersCount').textContent = statusCounts.returned;
+                        document.getElementById('partiallyReturnedOrdersCount').textContent = statusCounts.partially_returned;
+                        document.getElementById('cancelledOrdersCount').textContent = statusCounts.cancelled;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading order counts:', error);
+                // Set all counts to 0 on error
+                document.getElementById('allOrdersCount').textContent = '0';
+                document.getElementById('pendingOrdersCount').textContent = '0';
+                document.getElementById('confirmedOrdersCount').textContent = '0';
+                document.getElementById('processingOrdersCount').textContent = '0';
+                document.getElementById('shippedOrdersCount').textContent = '0';
+                document.getElementById('deliveredOrdersCount').textContent = '0';
+                document.getElementById('returnedOrdersCount').textContent = '0';
+                document.getElementById('partiallyReturnedOrdersCount').textContent = '0';
+                document.getElementById('cancelledOrdersCount').textContent = '0';
             });
     }
     
@@ -956,7 +2114,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!orders || orders.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="7" class="text-center py-4">No orders found.</td>
+                    <td colspan="8" class="text-center py-4">No orders found.</td>
                 </tr>
             `;
             return;
@@ -1069,6 +2227,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const formattedOrderNumber = `${order.order_number} (${displayCustomerName})`;
             
             tr.innerHTML = `
+                <td>
+                    <div class="form-check">
+                        <input class="form-check-input order-checkbox" type="checkbox" value="${order.id}" data-order-id="${order.id}">
+                    </div>
+                </td>
                 <td><span>${displayCustomerName}</span><br><span style="font-size: 0.8rem;">#${order.order_number}</span> </td>
                 <td>${formatRelativeTime(order.created_at)}</td>
                 <td>
@@ -1149,6 +2312,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Initialize fraud checks for all orders
         performFraudChecks(orders);
+        
+        // Initialize bulk action controls
+        updateBulkActionControls();
+        updateSelectAllCheckbox();
     }
     
     function updatePagination(data) {
