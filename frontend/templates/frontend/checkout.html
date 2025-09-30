@@ -1787,6 +1787,132 @@
                 }, 300);
             }, 5000); // Show for 5 seconds for error messages
         }
+        
+        // ====== CHECKOUT ABANDONMENT TRACKING ======
+        
+        let checkoutDataCache = {};
+        let saveTimeout = null;
+        let isFormSubmitting = false;
+        
+        // Function to get current form data
+        function getCheckoutData() {
+            return {
+                full_name: document.getElementById('full_name')?.value || '',
+                email: document.getElementById('email')?.value || '',
+                phone_number: document.getElementById('phone_number')?.value || '',
+                address: document.getElementById('address')?.value || '',
+                order_instruction: document.getElementById('order_instruction')?.value || '',
+                timestamp: new Date().toISOString()
+            };
+        }
+        
+        // Function to save checkout data to session
+        function saveCheckoutData() {
+            if (isFormSubmitting) return; // Don't save if form is being submitted
+            
+            const currentData = getCheckoutData();
+            
+            // Only save if data has changed or is significant
+            if (JSON.stringify(currentData) === JSON.stringify(checkoutDataCache)) {
+                return; // No changes
+            }
+            
+            // Check if we have at least email or name filled
+            if (!currentData.email && !currentData.full_name) {
+                return; // Not enough data to be worth saving
+            }
+            
+            checkoutDataCache = currentData;
+            
+            fetch('/api/incomplete-orders/save-checkout-data/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                },
+                body: JSON.stringify(currentData)
+            }).catch(error => {
+                console.log('Could not save checkout data:', error);
+            });
+        }
+        
+        // Function to track abandonment
+        function trackAbandonmentIfNeeded() {
+            if (isFormSubmitting) return; // Don't track if form is being submitted
+            
+            const currentData = getCheckoutData();
+            
+            // Only track if we have meaningful data
+            if (!currentData.email && !currentData.full_name) {
+                return;
+            }
+            
+            fetch('/api/incomplete-orders/track-abandonment/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                }
+            }).catch(error => {
+                console.log('Could not track abandonment:', error);
+            });
+        }
+        
+        // Add event listeners to form fields for real-time saving
+        const formFields = ['full_name', 'email', 'phone_number', 'address', 'order_instruction'];
+        
+        formFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                // Save data when user stops typing (debounced)
+                field.addEventListener('input', function() {
+                    clearTimeout(saveTimeout);
+                    saveTimeout = setTimeout(saveCheckoutData, 1000); // Save after 1 second of no typing
+                });
+                
+                // Save immediately when field loses focus
+                field.addEventListener('blur', saveCheckoutData);
+            }
+        });
+        
+        // Track when form is being submitted to prevent false abandonment tracking
+        const checkoutForm = document.getElementById('checkout-form');
+        if (checkoutForm) {
+            checkoutForm.addEventListener('submit', function() {
+                isFormSubmitting = true;
+            });
+        }
+        
+        // Track abandonment on page unload events
+        window.addEventListener('beforeunload', function(e) {
+            if (!isFormSubmitting) {
+                trackAbandonmentIfNeeded();
+            }
+        });
+        
+        // Track abandonment when page becomes hidden (mobile browsers)
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'hidden' && !isFormSubmitting) {
+                trackAbandonmentIfNeeded();
+            }
+        });
+        
+        // Track abandonment when user navigates away (modern browsers)
+        window.addEventListener('pagehide', function(e) {
+            if (!isFormSubmitting) {
+                trackAbandonmentIfNeeded();
+            }
+        });
+        
+        // For older browsers, also track on window unload
+        window.addEventListener('unload', function(e) {
+            if (!isFormSubmitting) {
+                trackAbandonmentIfNeeded();
+            }
+        });
+        
+        console.log('✅ Checkout abandonment tracking initialized');
+        
     });
 </script>
 {% endblock %}

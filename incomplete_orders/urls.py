@@ -15,4 +15,8 @@ app_name = 'incomplete_orders'
 urlpatterns = [
     # API endpoints
     path('api/', include(router.urls)),
+    
+    # Checkout abandonment tracking endpoints
+    path('api/incomplete-orders/save-checkout-data/', views.save_checkout_data, name='save_checkout_data'),
+    path('api/incomplete-orders/track-abandonment/', views.track_checkout_abandonment, name='track_abandonment'),
 ]
