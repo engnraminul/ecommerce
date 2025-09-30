@@ -89,7 +89,7 @@ class OrderAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
         ('Courier Details', {
-            'fields': ('curier_id', 'curier_charge', 'curier_status', 'partially_ammount'),
+            'fields': ('curier_id', 'curier_charge', 'curier_status', 'partially_ammount', 'curier_date'),
             'classes': ('collapse',)
         }),
     )

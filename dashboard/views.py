@@ -429,6 +429,20 @@ class OrderDashboardViewSet(viewsets.ModelViewSet):
         if status_filter:
             queryset = queryset.filter(status=status_filter)
         
+        # Courier date filtering
+        courier_date_filter = self.request.query_params.get('courier_date')
+        if courier_date_filter == 'today':
+            from django.utils import timezone
+            today = timezone.now().date()
+            queryset = queryset.filter(curier_date=today)
+        elif courier_date_filter:
+            try:
+                from datetime import datetime
+                courier_date = datetime.strptime(courier_date_filter, '%Y-%m-%d').date()
+                queryset = queryset.filter(curier_date=courier_date)
+            except ValueError:
+                pass  # Ignore invalid date format
+        
         # Count by status feature
         count_by_status = self.request.query_params.get('count_by_status')
         if count_by_status:
@@ -444,6 +458,7 @@ class OrderDashboardViewSet(viewsets.ModelViewSet):
         if count_by_status:
             # Return status counts
             from django.db.models import Count
+            from django.utils import timezone
             
             # Get all orders and count by status
             status_counts = {}
@@ -453,6 +468,11 @@ class OrderDashboardViewSet(viewsets.ModelViewSet):
             all_orders = Order.objects.all()
             status_counts = dict(all_orders.values('status').annotate(count=Count('status')).values_list('status', 'count'))
             total_count = all_orders.count()
+            
+            # Count today's courier orders
+            today = timezone.now().date()
+            courier_today_count = Order.objects.filter(curier_date=today).count()
+            status_counts['courier_today'] = courier_today_count
             
             return Response({
                 'status_counts': status_counts,
@@ -506,6 +526,7 @@ class OrderDashboardViewSet(viewsets.ModelViewSet):
                         'guest_email': order.guest_email,
                         'curier_id': order.curier_id,
                         'curier_status': order.curier_status,
+                        'curier_date': order.curier_date.isoformat() if order.curier_date else None,
                     })
                 
                 return self.get_paginated_response(orders_data)

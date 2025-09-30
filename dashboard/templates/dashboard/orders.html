@@ -752,6 +752,9 @@
             <button class="btn btn-outline-primary btn-sm status-filter-btn" data-status="cancelled">
                 Cancelled <span class="badge bg-primary-subtle text-primary rounded-pill" id="cancelledOrdersCount">0</span>
             </button>
+            <button class="btn btn-outline-primary btn-sm status-filter-btn" data-status="courier_today">
+                Today's Courier <span class="badge bg-primary-subtle text-primary rounded-pill" id="courierTodayOrdersCount">0</span>
+            </button>
         </div>
         
     </div>
@@ -940,6 +943,8 @@
                                     
                                     <dt class="col-sm-4 text-muted">Total Amount</dt>
                                     <dd class="col-sm-8 fw-bold" id="orderDetailTotal"></dd>
+                                    <dt class="col-sm-4 text-muted">Curier Date</dt>
+                                    <dd class="col-sm-8" id="orderDetailCurierDate"></dd>
                                 </dl>
                             </div>
                         </div>
@@ -1902,8 +1907,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Apply current status filter if exists
         if (window.currentStatusFilter !== undefined) {
             if (window.currentStatusFilter) {
-                url += `&status=${window.currentStatusFilter}`;
-                console.log('📊 Status filter applied:', window.currentStatusFilter);
+                if (window.currentStatusFilter === 'courier_today') {
+                    url += `&courier_date=today`;
+                    console.log('📦 Courier today filter applied');
+                } else {
+                    url += `&status=${window.currentStatusFilter}`;
+                    console.log('📊 Status filter applied:', window.currentStatusFilter);
+                }
             }
         }
         
@@ -2033,8 +2043,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (status) {
-            url += `&status=${status}`;
-            console.log('📊 Status filter applied:', status);
+            if (status === 'courier_today') {
+                url += `&courier_date=today`;
+                console.log('📦 Courier today filter applied');
+            } else {
+                url += `&status=${status}`;
+                console.log('📊 Status filter applied:', status);
+            }
         }
         
         // Handle date filtering
@@ -2139,7 +2154,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         'delivered': 'deliveredOrdersCount',
                         'returned': 'returnedOrdersCount',
                         'partially_returned': 'partiallyReturnedOrdersCount',
-                        'cancelled': 'cancelledOrdersCount'
+                        'cancelled': 'cancelledOrdersCount',
+                        'courier_today': 'courierTodayOrdersCount'
                     };
                     
                     // Update individual status counts using the mapping
@@ -2614,6 +2630,12 @@ document.addEventListener('DOMContentLoaded', function() {
             </span>
         `;
         document.getElementById('orderDetailDate').textContent = new Date(order.created_at).toLocaleString();
+        document.getElementById('orderDetailCurierDate').textContent = 
+    new Date(order.curier_date).toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
         
         // Set order status with appropriate badge
         const statusElement = document.getElementById('orderDetailStatus');

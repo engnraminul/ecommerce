@@ -73,6 +73,7 @@ class Order(models.Model):
     curier_id = models.CharField(max_length=100, blank=True)
     curier_charge = models.DecimalField(max_digits=8, decimal_places=2, default=110, validators=[MinValueValidator(0)])
     curier_status = models.CharField(max_length=100, blank=True)
+    curier_date = models.DateField(null=True, blank=True)  # Date when order was added to courier
     partially_ammount = models.DecimalField(max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(0)])
 
     class Meta:
