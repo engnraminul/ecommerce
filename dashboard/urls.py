@@ -12,6 +12,7 @@ router.register(r'products', views.ProductDashboardViewSet)
 router.register(r'variants', views.ProductVariantDashboardViewSet)
 router.register(r'product-images', views.ProductImageDashboardViewSet)
 router.register(r'orders', views.OrderDashboardViewSet)
+router.register(r'incomplete-orders', views.IncompleteOrderDashboardViewSet)
 router.register(r'expenses', views.ExpenseDashboardViewSet)
 app_name = 'dashboard'
 
@@ -35,6 +36,7 @@ urlpatterns = [
     path('logout/', views.dashboard_logout, name='logout'),
     path('products/', views.dashboard_products, name='products'),
     path('orders/', views.dashboard_orders, name='orders'),
+    path('incomplete-orders/', views.dashboard_incomplete_orders, name='incomplete_orders'),
     path('users/', views.dashboard_users, name='users'),
     path('expenses/', views.dashboard_expenses, name='expenses'),
     path('statistics/', views.dashboard_statistics, name='statistics'),

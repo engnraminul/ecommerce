@@ -7,6 +7,8 @@ from rest_framework.response import Response
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAdminUser
+from rest_framework.filters import SearchFilter, OrderingFilter
+from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import authenticate, login, logout
@@ -23,6 +25,7 @@ from .serializers import (
 )
 from products.models import Product, ProductVariant, ProductImage, Category
 from orders.models import Order, OrderItem
+from incomplete_orders.models import IncompleteOrder, IncompleteOrderItem, IncompleteShippingAddress
 from users.models import User
 
 class IsStaffUser(permissions.BasePermission):
@@ -1283,6 +1286,14 @@ def dashboard_orders(request):
 
 @login_required
 @user_passes_test(is_admin)
+def dashboard_incomplete_orders(request):
+    context = {
+        'active_page': 'incomplete_orders'
+    }
+    return render(request, 'dashboard/incomplete_orders.html', context)
+
+@login_required
+@user_passes_test(is_admin)
 def dashboard_users(request):
     context = {
         'active_page': 'users'
@@ -1408,6 +1419,516 @@ def fraud_check_api(request):
             'error': 'Internal server error'
         }, status=500)
 
+
+class IncompleteOrderDashboardViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing incomplete orders in the dashboard."""
+    queryset = IncompleteOrder.objects.all().prefetch_related('items', 'shipping_address', 'history')
+    permission_classes = [IsAdminUser]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    
+    filterset_fields = ['status', 'is_guest_order', 'recovery_attempts']
+    search_fields = ['incomplete_order_id', 'customer_email', 'guest_email', 'user__username']
+    ordering_fields = ['created_at', 'total_amount', 'recovery_attempts']
+    ordering = ['-created_at']
+    
+    def get_serializer_class(self):
+        # Use the incomplete orders serializers
+        from incomplete_orders.serializers import IncompleteOrderSerializer
+        return IncompleteOrderSerializer
+    
+    def list(self, request, *args, **kwargs):
+        """Enhanced list method with status counts"""
+        # Check if this is a count_by_status request
+        count_by_status = request.query_params.get('count_by_status')
+        if count_by_status:
+            from django.db.models import Count
+            from django.utils import timezone
+            
+            # Get all incomplete orders and count by status
+            status_counts = {}
+            
+            # Count each status
+            all_orders = IncompleteOrder.objects.all()
+            status_counts = dict(all_orders.values('status').annotate(count=Count('status')).values_list('status', 'count'))
+            total_count = all_orders.count()
+            
+            # Count orders by recovery attempts
+            recovery_counts = dict(all_orders.values('recovery_attempts').annotate(count=Count('recovery_attempts')).values_list('recovery_attempts', 'count'))
+            
+            return Response({
+                'status_counts': status_counts,
+                'recovery_counts': recovery_counts,
+                'total_count': total_count
+            })
+        
+        # Include detailed information in serialization
+        include_details = request.query_params.get('include_details')
+        if include_details:
+            queryset = self.filter_queryset(self.get_queryset())
+            page = self.paginate_queryset(queryset)
+            
+            if page is not None:
+                orders_data = []
+                for order in page:
+                    # Get shipping address data
+                    shipping_address = None
+                    if hasattr(order, 'shipping_address') and order.shipping_address:
+                        shipping_address = {
+                            'first_name': order.shipping_address.first_name,
+                            'last_name': order.shipping_address.last_name,
+                            'phone': order.shipping_address.phone,
+                            'email': order.shipping_address.email,
+                            'address_line_1': order.shipping_address.address_line_1,
+                            'address_line_2': order.shipping_address.address_line_2,
+                            'city': order.shipping_address.city,
+                            'state': order.shipping_address.state,
+                            'postal_code': order.shipping_address.postal_code,
+                            'country': order.shipping_address.country,
+                        }
+                    
+                    orders_data.append({
+                        'id': order.id,
+                        'incomplete_order_id': order.incomplete_order_id,
+                        'created_at': order.created_at.isoformat(),
+                        'status': order.status,
+                        'total_amount': str(order.total_amount),
+                        'items_count': order.total_items,
+                        'user': {
+                            'id': order.user.id if order.user else None,
+                            'username': order.user.username if order.user else None,
+                            'email': order.user.email if order.user else order.guest_email,
+                            'first_name': order.user.first_name if order.user else None,
+                            'last_name': order.user.last_name if order.user else None,
+                        } if order.user else None,
+                        'shipping_address': shipping_address,
+                        'customer_email': order.customer_email,
+                        'customer_phone': order.customer_phone,
+                        'guest_email': order.guest_email,
+                        'recovery_attempts': order.recovery_attempts,
+                        'last_recovery_attempt': order.last_recovery_attempt.isoformat() if order.last_recovery_attempt else None,
+                        'abandonment_reason': order.abandonment_reason,
+                        'can_convert': order.can_convert,
+                        'is_expired': order.is_expired,
+                        'days_since_created': order.days_since_created,
+                        'expires_at': order.expires_at.isoformat() if order.expires_at else None,
+                    })
+                
+                return self.get_paginated_response(orders_data)
+        
+        # Default behavior
+        return super().list(request, *args, **kwargs)
+    
+    @action(detail=True, methods=['post'])
+    def convert_to_order(self, request, pk=None):
+        """Convert incomplete order to complete order"""
+        incomplete_order = self.get_object()
+        
+        try:
+            if not incomplete_order.can_convert:
+                return Response({
+                    'success': False,
+                    'error': 'This incomplete order cannot be converted'
+                }, status=400)
+            
+            complete_order = incomplete_order.convert_to_order()
+            
+            return Response({
+                'success': True,
+                'message': f'Successfully converted to order {complete_order.order_number}',
+                'order_id': complete_order.id,
+                'order_number': complete_order.order_number
+            })
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+    
+    @action(detail=True, methods=['post'])
+    def send_recovery_email(self, request, pk=None):
+        """Send recovery email for incomplete order"""
+        incomplete_order = self.get_object()
+        
+        try:
+            from incomplete_orders.services import IncompleteOrderService
+            
+            email_type = request.data.get('email_type', 'abandoned_cart')
+            success = IncompleteOrderService.send_recovery_email(
+                incomplete_order=incomplete_order,
+                email_type=email_type
+            )
+            
+            if success:
+                incomplete_order.increment_recovery_attempt()
+                return Response({
+                    'success': True,
+                    'message': 'Recovery email sent successfully'
+                })
+            else:
+                return Response({
+                    'success': False,
+                    'error': 'Failed to send recovery email'
+                }, status=400)
+                
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+    
+    @action(detail=False, methods=['post'])
+    def bulk_action(self, request):
+        """Bulk actions for incomplete orders"""
+        order_ids = request.data.get('order_ids', [])
+        action = request.data.get('action')
+        
+        if not order_ids or not action:
+            return Response({
+                'success': False,
+                'error': 'order_ids and action are required'
+            }, status=400)
+        
+        try:
+            orders = IncompleteOrder.objects.filter(id__in=order_ids)
+            
+            if action == 'convert':
+                converted_count = 0
+                failed_count = 0
+                
+                for order in orders:
+                    try:
+                        if order.can_convert:
+                            order.convert_to_order()
+                            converted_count += 1
+                        else:
+                            failed_count += 1
+                    except:
+                        failed_count += 1
+                
+                return Response({
+                    'success': True,
+                    'message': f'Converted {converted_count} orders, {failed_count} failed',
+                    'converted': converted_count,
+                    'failed': failed_count
+                })
+            
+            elif action == 'send_recovery':
+                sent_count = 0
+                for order in orders:
+                    try:
+                        from incomplete_orders.services import IncompleteOrderService
+                        if IncompleteOrderService.send_recovery_email(order):
+                            order.increment_recovery_attempt()
+                            sent_count += 1
+                    except:
+                        pass
+                
+                return Response({
+                    'success': True,
+                    'message': f'Sent recovery emails to {sent_count} customers',
+                    'sent': sent_count
+                })
+            
+            elif action == 'mark_abandoned':
+                updated_count = orders.filter(status__in=['pending', 'payment_pending']).update(status='abandoned')
+                
+                return Response({
+                    'success': True,
+                    'message': f'Marked {updated_count} orders as abandoned',
+                    'updated': updated_count
+                })
+            
+            elif action == 'delete':
+                deleted_count = orders.count()
+                orders.delete()
+                
+                return Response({
+                    'success': True,
+                    'message': f'Deleted {deleted_count} incomplete orders',
+                    'deleted': deleted_count
+                })
+            
+            else:
+                return Response({
+                    'success': False,
+                    'error': 'Invalid action'
+                }, status=400)
+                
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+    
+    @action(detail=True, methods=['get'])
+    def items(self, request, pk=None):
+        """Get items for a specific incomplete order"""
+        incomplete_order = self.get_object()
+        
+        try:
+            items = incomplete_order.items.all().select_related('product', 'variant').prefetch_related('product__images')
+            items_data = []
+            
+            for item in items:
+                # Get product image (first image from product images)
+                product_image = None
+                if item.product and item.product.images.exists():
+                    first_image = item.product.images.first()
+                    if first_image and first_image.image:
+                        try:
+                            product_image = first_image.image.url
+                        except:
+                            product_image = None
+                
+                # Get variant image
+                variant_image = None
+                if item.variant and item.variant.image:
+                    try:
+                        variant_image = item.variant.image.url
+                    except:
+                        variant_image = None
+                
+                # Use default image if no product or variant image available
+                display_image = variant_image or product_image or '/media/default.webp'
+                
+                items_data.append({
+                    'id': item.id,
+                    'product_name': item.product_name or (item.product.name if item.product else 'Unknown Product'),
+                    'product_sku': item.product_sku or (item.product.sku if item.product else 'N/A'),
+                    'variant_name': item.variant_name or (item.variant.name if item.variant else 'Default'),
+                    'quantity': item.quantity,
+                    'unit_price': str(item.unit_price),
+                    'total_price': str(item.total_price),
+                    'product_image': product_image,
+                    'variant_image': variant_image,
+                    'display_image': display_image,  # Primary image to show in UI
+                })
+            
+            return Response({
+                'success': True,
+                'items': items_data,
+                'total_items': len(items_data),
+                'subtotal': str(incomplete_order.subtotal),
+                'shipping_cost': str(incomplete_order.shipping_cost),
+                'tax_amount': str(incomplete_order.tax_amount),
+                'discount_amount': str(incomplete_order.discount_amount),
+                'total_amount': str(incomplete_order.total_amount),
+            })
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+    
+    @action(detail=True, methods=['post'])
+    def add_item(self, request, pk=None):
+        """Add a new item to an incomplete order"""
+        try:
+            incomplete_order = self.get_object()
+            
+            product_id = request.data.get('product_id')
+            variant_id = request.data.get('variant_id')
+            quantity = int(request.data.get('quantity', 1))
+            unit_price = request.data.get('unit_price')
+            
+            # Validate required fields
+            if not product_id:
+                return Response({
+                    'success': False,
+                    'error': 'Product ID is required'
+                }, status=400)
+            
+            # Get product and variant
+            from products.models import Product, ProductVariant
+            try:
+                product = Product.objects.get(id=product_id)
+            except Product.DoesNotExist:
+                return Response({
+                    'success': False,
+                    'error': 'Product not found'
+                }, status=404)
+            
+            variant = None
+            if variant_id:
+                try:
+                    variant = ProductVariant.objects.get(id=variant_id, product=product)
+                except ProductVariant.DoesNotExist:
+                    return Response({
+                        'success': False,
+                        'error': 'Product variant not found'
+                    }, status=404)
+            
+            # Use provided price or default to product/variant price
+            if unit_price is None:
+                if variant and variant.price:
+                    unit_price = variant.price
+                else:
+                    unit_price = product.price
+            
+            from incomplete_orders.models import IncompleteOrderItem
+            from decimal import Decimal
+            
+            # Check if item already exists in order
+            existing_item = IncompleteOrderItem.objects.filter(
+                incomplete_order=incomplete_order,
+                product=product,
+                variant=variant
+            ).first()
+            
+            if existing_item:
+                # Update existing item quantity
+                existing_item.quantity += quantity
+                existing_item.save()
+                message = 'Item quantity updated successfully'
+            else:
+                # Create new item
+                IncompleteOrderItem.objects.create(
+                    incomplete_order=incomplete_order,
+                    product=product,
+                    variant=variant,
+                    product_name=product.name,
+                    product_sku=product.sku,
+                    variant_name=variant.name if variant else 'Default',
+                    quantity=quantity,
+                    unit_price=Decimal(str(unit_price))
+                )
+                message = 'Item added to order successfully'
+            
+            # Recalculate order total
+            total = sum(item.quantity * item.unit_price for item in incomplete_order.items.all())
+            incomplete_order.total_amount = total
+            incomplete_order.save()
+            
+            return Response({
+                'success': True,
+                'message': message,
+                'new_total': float(total)
+            })
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+    
+    @action(detail=True, methods=['post'])
+    def remove_item(self, request, pk=None):
+        """Remove an item from an incomplete order"""
+        try:
+            incomplete_order = self.get_object()
+            item_id = request.data.get('item_id')
+            
+            if not item_id:
+                return Response({
+                    'success': False,
+                    'error': 'Item ID is required'
+                }, status=400)
+            
+            from incomplete_orders.models import IncompleteOrderItem
+            
+            try:
+                item = IncompleteOrderItem.objects.get(
+                    id=item_id,
+                    incomplete_order=incomplete_order
+                )
+                item.delete()
+                
+                # Recalculate order total
+                total = sum(item.quantity * item.unit_price for item in incomplete_order.items.all())
+                incomplete_order.total_amount = total
+                incomplete_order.save()
+                
+                return Response({
+                    'success': True,
+                    'message': 'Item removed successfully',
+                    'new_total': float(total)
+                })
+                
+            except IncompleteOrderItem.DoesNotExist:
+                return Response({
+                    'success': False,
+                    'error': 'Item not found'
+                }, status=404)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+    
+    @action(detail=True, methods=['post'])
+    def update_shipping(self, request, pk=None):
+        """Update shipping address for an incomplete order"""
+        try:
+            incomplete_order = self.get_object()
+            shipping_data = request.data
+            
+            # Update or create shipping address
+            if hasattr(incomplete_order, 'shipping_address') and incomplete_order.shipping_address:
+                shipping_address = incomplete_order.shipping_address
+                for field, value in shipping_data.items():
+                    setattr(shipping_address, field, value)
+                shipping_address.save()
+            else:
+                # Create new shipping address
+                from incomplete_orders.models import IncompleteShippingAddress
+                shipping_address = IncompleteShippingAddress.objects.create(
+                    incomplete_order=incomplete_order,
+                    **shipping_data
+                )
+            
+            return Response({
+                'success': True,
+                'message': 'Shipping address updated successfully'
+            })
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+    
+    @action(detail=True, methods=['post'])
+    def update_items(self, request, pk=None):
+        """Update items for an incomplete order"""
+        try:
+            incomplete_order = self.get_object()
+            items_data = request.data.get('items', [])
+            
+            from incomplete_orders.models import IncompleteOrderItem
+            from decimal import Decimal
+            
+            # Update existing items
+            for item_data in items_data:
+                try:
+                    item = IncompleteOrderItem.objects.get(
+                        id=item_data['id'],
+                        incomplete_order=incomplete_order
+                    )
+                    item.quantity = int(item_data['quantity'])
+                    item.unit_price = Decimal(str(item_data['unit_price']))
+                    item.save()
+                except IncompleteOrderItem.DoesNotExist:
+                    continue
+            
+            # Calculate new total
+            total = sum(item.quantity * item.unit_price for item in incomplete_order.items.all())
+            incomplete_order.total_amount = total
+            incomplete_order.save()
+            
+            return Response({
+                'success': True,
+                'message': 'Items updated successfully',
+                'new_total': float(total)
+            })
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=400)
 class ExpenseDashboardViewSet(viewsets.ModelViewSet):
     """ViewSet for managing expenses in the dashboard."""
     queryset = Expense.objects.all()

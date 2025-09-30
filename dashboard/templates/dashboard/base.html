@@ -214,6 +214,11 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{% url 'dashboard:incomplete_orders' %}" class="{% if active_page == 'incomplete_orders' %}active{% endif %}">
+                        <i class="fas fa-clock"></i> Incomplete Orders
+                    </a>
+                </li>
+                <li>
                     <a href="{% url 'dashboard:users' %}" class="{% if active_page == 'users' %}active{% endif %}">
                         <i class="fas fa-users"></i> Users
                     </a>

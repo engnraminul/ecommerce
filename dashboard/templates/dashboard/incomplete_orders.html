@@ -1,0 +1,1881 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Incomplete Orders - MB Admin{% endblock %}
+
+{% block page_title %}Incomplete Orders Management{% endblock %}
+
+{% block extra_css %}
+<!-- SweetAlert2 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<style>
+    /* Modal Custom Styles */
+    .modal-content {
+        border-radius: var(--border-radius);
+    }
+    
+    .modal-header {
+        background-color: var(--secondary-color);
+        color: var(--white);
+        border-top-left-radius: var(--border-radius);
+        border-top-right-radius: var(--border-radius);
+    }
+    
+    .modal-header .btn-close-white:focus {
+        box-shadow: none;
+    }
+    
+    .card {
+        transition: transform 0.2s;
+        border-radius: var(--border-radius);
+    }
+    
+    .card:hover {
+        transform: translateY(-3px);
+    }
+    
+    .badge {
+        font-weight: 500;
+        letter-spacing: 0.3px;
+        padding: 0.5rem 0.75rem;
+        border-radius: 4px;
+    }
+    
+    /* Custom status badge colors */
+    .bg-indigo {
+        background-color: #6610f2;
+    }
+    
+    .bg-orange {
+        background-color: #fd7e14;
+    }
+    
+    .bg-brown {
+        background-color: #8B4513;
+    }
+    
+    .bg-teal {
+        background-color: #20c997;
+    }
+    
+    /* Status Filter Buttons */
+    .status-filter-btn {
+        transition: all 0.3s ease;
+        border-radius: 25px;
+        font-weight: 500;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .status-filter-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .status-filter-btn.active {
+        background-color: var(--primary-color) !important;
+        border-color: var(--primary-color) !important;
+        color: white !important;
+        box-shadow: 0 4px 12px rgba(147, 0, 0, 0.3);
+    }
+    
+    .status-filter-btn.active .badge {
+        background-color: rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+    }
+    
+    .status-filter-btn .badge {
+        font-size: 0.7rem;
+        margin-left: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    /* Bulk Actions Styles */
+    .bulk-actions-row {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    #bulkActionSelect:disabled,
+    #applyBulkActionBtn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    #applyBulkActionBtn:not(:disabled) {
+        background-color: #ffc107;
+        border-color: #ffc107;
+        color: #000;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    #applyBulkActionBtn:not(:disabled):hover {
+        background-color: #ffca2c;
+        border-color: #ffca2c;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+    }
+    
+    /* Checkbox styles */
+    .form-check-input:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    
+    .form-check-input:focus {
+        border-color: var(--primary-color);
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(147, 0, 0, 0.25);
+    }
+    
+    /* Selected row highlighting */
+    tr.selected-row {
+        background-color: rgba(147, 0, 0, 0.1) !important;
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    /* Recovery indicator */
+    .recovery-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.8rem;
+    }
+    
+    .recovery-indicator.high {
+        color: #dc3545;
+    }
+    
+    .recovery-indicator.medium {
+        color: #ffc107;
+    }
+    
+    .recovery-indicator.low {
+        color: #28a745;
+    }
+    
+    /* Expiry indicator */
+    .expiry-indicator {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+    }
+    
+    .expiry-indicator.expired {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .expiry-indicator.expiring-soon {
+        background-color: #ffc107;
+        color: #000;
+    }
+    
+    .expiry-indicator.fresh {
+        background-color: #28a745;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hidden CSRF Token for JavaScript use -->
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Incomplete Orders</h5>
+        <button class="btn btn-sm btn-secondary" id="refreshIncompleteOrdersBtn">
+            <i class="fas fa-sync-alt me-1"></i> Refresh
+        </button>
+    </div>
+    <div class="filter-with-status-list">
+        <div class="d-flex flex-wrap gap-2 p-3 border-bottom">
+            <button class="btn btn-primary btn-sm status-filter-btn active" data-status="">
+                All <span class="badge bg-primary-subtle text-primary rounded-pill" id="allIncompleteOrdersCount">0</span>
+            </button>
+            <button class="btn btn-outline-primary btn-sm status-filter-btn" data-status="pending">
+                Pending <span class="badge bg-primary-subtle text-primary rounded-pill" id="pendingIncompleteOrdersCount">0</span>
+            </button>
+            <button class="btn btn-outline-primary btn-sm status-filter-btn" data-status="abandoned">
+                Abandoned <span class="badge bg-primary-subtle text-primary rounded-pill" id="abandonedIncompleteOrdersCount">0</span>
+            </button>
+            <button class="btn btn-outline-primary btn-sm status-filter-btn" data-status="payment_pending">
+                Payment Pending <span class="badge bg-primary-subtle text-primary rounded-pill" id="paymentPendingIncompleteOrdersCount">0</span>
+            </button>
+            <button class="btn btn-outline-primary btn-sm status-filter-btn" data-status="converted">
+                Converted <span class="badge bg-primary-subtle text-primary rounded-pill" id="convertedIncompleteOrdersCount">0</span>
+            </button>
+            <button class="btn btn-outline-primary btn-sm status-filter-btn" data-status="expired">
+                Expired <span class="badge bg-primary-subtle text-primary rounded-pill" id="expiredIncompleteOrdersCount">0</span>
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="mb-3">
+            <div class="row g-2 align-items-center">
+                <!-- Left side: Bulk Actions -->
+                <div class="col-md-2">
+                    <select class="form-select form-select-sm" id="bulkActionSelect" disabled>
+                        <option value="">Bulk Actions</option>
+                        <option value="convert">Convert to Orders</option>
+                        <option value="send_recovery">Send Recovery Emails</option>
+                        <option value="mark_abandoned">Mark as Abandoned</option>
+                        <option value="delete">Delete Selected</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <button class="btn btn-warning btn-sm w-100" id="applyBulkActionBtn" disabled>
+                        <i class="fas fa-check me-1"></i> Apply
+                    </button>
+                </div>
+                
+                <!-- Right side: Search and Filters -->
+                <div class="col-md-3">
+                    <div class="input-group input-group-sm position-relative">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="incompleteOrderSearchInput" 
+                               placeholder="Search by ID, customer email, or name..." 
+                               autocomplete="off">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select form-select-sm" id="dateFilter">
+                        <option value="">All Dates</option>
+                        <option value="today">Today</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="this_week">This Week</option>
+                        <option value="this_month">This Month</option>
+                        <option value="custom">Custom Date</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <div class="d-flex gap-1">
+                        <input type="date" class="form-control form-control-sm" id="customDateStart" 
+                               style="display: none;" title="Start Date">
+                        <input type="date" class="form-control form-control-sm" id="customDateEnd" 
+                               style="display: none;" title="End Date">
+                        <button class="btn btn-outline-secondary btn-sm" id="clearFiltersBtn" title="Clear all filters">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th width="50">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="selectAllIncompleteOrders" title="Select/Deselect All">
+                                <label class="form-check-label" for="selectAllIncompleteOrders"></label>
+                            </div>
+                        </th>
+                        <th>Customer</th>
+                        <th>Order ID</th>
+                        <th>Created</th>
+                        <th>Total</th>
+                        <th>Items</th>
+                        <th>Recovery</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="incompleteOrdersTableBody">
+                    <tr>
+                        <td colspan="9" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading incomplete orders...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                <span id="incompleteOrdersTotalCount">0</span> incomplete orders
+            </div>
+            <div>
+                <nav aria-label="Incomplete Orders pagination">
+                    <ul class="pagination pagination-sm" id="incompleteOrdersPagination"></ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Incomplete Order Details Modal -->
+<div class="modal fade" id="incompleteOrderDetailsModal" tabindex="-1" aria-labelledby="incompleteOrderDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title" id="incompleteOrderDetailsModalLabel">
+                    Incomplete Order #<span id="incompleteOrderNumberDisplay"></span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Order Status Badge -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="d-flex align-items-center" style="gap: 0.5rem;">
+                        <span id="incompleteOrderDetailStatus" class="badge me-2"></span>
+                        <button class="btn btn-sm btn-outline-primary" id="editIncompleteOrderBtn">
+                            <i class="fas fa-edit me-1"></i> Edit Order
+                        </button>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="changeStatusBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                                Actions
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="changeStatusBtn">
+                                <li><a class="dropdown-item" href="#" onclick="convertIncompleteOrderFromModal()">Convert to Order</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="sendRecoveryEmailFromModal()">Send Recovery Email</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="markAsAbandonedFromModal()">Mark as Abandoned</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="#" onclick="deleteIncompleteOrderFromModal()">Delete</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="badge" id="incompleteOrderRecoveryStatus"></span>
+                    </div>
+                </div>
+                
+                <!-- Order Summary Cards -->
+                <div class="row g-4 mb-4">
+                    <!-- Order Info Card -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-3 text-muted">
+                                    <i class="fas fa-info-circle me-2"></i>Order Information
+                                </h6>
+                                <dl class="row mb-0" id="incompleteOrderInfo">
+                                    <!-- Will be populated by JavaScript -->
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Shipping Address -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-3 text-muted d-flex justify-content-between align-items-center">
+                                    <span><i class="fas fa-shipping-fast me-2"></i>Shipping Address</span>
+                                    <button class="btn btn-xs btn-outline-primary" id="editShippingBtn" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                </h6>
+                                <div id="shippingAddressView">
+                                    <p class="border rounded p-3 bg-light mb-0" id="incompleteOrderDetailShippingAddress">
+                                        No shipping address provided
+                                    </p>
+                                </div>
+                                <div id="shippingAddressEdit" style="display: none;">
+                                    <form id="shippingAddressForm">
+                                        <div class="row g-2">
+                                            <div class="col-md-6">
+                                                <input type="text" class="form-control form-control-sm" id="editFirstName" placeholder="First Name">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <input type="text" class="form-control form-control-sm" id="editLastName" placeholder="Last Name">
+                                            </div>
+                                            <div class="col-12">
+                                                <input type="text" class="form-control form-control-sm" id="editAddressLine1" placeholder="Address Line 1">
+                                            </div>
+                                            <div class="col-12">
+                                                <input type="text" class="form-control form-control-sm" id="editAddressLine2" placeholder="Address Line 2 (Optional)">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <input type="text" class="form-control form-control-sm" id="editCity" placeholder="City">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <input type="text" class="form-control form-control-sm" id="editState" placeholder="State">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <input type="text" class="form-control form-control-sm" id="editPostalCode" placeholder="Postal Code">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <input type="text" class="form-control form-control-sm" id="editCountry" placeholder="Country">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <input type="tel" class="form-control form-control-sm" id="editPhone" placeholder="Phone">
+                                            </div>
+                                            <div class="col-12">
+                                                <input type="email" class="form-control form-control-sm" id="editEmail" placeholder="Email">
+                                            </div>
+                                            <div class="col-12 mt-2">
+                                                <button type="button" class="btn btn-success btn-sm me-2" id="saveShippingBtn">
+                                                    <i class="fas fa-save"></i> Save
+                                                </button>
+                                                <button type="button" class="btn btn-secondary btn-sm" id="cancelShippingBtn">
+                                                    <i class="fas fa-times"></i> Cancel
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Order Items -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-3 text-muted d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-shopping-bag me-2"></i>Order Items</span>
+                            <div>
+                                <button class="btn btn-xs btn-outline-success me-1" id="addItemBtn" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;">
+                                    <i class="fas fa-plus"></i> Add Item
+                                </button>
+                                <button class="btn btn-xs btn-outline-primary" id="editItemsBtn" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                            </div>
+                        </h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Variant</th>
+                                        <th>Quantity</th>
+                                        <th>Unit Price</th>
+                                        <th>Total</th>
+                                        <th id="actionsHeader" style="display: none;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="incompleteOrderItemsTableBody"></tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <th colspan="4" class="text-end">Total:</th>
+                                        <th id="incompleteOrderTotalAmount">$0.00</th>
+                                        <th id="actionsTotalCell" style="display: none;"></th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <div id="editItemsControls" style="display: none;" class="mt-3">
+                            <button class="btn btn-success btn-sm me-2" id="saveItemsBtn">
+                                <i class="fas fa-save"></i> Save Changes
+                            </button>
+                            <button class="btn btn-secondary btn-sm" id="cancelItemsBtn">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recovery Information -->
+                <div class="card border-0 shadow-sm mb-4" id="recoveryInfoCard">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-3 text-muted">
+                            <i class="fas fa-envelope me-2"></i>Recovery Information
+                        </h6>
+                        <div id="recoveryInfo">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentPage = 1;
+    let currentIncompleteOrderId = null;
+    let incompleteOrders = [];
+    let isEditMode = false;
+    let originalItemsData = [];
+    let currentOrderData = null;
+    
+    // Initialize status filter
+    window.currentStatusFilter = ''; // Empty means "All"
+    
+    // Helper function to format status names
+    function formatStatusName(status) {
+        if (!status) return '';
+        return status.split('_')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    }
+    
+    // Helper function to format relative time
+    function formatRelativeTime(dateString) {
+        const now = new Date();
+        const date = new Date(dateString);
+        const diffMs = now - date;
+        const diffMinutes = Math.floor(diffMs / (1000 * 60));
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        
+        if (diffMinutes < 60) {
+            return `${diffMinutes} min ago`;
+        } else if (diffHours < 24) {
+            return `${diffHours} hours ago`;
+        } else if (diffDays < 7) {
+            return `${diffDays} days ago`;
+        } else {
+            const options = { month: 'short', day: 'numeric', year: 'numeric' };
+            return date.toLocaleDateString('en-US', options);
+        }
+    }
+    
+    // Event listeners
+    document.getElementById('refreshIncompleteOrdersBtn').addEventListener('click', function() {
+        loadIncompleteOrders(1);
+        loadIncompleteOrderCounts();
+    });
+    
+    // Clear filters button
+    document.getElementById('clearFiltersBtn').addEventListener('click', function() {
+        document.getElementById('incompleteOrderSearchInput').value = '';
+        document.getElementById('dateFilter').value = '';
+        document.getElementById('customDateStart').style.display = 'none';
+        document.getElementById('customDateEnd').style.display = 'none';
+        document.getElementById('customDateStart').value = '';
+        document.getElementById('customDateEnd').value = '';
+        
+        // Reset status filter to "All"
+        document.querySelectorAll('.status-filter-btn').forEach(button => {
+            button.classList.remove('active');
+            button.classList.remove('btn-primary');
+            button.classList.add('btn-outline-primary');
+        });
+        
+        document.querySelector('.status-filter-btn[data-status=""]').classList.add('active');
+        document.querySelector('.status-filter-btn[data-status=""]').classList.remove('btn-outline-primary');
+        document.querySelector('.status-filter-btn[data-status=""]').classList.add('btn-primary');
+        
+        window.currentStatusFilter = '';
+        loadIncompleteOrders(1);
+    });
+    
+    // Status filter button event listeners
+    document.querySelectorAll('.status-filter-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.status-filter-btn').forEach(button => {
+                button.classList.remove('active');
+                button.classList.remove('btn-primary');
+                button.classList.add('btn-outline-primary');
+            });
+            
+            // Add active class to clicked button
+            this.classList.add('active');
+            this.classList.remove('btn-outline-primary');
+            this.classList.add('btn-primary');
+            
+            const selectedStatus = this.dataset.status;
+            window.currentStatusFilter = selectedStatus;
+            
+            loadIncompleteOrdersWithStatus(1, selectedStatus);
+        });
+    });
+    
+    // Search functionality
+    let searchTimeout;
+    document.getElementById('incompleteOrderSearchInput').addEventListener('input', function() {
+        const searchTerm = this.value.trim();
+        
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            loadIncompleteOrders(1);
+        }, 500);
+    });
+    
+    // Date filter functionality
+    document.getElementById('dateFilter').addEventListener('change', function() {
+        const selectedValue = this.value;
+        const customDateStart = document.getElementById('customDateStart');
+        const customDateEnd = document.getElementById('customDateEnd');
+        
+        if (selectedValue === 'custom') {
+            customDateStart.style.display = 'block';
+            customDateEnd.style.display = 'block';
+        } else {
+            customDateStart.style.display = 'none';
+            customDateEnd.style.display = 'none';
+            customDateStart.value = '';
+            customDateEnd.value = '';
+            loadIncompleteOrders(1);
+        }
+    });
+    
+    // Custom date inputs
+    document.getElementById('customDateStart').addEventListener('change', function() {
+        if (this.value && document.getElementById('customDateEnd').value) {
+            loadIncompleteOrders(1);
+        }
+    });
+    
+    document.getElementById('customDateEnd').addEventListener('change', function() {
+        if (this.value && document.getElementById('customDateStart').value) {
+            loadIncompleteOrders(1);
+        }
+    });
+    
+    // Bulk actions
+    document.getElementById('selectAllIncompleteOrders').addEventListener('change', function() {
+        const isChecked = this.checked;
+        const checkboxes = document.querySelectorAll('.incomplete-order-checkbox');
+        
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = isChecked;
+            toggleRowSelection(checkbox.closest('tr'), isChecked);
+        });
+        
+        updateBulkActionControls();
+    });
+    
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('incomplete-order-checkbox')) {
+            toggleRowSelection(e.target.closest('tr'), e.target.checked);
+            updateBulkActionControls();
+            updateSelectAllCheckbox();
+        }
+    });
+    
+    document.getElementById('bulkActionSelect').addEventListener('change', updateBulkActionControls);
+    
+    document.getElementById('applyBulkActionBtn').addEventListener('click', function() {
+        const selectedCheckboxes = document.querySelectorAll('.incomplete-order-checkbox:checked');
+        const selectedOrderIds = Array.from(selectedCheckboxes).map(cb => cb.dataset.orderId);
+        const action = document.getElementById('bulkActionSelect').value;
+        
+        if (selectedOrderIds.length === 0) {
+            Swal.fire('No Selection', 'Please select incomplete orders first.', 'warning');
+            return;
+        }
+        
+        if (!action) {
+            Swal.fire('No Action', 'Please select an action to perform.', 'warning');
+            return;
+        }
+        
+        performBulkAction(selectedOrderIds, action);
+    });
+    
+    // Helper functions
+    function toggleRowSelection(row, isSelected) {
+        if (isSelected) {
+            row.classList.add('selected-row');
+        } else {
+            row.classList.remove('selected-row');
+        }
+    }
+    
+    function updateBulkActionControls() {
+        const selectedCheckboxes = document.querySelectorAll('.incomplete-order-checkbox:checked');
+        const bulkActionSelect = document.getElementById('bulkActionSelect');
+        const applyBulkActionBtn = document.getElementById('applyBulkActionBtn');
+        
+        const hasSelection = selectedCheckboxes.length > 0;
+        
+        bulkActionSelect.disabled = !hasSelection;
+        applyBulkActionBtn.disabled = !hasSelection || !bulkActionSelect.value;
+        
+        if (hasSelection) {
+            applyBulkActionBtn.innerHTML = `<i class="fas fa-check me-1"></i> Apply (${selectedCheckboxes.length})`;
+        } else {
+            applyBulkActionBtn.innerHTML = `<i class="fas fa-check me-1"></i> Apply`;
+        }
+    }
+    
+    function updateSelectAllCheckbox() {
+        const allCheckboxes = document.querySelectorAll('.incomplete-order-checkbox');
+        const checkedCheckboxes = document.querySelectorAll('.incomplete-order-checkbox:checked');
+        const selectAllCheckbox = document.getElementById('selectAllIncompleteOrders');
+        
+        if (checkedCheckboxes.length === 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        } else if (checkedCheckboxes.length === allCheckboxes.length) {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.indeterminate = false;
+        } else {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = true;
+        }
+    }
+    
+    function getStatusBadgeClass(status) {
+        const statusClasses = {
+            'pending': 'bg-warning text-dark',
+            'abandoned': 'bg-danger text-white',
+            'payment_pending': 'bg-info text-white',
+            'converted': 'bg-success text-white',
+            'expired': 'bg-secondary text-white'
+        };
+        return statusClasses[status] || 'bg-secondary text-white';
+    }
+    
+    function getRecoveryBadgeClass(attempts) {
+        if (attempts === 0) return 'bg-light text-dark';
+        if (attempts <= 2) return 'bg-success text-white';
+        if (attempts <= 5) return 'bg-warning text-dark';
+        return 'bg-danger text-white';
+    }
+    
+    // Load incomplete orders
+    function loadIncompleteOrders(page = 1) {
+        currentPage = page;
+        const searchTerm = document.getElementById('incompleteOrderSearchInput').value.trim();
+        const dateFilter = document.getElementById('dateFilter').value;
+        const customDateStart = document.getElementById('customDateStart').value;
+        const customDateEnd = document.getElementById('customDateEnd').value;
+        
+        let url = `/mb-admin/api/incomplete-orders/?page=${page}&include_details=true`;
+        
+        if (searchTerm) {
+            url += `&search=${encodeURIComponent(searchTerm)}`;
+        }
+        
+        if (window.currentStatusFilter) {
+            url += `&status=${window.currentStatusFilter}`;
+        }
+        
+        // Handle date filtering
+        if (dateFilter && dateFilter !== 'custom') {
+            const dateRange = getDateRange(dateFilter);
+            if (dateRange.start) {
+                url += `&created_at__date__gte=${dateRange.start}`;
+            }
+            if (dateRange.end) {
+                url += `&created_at__date__lte=${dateRange.end}`;
+            }
+        } else if (dateFilter === 'custom' && customDateStart && customDateEnd) {
+            url += `&created_at__date__gte=${customDateStart}`;
+            url += `&created_at__date__lte=${customDateEnd}`;
+        }
+        
+        console.log('Loading incomplete orders from:', url);
+        
+        // Show loading
+        document.getElementById('incompleteOrdersTableBody').innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading incomplete orders...</p>
+                </td>
+            </tr>
+        `;
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Incomplete orders data:', data);
+                renderIncompleteOrders(data.results || []);
+                renderPagination(data);
+                document.getElementById('incompleteOrdersTotalCount').textContent = data.count || 0;
+            })
+            .catch(error => {
+                console.error('Error loading incomplete orders:', error);
+                document.getElementById('incompleteOrdersTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="9" class="text-center py-4 text-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Error loading incomplete orders: ${error.message}
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+    
+    function loadIncompleteOrdersWithStatus(page, status) {
+        window.currentStatusFilter = status;
+        loadIncompleteOrders(page);
+    }
+    
+    function loadIncompleteOrderCounts() {
+        fetch('/mb-admin/api/incomplete-orders/?count_by_status=true')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Incomplete order counts:', data);
+                
+                document.getElementById('allIncompleteOrdersCount').textContent = data.total_count || 0;
+                
+                const statusElementMapping = {
+                    'pending': 'pendingIncompleteOrdersCount',
+                    'abandoned': 'abandonedIncompleteOrdersCount',
+                    'payment_pending': 'paymentPendingIncompleteOrdersCount',
+                    'converted': 'convertedIncompleteOrdersCount',
+                    'expired': 'expiredIncompleteOrdersCount'
+                };
+                
+                Object.keys(data.status_counts || {}).forEach(status => {
+                    const elementId = statusElementMapping[status];
+                    if (elementId) {
+                        const countElement = document.getElementById(elementId);
+                        if (countElement) {
+                            countElement.textContent = data.status_counts[status];
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error loading counts:', error);
+            });
+    }
+    
+    function renderIncompleteOrders(orders) {
+        const tbody = document.getElementById('incompleteOrdersTableBody');
+        
+        if (!orders || orders.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="text-center py-4 text-muted">
+                        <i class="fas fa-inbox me-2"></i>
+                        No incomplete orders found
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        incompleteOrders = orders;
+        
+        tbody.innerHTML = orders.map(order => {
+            // Determine customer name with priority: shipping address > user > guest
+            let customerName = 'Guest';
+            let customerEmail = order.customer_email || order.guest_email || 'No email';
+            
+            if (order.shipping_address && (order.shipping_address.first_name || order.shipping_address.last_name)) {
+                customerName = `${order.shipping_address.first_name || ''} ${order.shipping_address.last_name || ''}`.trim();
+            } else if (order.user?.first_name && order.user?.last_name) {
+                customerName = `${order.user.first_name} ${order.user.last_name}`;
+            } else if (order.user?.username) {
+                customerName = order.user.username;
+            }
+            
+            const statusBadgeClass = getStatusBadgeClass(order.status);
+            const recoveryBadgeClass = getRecoveryBadgeClass(order.recovery_attempts);
+            
+            return `
+                <tr>
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input incomplete-order-checkbox" type="checkbox" 
+                                   data-order-id="${order.id}" id="checkbox_${order.id}">
+                            <label class="form-check-label" for="checkbox_${order.id}"></label>
+                        </div>
+                    </td>
+                    <td>
+                        <div>
+                            <div class="fw-semibold">${customerName}</div>
+                            <small class="text-muted">${customerEmail}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="fw-bold">${order.incomplete_order_id}</span>
+                    </td>
+                    <td>
+                        <small>${formatRelativeTime(order.created_at)}</small>
+                    </td>
+                    <td class="fw-bold">$${parseFloat(order.total_amount).toFixed(2)}</td>
+                    <td>
+                        <span class="badge bg-light text-dark">${order.items_count}</span>
+                    </td>
+                    <td>
+                        <span class="badge ${recoveryBadgeClass}">${order.recovery_attempts} attempts</span>
+                    </td>
+                    <td>
+                        <span class="badge ${statusBadgeClass}">${formatStatusName(order.status)}</span>
+                        ${order.can_convert ? '<small class="d-block text-success">Can convert</small>' : ''}
+                        ${order.is_expired ? '<small class="d-block text-danger">Expired</small>' : ''}
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button class="btn btn-outline-primary btn-sm" onclick="viewIncompleteOrderDetails(${order.id})" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            ${order.can_convert ? `
+                                <button class="btn btn-outline-success btn-sm" onclick="convertIncompleteOrder(${order.id})" title="Convert to Order">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </button>
+                            ` : ''}
+                            <button class="btn btn-outline-info btn-sm" onclick="sendRecoveryEmail(${order.id})" title="Send Recovery Email">
+                                <i class="fas fa-envelope"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+    
+    function renderPagination(data) {
+        const pagination = document.getElementById('incompleteOrdersPagination');
+        
+        if (!data.count || data.count <= 20) {
+            pagination.innerHTML = '';
+            return;
+        }
+        
+        const totalPages = Math.ceil(data.count / 20);
+        const currentPage = data.current_page || 1;
+        
+        let paginationHtml = '';
+        
+        // Previous button
+        if (data.previous) {
+            paginationHtml += `<li class="page-item"><a class="page-link" href="#" onclick="loadIncompleteOrders(${currentPage - 1})">Previous</a></li>`;
+        }
+        
+        // Page numbers
+        for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+            paginationHtml += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                <a class="page-link" href="#" onclick="loadIncompleteOrders(${i})">${i}</a>
+            </li>`;
+        }
+        
+        // Next button
+        if (data.next) {
+            paginationHtml += `<li class="page-item"><a class="page-link" href="#" onclick="loadIncompleteOrders(${currentPage + 1})">Next</a></li>`;
+        }
+        
+        pagination.innerHTML = paginationHtml;
+    }
+    
+    function getDateRange(filterType) {
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
+        
+        switch(filterType) {
+            case 'today':
+                return { start: today, end: today };
+            case 'yesterday':
+                const yesterday = new Date(now);
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yesterdayStr = yesterday.toISOString().split('T')[0];
+                return { start: yesterdayStr, end: yesterdayStr };
+            case 'this_week':
+                const startOfWeek = new Date(now);
+                startOfWeek.setDate(now.getDate() - now.getDay());
+                return { start: startOfWeek.toISOString().split('T')[0], end: today };
+            case 'this_month':
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                return { start: startOfMonth.toISOString().split('T')[0], end: today };
+            default:
+                return {};
+        }
+    }
+    
+    function performBulkAction(orderIds, action) {
+        Swal.fire({
+            title: 'Confirm Bulk Action',
+            text: `Are you sure you want to ${action} ${orderIds.length} incomplete order(s)?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#930000',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, proceed!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Processing...',
+                    text: 'Please wait while we process your request.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                fetch('/mb-admin/api/incomplete-orders/bulk_action/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({
+                        order_ids: orderIds,
+                        action: action
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('Success!', data.message, 'success');
+                        loadIncompleteOrders(currentPage);
+                        loadIncompleteOrderCounts();
+                        
+                        // Clear selections
+                        document.querySelectorAll('.incomplete-order-checkbox').forEach(cb => cb.checked = false);
+                        document.getElementById('selectAllIncompleteOrders').checked = false;
+                        updateBulkActionControls();
+                    } else {
+                        Swal.fire('Error!', data.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    Swal.fire('Error!', 'Failed to perform bulk action: ' + error.message, 'error');
+                });
+            }
+        });
+    }
+    
+    // Global functions for onclick handlers
+    window.viewIncompleteOrderDetails = function(orderId) {
+        const order = incompleteOrders.find(o => o.id === orderId);
+        if (!order) return;
+        
+        currentIncompleteOrderId = orderId;
+        currentOrderData = order; // Set the current order data for editing
+        
+        // Determine customer name with priority: shipping address > user > guest
+        let customerName = 'Guest';
+        if (order.shipping_address && (order.shipping_address.first_name || order.shipping_address.last_name)) {
+            customerName = `${order.shipping_address.first_name || ''} ${order.shipping_address.last_name || ''}`.trim();
+        } else if (order.user?.first_name && order.user?.last_name) {
+            customerName = `${order.user.first_name} ${order.user.last_name}`;
+        } else if (order.user?.username) {
+            customerName = order.user.username;
+        }
+        
+        // Populate modal
+        document.getElementById('incompleteOrderNumberDisplay').textContent = order.incomplete_order_id;
+        document.getElementById('incompleteOrderDetailStatus').textContent = formatStatusName(order.status);
+        document.getElementById('incompleteOrderDetailStatus').className = `badge ${getStatusBadgeClass(order.status)}`;
+        
+        // Populate order info
+        const orderInfo = document.getElementById('incompleteOrderInfo');
+        orderInfo.innerHTML = `
+            <dt class="col-sm-4">Customer:</dt>
+            <dd class="col-sm-8">${customerName}</dd>
+            <dt class="col-sm-4">Email:</dt>
+            <dd class="col-sm-8">${order.customer_email || order.guest_email || 'N/A'}</dd>
+            <dt class="col-sm-4">Phone:</dt>
+            <dd class="col-sm-8">${order.customer_phone || (order.shipping_address?.phone) || 'N/A'}</dd>
+            <dt class="col-sm-4">Created:</dt>
+            <dd class="col-sm-8">${new Date(order.created_at).toLocaleString()}</dd>
+            <dt class="col-sm-4">Recovery Attempts:</dt>
+            <dd class="col-sm-8"><span class="badge ${getRecoveryBadgeClass(order.recovery_attempts)}">${order.recovery_attempts}</span></dd>
+            <dt class="col-sm-4">Can Convert:</dt>
+            <dd class="col-sm-8">${order.can_convert ? '<span class="text-success">Yes</span>' : '<span class="text-danger">No</span>'}</dd>
+        `;
+        
+        // Populate shipping address
+        const shippingDiv = document.getElementById('incompleteOrderDetailShippingAddress');
+        if (order.shipping_address) {
+            const addr = order.shipping_address;
+            shippingDiv.innerHTML = `
+                <strong>${addr.first_name || ''} ${addr.last_name || ''}</strong><br>
+                ${addr.address_line_1 || ''}<br>
+                ${addr.address_line_2 ? addr.address_line_2 + '<br>' : ''}
+                ${addr.city || ''}, ${addr.state || ''} ${addr.postal_code || ''}<br>
+                ${addr.country || ''}<br>
+                <strong>Phone:</strong> ${addr.phone || 'N/A'}<br>
+                <strong>Email:</strong> ${addr.email || 'N/A'}
+            `;
+        } else {
+            shippingDiv.innerHTML = 'No shipping address provided';
+        }
+        
+        // Load order items (using the new API endpoint)
+        loadIncompleteOrderItems(orderId);
+        
+        // Show modal
+        new bootstrap.Modal(document.getElementById('incompleteOrderDetailsModal')).show();
+    };
+    
+    window.convertIncompleteOrder = function(orderId) {
+        Swal.fire({
+            title: 'Convert to Order?',
+            text: 'This will create a complete order from this incomplete order.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#930000',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, convert it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/mb-admin/api/incomplete-orders/${orderId}/convert_to_order/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('Converted!', data.message, 'success');
+                        loadIncompleteOrders(currentPage);
+                        loadIncompleteOrderCounts();
+                    } else {
+                        Swal.fire('Error!', data.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    Swal.fire('Error!', 'Failed to convert order: ' + error.message, 'error');
+                });
+            }
+        });
+    };
+    
+    window.sendRecoveryEmail = function(orderId) {
+        Swal.fire({
+            title: 'Send Recovery Email?',
+            text: 'This will send a recovery email to the customer.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#930000',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, send it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/mb-admin/api/incomplete-orders/${orderId}/send_recovery_email/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({
+                        email_type: 'abandoned_cart'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('Email Sent!', data.message, 'success');
+                        loadIncompleteOrders(currentPage);
+                        loadIncompleteOrderCounts();
+                    } else {
+                        Swal.fire('Error!', data.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    Swal.fire('Error!', 'Failed to send email: ' + error.message, 'error');
+                });
+            }
+        });
+    };
+    
+    function loadIncompleteOrderItems(orderId) {
+        const tbody = document.getElementById('incompleteOrderItemsTableBody');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center py-3">
+                    <div class="spinner-border spinner-border-sm" role="status">
+                        <span class="visually-hidden">Loading items...</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+        
+        // Fetch items from API
+        fetch(`/mb-admin/api/incomplete-orders/${orderId}/items/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.items) {
+                    if (data.items.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="5" class="text-center py-3 text-muted">
+                                    <i class="fas fa-inbox me-2"></i>
+                                    No items found
+                                </td>
+                            </tr>
+                        `;
+                    } else {
+                        tbody.innerHTML = data.items.map(item => `
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        ${item.display_image ? 
+                                            `<img src="${item.display_image}" alt="${item.product_name}" class="me-2" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;" onerror="this.src='/media/default.webp';">` : 
+                                            `<div class="me-2 bg-light d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-radius: 4px;"><i class="fas fa-image text-muted"></i></div>`
+                                        }
+                                        <div>
+                                            <div class="fw-semibold">${item.product_name}</div>
+                                            <small class="text-muted">SKU: ${item.product_sku}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>${item.variant_name}</td>
+                                <td>
+                                    <span class="badge bg-primary">${item.quantity}</span>
+                                </td>
+                                <td class="fw-bold">$${parseFloat(item.unit_price).toFixed(2)}</td>
+                                <td class="fw-bold">$${parseFloat(item.total_price).toFixed(2)}</td>
+                            </tr>
+                        `).join('');
+                    }
+                    
+                    // Update total amount
+                    console.log('Loading items - API total:', data.total_amount); // Debug log
+                    document.getElementById('incompleteOrderTotalAmount').textContent = `$${parseFloat(data.total_amount).toFixed(2)}`;
+                    
+                    // Also update currentOrderData with the latest total
+                    if (currentOrderData) {
+                        currentOrderData.total_amount = data.total_amount;
+                    }
+                } else {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center py-3 text-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Error loading items: ${data.error || 'Unknown error'}
+                            </td>
+                        </tr>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading incomplete order items:', error);
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-3 text-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Error loading items: ${error.message}
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+    
+    // Initial data loading
+    loadIncompleteOrders(1);
+    loadIncompleteOrderCounts();
+    
+    // Modal action functions
+    window.convertIncompleteOrderFromModal = function() {
+        if (currentIncompleteOrderId) {
+            convertIncompleteOrder(currentIncompleteOrderId);
+        }
+    };
+    
+    window.sendRecoveryEmailFromModal = function() {
+        if (currentIncompleteOrderId) {
+            sendRecoveryEmail(currentIncompleteOrderId);
+        }
+    };
+    
+    window.markAsAbandonedFromModal = function() {
+        if (currentIncompleteOrderId) {
+            Swal.fire({
+                title: 'Mark as Abandoned?',
+                text: 'This will mark the order as abandoned.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#930000',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, mark it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    performBulkAction([currentIncompleteOrderId], 'mark_abandoned');
+                }
+            });
+        }
+    };
+    
+    window.deleteIncompleteOrderFromModal = function() {
+        if (currentIncompleteOrderId) {
+            Swal.fire({
+                title: 'Delete Order?',
+                text: 'This action cannot be undone!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    performBulkAction([currentIncompleteOrderId], 'delete');
+                    // Close modal after deletion
+                    bootstrap.Modal.getInstance(document.getElementById('incompleteOrderDetailsModal')).hide();
+                }
+            });
+        }
+    };
+    
+    // Edit functionality
+    document.getElementById('editIncompleteOrderBtn').addEventListener('click', function() {
+        toggleEditMode(true);
+    });
+    
+    // Shipping address edit functionality
+    document.getElementById('editShippingBtn').addEventListener('click', function() {
+        toggleShippingEdit(true);
+    });
+    
+    document.getElementById('saveShippingBtn').addEventListener('click', function() {
+        saveShippingAddress();
+    });
+    
+    document.getElementById('cancelShippingBtn').addEventListener('click', function() {
+        toggleShippingEdit(false);
+    });
+    
+    // Items edit functionality
+    document.getElementById('editItemsBtn').addEventListener('click', function() {
+        toggleItemsEdit(true);
+    });
+    
+    document.getElementById('saveItemsBtn').addEventListener('click', function() {
+        saveItemsChanges();
+    });
+    
+    document.getElementById('cancelItemsBtn').addEventListener('click', function() {
+        toggleItemsEdit(false);
+    });
+    
+    document.getElementById('addItemBtn').addEventListener('click', function() {
+        addNewItem();
+    });
+    
+    function toggleEditMode(enable) {
+        isEditMode = enable;
+        const editBtn = document.getElementById('editIncompleteOrderBtn');
+        
+        if (enable) {
+            editBtn.innerHTML = '<i class="fas fa-times me-1"></i> Cancel Edit';
+            editBtn.classList.remove('btn-outline-primary');
+            editBtn.classList.add('btn-outline-danger');
+        } else {
+            editBtn.innerHTML = '<i class="fas fa-edit me-1"></i> Edit Order';
+            editBtn.classList.remove('btn-outline-danger');
+            editBtn.classList.add('btn-outline-primary');
+            
+            // Reset all edit modes
+            toggleShippingEdit(false);
+            toggleItemsEdit(false);
+        }
+    }
+    
+    function toggleShippingEdit(enable) {
+        const viewDiv = document.getElementById('shippingAddressView');
+        const editDiv = document.getElementById('shippingAddressEdit');
+        
+        if (enable) {
+            viewDiv.style.display = 'none';
+            editDiv.style.display = 'block';
+            populateShippingForm();
+        } else {
+            viewDiv.style.display = 'block';
+            editDiv.style.display = 'none';
+        }
+    }
+    
+    function populateShippingForm() {
+        if (currentOrderData && currentOrderData.shipping_address) {
+            const addr = currentOrderData.shipping_address;
+            document.getElementById('editFirstName').value = addr.first_name || '';
+            document.getElementById('editLastName').value = addr.last_name || '';
+            document.getElementById('editAddressLine1').value = addr.address_line_1 || '';
+            document.getElementById('editAddressLine2').value = addr.address_line_2 || '';
+            document.getElementById('editCity').value = addr.city || '';
+            document.getElementById('editState').value = addr.state || '';
+            document.getElementById('editPostalCode').value = addr.postal_code || '';
+            document.getElementById('editCountry').value = addr.country || '';
+            document.getElementById('editPhone').value = addr.phone || '';
+            document.getElementById('editEmail').value = addr.email || '';
+        }
+    }
+    
+    function saveShippingAddress() {
+        const formData = {
+            first_name: document.getElementById('editFirstName').value,
+            last_name: document.getElementById('editLastName').value,
+            address_line_1: document.getElementById('editAddressLine1').value,
+            address_line_2: document.getElementById('editAddressLine2').value,
+            city: document.getElementById('editCity').value,
+            state: document.getElementById('editState').value,
+            postal_code: document.getElementById('editPostalCode').value,
+            country: document.getElementById('editCountry').value,
+            phone: document.getElementById('editPhone').value,
+            email: document.getElementById('editEmail').value
+        };
+        
+        fetch(`/mb-admin/api/incomplete-orders/${currentIncompleteOrderId}/update_shipping/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire('Success!', 'Shipping address updated successfully', 'success');
+                toggleShippingEdit(false);
+                // Refresh the order details
+                viewIncompleteOrderDetails(currentIncompleteOrderId);
+            } else {
+                Swal.fire('Error!', data.error || 'Failed to update shipping address', 'error');
+            }
+        })
+        .catch(error => {
+            Swal.fire('Error!', 'Failed to update shipping address: ' + error.message, 'error');
+        });
+    }
+    
+    function toggleItemsEdit(enable) {
+        const actionsHeader = document.getElementById('actionsHeader');
+        const actionsTotalCell = document.getElementById('actionsTotalCell');
+        const editControls = document.getElementById('editItemsControls');
+        
+        if (enable) {
+            actionsHeader.style.display = 'table-cell';
+            actionsTotalCell.style.display = 'table-cell';
+            editControls.style.display = 'block';
+            renderEditableItems();
+        } else {
+            actionsHeader.style.display = 'none';
+            actionsTotalCell.style.display = 'none';
+            editControls.style.display = 'none';
+            loadIncompleteOrderItems(currentIncompleteOrderId);
+        }
+    }
+    
+    function renderEditableItems() {
+        fetch(`/mb-admin/api/incomplete-orders/${currentIncompleteOrderId}/items/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.items) {
+                    originalItemsData = [...data.items];
+                    const tbody = document.getElementById('incompleteOrderItemsTableBody');
+                    
+                    tbody.innerHTML = data.items.map((item, index) => `
+                        <tr data-item-id="${item.id}" data-index="${index}">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    ${item.display_image ? 
+                                        `<img src="${item.display_image}" alt="${item.product_name}" class="me-2" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;" onerror="this.src='/media/default.webp';">` : 
+                                        `<div class="me-2 bg-light d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-radius: 4px;"><i class="fas fa-image text-muted"></i></div>`
+                                    }
+                                    <div>
+                                        <div class="fw-semibold">${item.product_name}</div>
+                                        <small class="text-muted">SKU: ${item.product_sku}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>${item.variant_name}</td>
+                            <td>
+                                <input type="number" class="form-control form-control-sm item-quantity" 
+                                       value="${item.quantity}" min="1" max="999" 
+                                       onchange="updateItemTotal(${index})" style="width: 80px;">
+                            </td>
+                            <td>
+                                <input type="number" class="form-control form-control-sm item-price" 
+                                       value="${parseFloat(item.unit_price).toFixed(2)}" min="0" step="0.01"
+                                       onchange="updateItemTotal(${index})" style="width: 100px;">
+                            </td>
+                            <td class="fw-bold item-total">$${parseFloat(item.total_price).toFixed(2)}</td>
+                            <td>
+                                <button class="btn btn-danger btn-xs" onclick="removeItem(${index})" title="Remove Item">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            });
+    }
+    
+    window.updateItemTotal = function(index) {
+        const row = document.querySelector(`tr[data-index="${index}"]`);
+        const quantity = parseFloat(row.querySelector('.item-quantity').value) || 0;
+        const price = parseFloat(row.querySelector('.item-price').value) || 0;
+        const total = quantity * price;
+        
+        row.querySelector('.item-total').textContent = `$${total.toFixed(2)}`;
+        updateOrderTotal();
+    };
+    
+    window.removeItem = function(index) {
+        const row = document.querySelector(`tr[data-index="${index}"]`);
+        const itemId = row.dataset.itemId;
+        
+        Swal.fire({
+            title: 'Remove Item?',
+            text: 'Are you sure you want to remove this item?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, remove it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Call API to remove item
+                fetch(`/mb-admin/api/incomplete-orders/${currentIncompleteOrderId}/remove_item/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({ item_id: itemId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('Success!', 'Item removed successfully', 'success');
+                        
+                        // Update the total immediately from the API response
+                        if (data.new_total !== undefined) {
+                            document.getElementById('incompleteOrderTotalAmount').textContent = `$${data.new_total.toFixed(2)}`;
+                            
+                            // Update currentOrderData if it exists
+                            if (currentOrderData) {
+                                currentOrderData.total_amount = data.new_total.toString();
+                            }
+                        }
+                        
+                        // Remove the row from table
+                        row.remove();
+                        
+                        // Refresh the main orders list
+                        loadIncompleteOrders(currentPage);
+                    } else {
+                        Swal.fire('Error!', data.error || 'Failed to remove item', 'error');
+                    }
+                })
+                .catch(error => {
+                    Swal.fire('Error!', 'Failed to remove item: ' + error.message, 'error');
+                });
+            }
+        });
+    };
+    
+    function updateOrderTotal() {
+        const rows = document.querySelectorAll('#incompleteOrderItemsTableBody tr[data-item-id]');
+        let total = 0;
+        
+        rows.forEach(row => {
+            const itemTotal = row.querySelector('.item-total').textContent;
+            total += parseFloat(itemTotal.replace('$', '')) || 0;
+        });
+        
+        document.getElementById('incompleteOrderTotalAmount').textContent = `$${total.toFixed(2)}`;
+    }
+    
+    function addNewItem() {
+        // Show product selection modal
+        showProductSelectionModal();
+    }
+    
+    function showProductSelectionModal() {
+        // Create and show product selection modal
+        const modalHtml = `
+            <div class="modal fade" id="productSelectionModal" tabindex="-1" aria-labelledby="productSelectionModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="productSelectionModalLabel">Add Product to Order</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    <input type="text" class="form-control" id="productSearch" placeholder="Search products by name or SKU...">
+                                </div>
+                                <div class="col-md-4">
+                                    <button type="button" class="btn btn-primary" onclick="searchProducts()">
+                                        <i class="fas fa-search"></i> Search
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="productSearchResults">
+                                <div class="text-center text-muted">
+                                    <i class="fas fa-search fa-2x mb-2"></i>
+                                    <p>Search for products to add to this order</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal if it exists
+        const existingModal = document.getElementById('productSelectionModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Add modal to page
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Show modal
+        new bootstrap.Modal(document.getElementById('productSelectionModal')).show();
+        
+        // Focus on search input
+        setTimeout(() => {
+            document.getElementById('productSearch').focus();
+        }, 500);
+        
+        // Add enter key listener to search input
+        document.getElementById('productSearch').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchProducts();
+            }
+        });
+    }
+    
+    window.searchProducts = function() {
+        const searchTerm = document.getElementById('productSearch').value.trim();
+        if (!searchTerm) {
+            Swal.fire('Error', 'Please enter a search term', 'error');
+            return;
+        }
+        
+        const resultsDiv = document.getElementById('productSearchResults');
+        resultsDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
+        
+        fetch(`/mb-admin/api/products/?search=${encodeURIComponent(searchTerm)}&page_size=10`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.results && data.results.length > 0) {
+                    renderProductResults(data.results);
+                } else {
+                    resultsDiv.innerHTML = '<div class="text-center text-muted">No products found</div>';
+                }
+            })
+            .catch(error => {
+                resultsDiv.innerHTML = '<div class="text-center text-danger">Error searching products</div>';
+                console.error('Search error:', error);
+            });
+    };
+    
+    function renderProductResults(products) {
+        const resultsDiv = document.getElementById('productSearchResults');
+        
+        const resultsHtml = products.map(product => `
+            <div class="card mb-2">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            ${product.images && product.images.length > 0 ? 
+                                `<img src="${product.images[0].image}" alt="${product.name}" class="img-fluid rounded" style="max-height: 60px;" onerror="this.src='/media/default.webp';">` :
+                                `<div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 60px;"><i class="fas fa-image text-muted"></i></div>`
+                            }
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="card-title mb-1">${product.name}</h6>
+                            <small class="text-muted">SKU: ${product.sku || 'N/A'}</small><br>
+                            <small class="text-muted">Price: $${parseFloat(product.price || 0).toFixed(2)}</small>
+                        </div>
+                        <div class="col-md-4">
+                            ${product.variants && product.variants.length > 0 ?
+                                `<select class="form-select form-select-sm mb-2" id="variant_${product.id}">
+                                    <option value="">Select Variant</option>
+                                    ${product.variants.map(variant => 
+                                        `<option value="${variant.id}" data-price="${variant.price || product.price}">${variant.name || 'Default'} - $${parseFloat(variant.price || product.price || 0).toFixed(2)}</option>`
+                                    ).join('')}
+                                </select>` :
+                                `<input type="hidden" id="variant_${product.id}" value="">`
+                            }
+                            <button type="button" class="btn btn-success btn-sm w-100" onclick="addProductToOrder(${product.id}, '${product.name}', '${product.sku}', ${product.price || 0})">
+                                <i class="fas fa-plus"></i> Add to Order
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+        resultsDiv.innerHTML = resultsHtml;
+    }
+    
+    window.addProductToOrder = function(productId, productName, productSku, defaultPrice) {
+        const variantSelect = document.getElementById(`variant_${productId}`);
+        const selectedVariantId = variantSelect ? variantSelect.value : '';
+        
+        let variantName = 'Default';
+        let unitPrice = defaultPrice;
+        
+        if (variantSelect && selectedVariantId) {
+            const selectedOption = variantSelect.querySelector(`option[value="${selectedVariantId}"]`);
+            if (selectedOption) {
+                variantName = selectedOption.textContent.split(' - ')[0];
+                unitPrice = parseFloat(selectedOption.dataset.price) || defaultPrice;
+            }
+        }
+        
+        // Ask for quantity
+        Swal.fire({
+            title: 'Add Product',
+            html: `
+                <div class="text-start">
+                    <p><strong>Product:</strong> ${productName}</p>
+                    <p><strong>Variant:</strong> ${variantName}</p>
+                    <p><strong>Unit Price:</strong> $${parseFloat(unitPrice).toFixed(2)}</p>
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity:</label>
+                        <input type="number" class="form-control" id="swal-quantity" value="1" min="1" max="999">
+                    </div>
+                    <div class="mb-3">
+                        <label for="price" class="form-label">Unit Price:</label>
+                        <input type="number" class="form-control" id="swal-price" value="${unitPrice}" min="0" step="0.01">
+                    </div>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Add to Order',
+            cancelButtonText: 'Cancel',
+            preConfirm: () => {
+                const quantity = parseInt(document.getElementById('swal-quantity').value);
+                const price = parseFloat(document.getElementById('swal-price').value);
+                
+                if (!quantity || quantity <= 0) {
+                    Swal.showValidationMessage('Please enter a valid quantity');
+                    return false;
+                }
+                
+                if (!price || price < 0) {
+                    Swal.showValidationMessage('Please enter a valid price');
+                    return false;
+                }
+                
+                return { quantity, price };
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const { quantity, price } = result.value;
+                
+                // Call API to add item to order
+                addItemToIncompleteOrder(productId, selectedVariantId, quantity, price);
+            }
+        });
+    };
+    
+    function addItemToIncompleteOrder(productId, variantId, quantity, unitPrice) {
+        const requestData = {
+            product_id: productId,
+            variant_id: variantId || null,
+            quantity: quantity,
+            unit_price: unitPrice
+        };
+        
+        fetch(`/mb-admin/api/incomplete-orders/${currentIncompleteOrderId}/add_item/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Add item API response:', data); // Debug log
+            
+            if (data.success) {
+                Swal.fire('Success!', 'Item added to order successfully', 'success');
+                
+                // Update the total immediately from the API response
+                if (data.new_total !== undefined) {
+                    console.log('Updating total to:', data.new_total); // Debug log
+                    document.getElementById('incompleteOrderTotalAmount').textContent = `$${parseFloat(data.new_total).toFixed(2)}`;
+                    
+                    // Update currentOrderData if it exists
+                    if (currentOrderData) {
+                        currentOrderData.total_amount = data.new_total.toString();
+                    }
+                }
+                
+                // Close product selection modal
+                bootstrap.Modal.getInstance(document.getElementById('productSelectionModal')).hide();
+                
+                // Refresh the items list to show the new item
+                // Check if we're in edit mode and refresh accordingly
+                const editItemsControls = document.getElementById('editItemsControls');
+                if (editItemsControls && editItemsControls.style.display === 'block') {
+                    // We're in edit mode, so render editable items
+                    console.log('Refreshing editable items'); // Debug log
+                    renderEditableItems();
+                } else {
+                    // We're in view mode, so load regular items
+                    console.log('Refreshing view mode items'); // Debug log
+                    loadIncompleteOrderItems(currentIncompleteOrderId);
+                }
+                
+                // Refresh the main orders list to update totals in the table
+                loadIncompleteOrders(currentPage);
+            } else {
+                Swal.fire('Error!', data.error || 'Failed to add item to order', 'error');
+            }
+        })
+        .catch(error => {
+            Swal.fire('Error!', 'Failed to add item: ' + error.message, 'error');
+            console.error('Add item error:', error);
+        });
+    }
+    
+    function saveItemsChanges() {
+        const rows = document.querySelectorAll('#incompleteOrderItemsTableBody tr[data-item-id]');
+        const updatedItems = [];
+        
+        rows.forEach(row => {
+            const itemId = row.dataset.itemId;
+            const quantity = parseFloat(row.querySelector('.item-quantity').value) || 0;
+            const price = parseFloat(row.querySelector('.item-price').value) || 0;
+            
+            if (quantity > 0 && price >= 0) {
+                updatedItems.push({
+                    id: itemId,
+                    quantity: quantity,
+                    unit_price: price
+                });
+            }
+        });
+        
+        fetch(`/mb-admin/api/incomplete-orders/${currentIncompleteOrderId}/update_items/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({ items: updatedItems })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire('Success!', 'Items updated successfully', 'success');
+                
+                // Update the total immediately from the API response
+                if (data.new_total !== undefined) {
+                    document.getElementById('incompleteOrderTotalAmount').textContent = `$${parseFloat(data.new_total).toFixed(2)}`;
+                    
+                    // Update currentOrderData if it exists
+                    if (currentOrderData) {
+                        currentOrderData.total_amount = data.new_total.toString();
+                    }
+                }
+                
+                toggleItemsEdit(false);
+                loadIncompleteOrders(currentPage); // Refresh the main table
+            } else {
+                Swal.fire('Error!', data.error || 'Failed to update items', 'error');
+            }
+        })
+        .catch(error => {
+            Swal.fire('Error!', 'Failed to update items: ' + error.message, 'error');
+        });
+    }
+    
+    console.log('✅ Incomplete Orders dashboard initialized');
+});
+</script>
+{% endblock %}
