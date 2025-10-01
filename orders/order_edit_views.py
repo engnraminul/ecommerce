@@ -350,3 +350,36 @@ def get_available_products(request):
             {'error': f'Failed to load products: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def update_courier_info(request, order_id):
+    """Update courier ID and/or courier date for an order"""
+    try:
+        order = get_object_or_404(Order, id=order_id)
+        
+        courier_id = request.data.get('courier_id')
+        curier_date = request.data.get('curier_date')
+        
+        # Update fields if provided
+        if 'courier_id' in request.data:
+            order.curier_id = courier_id if courier_id else ''
+            
+        if 'curier_date' in request.data:
+            order.curier_date = curier_date if curier_date else None
+        
+        order.save()
+        
+        return Response({
+            'success': True,
+            'message': 'Courier information updated successfully',
+            'courier_id': order.curier_id,
+            'curier_date': order.curier_date.isoformat() if order.curier_date else None
+        })
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to update courier information: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

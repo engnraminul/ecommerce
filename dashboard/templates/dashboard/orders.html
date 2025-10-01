@@ -709,6 +709,38 @@
         opacity: 1;
         transform: scale(1);
     }
+    
+    /* Product Search Dropdown Styles */
+    .product-search-item {
+        transition: background-color 0.2s;
+    }
+    
+    .product-search-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .product-search-item.active {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    #addItemProductDropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 0.375rem 0.375rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+    }
+    
+    #addItemProductSearch:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(147, 0, 0, 0.25);
+    }
 </style>
 {% endblock %}
 
@@ -943,8 +975,22 @@
                                     
                                     <dt class="col-sm-4 text-muted">Total Amount</dt>
                                     <dd class="col-sm-8 fw-bold" id="orderDetailTotal"></dd>
-                                    <dt class="col-sm-4 text-muted">Curier Date</dt>
-                                    <dd class="col-sm-8" id="orderDetailCurierDate"></dd>
+                                    
+                                    <dt class="col-sm-4 text-muted">Courier ID</dt>
+                                    <dd class="col-sm-8" id="orderDetailCourierId">
+                                        <span id="courierIdDisplay"></span>
+                                        <button class="btn btn-sm btn-outline-primary ms-2" id="editCourierBtn" style="display: none;">
+                                            <i class="fas fa-edit me-1"></i> Edit
+                                        </button>
+                                    </dd>
+                                    
+                                    <dt class="col-sm-4 text-muted">Courier Date</dt>
+                                    <dd class="col-sm-8" id="orderDetailCurierDate">
+                                        <span id="courierDateDisplay"></span>
+                                        <button class="btn btn-sm btn-outline-primary ms-2" id="editCourierDateBtn" style="display: none;">
+                                            <i class="fas fa-edit me-1"></i> Edit
+                                        </button>
+                                    </dd>
                                 </dl>
                             </div>
                         </div>
@@ -1166,9 +1212,14 @@
             <div class="modal-body">
                 <div class="mb-3">
                     <label for="addItemProductSelect" class="form-label">Product</label>
-                    <select class="form-select" id="addItemProductSelect">
-                        <option value="">Select a product...</option>
-                    </select>
+                    <div class="position-relative">
+                        <input type="text" class="form-control" id="addItemProductSearch" 
+                               placeholder="Search products..." autocomplete="off">
+                        <div id="addItemProductDropdown" class="dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto;">
+                            <!-- Product options will be populated here -->
+                        </div>
+                        <input type="hidden" id="addItemProductSelect" value="">
+                    </div>
                 </div>
                 <div class="mb-3" id="addItemVariantContainer" style="display: none;">
                     <label for="addItemVariantSelect" class="form-label">Variant</label>
@@ -1337,6 +1388,50 @@
                 <button type="button" class="btn btn-primary" id="printStickerBtn">
                     <i class="fas fa-print me-2"></i>Print Sticker
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Courier ID Modal -->
+<div class="modal fade" id="editCourierModal" tabindex="-1" aria-labelledby="editCourierModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCourierModalLabel">Edit Courier ID</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="editCourierIdInput" class="form-label">Courier ID</label>
+                    <input type="text" class="form-control" id="editCourierIdInput" placeholder="Enter courier ID">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmEditCourierBtn">Update Courier ID</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Courier Date Modal -->
+<div class="modal fade" id="editCourierDateModal" tabindex="-1" aria-labelledby="editCourierDateModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCourierDateModalLabel">Edit Courier Date</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="editCourierDateInput" class="form-label">Courier Date</label>
+                    <input type="date" class="form-control" id="editCourierDateInput">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmEditCourierDateBtn">Update Courier Date</button>
             </div>
         </div>
     </div>
@@ -2780,17 +2875,34 @@ document.addEventListener('DOMContentLoaded', function() {
             </span>
         `;
         document.getElementById('orderDetailDate').textContent = new Date(order.created_at).toLocaleString();
-        const curierDateElem = document.getElementById('orderDetailCurierDate');
-
-if (order.curier_date) {
-    curierDateElem.textContent = new Date(order.curier_date).toLocaleDateString('en-GB', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-    });
-} else {
-    curierDateElem.textContent = ""; // or "N/A"
-}
+        
+        // Handle Courier ID display and edit functionality
+        const courierIdDisplay = document.getElementById('courierIdDisplay');
+        const editCourierBtn = document.getElementById('editCourierBtn');
+        
+        if (order.curier_id) {
+            courierIdDisplay.textContent = order.curier_id;
+            editCourierBtn.style.display = 'inline-block';
+        } else {
+            courierIdDisplay.textContent = 'Not assigned';
+            editCourierBtn.style.display = 'inline-block';
+        }
+        
+        // Handle Courier Date display and edit functionality
+        const courierDateDisplay = document.getElementById('courierDateDisplay');
+        const editCourierDateBtn = document.getElementById('editCourierDateBtn');
+        
+        if (order.curier_date) {
+            courierDateDisplay.textContent = new Date(order.curier_date).toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+            editCourierDateBtn.style.display = 'inline-block';
+        } else {
+            courierDateDisplay.textContent = 'Not set';
+            editCourierDateBtn.style.display = 'inline-block';
+        }
         
         // Set order status with appropriate badge
         const statusElement = document.getElementById('orderDetailStatus');
@@ -4603,10 +4715,25 @@ if (order.curier_date) {
     // Add Order Item Button Event Listener
     document.getElementById('addOrderItemBtn').addEventListener('click', function() {
         loadAvailableProducts().then(() => {
+            // Reset the modal form
+            resetAddItemModal();
+            
             const modal = new bootstrap.Modal(document.getElementById('addOrderItemModal'));
             modal.show();
         });
     });
+    
+    // Reset Add Item Modal
+    function resetAddItemModal() {
+        document.getElementById('addItemProductSearch').value = '';
+        document.getElementById('addItemProductSelect').value = '';
+        document.getElementById('addItemVariantContainer').style.display = 'none';
+        document.getElementById('addItemVariantSelect').innerHTML = '<option value="">Select a variant...</option>';
+        document.getElementById('addItemQuantityInput').value = '1';
+        document.getElementById('addItemPriceInput').value = '';
+        document.getElementById('addItemStock').textContent = '0';
+        document.getElementById('addItemProductDropdown').style.display = 'none';
+    }
     
     // Edit Address Button Event Listener
     document.getElementById('editAddressBtn').addEventListener('click', function() {
@@ -4685,59 +4812,164 @@ if (order.curier_date) {
         }
     }
     
-    // Populate Product Select
+    // Populate Product Search Dropdown
     function populateProductSelect() {
-        const select = document.getElementById('addItemProductSelect');
-        select.innerHTML = '<option value="">Select a product...</option>';
+        const dropdown = document.getElementById('addItemProductDropdown');
+        const searchInput = document.getElementById('addItemProductSearch');
         
+        // Clear existing options
+        dropdown.innerHTML = '';
+        
+        if (availableProducts.length === 0) {
+            dropdown.innerHTML = '<div class="dropdown-item-text text-muted">No products available</div>';
+            return;
+        }
+        
+        // Create dropdown items for each product
         availableProducts.forEach(product => {
-            const option = document.createElement('option');
-            option.value = product.id;
-            option.textContent = `${product.name} (Stock: ${product.stock_quantity})`;
-            option.dataset.productData = JSON.stringify(product);
-            select.appendChild(option);
+            const item = document.createElement('div');
+            item.className = 'dropdown-item product-search-item';
+            item.style.cursor = 'pointer';
+            item.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-medium">${product.name}</div>
+                        <small class="text-muted">Price: $${product.price}</small>
+                    </div>
+                    <small class="text-success">Stock: ${product.stock_quantity}</small>
+                </div>
+            `;
+            item.dataset.productId = product.id;
+            item.dataset.productData = JSON.stringify(product);
+            
+            // Add click handler
+            item.addEventListener('click', function() {
+                selectProduct(product);
+            });
+            
+            dropdown.appendChild(item);
         });
     }
     
-    // Product Select Change Handler
-    document.getElementById('addItemProductSelect').addEventListener('change', function() {
-        const selectedOption = this.options[this.selectedIndex];
+    // Product Search Functionality
+    let productSearchTimeout;
+    document.getElementById('addItemProductSearch').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase().trim();
+        const dropdown = document.getElementById('addItemProductDropdown');
+        
+        clearTimeout(productSearchTimeout);
+        
+        if (searchTerm.length === 0) {
+            dropdown.style.display = 'none';
+            return;
+        }
+        
+        productSearchTimeout = setTimeout(() => {
+            // Filter products based on search term
+            const filteredProducts = availableProducts.filter(product => 
+                product.name.toLowerCase().includes(searchTerm) ||
+                product.sku.toLowerCase().includes(searchTerm)
+            );
+            
+            // Clear dropdown
+            dropdown.innerHTML = '';
+            
+            if (filteredProducts.length === 0) {
+                dropdown.innerHTML = '<div class="dropdown-item-text text-muted">No products found</div>';
+            } else {
+                filteredProducts.forEach(product => {
+                    const item = document.createElement('div');
+                    item.className = 'dropdown-item product-search-item';
+                    item.style.cursor = 'pointer';
+                    item.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-medium">${product.name}</div>
+                                <small class="text-muted">Price: $${product.price}</small>
+                            </div>
+                            <small class="text-success">Stock: ${product.stock_quantity}</small>
+                        </div>
+                    `;
+                    item.dataset.productId = product.id;
+                    item.dataset.productData = JSON.stringify(product);
+                    
+                    // Add click handler
+                    item.addEventListener('click', function() {
+                        selectProduct(product);
+                    });
+                    
+                    dropdown.appendChild(item);
+                });
+            }
+            
+            dropdown.style.display = 'block';
+        }, 300);
+    });
+    
+    // Function to select a product
+    function selectProduct(product) {
+        const searchInput = document.getElementById('addItemProductSearch');
+        const hiddenSelect = document.getElementById('addItemProductSelect');
+        const dropdown = document.getElementById('addItemProductDropdown');
+        
+        // Set input value
+        searchInput.value = product.name;
+        hiddenSelect.value = product.id;
+        
+        // Hide dropdown
+        dropdown.style.display = 'none';
+        
+        // Trigger the product selection logic
+        handleProductSelection(product);
+    }
+    
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        const dropdown = document.getElementById('addItemProductDropdown');
+        const searchInput = document.getElementById('addItemProductSearch');
+        
+        if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    // Show dropdown on focus
+    document.getElementById('addItemProductSearch').addEventListener('focus', function() {
+        if (this.value.trim().length > 0) {
+            document.getElementById('addItemProductDropdown').style.display = 'block';
+        }
+    });
+    
+    // Product Selection Handler
+    function handleProductSelection(product) {
         const variantContainer = document.getElementById('addItemVariantContainer');
         const variantSelect = document.getElementById('addItemVariantSelect');
         const priceInput = document.getElementById('addItemPriceInput');
         const stockSpan = document.getElementById('addItemStock');
         
-        if (selectedOption.value) {
-            const product = JSON.parse(selectedOption.dataset.productData);
+        // Show variants if available
+        if (product.variants && product.variants.length > 0) {
+            variantContainer.style.display = 'block';
+            variantSelect.innerHTML = '<option value="">Select a variant...</option>';
             
-            // Show variants if available
-            if (product.variants && product.variants.length > 0) {
-                variantContainer.style.display = 'block';
-                variantSelect.innerHTML = '<option value="">Select a variant...</option>';
-                
-                product.variants.forEach(variant => {
-                    const option = document.createElement('option');
-                    option.value = variant.id;
-                    option.textContent = `${variant.name} (Stock: ${variant.stock_quantity})`;
-                    option.dataset.variantData = JSON.stringify(variant);
-                    variantSelect.appendChild(option);
-                });
-                
-                // Clear price and stock until variant is selected
-                priceInput.value = '';
-                stockSpan.textContent = '0';
-            } else {
-                // No variants, use product data directly
-                variantContainer.style.display = 'none';
-                priceInput.value = product.price;
-                stockSpan.textContent = product.stock_quantity;
-            }
-        } else {
-            variantContainer.style.display = 'none';
+            product.variants.forEach(variant => {
+                const option = document.createElement('option');
+                option.value = variant.id;
+                option.textContent = `${variant.name} (Stock: ${variant.stock_quantity})`;
+                option.dataset.variantData = JSON.stringify(variant);
+                variantSelect.appendChild(option);
+            });
+            
+            // Clear price and stock until variant is selected
             priceInput.value = '';
             stockSpan.textContent = '0';
+        } else {
+            // No variants, use product data directly
+            variantContainer.style.display = 'none';
+            priceInput.value = product.price;
+            stockSpan.textContent = product.stock_quantity;
         }
-    });
+    }
     
     // Variant Select Change Handler
     document.getElementById('addItemVariantSelect').addEventListener('change', function() {
@@ -4908,12 +5140,8 @@ if (order.curier_date) {
                 const modal = bootstrap.Modal.getInstance(document.getElementById('addOrderItemModal'));
                 modal.hide();
                 
-                // Reset form
-                document.getElementById('addItemProductSelect').value = '';
-                document.getElementById('addItemVariantSelect').value = '';
-                document.getElementById('addItemQuantityInput').value = '1';
-                document.getElementById('addItemPriceInput').value = '';
-                document.getElementById('addItemVariantContainer').style.display = 'none';
+                // Reset form using the new reset function
+                resetAddItemModal();
                 
                 // Refresh order items
                 loadOrderDetails(currentOrderId);
@@ -5155,6 +5383,144 @@ if (order.curier_date) {
         
         return cookieValue;
     }
+    
+    // Courier Editing Event Handlers
+    
+    // Edit Courier ID Button
+    document.getElementById('editCourierBtn').addEventListener('click', function() {
+        const currentValue = document.getElementById('courierIdDisplay').textContent;
+        document.getElementById('editCourierIdInput').value = currentValue === 'Not assigned' ? '' : currentValue;
+        
+        const modal = new bootstrap.Modal(document.getElementById('editCourierModal'));
+        modal.show();
+    });
+    
+    // Confirm Edit Courier ID
+    document.getElementById('confirmEditCourierBtn').addEventListener('click', function() {
+        const newCourierId = document.getElementById('editCourierIdInput').value.trim();
+        const orderId = window.currentOrderData.id;
+        
+        // Update courier ID via API
+        fetch(`/mb-admin/api/orders/${orderId}/edit/courier-info/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                courier_id: newCourierId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update display
+                document.getElementById('courierIdDisplay').textContent = newCourierId || 'Not assigned';
+                
+                // Update global order data
+                window.currentOrderData.curier_id = newCourierId;
+                
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('editCourierModal')).hide();
+                
+                // Show success message
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Courier ID updated successfully.',
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                throw new Error(data.error || 'Failed to update courier ID');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating courier ID:', error);
+            Swal.fire({
+                title: 'Error',
+                text: error.message || 'Failed to update courier ID.',
+                icon: 'error'
+            });
+        });
+    });
+    
+    // Edit Courier Date Button
+    document.getElementById('editCourierDateBtn').addEventListener('click', function() {
+        const currentOrder = window.currentOrderData;
+        let currentDate = '';
+        
+        if (currentOrder.curier_date) {
+            // Convert to YYYY-MM-DD format for input
+            const date = new Date(currentOrder.curier_date);
+            currentDate = date.toISOString().split('T')[0];
+        }
+        
+        document.getElementById('editCourierDateInput').value = currentDate;
+        
+        const modal = new bootstrap.Modal(document.getElementById('editCourierDateModal'));
+        modal.show();
+    });
+    
+    // Confirm Edit Courier Date
+    document.getElementById('confirmEditCourierDateBtn').addEventListener('click', function() {
+        const newCourierDate = document.getElementById('editCourierDateInput').value;
+        const orderId = window.currentOrderData.id;
+        
+        // Update courier date via API
+        fetch(`/mb-admin/api/orders/${orderId}/edit/courier-info/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                curier_date: newCourierDate
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update display
+                const courierDateDisplay = document.getElementById('courierDateDisplay');
+                if (newCourierDate) {
+                    const formattedDate = new Date(newCourierDate).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                    });
+                    courierDateDisplay.textContent = formattedDate;
+                } else {
+                    courierDateDisplay.textContent = 'Not set';
+                }
+                
+                // Update global order data
+                window.currentOrderData.curier_date = newCourierDate;
+                
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('editCourierDateModal')).hide();
+                
+                // Show success message
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Courier date updated successfully.',
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                throw new Error(data.error || 'Failed to update courier date');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating courier date:', error);
+            Swal.fire({
+                title: 'Error',
+                text: error.message || 'Failed to update courier date.',
+                icon: 'error'
+            });
+        });
+    });
 });
 </script>
 {% endblock %}
