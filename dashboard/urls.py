@@ -2,6 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
 from . import order_views
+from orders import order_edit_views
 
 router = DefaultRouter()
 router.register(r'settings', views.DashboardSettingViewSet)
@@ -21,6 +22,15 @@ urlpatterns = [
     # Explicit URL patterns for order-related actions
     path('api/orders/<int:order_id>/items/', order_views.get_order_items, name='order_items'),
     path('api/orders/<int:order_id>/restock/', order_views.restock_order_items, name='restock_order_items'),
+    
+    # Order editing endpoints
+    path('api/orders/<int:order_id>/edit/', order_edit_views.get_order_for_edit, name='get_order_for_edit'),
+    path('api/orders/<int:order_id>/edit/update-quantity/', order_edit_views.update_order_item_quantity, name='update_order_item_quantity'),
+    path('api/orders/<int:order_id>/edit/add-item/', order_edit_views.add_order_item, name='add_order_item'),
+    path('api/orders/<int:order_id>/edit/delete-item/', order_edit_views.delete_order_item, name='delete_order_item'),
+    path('api/orders/<int:order_id>/edit/update-address/', order_edit_views.update_shipping_address, name='update_shipping_address'),
+    path('api/orders/edit/available-products/', order_edit_views.get_available_products, name='get_available_products'),
+    
     # Add an explicit path for add_to_curier that matches the JavaScript URL
     path('api/orders/<int:pk>/add_to_curier/', views.OrderDashboardViewSet.as_view({'post': 'add_to_curier'}), name='order_add_to_curier'),
     path('api/statistics/', views.DashboardStatisticsView.as_view(), name='statistics'),

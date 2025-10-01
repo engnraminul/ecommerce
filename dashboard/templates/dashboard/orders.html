@@ -954,8 +954,11 @@
                     <div class="col-md-6">
                         <div class="card h-100 border-0 shadow-sm">
                             <div class="card-body">
-                                <h6 class="card-subtitle mb-3 text-muted">
-                                    <i class="fas fa-map-marker-alt me-2"></i>Shipping Address
+                                <h6 class="card-subtitle mb-3 text-muted d-flex justify-content-between align-items-center">
+                                    <span><i class="fas fa-map-marker-alt me-2"></i>Shipping Address</span>
+                                    <button class="btn btn-sm btn-outline-primary" id="editAddressBtn">
+                                        <i class="fas fa-edit me-1"></i> Edit
+                                    </button>
                                 </h6>
                                 <p class="border rounded p-3 bg-light mb-0" id="orderDetailShippingAddress"></p>
                             </div>
@@ -1006,13 +1009,17 @@
                 <!-- Order Items -->
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-body">
-                        <h6 class="card-subtitle mb-3 text-muted">
-                            <i class="fas fa-shopping-bag me-2"></i>Order Items
+                        <h6 class="card-subtitle mb-3 text-muted d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-shopping-bag me-2"></i>Order Items</span>
+                            <button class="btn btn-sm btn-outline-primary" id="addOrderItemBtn">
+                                <i class="fas fa-plus me-1"></i> Add Item
+                            </button>
                         </h6>
                         <div class="table-responsive">
                             <table class="table table-sm table-hover">
                                 <thead class="table-light">
                                     <tr>
+                                        <th width="40">Action</th>
                                         <th>Product</th>
                                         <th>Variant</th>
                                         <th class="text-center">Quantity</th>
@@ -1023,19 +1030,19 @@
                                 <tbody id="orderItemsTableBody"></tbody>
                                 <tfoot class="table-light">
                                     <tr>
-                                        <td colspan="4" class="text-end">Subtotal:</td>
+                                        <td colspan="5" class="text-end">Subtotal:</td>
                                         <td class="text-end" id="orderDetailSubtotal"></td>
                                     </tr>
                                     <tr>
-                                        <td colspan="4" class="text-end">Shipping:</td>
+                                        <td colspan="5" class="text-end">Shipping:</td>
                                         <td class="text-end" id="orderDetailShipping"></td>
                                     </tr>
                                     <tr>
-                                        <td colspan="4" class="text-end">Tax:</td>
+                                        <td colspan="5" class="text-end">Tax:</td>
                                         <td class="text-end" id="orderDetailTax"></td>
                                     </tr>
                                     <tr>
-                                        <td colspan="4" class="text-end fw-bold">Total:</td>
+                                        <td colspan="5" class="text-end fw-bold">Total:</td>
                                         <td class="text-end fw-bold" id="orderDetailGrandTotal"></td>
                                     </tr>
                                 </tfoot>
@@ -1115,6 +1122,149 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" id="confirmStatusChangeBtn">Confirm Status Change</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Order Item Quantity Modal -->
+<div class="modal fade" id="editQuantityModal" tabindex="-1" aria-labelledby="editQuantityModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editQuantityModalLabel">Edit Item Quantity</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="editQuantityProductName" class="form-label">Product</label>
+                    <input type="text" class="form-control" id="editQuantityProductName" readonly>
+                </div>
+                <div class="mb-3">
+                    <label for="editQuantityInput" class="form-label">New Quantity</label>
+                    <input type="number" class="form-control" id="editQuantityInput" min="1" step="1">
+                    <small class="text-muted">Current stock: <span id="editQuantityStock">0</span></small>
+                </div>
+                <input type="hidden" id="editQuantityItemId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmEditQuantityBtn">Update Quantity</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Order Item Modal -->
+<div class="modal fade" id="addOrderItemModal" tabindex="-1" aria-labelledby="addOrderItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addOrderItemModalLabel">Add Item to Order</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="addItemProductSelect" class="form-label">Product</label>
+                    <select class="form-select" id="addItemProductSelect">
+                        <option value="">Select a product...</option>
+                    </select>
+                </div>
+                <div class="mb-3" id="addItemVariantContainer" style="display: none;">
+                    <label for="addItemVariantSelect" class="form-label">Variant</label>
+                    <select class="form-select" id="addItemVariantSelect">
+                        <option value="">Select a variant...</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="addItemQuantityInput" class="form-label">Quantity</label>
+                    <input type="number" class="form-control" id="addItemQuantityInput" min="1" step="1" value="1">
+                    <small class="text-muted">Available stock: <span id="addItemStock">0</span></small>
+                </div>
+                <div class="mb-3">
+                    <label for="addItemPriceInput" class="form-label">Unit Price</label>
+                    <input type="number" class="form-control" id="addItemPriceInput" min="0" step="0.01" readonly>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmAddItemBtn">Add Item</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Shipping Address Modal -->
+<div class="modal fade" id="editAddressModal" tabindex="-1" aria-labelledby="editAddressModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editAddressModalLabel">Edit Shipping Address</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editAddressForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editFirstName" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="editFirstName" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editLastName" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="editLastName">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editCompany" class="form-label">Company (Optional)</label>
+                        <input type="text" class="form-control" id="editCompany">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editAddressLine1" class="form-label">Address Line 1</label>
+                        <input type="text" class="form-control" id="editAddressLine1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editAddressLine2" class="form-label">Address Line 2 (Optional)</label>
+                        <input type="text" class="form-control" id="editAddressLine2">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editCity" class="form-label">City</label>
+                            <input type="text" class="form-control" id="editCity" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editState" class="form-label">State</label>
+                            <input type="text" class="form-control" id="editState" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editPostalCode" class="form-label">Postal Code</label>
+                            <input type="text" class="form-control" id="editPostalCode" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editCountry" class="form-label">Country</label>
+                            <input type="text" class="form-control" id="editCountry" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editPhone" class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="editPhone">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editEmail">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDeliveryInstructions" class="form-label">Delivery Instructions</label>
+                        <textarea class="form-control" id="editDeliveryInstructions" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmEditAddressBtn">Update Address</button>
             </div>
         </div>
     </div>
@@ -2630,12 +2780,17 @@ document.addEventListener('DOMContentLoaded', function() {
             </span>
         `;
         document.getElementById('orderDetailDate').textContent = new Date(order.created_at).toLocaleString();
-        document.getElementById('orderDetailCurierDate').textContent = 
-    new Date(order.curier_date).toLocaleDateString('en-GB', {
+        const curierDateElem = document.getElementById('orderDetailCurierDate');
+
+if (order.curier_date) {
+    curierDateElem.textContent = new Date(order.curier_date).toLocaleDateString('en-GB', {
         day: 'numeric',
         month: 'long',
         year: 'numeric'
     });
+} else {
+    curierDateElem.textContent = ""; // or "N/A"
+}
         
         // Set order status with appropriate badge
         const statusElement = document.getElementById('orderDetailStatus');
@@ -2876,7 +3031,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tbody.innerHTML = '';
         
         if (!items || items.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center">No items in this order.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center">No items in this order.</td></tr>';
             return;
         }
         
@@ -2915,6 +3070,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
+                    <td class="align-middle">
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-sm btn-outline-primary edit-quantity-btn" 
+                                data-item-id="${item.id}" 
+                                data-product-name="${productName}" 
+                                data-current-quantity="${quantity}"
+                                data-product-stock="${item.product_stock || 0}"
+                                title="Edit Quantity">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger delete-item-btn" 
+                                data-item-id="${item.id}" 
+                                data-product-name="${productName}"
+                                title="Delete Item">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
                     <td class="align-middle">${productName}</td>
                     <td class="align-middle">
                         ${variantName}
@@ -2933,6 +3106,27 @@ document.addEventListener('DOMContentLoaded', function() {
             } catch (error) {
                 console.error(`Error rendering order item ${index}:`, error, item);
             }
+        });
+        
+        // Add event listeners for edit and delete buttons
+        document.querySelectorAll('.edit-quantity-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const itemId = this.dataset.itemId;
+                const productName = this.dataset.productName;
+                const currentQuantity = this.dataset.currentQuantity;
+                const productStock = this.dataset.productStock;
+                
+                showEditQuantityModal(itemId, productName, currentQuantity, productStock);
+            });
+        });
+        
+        document.querySelectorAll('.delete-item-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const itemId = this.dataset.itemId;
+                const productName = this.dataset.productName;
+                
+                showDeleteItemConfirmation(itemId, productName);
+            });
         });
         
         // Set subtotal
@@ -4398,6 +4592,441 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add to window for console access
     window.manualDeliveryTest = manualDeliveryTest;
+    
+    // ============================================
+    // ORDER EDITING FUNCTIONALITY
+    // ============================================
+    
+    // Global variables for order editing
+    let availableProducts = [];
+    
+    // Add Order Item Button Event Listener
+    document.getElementById('addOrderItemBtn').addEventListener('click', function() {
+        loadAvailableProducts().then(() => {
+            const modal = new bootstrap.Modal(document.getElementById('addOrderItemModal'));
+            modal.show();
+        });
+    });
+    
+    // Edit Address Button Event Listener
+    document.getElementById('editAddressBtn').addEventListener('click', function() {
+        showEditAddressModal();
+    });
+    
+    // Edit Quantity Modal Functionality
+    function showEditQuantityModal(itemId, productName, currentQuantity, productStock) {
+        document.getElementById('editQuantityItemId').value = itemId;
+        document.getElementById('editQuantityProductName').value = productName;
+        document.getElementById('editQuantityInput').value = currentQuantity;
+        document.getElementById('editQuantityStock').textContent = productStock;
+        
+        const modal = new bootstrap.Modal(document.getElementById('editQuantityModal'));
+        modal.show();
+    }
+    
+    // Confirm Edit Quantity
+    document.getElementById('confirmEditQuantityBtn').addEventListener('click', function() {
+        const itemId = document.getElementById('editQuantityItemId').value;
+        const newQuantity = parseInt(document.getElementById('editQuantityInput').value);
+        
+        if (!newQuantity || newQuantity <= 0) {
+            Swal.fire({
+                title: 'Invalid Quantity',
+                text: 'Please enter a valid quantity greater than 0.',
+                icon: 'warning'
+            });
+            return;
+        }
+        
+        updateOrderItemQuantity(itemId, newQuantity);
+    });
+    
+    // Delete Item Confirmation
+    function showDeleteItemConfirmation(itemId, productName) {
+        Swal.fire({
+            title: 'Delete Item?',
+            text: `Are you sure you want to remove "${productName}" from this order?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                deleteOrderItem(itemId);
+            }
+        });
+    }
+    
+    // Load Available Products
+    async function loadAvailableProducts() {
+        try {
+            const response = await fetch('/mb-admin/api/orders/edit/available-products/', {
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                availableProducts = data.products;
+                populateProductSelect();
+            } else {
+                throw new Error(data.error || 'Failed to load products');
+            }
+        } catch (error) {
+            console.error('Error loading products:', error);
+            Swal.fire({
+                title: 'Error',
+                text: 'Failed to load available products.',
+                icon: 'error'
+            });
+        }
+    }
+    
+    // Populate Product Select
+    function populateProductSelect() {
+        const select = document.getElementById('addItemProductSelect');
+        select.innerHTML = '<option value="">Select a product...</option>';
+        
+        availableProducts.forEach(product => {
+            const option = document.createElement('option');
+            option.value = product.id;
+            option.textContent = `${product.name} (Stock: ${product.stock_quantity})`;
+            option.dataset.productData = JSON.stringify(product);
+            select.appendChild(option);
+        });
+    }
+    
+    // Product Select Change Handler
+    document.getElementById('addItemProductSelect').addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const variantContainer = document.getElementById('addItemVariantContainer');
+        const variantSelect = document.getElementById('addItemVariantSelect');
+        const priceInput = document.getElementById('addItemPriceInput');
+        const stockSpan = document.getElementById('addItemStock');
+        
+        if (selectedOption.value) {
+            const product = JSON.parse(selectedOption.dataset.productData);
+            
+            // Show variants if available
+            if (product.variants && product.variants.length > 0) {
+                variantContainer.style.display = 'block';
+                variantSelect.innerHTML = '<option value="">Select a variant...</option>';
+                
+                product.variants.forEach(variant => {
+                    const option = document.createElement('option');
+                    option.value = variant.id;
+                    option.textContent = `${variant.name} (Stock: ${variant.stock_quantity})`;
+                    option.dataset.variantData = JSON.stringify(variant);
+                    variantSelect.appendChild(option);
+                });
+                
+                // Clear price and stock until variant is selected
+                priceInput.value = '';
+                stockSpan.textContent = '0';
+            } else {
+                // No variants, use product data directly
+                variantContainer.style.display = 'none';
+                priceInput.value = product.price;
+                stockSpan.textContent = product.stock_quantity;
+            }
+        } else {
+            variantContainer.style.display = 'none';
+            priceInput.value = '';
+            stockSpan.textContent = '0';
+        }
+    });
+    
+    // Variant Select Change Handler
+    document.getElementById('addItemVariantSelect').addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const priceInput = document.getElementById('addItemPriceInput');
+        const stockSpan = document.getElementById('addItemStock');
+        
+        if (selectedOption.value) {
+            const variant = JSON.parse(selectedOption.dataset.variantData);
+            priceInput.value = variant.price;
+            stockSpan.textContent = variant.stock_quantity;
+        } else {
+            priceInput.value = '';
+            stockSpan.textContent = '0';
+        }
+    });
+    
+    // Confirm Add Item
+    document.getElementById('confirmAddItemBtn').addEventListener('click', function() {
+        const productId = document.getElementById('addItemProductSelect').value;
+        const variantId = document.getElementById('addItemVariantSelect').value || null;
+        const quantity = parseInt(document.getElementById('addItemQuantityInput').value);
+        
+        if (!productId) {
+            Swal.fire({
+                title: 'Product Required',
+                text: 'Please select a product.',
+                icon: 'warning'
+            });
+            return;
+        }
+        
+        if (!quantity || quantity <= 0) {
+            Swal.fire({
+                title: 'Invalid Quantity',
+                text: 'Please enter a valid quantity greater than 0.',
+                icon: 'warning'
+            });
+            return;
+        }
+        
+        addOrderItem(productId, variantId, quantity);
+    });
+    
+    // Show Edit Address Modal
+    function showEditAddressModal() {
+        const currentOrder = window.currentOrderData;
+        if (!currentOrder || !currentOrder.shipping_address) {
+            Swal.fire({
+                title: 'No Address',
+                text: 'No shipping address found for this order.',
+                icon: 'warning'
+            });
+            return;
+        }
+        
+        const address = currentOrder.shipping_address;
+        
+        // Populate form fields
+        document.getElementById('editFirstName').value = address.first_name || '';
+        document.getElementById('editLastName').value = address.last_name || '';
+        document.getElementById('editCompany').value = address.company || '';
+        document.getElementById('editAddressLine1').value = address.address_line_1 || '';
+        document.getElementById('editAddressLine2').value = address.address_line_2 || '';
+        document.getElementById('editCity').value = address.city || '';
+        document.getElementById('editState').value = address.state || '';
+        document.getElementById('editPostalCode').value = address.postal_code || '';
+        document.getElementById('editCountry').value = address.country || '';
+        document.getElementById('editPhone').value = address.phone || '';
+        document.getElementById('editEmail').value = address.email || '';
+        document.getElementById('editDeliveryInstructions').value = address.delivery_instructions || '';
+        
+        const modal = new bootstrap.Modal(document.getElementById('editAddressModal'));
+        modal.show();
+    }
+    
+    // Confirm Edit Address
+    document.getElementById('confirmEditAddressBtn').addEventListener('click', function() {
+        const formData = {
+            first_name: document.getElementById('editFirstName').value,
+            last_name: document.getElementById('editLastName').value,
+            company: document.getElementById('editCompany').value,
+            address_line_1: document.getElementById('editAddressLine1').value,
+            address_line_2: document.getElementById('editAddressLine2').value,
+            city: document.getElementById('editCity').value,
+            state: document.getElementById('editState').value,
+            postal_code: document.getElementById('editPostalCode').value,
+            country: document.getElementById('editCountry').value,
+            phone: document.getElementById('editPhone').value,
+            email: document.getElementById('editEmail').value,
+            delivery_instructions: document.getElementById('editDeliveryInstructions').value
+        };
+        
+        updateShippingAddress(formData);
+    });
+    
+    // API Functions for Order Editing
+    async function updateOrderItemQuantity(itemId, newQuantity) {
+        try {
+            const response = await fetch(`/mb-admin/api/orders/${currentOrderId}/edit/update-quantity/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    item_id: parseInt(itemId),
+                    new_quantity: newQuantity
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editQuantityModal'));
+                modal.hide();
+                
+                // Refresh order items
+                loadOrderDetails(currentOrderId);
+                
+                Swal.fire({
+                    title: 'Success!',
+                    text: data.message,
+                    icon: 'success',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            } else {
+                throw new Error(data.error || 'Failed to update quantity');
+            }
+        } catch (error) {
+            console.error('Error updating quantity:', error);
+            Swal.fire({
+                title: 'Error',
+                text: error.message,
+                icon: 'error'
+            });
+        }
+    }
+    
+    async function addOrderItem(productId, variantId, quantity) {
+        try {
+            const requestData = {
+                product_id: parseInt(productId),
+                quantity: quantity
+            };
+            
+            if (variantId) {
+                requestData.variant_id = parseInt(variantId);
+            }
+            
+            const response = await fetch(`/mb-admin/api/orders/${currentOrderId}/edit/add-item/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(requestData)
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addOrderItemModal'));
+                modal.hide();
+                
+                // Reset form
+                document.getElementById('addItemProductSelect').value = '';
+                document.getElementById('addItemVariantSelect').value = '';
+                document.getElementById('addItemQuantityInput').value = '1';
+                document.getElementById('addItemPriceInput').value = '';
+                document.getElementById('addItemVariantContainer').style.display = 'none';
+                
+                // Refresh order items
+                loadOrderDetails(currentOrderId);
+                
+                Swal.fire({
+                    title: 'Success!',
+                    text: data.message,
+                    icon: 'success',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            } else {
+                throw new Error(data.error || 'Failed to add item');
+            }
+        } catch (error) {
+            console.error('Error adding item:', error);
+            Swal.fire({
+                title: 'Error',
+                text: error.message,
+                icon: 'error'
+            });
+        }
+    }
+    
+    async function deleteOrderItem(itemId) {
+        try {
+            const response = await fetch(`/mb-admin/api/orders/${currentOrderId}/edit/delete-item/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    item_id: parseInt(itemId)
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Refresh order items
+                loadOrderDetails(currentOrderId);
+                
+                Swal.fire({
+                    title: 'Deleted!',
+                    text: data.message,
+                    icon: 'success',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            } else {
+                throw new Error(data.error || 'Failed to delete item');
+            }
+        } catch (error) {
+            console.error('Error deleting item:', error);
+            Swal.fire({
+                title: 'Error',
+                text: error.message,
+                icon: 'error'
+            });
+        }
+    }
+    
+    async function updateShippingAddress(addressData) {
+        try {
+            const response = await fetch(`/mb-admin/api/orders/${currentOrderId}/edit/update-address/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(addressData)
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editAddressModal'));
+                modal.hide();
+                
+                // Refresh order details
+                loadOrderDetails(currentOrderId);
+                
+                Swal.fire({
+                    title: 'Success!',
+                    text: data.message,
+                    icon: 'success',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            } else {
+                throw new Error(data.error || 'Failed to update address');
+            }
+        } catch (error) {
+            console.error('Error updating address:', error);
+            Swal.fire({
+                title: 'Error',
+                text: error.message,
+                icon: 'error'
+            });
+        }
+    }
+    
+    // ============================================
+    // END ORDER EDITING FUNCTIONALITY
+    // ============================================
     
     // ============================================
     // END COURIER MONITORING DEBUG FUNCTIONS
