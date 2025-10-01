@@ -386,34 +386,22 @@
                                     <form id="shippingAddressForm">
                                         <div class="row g-2">
                                             <div class="col-md-6">
-                                                <input type="text" class="form-control form-control-sm" id="editFirstName" placeholder="First Name">
+                                                <input type="text" class="form-control form-control-sm" id="editFirstName" placeholder="First Name *" required>
                                             </div>
                                             <div class="col-md-6">
                                                 <input type="text" class="form-control form-control-sm" id="editLastName" placeholder="Last Name">
                                             </div>
                                             <div class="col-12">
-                                                <input type="text" class="form-control form-control-sm" id="editAddressLine1" placeholder="Address Line 1">
-                                            </div>
-                                            <div class="col-12">
-                                                <input type="text" class="form-control form-control-sm" id="editAddressLine2" placeholder="Address Line 2 (Optional)">
-                                            </div>
-                                            <div class="col-md-4">
-                                                <input type="text" class="form-control form-control-sm" id="editCity" placeholder="City">
-                                            </div>
-                                            <div class="col-md-4">
-                                                <input type="text" class="form-control form-control-sm" id="editState" placeholder="State">
-                                            </div>
-                                            <div class="col-md-4">
-                                                <input type="text" class="form-control form-control-sm" id="editPostalCode" placeholder="Postal Code">
+                                                <textarea class="form-control form-control-sm" id="editAddressLine1" placeholder="Address *" rows="2" required></textarea>
                                             </div>
                                             <div class="col-md-6">
-                                                <input type="text" class="form-control form-control-sm" id="editCountry" placeholder="Country">
+                                                <input type="tel" class="form-control form-control-sm" id="editPhone" placeholder="Phone *" required>
                                             </div>
                                             <div class="col-md-6">
-                                                <input type="tel" class="form-control form-control-sm" id="editPhone" placeholder="Phone">
-                                            </div>
-                                            <div class="col-12">
                                                 <input type="email" class="form-control form-control-sm" id="editEmail" placeholder="Email">
+                                            </div>
+                                            <div class="col-12">
+                                                <textarea class="form-control form-control-sm" id="editDeliveryInstructions" placeholder="Delivery Instructions" rows="2"></textarea>
                                             </div>
                                             <div class="col-12 mt-2">
                                                 <button type="button" class="btn btn-success btn-sm me-2" id="saveShippingBtn">
@@ -506,6 +494,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let isEditMode = false;
     let originalItemsData = [];
     let currentOrderData = null;
+    let incompleteOrderDetailsModalInstance = null; // Track modal instance
     
     // Initialize status filter
     window.currentStatusFilter = ''; // Empty means "All"
@@ -1096,8 +1085,23 @@ document.addEventListener('DOMContentLoaded', function() {
         // Load order items (using the new API endpoint)
         loadIncompleteOrderItems(orderId);
         
-        // Show modal
-        new bootstrap.Modal(document.getElementById('incompleteOrderDetailsModal')).show();
+        // Show modal with proper instance management
+        if (incompleteOrderDetailsModalInstance) {
+            incompleteOrderDetailsModalInstance.dispose(); // Clean up any existing instance
+        }
+        incompleteOrderDetailsModalInstance = new bootstrap.Modal(document.getElementById('incompleteOrderDetailsModal'));
+        
+        // Add event listener to clean up modal instance when hidden
+        document.getElementById('incompleteOrderDetailsModal').addEventListener('hidden.bs.modal', function() {
+            if (incompleteOrderDetailsModalInstance) {
+                incompleteOrderDetailsModalInstance.dispose();
+                incompleteOrderDetailsModalInstance = null;
+            }
+            // Remove any lingering backdrops
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+        }, { once: true });
+        
+        incompleteOrderDetailsModalInstance.show();
     };
     
     window.convertIncompleteOrder = function(orderId) {
@@ -1303,8 +1307,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }).then((result) => {
                 if (result.isConfirmed) {
                     performBulkAction([currentIncompleteOrderId], 'delete');
-                    // Close modal after deletion
-                    bootstrap.Modal.getInstance(document.getElementById('incompleteOrderDetailsModal')).hide();
+                    // Close modal after deletion using the proper instance
+                    if (incompleteOrderDetailsModalInstance) {
+                        incompleteOrderDetailsModalInstance.hide();
+                    }
                 }
             });
         }
@@ -1384,13 +1390,9 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('editFirstName').value = addr.first_name || '';
             document.getElementById('editLastName').value = addr.last_name || '';
             document.getElementById('editAddressLine1').value = addr.address_line_1 || '';
-            document.getElementById('editAddressLine2').value = addr.address_line_2 || '';
-            document.getElementById('editCity').value = addr.city || '';
-            document.getElementById('editState').value = addr.state || '';
-            document.getElementById('editPostalCode').value = addr.postal_code || '';
-            document.getElementById('editCountry').value = addr.country || '';
             document.getElementById('editPhone').value = addr.phone || '';
             document.getElementById('editEmail').value = addr.email || '';
+            document.getElementById('editDeliveryInstructions').value = addr.delivery_instructions || '';
         }
     }
     
@@ -1399,13 +1401,9 @@ document.addEventListener('DOMContentLoaded', function() {
             first_name: document.getElementById('editFirstName').value,
             last_name: document.getElementById('editLastName').value,
             address_line_1: document.getElementById('editAddressLine1').value,
-            address_line_2: document.getElementById('editAddressLine2').value,
-            city: document.getElementById('editCity').value,
-            state: document.getElementById('editState').value,
-            postal_code: document.getElementById('editPostalCode').value,
-            country: document.getElementById('editCountry').value,
             phone: document.getElementById('editPhone').value,
-            email: document.getElementById('editEmail').value
+            email: document.getElementById('editEmail').value,
+            delivery_instructions: document.getElementById('editDeliveryInstructions').value
         };
         
         fetch(`/mb-admin/api/incomplete-orders/${currentIncompleteOrderId}/update_shipping/`, {
@@ -1421,8 +1419,17 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 Swal.fire('Success!', 'Shipping address updated successfully', 'success');
                 toggleShippingEdit(false);
-                // Refresh the order details
-                viewIncompleteOrderDetails(currentIncompleteOrderId);
+                
+                // Update the current order data with the new shipping address
+                if (currentOrderData && data.updated_address) {
+                    currentOrderData.shipping_address = data.updated_address;
+                }
+                
+                // Update the shipping address display without refreshing the entire modal
+                updateShippingAddressDisplay(data.updated_address || formData);
+                
+                // Also refresh the main table to show updated data
+                loadIncompleteOrders(currentPage);
             } else {
                 Swal.fire('Error!', data.error || 'Failed to update shipping address', 'error');
             }
@@ -1430,6 +1437,22 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             Swal.fire('Error!', 'Failed to update shipping address: ' + error.message, 'error');
         });
+    }
+    
+    function updateShippingAddressDisplay(addressData) {
+        const shippingDiv = document.getElementById('incompleteOrderDetailShippingAddress');
+        if (addressData && (addressData.first_name || addressData.last_name || addressData.address_line_1)) {
+            const addr = addressData;
+            shippingDiv.innerHTML = `
+                <strong>${addr.first_name || ''} ${addr.last_name || ''}</strong><br>
+                ${addr.address_line_1 || ''}<br>
+                <strong>Phone:</strong> ${addr.phone || 'N/A'}<br>
+                <strong>Email:</strong> ${addr.email || 'N/A'}
+                ${addr.delivery_instructions ? '<br><strong>Delivery Instructions:</strong> ' + addr.delivery_instructions : ''}
+            `;
+        } else {
+            shippingDiv.innerHTML = 'No shipping address provided';
+        }
     }
     
     function toggleItemsEdit(enable) {
