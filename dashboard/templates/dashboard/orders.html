@@ -1257,7 +1257,7 @@
                 <form id="editAddressForm">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="editFirstName" class="form-label">First Name</label>
+                            <label for="editFirstName" class="form-label">First Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="editFirstName" required>
                         </div>
                         <div class="col-md-6 mb-3">
@@ -1266,41 +1266,13 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label for="editCompany" class="form-label">Company (Optional)</label>
-                        <input type="text" class="form-control" id="editCompany">
-                    </div>
-                    <div class="mb-3">
-                        <label for="editAddressLine1" class="form-label">Address Line 1</label>
-                        <input type="text" class="form-control" id="editAddressLine1" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editAddressLine2" class="form-label">Address Line 2 (Optional)</label>
-                        <input type="text" class="form-control" id="editAddressLine2">
+                        <label for="editAddressLine1" class="form-label">Address<span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="editAddressLine1" rows="3" required></textarea>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="editCity" class="form-label">City</label>
-                            <input type="text" class="form-control" id="editCity" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="editState" class="form-label">State</label>
-                            <input type="text" class="form-control" id="editState" required>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="editPostalCode" class="form-label">Postal Code</label>
-                            <input type="text" class="form-control" id="editPostalCode" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="editCountry" class="form-label">Country</label>
-                            <input type="text" class="form-control" id="editCountry" required>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="editPhone" class="form-label">Phone</label>
-                            <input type="tel" class="form-control" id="editPhone">
+                            <label for="editPhone" class="form-label">Phone <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control" id="editPhone" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="editEmail" class="form-label">Email</label>
@@ -5028,16 +5000,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const address = currentOrder.shipping_address;
         
-        // Populate form fields
+        // Populate form fields (only the fields that exist in the simplified form)
         document.getElementById('editFirstName').value = address.first_name || '';
         document.getElementById('editLastName').value = address.last_name || '';
-        document.getElementById('editCompany').value = address.company || '';
         document.getElementById('editAddressLine1').value = address.address_line_1 || '';
-        document.getElementById('editAddressLine2').value = address.address_line_2 || '';
-        document.getElementById('editCity').value = address.city || '';
-        document.getElementById('editState').value = address.state || '';
-        document.getElementById('editPostalCode').value = address.postal_code || '';
-        document.getElementById('editCountry').value = address.country || '';
         document.getElementById('editPhone').value = address.phone || '';
         document.getElementById('editEmail').value = address.email || '';
         document.getElementById('editDeliveryInstructions').value = address.delivery_instructions || '';
@@ -5051,13 +5017,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = {
             first_name: document.getElementById('editFirstName').value,
             last_name: document.getElementById('editLastName').value,
-            company: document.getElementById('editCompany').value,
             address_line_1: document.getElementById('editAddressLine1').value,
-            address_line_2: document.getElementById('editAddressLine2').value,
-            city: document.getElementById('editCity').value,
-            state: document.getElementById('editState').value,
-            postal_code: document.getElementById('editPostalCode').value,
-            country: document.getElementById('editCountry').value,
             phone: document.getElementById('editPhone').value,
             email: document.getElementById('editEmail').value,
             delivery_instructions: document.getElementById('editDeliveryInstructions').value
@@ -5400,6 +5360,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const newCourierId = document.getElementById('editCourierIdInput').value.trim();
         const orderId = window.currentOrderData.id;
         
+        console.log('Updating courier ID for order:', orderId, 'New ID:', newCourierId);
+        
         // Update courier ID via API
         fetch(`/mb-admin/api/orders/${orderId}/edit/courier-info/`, {
             method: 'POST',
@@ -5411,8 +5373,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 courier_id: newCourierId
             })
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            
+            if (!response.ok) {
+                return response.text().then(text => {
+                    console.error('Non-JSON response:', text);
+                    throw new Error(`HTTP ${response.status}: ${text}`);
+                });
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('API Response:', data);
+            
             if (data.success) {
                 // Update display
                 document.getElementById('courierIdDisplay').textContent = newCourierId || 'Not assigned';
@@ -5467,6 +5442,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const newCourierDate = document.getElementById('editCourierDateInput').value;
         const orderId = window.currentOrderData.id;
         
+        console.log('Updating courier date for order:', orderId, 'New date:', newCourierDate);
+        
         // Update courier date via API
         fetch(`/mb-admin/api/orders/${orderId}/edit/courier-info/`, {
             method: 'POST',
@@ -5478,8 +5455,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 curier_date: newCourierDate
             })
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            
+            if (!response.ok) {
+                return response.text().then(text => {
+                    console.error('Non-JSON response:', text);
+                    throw new Error(`HTTP ${response.status}: ${text}`);
+                });
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('API Response:', data);
+            
             if (data.success) {
                 // Update display
                 const courierDateDisplay = document.getElementById('courierDateDisplay');

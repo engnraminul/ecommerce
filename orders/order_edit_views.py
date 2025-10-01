@@ -357,28 +357,64 @@ def get_available_products(request):
 def update_courier_info(request, order_id):
     """Update courier ID and/or courier date for an order"""
     try:
+        print(f"Updating courier info for order {order_id}")
+        print(f"Request data: {request.data}")
+        
         order = get_object_or_404(Order, id=order_id)
+        print(f"Found order: {order.order_number}")
         
         courier_id = request.data.get('courier_id')
         curier_date = request.data.get('curier_date')
         
+        print(f"Courier ID: {courier_id}, Courier Date: {curier_date}")
+        
         # Update fields if provided
         if 'courier_id' in request.data:
             order.curier_id = courier_id if courier_id else ''
+            print(f"Updated curier_id to: {order.curier_id}")
             
         if 'curier_date' in request.data:
-            order.curier_date = curier_date if curier_date else None
+            if curier_date:
+                # Convert string date to date object if necessary
+                from datetime import datetime
+                if isinstance(curier_date, str):
+                    try:
+                        # Parse the date string (expecting YYYY-MM-DD format)
+                        parsed_date = datetime.strptime(curier_date, '%Y-%m-%d').date()
+                        order.curier_date = parsed_date
+                        print(f"Parsed and updated curier_date to: {order.curier_date}")
+                    except ValueError as e:
+                        print(f"Date parsing error: {e}")
+                        return Response(
+                            {'error': f'Invalid date format. Expected YYYY-MM-DD, got: {curier_date}'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                else:
+                    order.curier_date = curier_date
+                    print(f"Updated curier_date to: {order.curier_date}")
+            else:
+                order.curier_date = None
+                print("Set curier_date to None")
         
         order.save()
+        print("Order saved successfully")
         
-        return Response({
+        # Prepare response data
+        response_data = {
             'success': True,
             'message': 'Courier information updated successfully',
-            'courier_id': order.curier_id,
+            'curier_id': order.curier_id,
             'curier_date': order.curier_date.isoformat() if order.curier_date else None
-        })
+        }
+        print(f"Response data: {response_data}")
+        
+        return Response(response_data)
         
     except Exception as e:
+        print(f"Error updating courier info: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
         return Response(
             {'error': f'Failed to update courier information: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
