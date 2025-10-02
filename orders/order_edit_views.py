@@ -105,6 +105,165 @@ def update_order_item_quantity(request, order_id):
 @api_view(['POST'])
 @permission_classes([IsAdminUser])
 @transaction.atomic
+def update_order_item(request, order_id):
+    """Update order item with quantity, price, and variant support"""
+    try:
+        order = get_object_or_404(Order, id=order_id)
+        
+        # Extract data from request
+        item_id = request.data.get('item_id')
+        new_quantity = request.data.get('quantity')
+        new_price = request.data.get('price')
+        new_variant_id = request.data.get('variant_id')
+        
+        if not item_id:
+            return Response(
+                {'error': 'item_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get the order item
+        order_item = get_object_or_404(OrderItem, id=item_id, order=order)
+        old_quantity = order_item.quantity
+        old_variant = order_item.variant
+        
+        # Validate new quantity
+        if new_quantity is not None:
+            try:
+                new_quantity = int(new_quantity)
+                if new_quantity <= 0:
+                    return Response(
+                        {'error': 'Quantity must be greater than 0'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            except (ValueError, TypeError):
+                return Response(
+                    {'error': 'Invalid quantity value'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        else:
+            new_quantity = old_quantity
+        
+        # Handle variant change
+        new_variant = None
+        if new_variant_id is not None:
+            if new_variant_id:
+                try:
+                    new_variant = ProductVariant.objects.get(
+                        id=new_variant_id, 
+                        product=order_item.product
+                    )
+                except ProductVariant.DoesNotExist:
+                    return Response(
+                        {'error': 'Invalid variant selected'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            # If new_variant_id is empty/null, new_variant remains None
+        else:
+            new_variant = old_variant
+        
+        # Stock management for quantity changes
+        quantity_difference = new_quantity - old_quantity
+        
+        # If variant is changing, we need to handle stock for both old and new variants
+        if old_variant != new_variant:
+            # Restore stock to old variant/product
+            if old_variant:
+                old_variant.stock_quantity += old_quantity
+                old_variant.save()
+            elif hasattr(order_item.product, 'stock_quantity'):
+                order_item.product.stock_quantity += old_quantity
+                order_item.product.save()
+            
+            # Check and reduce stock for new variant/product
+            if new_variant:
+                if new_variant.stock_quantity < new_quantity:
+                    return Response(
+                        {'error': f'Insufficient stock for selected variant. Available: {new_variant.stock_quantity}'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                new_variant.stock_quantity -= new_quantity
+                new_variant.save()
+            elif hasattr(order_item.product, 'stock_quantity'):
+                product = order_item.product
+                if product.stock_quantity < new_quantity:
+                    return Response(
+                        {'error': f'Insufficient stock. Available: {product.stock_quantity}'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                product.stock_quantity -= new_quantity
+                product.save()
+        else:
+            # Same variant, just update quantity
+            if quantity_difference != 0:
+                if new_variant:
+                    new_stock = new_variant.stock_quantity - quantity_difference
+                    if new_stock < 0:
+                        return Response(
+                            {'error': f'Insufficient stock. Available: {new_variant.stock_quantity + old_quantity}'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                    new_variant.stock_quantity = new_stock
+                    new_variant.save()
+                elif hasattr(order_item.product, 'stock_quantity'):
+                    product = order_item.product
+                    new_stock = product.stock_quantity - quantity_difference
+                    if new_stock < 0:
+                        return Response(
+                            {'error': f'Insufficient stock. Available: {product.stock_quantity + old_quantity}'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                    product.stock_quantity = new_stock
+                    product.save()
+        
+        # Update order item
+        order_item.quantity = new_quantity
+        order_item.variant = new_variant
+        
+        # Update price if provided
+        if new_price is not None:
+            try:
+                from decimal import Decimal
+                new_price = Decimal(str(new_price))
+                if new_price < 0:
+                    return Response(
+                        {'error': 'Price cannot be negative'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                order_item.unit_price = new_price
+            except (ValueError, TypeError):
+                return Response(
+                    {'error': 'Invalid price value'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        order_item.save()
+        
+        # Recalculate order totals
+        order.calculate_totals()
+        
+        return Response({
+            'success': True,
+            'message': 'Order item updated successfully',
+            'item_id': order_item.id,
+            'old_quantity': old_quantity,
+            'new_quantity': new_quantity,
+            'unit_price': str(order_item.unit_price),
+            'variant_id': new_variant.id if new_variant else None,
+            'variant_name': new_variant.name if new_variant else None,
+            'order_total': str(order.total_amount)
+        })
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to update order item: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+@transaction.atomic
 def add_order_item(request, order_id):
     """Add new item to order with stock management"""
     try:

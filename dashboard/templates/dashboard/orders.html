@@ -1178,7 +1178,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editQuantityModalLabel">Edit Item Quantity</h5>
+                <h5 class="modal-title" id="editQuantityModalLabel">Edit Item Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -1186,16 +1186,30 @@
                     <label for="editQuantityProductName" class="form-label">Product</label>
                     <input type="text" class="form-control" id="editQuantityProductName" readonly>
                 </div>
+                <div class="mb-3" id="editQuantityVariantContainer" style="display: none;">
+                    <label for="editQuantityVariantSelect" class="form-label">Variant</label>
+                    <select class="form-select" id="editQuantityVariantSelect">
+                        <option value="">Select a variant...</option>
+                    </select>
+                </div>
                 <div class="mb-3">
                     <label for="editQuantityInput" class="form-label">New Quantity</label>
                     <input type="number" class="form-control" id="editQuantityInput" min="1" step="1">
-                    <small class="text-muted">Current stock: <span id="editQuantityStock">0</span></small>
+                    <small class="text-muted">Current stock: <span id="editQuantityStock">Loading...</span></small>
+                </div>
+                <div class="mb-3">
+                    <label for="editQuantityPriceInput" class="form-label">Unit Price</label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="number" class="form-control" id="editQuantityPriceInput" min="0" step="0.01">
+                    </div>
                 </div>
                 <input type="hidden" id="editQuantityItemId">
+                <input type="hidden" id="editQuantityCurrentVariantId">
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="confirmEditQuantityBtn">Update Quantity</button>
+                <button type="button" class="btn btn-primary" id="confirmEditQuantityBtn">Update Item</button>
             </div>
         </div>
     </div>
@@ -1266,7 +1280,7 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label for="editAddressLine1" class="form-label">Address <span class="text-danger">*</span></label>
+                        <label for="editAddressLine1" class="form-label">Address<span class="text-danger">*</span></label>
                         <textarea class="form-control" id="editAddressLine1" rows="3" required></textarea>
                     </div>
                     <div class="row">
@@ -1420,6 +1434,19 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentPage = 1;
     let currentOrderId = null;
     let orders = [];
+    
+    // Modal instance tracking
+    let orderDetailsModalInstance = null;
+    
+    // Add event listener for modal backdrop cleanup
+    document.getElementById('orderDetailsModal').addEventListener('hidden.bs.modal', function() {
+        // Remove any lingering backdrops
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => backdrop.remove());
+        
+        // Reset modal instance
+        orderDetailsModalInstance = null;
+    });
     
     // Initialize status filter
     window.currentStatusFilter = ''; // Empty means "All"
@@ -2738,9 +2765,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('Order data received:', order);
                 displayOrderDetails(order);
                 
-                // Show the modal after order data is loaded
-                const orderModal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
-                orderModal.show();
+                // Show the modal using tracked instance
+                if (!orderDetailsModalInstance) {
+                    orderDetailsModalInstance = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+                }
+                orderDetailsModalInstance.show();
                 
                 // Initialize copy functionality after modal is shown
                 setTimeout(initCopyFunctionality, 200);
@@ -3160,8 +3189,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                 data-item-id="${item.id}" 
                                 data-product-name="${productName}" 
                                 data-current-quantity="${quantity}"
+                                data-current-price="${unitPrice}"
+                                data-current-variant-id="${item.variant_id || item.variant || ''}"
                                 data-product-stock="${item.product_stock || 0}"
-                                title="Edit Quantity">
+                                title="Edit Item Details">
                                 <i class="fas fa-edit"></i>
                             </button>
                             <button class="btn btn-sm btn-outline-danger delete-item-btn" 
@@ -3198,9 +3229,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 const itemId = this.dataset.itemId;
                 const productName = this.dataset.productName;
                 const currentQuantity = this.dataset.currentQuantity;
+                const currentPrice = this.dataset.currentPrice;
+                const currentVariantId = this.dataset.currentVariantId;
                 const productStock = this.dataset.productStock;
                 
-                showEditQuantityModal(itemId, productName, currentQuantity, productStock);
+                showEditQuantityModal(itemId, productName, currentQuantity, productStock, currentPrice, currentVariantId);
             });
         });
         
@@ -3860,22 +3893,27 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Helper function to properly clean up a modal
     function cleanupModal(modalElement) {
-        const modal = bootstrap.Modal.getInstance(modalElement);
-        if (modal) {
-            modal.hide();
-            
-            // Remove backdrop manually if it's still there
-            setTimeout(() => {
-                const backdrop = document.querySelector('.modal-backdrop');
-                if (backdrop) {
-                    backdrop.remove();
-                }
-                // Also remove any body classes that Bootstrap might have added
-                document.body.classList.remove('modal-open');
-                document.body.style.overflow = '';
-                document.body.style.paddingRight = '';
-            }, 300);
+        // Special handling for orderDetailsModal
+        if (modalElement.id === 'orderDetailsModal' && orderDetailsModalInstance) {
+            orderDetailsModalInstance.hide();
+            orderDetailsModalInstance = null;
+        } else {
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) {
+                modal.hide();
+            }
         }
+        
+        // Remove backdrop manually if it's still there
+        setTimeout(() => {
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(backdrop => backdrop.remove());
+            
+            // Also remove any body classes that Bootstrap might have added
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        }, 300);
     }
     
     function deleteOrder(orderId) {
@@ -4713,20 +4751,196 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Edit Quantity Modal Functionality
-    function showEditQuantityModal(itemId, productName, currentQuantity, productStock) {
+    function showEditQuantityModal(itemId, productName, currentQuantity, productStock, currentPrice, currentVariantId) {
         document.getElementById('editQuantityItemId').value = itemId;
         document.getElementById('editQuantityProductName').value = productName;
         document.getElementById('editQuantityInput').value = currentQuantity;
-        document.getElementById('editQuantityStock').textContent = productStock;
+        document.getElementById('editQuantityPriceInput').value = currentPrice || '';
+        document.getElementById('editQuantityStock').textContent = 'Loading...';
+        document.getElementById('editQuantityCurrentVariantId').value = currentVariantId || '';
+        
+        // Fetch item details and populate variants
+        fetchItemDetailsAndVariants(itemId);
+        
+        // Fetch real stock data from API
+        fetchProductStock(itemId);
         
         const modal = new bootstrap.Modal(document.getElementById('editQuantityModal'));
         modal.show();
+    }
+    
+    // Function to fetch item details and load variants
+    async function fetchItemDetailsAndVariants(itemId) {
+        try {
+            if (!currentOrderId) {
+                console.error('No current order ID available');
+                return;
+            }
+            
+            // Get the item details
+            const orderItemResponse = await fetch(`/mb-admin/api/orders/${currentOrderId}/items/`);
+            if (!orderItemResponse.ok) throw new Error('Failed to fetch order items');
+            
+            const items = await orderItemResponse.json();
+            const currentItem = items.find(item => item.id == itemId);
+            
+            if (!currentItem) {
+                console.error('Item not found');
+                return;
+            }
+            
+            const productId = currentItem.product_id || currentItem.product;
+            const currentVariantId = currentItem.variant_id || currentItem.variant;
+            
+            // Store current variant ID
+            document.getElementById('editQuantityCurrentVariantId').value = currentVariantId || '';
+            
+            if (!productId) {
+                console.error('No product ID found');
+                return;
+            }
+            
+            // Fetch product details to get variants
+            const productResponse = await fetch(`/mb-admin/api/products/${productId}/`);
+            if (!productResponse.ok) throw new Error('Failed to fetch product details');
+            
+            const productData = await productResponse.json();
+            
+            // Check if product has variants
+            if (productData.variants && productData.variants.length > 0) {
+                populateVariantsDropdown(productData.variants, currentVariantId);
+                document.getElementById('editQuantityVariantContainer').style.display = 'block';
+            } else {
+                document.getElementById('editQuantityVariantContainer').style.display = 'none';
+            }
+            
+        } catch (error) {
+            console.error('Error fetching item details and variants:', error);
+            document.getElementById('editQuantityVariantContainer').style.display = 'none';
+        }
+    }
+    
+    // Function to populate variants dropdown
+    function populateVariantsDropdown(variants, currentVariantId) {
+        const variantSelect = document.getElementById('editQuantityVariantSelect');
+        variantSelect.innerHTML = '<option value="">No variant</option>';
+        
+        variants.forEach(variant => {
+            const option = document.createElement('option');
+            option.value = variant.id;
+            option.textContent = variant.name || variant.display_name || `Variant ${variant.id}`;
+            
+            if (variant.id == currentVariantId) {
+                option.selected = true;
+            }
+            
+            variantSelect.appendChild(option);
+        });
+        
+        // Remove any existing event listeners and add new one for variant change
+        const newVariantSelect = variantSelect.cloneNode(true);
+        variantSelect.parentNode.replaceChild(newVariantSelect, variantSelect);
+        
+        newVariantSelect.addEventListener('change', function() {
+            const selectedVariantId = this.value;
+            updateStockAndPriceForVariant(selectedVariantId);
+        });
+    }
+    
+    // Function to update stock and price when variant changes
+    async function updateStockAndPriceForVariant(variantId) {
+        try {
+            if (!currentOrderId) return;
+            
+            // Get the current item details
+            const orderItemResponse = await fetch(`/mb-admin/api/orders/${currentOrderId}/items/`);
+            if (!orderItemResponse.ok) throw new Error('Failed to fetch order items');
+            
+            const items = await orderItemResponse.json();
+            const itemId = document.getElementById('editQuantityItemId').value;
+            const currentItem = items.find(item => item.id == itemId);
+            
+            if (!currentItem) return;
+            
+            const productId = currentItem.product_id || currentItem.product;
+            
+            if (variantId) {
+                // Fetch variant details
+                const variantResponse = await fetch(`/mb-admin/api/products/${productId}/variants/${variantId}/`);
+                if (!variantResponse.ok) throw new Error('Failed to fetch variant details');
+                
+                const variantData = await variantResponse.json();
+                document.getElementById('editQuantityStock').textContent = variantData.stock_quantity || variantData.stock || 0;
+                document.getElementById('editQuantityPriceInput').value = variantData.price || 0;
+            } else {
+                // Fetch product details (no variant)
+                const productResponse = await fetch(`/mb-admin/api/products/${productId}/`);
+                if (!productResponse.ok) throw new Error('Failed to fetch product details');
+                
+                const productData = await productResponse.json();
+                document.getElementById('editQuantityStock').textContent = productData.stock_quantity || productData.stock || 0;
+                document.getElementById('editQuantityPriceInput').value = productData.price || 0;
+            }
+        } catch (error) {
+            console.error('Error updating stock and price for variant:', error);
+            document.getElementById('editQuantityStock').textContent = 'Error';
+        }
+    }
+    
+    // Function to fetch real stock data
+    async function fetchProductStock(itemId) {
+        try {
+            // Check if we have a current order ID
+            if (!currentOrderId) {
+                document.getElementById('editQuantityStock').textContent = 'Unknown';
+                return;
+            }
+            
+            // First get the item details to find the product ID
+            const orderItemResponse = await fetch(`/mb-admin/api/orders/${currentOrderId}/items/`);
+            if (!orderItemResponse.ok) throw new Error('Failed to fetch order items');
+            
+            const items = await orderItemResponse.json();
+            const currentItem = items.find(item => item.id == itemId);
+            
+            if (!currentItem) {
+                document.getElementById('editQuantityStock').textContent = 'Unknown';
+                return;
+            }
+            
+            // Now fetch the product stock
+            const productId = currentItem.product_id || currentItem.product;
+            const variantId = currentItem.variant_id || currentItem.variant;
+            
+            if (!productId) {
+                document.getElementById('editQuantityStock').textContent = 'Unknown';
+                return;
+            }
+            
+            let stockUrl = `/mb-admin/api/products/${productId}/`;
+            if (variantId) {
+                stockUrl += `variants/${variantId}/`;
+            }
+            
+            const stockResponse = await fetch(stockUrl);
+            if (!stockResponse.ok) throw new Error('Failed to fetch stock');
+            
+            const productData = await stockResponse.json();
+            const stock = variantId ? (productData.stock_quantity || productData.stock) : (productData.stock_quantity || productData.stock);
+            
+            document.getElementById('editQuantityStock').textContent = stock || 0;
+        } catch (error) {
+            console.error('Error fetching stock:', error);
+            document.getElementById('editQuantityStock').textContent = 'Error loading';
+        }
     }
     
     // Confirm Edit Quantity
     document.getElementById('confirmEditQuantityBtn').addEventListener('click', function() {
         const itemId = document.getElementById('editQuantityItemId').value;
         const newQuantity = parseInt(document.getElementById('editQuantityInput').value);
+        const newPrice = parseFloat(document.getElementById('editQuantityPriceInput').value);
+        const newVariantId = document.getElementById('editQuantityVariantSelect').value;
         
         if (!newQuantity || newQuantity <= 0) {
             Swal.fire({
@@ -4737,7 +4951,16 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        updateOrderItemQuantity(itemId, newQuantity);
+        if (!newPrice || newPrice <= 0) {
+            Swal.fire({
+                title: 'Invalid Price',
+                text: 'Please enter a valid price greater than 0.',
+                icon: 'warning'
+            });
+            return;
+        }
+        
+        updateOrderItem(itemId, newQuantity, newPrice, newVariantId);
     });
     
     // Delete Item Confirmation
@@ -5027,21 +5250,51 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // API Functions for Order Editing
-    async function updateOrderItemQuantity(itemId, newQuantity) {
+    async function updateOrderItem(itemId, newQuantity, newPrice, newVariantId) {
         try {
-            const response = await fetch(`/mb-admin/api/orders/${currentOrderId}/edit/update-quantity/`, {
+            const requestData = {
+                item_id: parseInt(itemId),
+                quantity: newQuantity,
+                price: newPrice
+            };
+            
+            // Add variant_id - send null if no variant selected, or the variant ID if one is selected
+            if (newVariantId !== undefined) {
+                requestData.variant_id = newVariantId && newVariantId !== '' ? parseInt(newVariantId) : null;
+            }
+            
+            console.log('Sending update request:', requestData); // For debugging
+            
+            // Try the comprehensive update endpoint first
+            let response = await fetch(`/mb-admin/api/orders/${currentOrderId}/edit/update-item/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken')
                 },
-                body: JSON.stringify({
-                    item_id: parseInt(itemId),
-                    new_quantity: newQuantity
-                })
+                body: JSON.stringify(requestData)
             });
             
+            // If that doesn't exist, try the original quantity endpoint with additional data
+            if (!response.ok && response.status === 404) {
+                response = await fetch(`/mb-admin/api/orders/${currentOrderId}/edit/update-quantity/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        item_id: parseInt(itemId),
+                        new_quantity: newQuantity,
+                        new_price: newPrice,
+                        variant_id: newVariantId || null
+                    })
+                });
+            }
+            
             const data = await response.json();
+            
+            console.log('Update item API Response:', data); // For debugging
             
             if (data.success) {
                 // Close modal
@@ -5053,26 +5306,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 Swal.fire({
                     title: 'Success!',
-                    text: data.message,
+                    text: 'Order item updated successfully.',
                     icon: 'success',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000
+                    timer: 2000,
+                    showConfirmButton: false
                 });
             } else {
-                throw new Error(data.error || 'Failed to update quantity');
+                throw new Error(data.message || 'Failed to update item');
             }
+            
         } catch (error) {
-            console.error('Error updating quantity:', error);
+            console.error('Error updating order item:', error);
             Swal.fire({
-                title: 'Error',
-                text: error.message,
+                title: 'Error!',
+                text: `Failed to update item: ${error.message}`,
                 icon: 'error'
             });
         }
     }
     
+    // Keep the old function for backward compatibility
+    async function updateOrderItemQuantity(itemId, newQuantity, newPrice) {
+        return updateOrderItem(itemId, newQuantity, newPrice, null);
+    }
+
     async function addOrderItem(productId, variantId, quantity) {
         try {
             const requestData = {

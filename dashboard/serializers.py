@@ -247,10 +247,17 @@ class OrderItemDashboardSerializer(serializers.ModelSerializer):
     """Serializer for order items in the dashboard"""
     variant_sku = serializers.SerializerMethodField()
     variant_display_name = serializers.SerializerMethodField()
+    product_id = serializers.IntegerField(source='product.id', read_only=True)
+    variant_id = serializers.IntegerField(source='variant.id', read_only=True)
+    product_stock = serializers.SerializerMethodField()
     
     class Meta:
         model = OrderItem
-        fields = ['id', 'order', 'product_name', 'variant_name', 'variant_sku', 'variant_display_name', 'quantity', 'unit_price']
+        fields = [
+            'id', 'order', 'product_name', 'variant_name', 'variant_sku', 
+            'variant_display_name', 'quantity', 'unit_price', 'product_id', 
+            'variant_id', 'product_stock'
+        ]
     
     def get_variant_sku(self, obj):
         """Get the full variant SKU"""
@@ -267,6 +274,12 @@ class OrderItemDashboardSerializer(serializers.ModelSerializer):
             else:
                 return obj.variant.name  # This should be "MW02 Black"
         return obj.product_name
+    
+    def get_product_stock(self, obj):
+        """Get current stock quantity"""
+        if obj.variant:
+            return obj.variant.stock_quantity
+        return obj.product.stock_quantity if hasattr(obj.product, 'stock_quantity') else 0
         
     def to_representation(self, instance):
         """Override to customize response data"""

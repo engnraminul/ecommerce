@@ -20,6 +20,7 @@ urlpatterns = [
     
     # Order editing (admin only)
     path('edit/<int:order_id>/', order_edit_views.get_order_for_edit, name='get-order-for-edit'),
+    path('edit/<int:order_id>/update-item/', order_edit_views.update_order_item, name='update-order-item'),
     path('edit/<int:order_id>/update-quantity/', order_edit_views.update_order_item_quantity, name='update-order-item-quantity'),
     path('edit/<int:order_id>/add-item/', order_edit_views.add_order_item, name='add-order-item'),
     path('edit/<int:order_id>/delete-item/', order_edit_views.delete_order_item, name='delete-order-item'),

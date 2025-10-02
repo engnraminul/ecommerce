@@ -25,6 +25,7 @@ urlpatterns = [
     
     # Order editing endpoints
     path('api/orders/<int:order_id>/edit/', order_edit_views.get_order_for_edit, name='get_order_for_edit'),
+    path('api/orders/<int:order_id>/edit/update-item/', order_edit_views.update_order_item, name='update_order_item'),
     path('api/orders/<int:order_id>/edit/update-quantity/', order_edit_views.update_order_item_quantity, name='update_order_item_quantity'),
     path('api/orders/<int:order_id>/edit/add-item/', order_edit_views.add_order_item, name='add_order_item'),
     path('api/orders/<int:order_id>/edit/delete-item/', order_edit_views.delete_order_item, name='delete_order_item'),
