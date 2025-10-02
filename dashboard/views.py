@@ -15,6 +15,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.urls import reverse
 from django.http import JsonResponse
 from decimal import Decimal
+from django.db import transaction
 
 from .models import DashboardSetting, AdminActivity, Expense
 from .serializers import (
@@ -27,6 +28,55 @@ from products.models import Product, ProductVariant, ProductImage, Category
 from orders.models import Order, OrderItem
 from incomplete_orders.models import IncompleteOrder, IncompleteOrderItem, IncompleteShippingAddress
 from users.models import User
+
+# Helper functions for stock management
+def restock_order_items(order):
+    """Restore stock for all items in an order"""
+    try:
+        for item in order.items.all():
+            if item.variant:
+                # Restore stock to variant
+                item.variant.stock_quantity += item.quantity
+                item.variant.save()
+                print(f"Restocked {item.quantity} units to variant {item.variant.sku}")
+            elif hasattr(item.product, 'stock_quantity'):
+                # Restore stock to product
+                item.product.stock_quantity += item.quantity
+                item.product.save()
+                print(f"Restocked {item.quantity} units to product {item.product.sku}")
+    except Exception as e:
+        print(f"Error restocking order {order.order_number}: {str(e)}")
+
+def reduce_order_stock(order):
+    """Reduce stock for all items in an order"""
+    try:
+        for item in order.items.all():
+            if item.variant:
+                # Reduce stock from variant
+                if item.variant.stock_quantity >= item.quantity:
+                    item.variant.stock_quantity -= item.quantity
+                    item.variant.save()
+                    print(f"Reduced {item.quantity} units from variant {item.variant.sku}")
+                else:
+                    print(f"Warning: Insufficient stock for variant {item.variant.sku}")
+            elif hasattr(item.product, 'stock_quantity'):
+                # Reduce stock from product
+                if item.product.stock_quantity >= item.quantity:
+                    item.product.stock_quantity -= item.quantity
+                    item.product.save()
+                    print(f"Reduced {item.quantity} units from product {item.product.sku}")
+                else:
+                    print(f"Warning: Insufficient stock for product {item.product.sku}")
+    except Exception as e:
+        print(f"Error reducing stock for order {order.order_number}: {str(e)}")
+
+def should_restock_status(status):
+    """Check if a status change should trigger restocking"""
+    return status.lower() in ['cancelled', 'returned', 'partially_returned']
+
+def should_reduce_stock_status(status):
+    """Check if a status change should trigger stock reduction"""
+    return status.lower() in ['pending', 'confirmed', 'processing', 'shipped', 'delivered']
 
 class IsStaffUser(permissions.BasePermission):
     """Custom permission to match dashboard view requirements"""
@@ -546,12 +596,16 @@ class OrderDashboardViewSet(viewsets.ModelViewSet):
     
     def perform_destroy(self, instance):
         try:
+            # Restock items before deleting the order
+            print(f"Restocking items for order {instance.order_number} before deletion")
+            restock_order_items(instance)
+            
             self.log_activity('deleted', instance)
         except Exception as e:
             # Log the error but continue with deletion
-            print(f"Error logging activity: {str(e)}")
+            print(f"Error logging activity or restocking: {str(e)}")
         
-        # Proceed with deletion even if logging fails
+        # Proceed with deletion even if logging/restocking fails
         instance.delete()
     
     def log_activity(self, action, instance):
@@ -576,6 +630,7 @@ class OrderDashboardViewSet(viewsets.ModelViewSet):
         return self.request.META.get('REMOTE_ADDR')
     
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def update_status(self, request, pk=None):
         order = self.get_object()
         new_status = request.data.get('status')
@@ -583,6 +638,23 @@ class OrderDashboardViewSet(viewsets.ModelViewSet):
         if not new_status:
             from rest_framework import status as http_status
             return Response({'error': 'Status is required'}, status=http_status.HTTP_400_BAD_REQUEST)
+        
+        # Store the old status for stock management
+        old_status = order.status
+        
+        # Handle stock management based on status change
+        if old_status != new_status:
+            print(f"Order {order.order_number}: Status changing from {old_status} to {new_status}")
+            
+            # If changing FROM cancelled TO active status, reduce stock
+            if should_restock_status(old_status) and should_reduce_stock_status(new_status):
+                print(f"Order {order.order_number}: Changing from {old_status} to {new_status} - reducing stock")
+                reduce_order_stock(order)
+            
+            # If changing TO cancelled FROM active status, restock
+            elif should_reduce_stock_status(old_status) and should_restock_status(new_status):
+                print(f"Order {order.order_number}: Changing from {old_status} to {new_status} - restocking")
+                restock_order_items(order)
         
         # Update order status
         order.status = new_status
@@ -629,7 +701,7 @@ class OrderDashboardViewSet(viewsets.ModelViewSet):
             if 'partially_ammount' in request.data and request.data['partially_ammount']:
                 additional_info['partially_refunded'] = request.data['partially_ammount']
                 
-            activity_details = f"Updated status to {new_status}"
+            activity_details = f"Updated status from {old_status} to {new_status}"
             if additional_info:
                 activity_details += f" with {additional_info}"
                 
@@ -637,7 +709,7 @@ class OrderDashboardViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(f"Error logging activity: {str(e)}")
         
-        return Response({'success': True, 'status': order.status})
+        return Response({'success': True, 'status': order.status, 'message': f'Order status updated with stock management'})
     
     @action(detail=True, methods=['get'])
     def items(self, request, pk=None):
@@ -779,19 +851,37 @@ class OrderDashboardViewSet(viewsets.ModelViewSet):
             updated_count = 0
             
             if action == 'delete':
+                # Restock items before deleting orders
+                for order in orders:
+                    print(f"Restocking items for order {order.order_number} before deletion")
+                    restock_order_items(order)
+                
                 # Delete orders
                 deleted_count = orders.count()
                 orders.delete()
                 return Response({
                     'success': True,
-                    'message': f'Successfully deleted {deleted_count} order(s)'
+                    'message': f'Successfully deleted {deleted_count} order(s) and restocked items'
                 })
             else:
                 # Update status
                 new_status = request.data.get('new_status', action)
                 
                 for order in orders:
+                    old_status = order.status
                     order.status = new_status
+                    
+                    # Handle stock management based on status change
+                    if old_status != new_status:
+                        # If changing FROM cancelled TO active status, reduce stock
+                        if should_restock_status(old_status) and should_reduce_stock_status(new_status):
+                            print(f"Order {order.order_number}: Changing from {old_status} to {new_status} - reducing stock")
+                            reduce_order_stock(order)
+                        
+                        # If changing TO cancelled FROM active status, restock
+                        elif should_reduce_stock_status(old_status) and should_restock_status(new_status):
+                            print(f"Order {order.order_number}: Changing from {old_status} to {new_status} - restocking")
+                            restock_order_items(order)
                     
                     # Handle special cases for partially returned status
                     if new_status == 'partially_returned':
@@ -810,7 +900,7 @@ class OrderDashboardViewSet(viewsets.ModelViewSet):
                 
                 return Response({
                     'success': True,
-                    'message': f'Successfully updated {updated_count} order(s) to {new_status}'
+                    'message': f'Successfully updated {updated_count} order(s) to {new_status} with stock management'
                 })
                 
         except Exception as e:

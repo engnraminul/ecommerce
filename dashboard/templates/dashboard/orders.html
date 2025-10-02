@@ -3813,19 +3813,14 @@ document.addEventListener('DOMContentLoaded', function() {
             // Clean up the modal properly using our helper function
             cleanupModal(statusChangeModalElement);
             
-            // Handle inventory restocking for returned, partially returned, or cancelled orders
-            if (['returned', 'partially_returned', 'cancelled'].includes(newStatus)) {
-                // Call the restock function
-                restockOrderItems(orderId, newStatus);
-            }
-            
             // Refresh orders list in background
             loadOrders(currentPage);
             
-            // Show success notification with SweetAlert2
+            // Show success notification with SweetAlert2 - use backend message if available
+            const successMessage = data.message || `Order status has been changed to ${formatStatusName(newStatus)} with stock management applied`;
             Swal.fire({
                 title: 'Status Updated',
-                text: `Order status has been changed to ${formatStatusName(newStatus)}`,
+                text: successMessage,
                 icon: 'success',
                 toast: true,
                 position: 'top-end',
@@ -3983,7 +3978,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Show success notification with SweetAlert2
             Swal.fire({
                 title: 'Deleted!',
-                text: 'The order has been deleted successfully.',
+                text: 'The order has been deleted successfully and stock has been restored.',
                 icon: 'success',
                 confirmButtonColor: '#28a745'
             });
