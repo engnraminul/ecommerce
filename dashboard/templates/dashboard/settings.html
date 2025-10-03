@@ -16,23 +16,11 @@
                     <button class="nav-link text-start active" id="general-tab" data-bs-toggle="pill" data-bs-target="#general" type="button" role="tab" aria-selected="true">
                         <i class="fas fa-cog fa-fw me-2"></i> General
                     </button>
-                    <button class="nav-link text-start" id="shipping-tab" data-bs-toggle="pill" data-bs-target="#shipping" type="button" role="tab" aria-selected="false">
-                        <i class="fas fa-truck fa-fw me-2"></i> Shipping
-                    </button>
-                    <button class="nav-link text-start" id="payment-tab" data-bs-toggle="pill" data-bs-target="#payment" type="button" role="tab" aria-selected="false">
-                        <i class="fas fa-credit-card fa-fw me-2"></i> Payment
-                    </button>
-                    <button class="nav-link text-start" id="tax-tab" data-bs-toggle="pill" data-bs-target="#tax" type="button" role="tab" aria-selected="false">
-                        <i class="fas fa-percentage fa-fw me-2"></i> Tax
-                    </button>
                     <button class="nav-link text-start" id="email-tab" data-bs-toggle="pill" data-bs-target="#email" type="button" role="tab" aria-selected="false">
                         <i class="fas fa-envelope fa-fw me-2"></i> Email
                     </button>
                     <button class="nav-link text-start" id="appearance-tab" data-bs-toggle="pill" data-bs-target="#appearance" type="button" role="tab" aria-selected="false">
                         <i class="fas fa-palette fa-fw me-2"></i> Appearance
-                    </button>
-                    <button class="nav-link text-start" id="advanced-tab" data-bs-toggle="pill" data-bs-target="#advanced" type="button" role="tab" aria-selected="false">
-                        <i class="fas fa-tools fa-fw me-2"></i> Advanced
                     </button>
                     <button class="nav-link text-start" id="checkout-tab" data-bs-toggle="pill" data-bs-target="#checkout" type="button" role="tab" aria-selected="false">
                         <i class="fas fa-shopping-cart fa-fw me-2"></i> Checkout Customize
@@ -116,323 +104,6 @@
                         </form>
                     </div>
                     
-                    <!-- Shipping Settings -->
-                    <div class="tab-pane fade" id="shipping" role="tabpanel" aria-labelledby="shipping-tab">
-                        <h5 class="mb-4">Shipping Settings</h5>
-                        <form id="shippingSettingsForm">
-                            <div class="mb-3 form-check">
-                                <input class="form-check-input" type="checkbox" id="enableShipping" name="enable_shipping" checked>
-                                <label class="form-check-label" for="enableShipping">
-                                    Enable Shipping
-                                </label>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <label class="form-label">Shipping Zones</label>
-                                <div class="table-responsive">
-                                    <table class="table table-bordered table-sm" id="shippingZonesTable">
-                                        <thead>
-                                            <tr>
-                                                <th>Zone Name</th>
-                                                <th>Countries</th>
-                                                <th>Base Cost</th>
-                                                <th>Free Shipping Over</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>Domestic</td>
-                                                <td>United States</td>
-                                                <td>$5.00</td>
-                                                <td>$50.00</td>
-                                                <td>
-                                                    <button type="button" class="btn btn-sm btn-outline-primary edit-zone-btn" data-zone-id="1">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-zone-btn" data-zone-id="1">
-                                                        <i class="fas fa-trash-alt"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>International</td>
-                                                <td>Rest of the World</td>
-                                                <td>$15.00</td>
-                                                <td>$100.00</td>
-                                                <td>
-                                                    <button type="button" class="btn btn-sm btn-outline-primary edit-zone-btn" data-zone-id="2">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-zone-btn" data-zone-id="2">
-                                                        <i class="fas fa-trash-alt"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <button type="button" class="btn btn-sm btn-success" id="addShippingZoneBtn">
-                                    <i class="fas fa-plus-circle me-1"></i> Add Shipping Zone
-                                </button>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <label class="form-label">Shipping Methods</label>
-                                <div class="table-responsive">
-                                    <table class="table table-bordered table-sm" id="shippingMethodsTable">
-                                        <thead>
-                                            <tr>
-                                                <th>Method Name</th>
-                                                <th>Description</th>
-                                                <th>Cost Modifier</th>
-                                                <th>Status</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>Standard Shipping</td>
-                                                <td>5-7 business days</td>
-                                                <td>+$0.00</td>
-                                                <td><span class="badge bg-success">Active</span></td>
-                                                <td>
-                                                    <button type="button" class="btn btn-sm btn-outline-primary edit-method-btn" data-method-id="1">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-method-btn" data-method-id="1">
-                                                        <i class="fas fa-trash-alt"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>Express Shipping</td>
-                                                <td>2-3 business days</td>
-                                                <td>+$10.00</td>
-                                                <td><span class="badge bg-success">Active</span></td>
-                                                <td>
-                                                    <button type="button" class="btn btn-sm btn-outline-primary edit-method-btn" data-method-id="2">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-method-btn" data-method-id="2">
-                                                        <i class="fas fa-trash-alt"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <button type="button" class="btn btn-sm btn-success" id="addShippingMethodBtn">
-                                    <i class="fas fa-plus-circle me-1"></i> Add Shipping Method
-                                </button>
-                            </div>
-                            
-                            <button type="button" class="btn btn-primary" id="saveShippingSettingsBtn">
-                                <i class="fas fa-save me-1"></i> Save Shipping Settings
-                            </button>
-                        </form>
-                    </div>
-                    
-                    <!-- Payment Settings -->
-                    <div class="tab-pane fade" id="payment" role="tabpanel" aria-labelledby="payment-tab">
-                        <h5 class="mb-4">Payment Settings</h5>
-                        <form id="paymentSettingsForm">
-                            <div class="mb-4">
-                                <h6 class="mb-3">Payment Gateways</h6>
-                                
-                                <!-- Stripe -->
-                                <div class="card mb-3">
-                                    <div class="card-header d-flex justify-content-between align-items-center">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" id="stripeEnabled" name="stripe_enabled" checked>
-                                            <label class="form-check-label" for="stripeEnabled">
-                                                <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" alt="Stripe" height="25">
-                                                Stripe
-                                            </label>
-                                        </div>
-                                        <button class="btn btn-sm btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#stripeSettings">
-                                            <i class="fas fa-cog"></i> Configure
-                                        </button>
-                                    </div>
-                                    <div class="collapse" id="stripeSettings">
-                                        <div class="card-body">
-                                            <div class="mb-3">
-                                                <label for="stripePublicKey" class="form-label">Public Key</label>
-                                                <input type="text" class="form-control" id="stripePublicKey" name="stripe_public_key" value="pk_test_example">
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="stripeSecretKey" class="form-label">Secret Key</label>
-                                                <input type="password" class="form-control" id="stripeSecretKey" name="stripe_secret_key" value="sk_test_example">
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="stripeTestMode" name="stripe_test_mode" checked>
-                                                <label class="form-check-label" for="stripeTestMode">
-                                                    Test Mode
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- PayPal -->
-                                <div class="card mb-3">
-                                    <div class="card-header d-flex justify-content-between align-items-center">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" id="paypalEnabled" name="paypal_enabled">
-                                            <label class="form-check-label" for="paypalEnabled">
-                                                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" height="25">
-                                                PayPal
-                                            </label>
-                                        </div>
-                                        <button class="btn btn-sm btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#paypalSettings">
-                                            <i class="fas fa-cog"></i> Configure
-                                        </button>
-                                    </div>
-                                    <div class="collapse" id="paypalSettings">
-                                        <div class="card-body">
-                                            <div class="mb-3">
-                                                <label for="paypalClientId" class="form-label">Client ID</label>
-                                                <input type="text" class="form-control" id="paypalClientId" name="paypal_client_id">
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="paypalSecretKey" class="form-label">Secret Key</label>
-                                                <input type="password" class="form-control" id="paypalSecretKey" name="paypal_secret_key">
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="paypalTestMode" name="paypal_test_mode" checked>
-                                                <label class="form-check-label" for="paypalTestMode">
-                                                    Test Mode
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Cash on Delivery -->
-                                <div class="card mb-3">
-                                    <div class="card-header d-flex justify-content-between align-items-center">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" id="codEnabled" name="cod_enabled" checked>
-                                            <label class="form-check-label" for="codEnabled">
-                                                <i class="fas fa-money-bill-wave me-2"></i>
-                                                Cash on Delivery (COD)
-                                            </label>
-                                        </div>
-                                        <button class="btn btn-sm btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#codSettings">
-                                            <i class="fas fa-cog"></i> Configure
-                                        </button>
-                                    </div>
-                                    <div class="collapse" id="codSettings">
-                                        <div class="card-body">
-                                            <div class="mb-3">
-                                                <label for="codFee" class="form-label">Additional Fee</label>
-                                                <div class="input-group">
-                                                    <span class="input-group-text">$</span>
-                                                    <input type="number" class="form-control" id="codFee" name="cod_fee" value="2.00" step="0.01">
-                                                </div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="codInstructions" class="form-label">Instructions for Customer</label>
-                                                <textarea class="form-control" id="codInstructions" name="cod_instructions" rows="2">Please have the exact amount ready when the delivery arrives.</textarea>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <button type="button" class="btn btn-primary" id="savePaymentSettingsBtn">
-                                <i class="fas fa-save me-1"></i> Save Payment Settings
-                            </button>
-                        </form>
-                    </div>
-                    
-                    <!-- Tax Settings -->
-                    <div class="tab-pane fade" id="tax" role="tabpanel" aria-labelledby="tax-tab">
-                        <h5 class="mb-4">Tax Settings</h5>
-                        <form id="taxSettingsForm">
-                            <div class="mb-3">
-                                <label class="form-label">Tax Options</label>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="radio" name="tax_calculation" id="taxInclusive" value="inclusive">
-                                    <label class="form-check-label" for="taxInclusive">
-                                        Prices include tax
-                                    </label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="radio" name="tax_calculation" id="taxExclusive" value="exclusive" checked>
-                                    <label class="form-check-label" for="taxExclusive">
-                                        Prices exclude tax
-                                    </label>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="defaultTaxRate" class="form-label">Default Tax Rate (%)</label>
-                                <input type="number" class="form-control" id="defaultTaxRate" name="default_tax_rate" value="7.5" step="0.01" min="0" max="100">
-                            </div>
-                            
-                            <div class="mb-4">
-                                <label class="form-label">Tax Rates by Location</label>
-                                <div class="table-responsive">
-                                    <table class="table table-bordered table-sm" id="taxRatesTable">
-                                        <thead>
-                                            <tr>
-                                                <th>Country</th>
-                                                <th>State/Province</th>
-                                                <th>Tax Rate (%)</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>United States</td>
-                                                <td>California</td>
-                                                <td>8.25</td>
-                                                <td>
-                                                    <button type="button" class="btn btn-sm btn-outline-primary edit-tax-rate-btn" data-rate-id="1">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-tax-rate-btn" data-rate-id="1">
-                                                        <i class="fas fa-trash-alt"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>United States</td>
-                                                <td>New York</td>
-                                                <td>8.875</td>
-                                                <td>
-                                                    <button type="button" class="btn btn-sm btn-outline-primary edit-tax-rate-btn" data-rate-id="2">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-tax-rate-btn" data-rate-id="2">
-                                                        <i class="fas fa-trash-alt"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <button type="button" class="btn btn-sm btn-success" id="addTaxRateBtn">
-                                    <i class="fas fa-plus-circle me-1"></i> Add Tax Rate
-                                </button>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="taxShipping" name="tax_shipping">
-                                    <label class="form-check-label" for="taxShipping">
-                                        Apply tax to shipping
-                                    </label>
-                                </div>
-                            </div>
-                            
-                            <button type="button" class="btn btn-primary" id="saveTaxSettingsBtn">
-                                <i class="fas fa-save me-1"></i> Save Tax Settings
-                            </button>
-                        </form>
-                    </div>
-                    
                     <!-- Email Settings -->
                     <div class="tab-pane fade" id="email" role="tabpanel" aria-labelledby="email-tab">
                         <h5 class="mb-4">Email Settings</h5>
@@ -511,7 +182,10 @@
                                     <label class="form-label">Store Logo</label>
                                     <div class="card p-3 mb-3">
                                         <div class="text-center">
-                                            <img src="https://via.placeholder.com/200x100?text=Store+Logo" alt="Store Logo" class="img-fluid mb-3" style="max-height: 100px;">
+                                            <svg width="200" height="100" class="img-fluid mb-3" style="max-height: 100px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;">
+                                                <rect width="200" height="100" fill="#f8f9fa"/>
+                                                <text x="100" y="55" text-anchor="middle" fill="#6c757d" font-family="Arial, sans-serif" font-size="14">Store Logo</text>
+                                            </svg>
                                             <div>
                                                 <button type="button" class="btn btn-sm btn-outline-primary">
                                                     <i class="fas fa-upload me-1"></i> Upload New Logo
@@ -527,7 +201,10 @@
                                     <label class="form-label">Favicon</label>
                                     <div class="card p-3 mb-3">
                                         <div class="text-center">
-                                            <img src="https://via.placeholder.com/32x32?text=Icon" alt="Favicon" class="img-fluid mb-3" style="max-height: 32px;">
+                                            <svg width="32" height="32" class="img-fluid mb-3" style="max-height: 32px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;">
+                                                <rect width="32" height="32" fill="#f8f9fa"/>
+                                                <text x="16" y="20" text-anchor="middle" fill="#6c757d" font-family="Arial, sans-serif" font-size="10">Icon</text>
+                                            </svg>
                                             <div>
                                                 <button type="button" class="btn btn-sm btn-outline-primary">
                                                     <i class="fas fa-upload me-1"></i> Upload Favicon
@@ -548,7 +225,7 @@
                                         <label for="primaryColor" class="form-label">Primary Color</label>
                                         <div class="input-group">
                                             <span class="input-group-text">
-                                                <input type="color" class="form-control form-control-color p-0" id="primaryColorPicker" value="#0d6efd">
+                                                <input type="color" class="form-control form-control-color p-0" id="appearancePrimaryColorPicker" value="#0d6efd">
                                             </span>
                                             <input type="text" class="form-control" id="primaryColor" name="primary_color" value="#0d6efd">
                                         </div>
@@ -575,7 +252,7 @@
                                         <label for="backgroundColor" class="form-label">Background Color</label>
                                         <div class="input-group">
                                             <span class="input-group-text">
-                                                <input type="color" class="form-control form-control-color p-0" id="backgroundColorPicker" value="#f8f9fa">
+                                                <input type="color" class="form-control form-control-color p-0" id="appearanceBackgroundColorPicker" value="#f8f9fa">
                                             </span>
                                             <input type="text" class="form-control" id="backgroundColor" name="background_color" value="#f8f9fa">
                                         </div>
@@ -595,7 +272,10 @@
                                                         Default Layout
                                                     </label>
                                                 </div>
-                                                <img src="https://via.placeholder.com/250x150?text=Default+Layout" alt="Default Layout" class="img-fluid mt-2">
+                                                <svg width="250" height="150" class="img-fluid mt-2" style="background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;">
+                                                    <rect width="250" height="150" fill="#f8f9fa"/>
+                                                    <text x="125" y="80" text-anchor="middle" fill="#6c757d" font-family="Arial, sans-serif" font-size="14">Default Layout</text>
+                                                </svg>
                                             </div>
                                         </div>
                                     </div>
@@ -608,7 +288,10 @@
                                                         Alternative Layout
                                                     </label>
                                                 </div>
-                                                <img src="https://via.placeholder.com/250x150?text=Alternative+Layout" alt="Alternative Layout" class="img-fluid mt-2">
+                                                <svg width="250" height="150" class="img-fluid mt-2" style="background-color: #e9ecef; border: 1px solid #dee2e6; border-radius: 4px;">
+                                                    <rect width="250" height="150" fill="#e9ecef"/>
+                                                    <text x="125" y="80" text-anchor="middle" fill="#6c757d" font-family="Arial, sans-serif" font-size="14">Alternative Layout</text>
+                                                </svg>
                                             </div>
                                         </div>
                                     </div>
@@ -617,86 +300,6 @@
                             
                             <button type="button" class="btn btn-primary" id="saveAppearanceSettingsBtn">
                                 <i class="fas fa-save me-1"></i> Save Appearance Settings
-                            </button>
-                        </form>
-                    </div>
-                    
-                    <!-- Advanced Settings -->
-                    <div class="tab-pane fade" id="advanced" role="tabpanel" aria-labelledby="advanced-tab">
-                        <h5 class="mb-4">Advanced Settings</h5>
-                        <form id="advancedSettingsForm">
-                            <div class="mb-4">
-                                <h6 class="mb-3">Cache Settings</h6>
-                                <div class="mb-3">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="enableCache" name="enable_cache" checked>
-                                        <label class="form-check-label" for="enableCache">
-                                            Enable Page Cache
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="cacheExpiration" class="form-label">Cache Expiration (minutes)</label>
-                                    <input type="number" class="form-control" id="cacheExpiration" name="cache_expiration" value="60" min="1">
-                                </div>
-                                <div class="mb-3">
-                                    <button type="button" class="btn btn-outline-secondary" id="clearCacheBtn">
-                                        <i class="fas fa-broom me-1"></i> Clear Cache
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <h6 class="mb-3">API Settings</h6>
-                                <div class="mb-3">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="enableApi" name="enable_api" checked>
-                                        <label class="form-check-label" for="enableApi">
-                                            Enable API Access
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="apiKey" class="form-label">API Key</label>
-                                    <div class="input-group">
-                                        <input type="text" class="form-control" id="apiKey" name="api_key" value="sk_test_api_key_example" readonly>
-                                        <button class="btn btn-outline-secondary" type="button" id="regenerateApiKeyBtn">
-                                            <i class="fas fa-sync-alt"></i> Regenerate
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <h6 class="mb-3">Maintenance Mode</h6>
-                                <div class="mb-3">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="enableMaintenance" name="enable_maintenance">
-                                        <label class="form-check-label" for="enableMaintenance">
-                                            Enable Maintenance Mode
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="maintenanceMessage" class="form-label">Maintenance Message</label>
-                                    <textarea class="form-control" id="maintenanceMessage" name="maintenance_message" rows="3">We're currently updating our store to serve you better. Please check back soon.</textarea>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <h6 class="mb-3">Database Backup</h6>
-                                <div class="mb-3">
-                                    <button type="button" class="btn btn-outline-primary" id="backupDatabaseBtn">
-                                        <i class="fas fa-database me-1"></i> Create Backup
-                                    </button>
-                                    <button type="button" class="btn btn-outline-secondary ms-2" id="viewBackupsBtn">
-                                        <i class="fas fa-history me-1"></i> View Backups
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <button type="button" class="btn btn-primary" id="saveAdvancedSettingsBtn">
-                                <i class="fas fa-save me-1"></i> Save Advanced Settings
                             </button>
                         </form>
                     </div>
@@ -1111,12 +714,12 @@
                                         <input type="text" class="form-control" id="place_order_button_text" name="place_order_button_text">
                                     </div>
                                     <div class="col-md-6">
-                                        <label for="primary_color" class="form-label">Primary Color</label>
+                                        <label for="checkoutPrimaryColor" class="form-label">Primary Color</label>
                                         <div class="input-group">
                                             <span class="input-group-text">
-                                                <input type="color" class="form-control form-control-color p-0" id="primaryColorPicker" value="#930000">
+                                                <input type="color" class="form-control form-control-color p-0" id="checkoutPrimaryColorPicker" value="#930000">
                                             </span>
-                                            <input type="text" class="form-control" id="primary_color" name="primary_color" value="#930000">
+                                            <input type="text" class="form-control" id="checkoutPrimaryColor" name="primary_color" value="#930000">
                                         </div>
                                     </div>
                                 </div>
@@ -1291,12 +894,12 @@
                                     <div class="card-body">
                                         <div class="row mb-3">
                                             <div class="col-md-4">
-                                                <label for="primary_color" class="form-label fw-medium">Primary Color</label>
+                                                <label for="checkoutCustomPrimaryColor" class="form-label fw-medium">Primary Color</label>
                                                 <div class="input-group">
                                                     <span class="input-group-text p-1">
-                                                        <input type="color" class="form-control form-control-color border-0 p-0" id="primaryColorPicker" value="#930000" style="width: 30px; height: 30px;">
+                                                        <input type="color" class="form-control form-control-color border-0 p-0" id="checkoutCustomPrimaryColorPicker" value="#930000" style="width: 30px; height: 30px;">
                                                     </span>
-                                                    <input type="text" class="form-control" id="primary_color" name="primary_color" value="#930000" placeholder="#930000">
+                                                    <input type="text" class="form-control" id="checkoutCustomPrimaryColor" name="primary_color" value="#930000" placeholder="#930000">
                                                 </div>
                                                 <div class="form-text">Main brand color for buttons and highlights</div>
                                             </div>
@@ -1311,12 +914,12 @@
                                                 <div class="form-text">Color for action buttons</div>
                                             </div>
                                             <div class="col-md-4">
-                                                <label for="background_color" class="form-label fw-medium">Background Color</label>
+                                                <label for="checkoutBackgroundColor" class="form-label fw-medium">Background Color</label>
                                                 <div class="input-group">
                                                     <span class="input-group-text p-1">
-                                                        <input type="color" class="form-control form-control-color border-0 p-0" id="backgroundColorPicker" value="#f8fafc" style="width: 30px; height: 30px;">
+                                                        <input type="color" class="form-control form-control-color border-0 p-0" id="checkoutBackgroundColorPicker" value="#f8fafc" style="width: 30px; height: 30px;">
                                                     </span>
-                                                    <input type="text" class="form-control" id="background_color" name="background_color" value="#f8fafc" placeholder="#f8fafc">
+                                                    <input type="text" class="form-control" id="checkoutBackgroundColor" name="background_color" value="#f8fafc" placeholder="#f8fafc">
                                                 </div>
                                                 <div class="form-text">Background color for sections</div>
                                             </div>
@@ -1652,25 +1255,27 @@ document.addEventListener('DOMContentLoaded', function() {
     // Link color pickers to their text inputs
     function setupColorPickers() {
         const colorPairs = [
-            { picker: 'primaryColorPicker', input: 'primaryColor' },
+            { picker: 'appearancePrimaryColorPicker', input: 'primaryColor' },
             { picker: 'secondaryColorPicker', input: 'secondaryColor' },
             { picker: 'accentColorPicker', input: 'accentColor' },
-            { picker: 'backgroundColorPicker', input: 'backgroundColor' }
+            { picker: 'appearanceBackgroundColorPicker', input: 'backgroundColor' }
         ];
         
         colorPairs.forEach(pair => {
             const picker = document.getElementById(pair.picker);
             const input = document.getElementById(pair.input);
             
-            picker.addEventListener('input', function() {
-                input.value = this.value;
-            });
-            
-            input.addEventListener('input', function() {
-                if (this.value.startsWith('#') && (this.value.length === 4 || this.value.length === 7)) {
-                    picker.value = this.value;
-                }
-            });
+            if (picker && input) {
+                picker.addEventListener('input', function() {
+                    input.value = this.value;
+                });
+                
+                input.addEventListener('input', function() {
+                    if (this.value.startsWith('#') && (this.value.length === 4 || this.value.length === 7)) {
+                        picker.value = this.value;
+                    }
+                });
+            }
         });
     }
     
@@ -1683,28 +1288,12 @@ document.addEventListener('DOMContentLoaded', function() {
             saveSettings('general');
         });
         
-        document.getElementById('saveShippingSettingsBtn').addEventListener('click', function() {
-            saveSettings('shipping');
-        });
-        
-        document.getElementById('savePaymentSettingsBtn').addEventListener('click', function() {
-            saveSettings('payment');
-        });
-        
-        document.getElementById('saveTaxSettingsBtn').addEventListener('click', function() {
-            saveSettings('tax');
-        });
-        
         document.getElementById('saveEmailSettingsBtn').addEventListener('click', function() {
             saveSettings('email');
         });
         
         document.getElementById('saveAppearanceSettingsBtn').addEventListener('click', function() {
             saveSettings('appearance');
-        });
-        
-        document.getElementById('saveAdvancedSettingsBtn').addEventListener('click', function() {
-            saveSettings('advanced');
         });
         
         document.getElementById('saveCheckoutCustomizationBtn').addEventListener('click', function() {
@@ -1722,21 +1311,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Test email button
         document.getElementById('testEmailBtn').addEventListener('click', function() {
             sendTestEmail();
-        });
-        
-        // Clear cache button
-        document.getElementById('clearCacheBtn').addEventListener('click', function() {
-            clearCache();
-        });
-        
-        // Regenerate API key button
-        document.getElementById('regenerateApiKeyBtn').addEventListener('click', function() {
-            regenerateApiKey();
-        });
-        
-        // Database backup button
-        document.getElementById('backupDatabaseBtn').addEventListener('click', function() {
-            createDatabaseBackup();
         });
         
         // Set up Email Template Modal
@@ -1898,33 +1472,6 @@ document.addEventListener('DOMContentLoaded', function() {
         showAlert('Test email sent successfully! Please check your inbox.', 'success');
     }
     
-    function clearCache() {
-        // Mock API call
-        console.log('Clearing application cache...');
-        
-        // Show success message
-        showAlert('Cache cleared successfully!', 'success');
-    }
-    
-    function regenerateApiKey() {
-        // Mock API call to generate new key
-        const newApiKey = 'sk_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-        
-        // Update input field
-        document.getElementById('apiKey').value = newApiKey;
-        
-        // Show success message
-        showAlert('API key regenerated successfully!', 'success');
-    }
-    
-    function createDatabaseBackup() {
-        // Mock API call
-        console.log('Creating database backup...');
-        
-        // Show success message
-        showAlert('Database backup created successfully!', 'success');
-    }
-    
     // Helper function to show alert messages
     function showAlert(message, type) {
         // Create alert element
@@ -1994,8 +1541,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // Update color picker for primary color
-        const primaryColorPicker = document.getElementById('primaryColorPicker');
-        const primaryColorInput = document.getElementById('primary_color');
+        const primaryColorPicker = document.getElementById('checkoutCustomPrimaryColorPicker');
+        const primaryColorInput = document.getElementById('checkoutCustomPrimaryColor');
         if (primaryColorPicker && primaryColorInput && settings.primary_color) {
             primaryColorPicker.value = settings.primary_color;
             primaryColorInput.value = settings.primary_color;
@@ -2109,9 +1656,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup color picker synchronization for checkout customization
     const colorPickers = [
-        { picker: 'primaryColorPicker', input: 'primary_color' },
+        { picker: 'checkoutPrimaryColorPicker', input: 'checkoutPrimaryColor' },
         { picker: 'buttonColorPicker', input: 'button_color' },
-        { picker: 'backgroundColorPicker', input: 'background_color' }
+        { picker: 'checkoutBackgroundColorPicker', input: 'checkoutBackgroundColor' },
+        { picker: 'checkoutCustomPrimaryColorPicker', input: 'checkoutCustomPrimaryColor' }
     ];
     
     colorPickers.forEach(pair => {
