@@ -28,6 +28,7 @@ from products.models import Product, ProductVariant, ProductImage, Category
 from orders.models import Order, OrderItem
 from incomplete_orders.models import IncompleteOrder, IncompleteOrderItem, IncompleteShippingAddress
 from users.models import User
+from settings.models import CheckoutCustomization
 
 # Helper functions for stock management
 def restock_order_items(order):
@@ -2378,4 +2379,275 @@ def export_products_performance(request):
         return Response({
             'error': 'Failed to export data',
             'detail': str(e)
+        }, status=500)
+
+
+class CheckoutCustomizationViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing checkout page customization settings"""
+    queryset = CheckoutCustomization.objects.all()
+    permission_classes = [IsAdminUser]
+    
+    def get_permissions(self):
+        """Override permissions for specific actions"""
+        if self.action == 'active_settings':
+            # Allow anyone to read active settings for dashboard loading
+            return []
+        return super().get_permissions()
+    
+    def get_serializer_class(self):
+        # Create inline serializer for checkout customization
+        from rest_framework import serializers
+        
+        class CheckoutCustomizationSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = CheckoutCustomization
+                fields = '__all__'
+                
+        return CheckoutCustomizationSerializer
+    
+    def get_queryset(self):
+        """Get checkout customization settings, prioritizing active ones"""
+        return CheckoutCustomization.objects.all().order_by('-is_active', '-updated_at')
+    
+    @action(detail=False, methods=['get'])
+    def active_settings(self, request):
+        """Get the currently active checkout customization settings"""
+        try:
+            active_settings = CheckoutCustomization.get_active_settings()
+            
+            if not active_settings.pk:
+                # Return default settings if none exist
+                return Response({
+                    'exists': False,
+                    'message': 'No active checkout customization found. Using default settings.',
+                    'settings': self.get_serializer(active_settings).data
+                })
+            
+            serializer = self.get_serializer(active_settings)
+            return Response({
+                'exists': True,
+                'settings': serializer.data
+            })
+            
+        except Exception as e:
+            return Response({
+                'error': f'Failed to retrieve active settings: {str(e)}'
+            }, status=500)
+    
+    @action(detail=True, methods=['post'])
+    def activate(self, request, pk=None):
+        """Activate a specific checkout customization (deactivate others)"""
+        try:
+            customization = self.get_object()
+            
+            # Deactivate all other customizations
+            CheckoutCustomization.objects.exclude(pk=customization.pk).update(is_active=False)
+            
+            # Activate this one
+            customization.is_active = True
+            customization.save()
+            
+            # Log activity
+            try:
+                AdminActivity.objects.create(
+                    user=request.user,
+                    action='activated_checkout_customization',
+                    model_name='CheckoutCustomization',
+                    object_id=customization.id,
+                    object_repr=str(customization),
+                    ip_address=self.get_client_ip(request),
+                    user_agent=request.META.get('HTTP_USER_AGENT', '')
+                )
+            except Exception as e:
+                print(f"Error logging activity: {str(e)}")
+            
+            return Response({
+                'success': True,
+                'message': 'Checkout customization activated successfully'
+            })
+            
+        except Exception as e:
+            return Response({
+                'error': f'Failed to activate customization: {str(e)}'
+            }, status=500)
+    
+    @action(detail=False, methods=['post'])
+    def reset_to_defaults(self, request):
+        """Create new customization with default values"""
+        try:
+            # Deactivate all existing customizations
+            CheckoutCustomization.objects.update(is_active=False)
+            
+            # Create new default customization
+            default_customization = CheckoutCustomization.objects.create(is_active=True)
+            
+            # Log activity
+            try:
+                AdminActivity.objects.create(
+                    user=request.user,
+                    action='reset_checkout_to_defaults',
+                    model_name='CheckoutCustomization',
+                    object_id=default_customization.id,
+                    object_repr=str(default_customization),
+                    ip_address=self.get_client_ip(request),
+                    user_agent=request.META.get('HTTP_USER_AGENT', '')
+                )
+            except Exception as e:
+                print(f"Error logging activity: {str(e)}")
+            
+            serializer = self.get_serializer(default_customization)
+            return Response({
+                'success': True,
+                'message': 'Checkout customization reset to defaults',
+                'settings': serializer.data
+            })
+            
+        except Exception as e:
+            return Response({
+                'error': f'Failed to reset to defaults: {str(e)}'
+            }, status=500)
+    
+    @action(detail=False, methods=['post'])
+    def bulk_update(self, request):
+        """Update multiple fields at once for the active customization"""
+        try:
+            active_settings = CheckoutCustomization.objects.filter(is_active=True).first()
+            
+            if not active_settings:
+                # Create new active customization if none exists
+                active_settings = CheckoutCustomization.objects.create(is_active=True)
+            
+            # Update fields from request data
+            update_data = request.data.copy()
+            
+            # Remove non-model fields if any
+            if 'csrfmiddlewaretoken' in update_data:
+                del update_data['csrfmiddlewaretoken']
+            
+            # Update the settings
+            for field, value in update_data.items():
+                if hasattr(active_settings, field):
+                    setattr(active_settings, field, value)
+            
+            active_settings.save()
+            
+            # Log activity
+            try:
+                AdminActivity.objects.create(
+                    user=request.user,
+                    action='bulk_updated_checkout_customization',
+                    model_name='CheckoutCustomization',
+                    object_id=active_settings.id,
+                    object_repr=str(active_settings),
+                    ip_address=self.get_client_ip(request),
+                    user_agent=request.META.get('HTTP_USER_AGENT', '')
+                )
+            except Exception as e:
+                print(f"Error logging activity: {str(e)}")
+            
+            serializer = self.get_serializer(active_settings)
+            return Response({
+                'success': True,
+                'message': 'Checkout customization updated successfully',
+                'settings': serializer.data
+            })
+            
+        except Exception as e:
+            return Response({
+                'error': f'Failed to update customization: {str(e)}'
+            }, status=500)
+    
+    def perform_create(self, serializer):
+        # When creating new customization, optionally deactivate others
+        if serializer.validated_data.get('is_active', False):
+            CheckoutCustomization.objects.update(is_active=False)
+        
+        instance = serializer.save()
+        
+        # Log activity
+        try:
+            AdminActivity.objects.create(
+                user=self.request.user,
+                action='created',
+                model_name='CheckoutCustomization',
+                object_id=instance.id,
+                object_repr=str(instance),
+                ip_address=self.get_client_ip(self.request),
+                user_agent=self.request.META.get('HTTP_USER_AGENT', '')
+            )
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
+    
+    def perform_update(self, serializer):
+        # When updating, ensure only one active customization
+        if serializer.validated_data.get('is_active', False):
+            CheckoutCustomization.objects.exclude(pk=self.get_object().pk).update(is_active=False)
+        
+        instance = serializer.save()
+        
+        # Log activity
+        try:
+            AdminActivity.objects.create(
+                user=self.request.user,
+                action='updated',
+                model_name='CheckoutCustomization',
+                object_id=instance.id,
+                object_repr=str(instance),
+                ip_address=self.get_client_ip(self.request),
+                user_agent=self.request.META.get('HTTP_USER_AGENT', '')
+            )
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
+    
+    def perform_destroy(self, instance):
+        # Log activity before deletion
+        try:
+            AdminActivity.objects.create(
+                user=self.request.user,
+                action='deleted',
+                model_name='CheckoutCustomization',
+                object_id=instance.id,
+                object_repr=str(instance),
+                ip_address=self.get_client_ip(self.request),
+                user_agent=self.request.META.get('HTTP_USER_AGENT', '')
+            )
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
+        
+        instance.delete()
+    
+    def get_client_ip(self, request):
+        """Get client IP address"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            return x_forwarded_for.split(',')[0]
+        return request.META.get('REMOTE_ADDR')
+
+
+@api_view(['GET'])
+@permission_classes([])  # Allow anonymous access for frontend
+def get_checkout_customization(request):
+    """Public API endpoint to get active checkout customization for frontend"""
+    try:
+        active_settings = CheckoutCustomization.get_active_settings()
+        
+        # Create a simplified serializer for frontend use
+        from rest_framework import serializers
+        
+        class FrontendCheckoutCustomizationSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = CheckoutCustomization
+                exclude = ['id', 'created_at', 'updated_at']  # Exclude metadata fields
+        
+        serializer = FrontendCheckoutCustomizationSerializer(active_settings)
+        return Response({
+            'success': True,
+            'settings': serializer.data
+        })
+        
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': f'Failed to retrieve checkout customization: {str(e)}',
+            'settings': {}  # Return empty settings as fallback
         }, status=500)

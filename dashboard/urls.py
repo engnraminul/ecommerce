@@ -15,6 +15,7 @@ router.register(r'product-images', views.ProductImageDashboardViewSet)
 router.register(r'orders', views.OrderDashboardViewSet)
 router.register(r'incomplete-orders', views.IncompleteOrderDashboardViewSet)
 router.register(r'expenses', views.ExpenseDashboardViewSet)
+router.register(r'checkout-customization', views.CheckoutCustomizationViewSet)
 app_name = 'dashboard'
 
 urlpatterns = [
@@ -41,6 +42,9 @@ urlpatterns = [
     path('api/export-products/', views.export_products_performance, name='export_products'),
     # Fraud check API endpoint
     path('api/fraud-check/', views.fraud_check_api, name='fraud_check_api'),
+    
+    # Checkout customization public API
+    path('api/checkout-customization/', views.get_checkout_customization, name='get_checkout_customization'),
     
     # Frontend views for the dashboard SPA
     path('', views.dashboard_home, name='home'),

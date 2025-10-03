@@ -34,6 +34,9 @@
                     <button class="nav-link text-start" id="advanced-tab" data-bs-toggle="pill" data-bs-target="#advanced" type="button" role="tab" aria-selected="false">
                         <i class="fas fa-tools fa-fw me-2"></i> Advanced
                     </button>
+                    <button class="nav-link text-start" id="checkout-tab" data-bs-toggle="pill" data-bs-target="#checkout" type="button" role="tab" aria-selected="false">
+                        <i class="fas fa-shopping-cart fa-fw me-2"></i> Checkout Customize
+                    </button>
                 </div>
             </div>
         </div>
@@ -697,6 +700,704 @@
                             </button>
                         </form>
                     </div>
+                    
+                    <!-- Checkout Customization -->
+                    <div class="tab-pane fade" id="checkout" role="tabpanel" aria-labelledby="checkout-tab">
+                        <h5 class="mb-4">Checkout Page Customization</h5>
+                        <form id="checkoutCustomizationForm">
+                            {% csrf_token %}
+                            <!-- Page Header Section -->
+                            <div class="mb-4">
+                                <h6 class="mb-3">Page Header</h6>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="page_title" class="form-label">Page Title</label>
+                                        <input type="text" class="form-control" id="page_title" name="page_title">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="page_subtitle" class="form-label">Page Subtitle</label>
+                                        <input type="text" class="form-control" id="page_subtitle" name="page_subtitle">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Customer Information Section -->
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-user me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                                    <h6 class="mb-0">Customer Information Fields</h6>
+                                </div>
+                                
+                                <div class="card border-0 shadow-sm mb-3">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-heading me-2" style="color: var(--primary-color, #930000);"></i>Section Header</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="customer_section_title" class="form-label fw-medium">Section Title</label>
+                                            <input type="text" class="form-control" id="customer_section_title" name="customer_section_title" placeholder="Customer Information">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Full Name Fields -->
+                                <div class="card border-0 shadow-sm mb-3">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-signature me-2" style="color: var(--primary-color, #930000);"></i>Full Name Field</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <label for="full_name_label" class="form-label fw-medium">Field Label</label>
+                                                <input type="text" class="form-control" id="full_name_label" name="full_name_label" placeholder="Full Name">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="full_name_placeholder" class="form-label fw-medium">Placeholder Text</label>
+                                                <input type="text" class="form-control" id="full_name_placeholder" name="full_name_placeholder" placeholder="Enter your full name">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="full_name_default" class="form-label fw-medium">Default Value</label>
+                                                <input type="text" class="form-control" id="full_name_default" name="full_name_default" placeholder="Optional default value">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Email Fields -->
+                                <div class="card border-0 shadow-sm mb-3">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-envelope me-2" style="color: var(--primary-color, #930000);"></i>Email Field</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <label for="email_label" class="form-label fw-medium">Field Label</label>
+                                                <input type="text" class="form-control" id="email_label" name="email_label" placeholder="Email Address *">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="email_placeholder" class="form-label fw-medium">Placeholder Text</label>
+                                                <input type="text" class="form-control" id="email_placeholder" name="email_placeholder" placeholder="Enter your email address">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="email_default" class="form-label fw-medium">Default Value</label>
+                                                <input type="email" class="form-control" id="email_default" name="email_default" placeholder="Optional default email">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Phone Fields -->
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-phone me-2" style="color: var(--primary-color, #930000);"></i>Phone Field</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <label for="phone_label" class="form-label fw-medium">Field Label</label>
+                                                <input type="text" class="form-control" id="phone_label" name="phone_label" placeholder="Phone Number *">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="phone_placeholder" class="form-label fw-medium">Placeholder Text</label>
+                                                <input type="text" class="form-control" id="phone_placeholder" name="phone_placeholder" placeholder="Enter your phone number">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="phone_default" class="form-label fw-medium">Default Value</label>
+                                                <input type="tel" class="form-control" id="phone_default" name="phone_default" placeholder="Optional default phone">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Shipping Address Section -->
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-map-marker-alt me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                                    <h6 class="mb-0">Shipping Address Configuration</h6>
+                                </div>
+                                
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-home me-2" style="color: var(--primary-color, #930000);"></i>Address Field Settings</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <label for="shipping_section_title" class="form-label fw-medium">Section Title</label>
+                                                <input type="text" class="form-control" id="shipping_section_title" name="shipping_section_title" placeholder="Shipping Address">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="address_label" class="form-label fw-medium">Address Label</label>
+                                                <input type="text" class="form-control" id="address_label" name="address_label" placeholder="Street Address">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="address_placeholder" class="form-label fw-medium">Address Placeholder</label>
+                                                <input type="text" class="form-control" id="address_placeholder" name="address_placeholder" placeholder="Enter your complete address">
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="address_default" class="form-label fw-medium">Default Address Value</label>
+                                            <textarea class="form-control" id="address_default" name="address_default" rows="2" placeholder="Optional default address text"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Order Instructions Section -->
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-clipboard-list me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                                    <h6 class="mb-0">Order Instructions Configuration</h6>
+                                </div>
+                                
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-pencil-alt me-2" style="color: var(--primary-color, #930000);"></i>Instructions Field Settings</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="instructions_section_title" class="form-label fw-medium">Section Title</label>
+                                                <input type="text" class="form-control" id="instructions_section_title" name="instructions_section_title" placeholder="Order Instructions">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="instructions_label" class="form-label fw-medium">Field Label</label>
+                                                <input type="text" class="form-control" id="instructions_label" name="instructions_label" placeholder="Special Instructions (Optional)">
+                                            </div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="instructions_placeholder" class="form-label fw-medium">Placeholder Text</label>
+                                                <input type="text" class="form-control" id="instructions_placeholder" name="instructions_placeholder" placeholder="Any special delivery instructions...">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="instructions_help_text" class="form-label fw-medium">Help Text</label>
+                                                <input type="text" class="form-control" id="instructions_help_text" name="instructions_help_text" placeholder="Maximum 500 characters">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Shipping Method Section -->
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-truck me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                                    <h6 class="mb-0">Shipping Method Configuration</h6>
+                                </div>
+                                
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-map-marker-alt me-2" style="color: var(--primary-color, #930000);"></i>Delivery Location Settings</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <label for="shipping_method_section_title" class="form-label fw-medium">Section Title</label>
+                                                <input type="text" class="form-control" id="shipping_method_section_title" name="shipping_method_section_title" placeholder="Shipping Method">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="delivery_location_label" class="form-label fw-medium">Location Field Label</label>
+                                                <input type="text" class="form-control" id="delivery_location_label" name="delivery_location_label" placeholder="Delivery Location *">
+                                            </div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="dhaka_location_label" class="form-label fw-medium">
+                                                    <i class="fas fa-city me-1 text-success"></i>Dhaka Location Label
+                                                </label>
+                                                <input type="text" class="form-control" id="dhaka_location_label" name="dhaka_location_label" placeholder="Dhaka City">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="outside_location_label" class="form-label fw-medium">
+                                                    <i class="fas fa-globe me-1 text-info"></i>Outside Dhaka Label
+                                                </label>
+                                                <input type="text" class="form-control" id="outside_location_label" name="outside_location_label" placeholder="Outside Dhaka">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Payment Methods Section -->
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-credit-card me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                                    <h6 class="mb-0">Payment Methods Configuration</h6>
+                                </div>
+                                
+                                <!-- Payment Method Labels -->
+                                <div class="card border-0 shadow-sm mb-4">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-tags me-2" style="color: var(--primary-color, #930000);"></i>Payment Method Labels</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-3">
+                                                <label for="payment_section_title" class="form-label fw-medium">Section Title</label>
+                                                <input type="text" class="form-control" id="payment_section_title" name="payment_section_title" placeholder="Payment Method">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label for="cod_label" class="form-label fw-medium">COD Label</label>
+                                                <input type="text" class="form-control" id="cod_label" name="cod_label" placeholder="Cash on Delivery">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label for="bkash_label" class="form-label fw-medium">
+                                                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNCIgZmlsbD0iI0U5MUU2MyIvPgo8dGV4dCB4PSIxMiIgeT0iMTUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5iS2FzaDwvdGV4dD4KICA8L3N2Zz4=" alt="bKash" class="me-1" style="width: 16px; height: 16px;">
+                                                    bKash Label
+                                                </label>
+                                                <input type="text" class="form-control" id="bkash_label" name="bkash_label" placeholder="bKash">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label for="nagad_label" class="form-label fw-medium">
+                                                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNCIgZmlsbD0iI2ZmNzkwMCIvPgo8dGV4dCB4PSIxMiIgeT0iMTUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI5IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPk5hZ2FkPC90ZXh0Pgo8L3N2Zz4=" alt="Nagad" class="me-1" style="width: 16px; height: 16px;">
+                                                    Nagad Label
+                                                </label>
+                                                <input type="text" class="form-control" id="nagad_label" name="nagad_label" placeholder="Nagad">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Merchant Account Numbers -->
+                                <div class="card border-0 shadow-sm mb-4">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-building me-2" style="color: var(--primary-color, #930000);"></i>Merchant Account Numbers</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="bkash_merchant_number" class="form-label fw-medium">
+                                                    <i class="fas fa-phone me-1" style="color: #E91E63;"></i>bKash Merchant Number
+                                                </label>
+                                                <input type="text" class="form-control" id="bkash_merchant_number" name="bkash_merchant_number" placeholder="01XXXXXXXXX">
+                                                <div class="form-text">Enter your bKash merchant mobile number</div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="nagad_merchant_number" class="form-label fw-medium">
+                                                    <i class="fas fa-phone me-1" style="color: #ff7900;"></i>Nagad Merchant Number
+                                                </label>
+                                                <input type="text" class="form-control" id="nagad_merchant_number" name="nagad_merchant_number" placeholder="01XXXXXXXXX">
+                                                <div class="form-text">Enter your Nagad merchant mobile number</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Payment Instructions -->
+                                <div class="card border-0 shadow-sm mb-4">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-info-circle me-2" style="color: var(--primary-color, #930000);"></i>Payment Instructions</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- bKash Instructions -->
+                                        <div class="mb-4">
+                                            <label for="bkash_instructions" class="form-label fw-medium">
+                                                <i class="fas fa-mobile-alt me-1" style="color: #E91E63;"></i>bKash Payment Instructions
+                                            </label>
+                                            <textarea class="form-control" id="bkash_instructions" name="bkash_instructions" rows="6" placeholder="Enter step-by-step instructions for bKash payment (one instruction per line)"></textarea>
+                                            <div class="form-text">
+                                                <small>Enter each instruction on a new line. Instructions will be displayed as a numbered list. Available variables: <code>{merchant_number}</code>, <code>{amount}</code></small>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Nagad Instructions -->
+                                        <div class="mb-4">
+                                            <label for="nagad_instructions" class="form-label fw-medium">
+                                                <i class="fas fa-mobile-alt me-1" style="color: #ff7900;"></i>Nagad Payment Instructions
+                                            </label>
+                                            <textarea class="form-control" id="nagad_instructions" name="nagad_instructions" rows="6" placeholder="Enter step-by-step instructions for Nagad payment (one instruction per line)"></textarea>
+                                            <div class="form-text">
+                                                <small>Enter each instruction on a new line. Instructions will be displayed as a numbered list. Available variables: <code>{merchant_number}</code>, <code>{amount}</code></small>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- COD Instructions -->
+                                        <div class="mb-3">
+                                            <label for="cod_instructions" class="form-label fw-medium">
+                                                <i class="fas fa-money-bill-wave me-1" style="color: #28a745;"></i>Cash on Delivery Instructions
+                                            </label>
+                                            <textarea class="form-control" id="cod_instructions" name="cod_instructions" rows="6" placeholder="Enter step-by-step instructions for cash on delivery (one instruction per line)"></textarea>
+                                            <div class="form-text">Enter each instruction on a new line. Instructions will be displayed as a numbered list to customers. Available variables: <code>{amount}</code></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Transaction Field Labels -->
+                                <div class="card border-0 shadow-sm mb-4">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-receipt me-2" style="color: var(--primary-color, #930000);"></i>Transaction Field Configuration</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- bKash Transaction Fields -->
+                                        <div class="row mb-4">
+                                            <div class="col-12">
+                                                <h6 class="text-muted mb-3">
+                                                    <i class="fas fa-mobile-alt me-1" style="color: #E91E63;"></i>bKash Transaction Fields
+                                                </h6>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="bkash_transaction_label" class="form-label fw-medium">Transaction ID Label</label>
+                                                <input type="text" class="form-control" id="bkash_transaction_label" name="bkash_transaction_label" placeholder="bKash Transaction ID *">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="bkash_transaction_placeholder" class="form-label fw-medium">Transaction ID Placeholder</label>
+                                                <input type="text" class="form-control" id="bkash_transaction_placeholder" name="bkash_transaction_placeholder" placeholder="Enter transaction ID after payment">
+                                            </div>
+                                            <div class="col-md-6 mt-3">
+                                                <label for="bkash_sender_label" class="form-label fw-medium">Sender Number Label</label>
+                                                <input type="text" class="form-control" id="bkash_sender_label" name="bkash_sender_label" placeholder="Sender Mobile Number *">
+                                            </div>
+                                            <div class="col-md-6 mt-3">
+                                                <label for="bkash_sender_placeholder" class="form-label fw-medium">Sender Number Placeholder</label>
+                                                <input type="text" class="form-control" id="bkash_sender_placeholder" name="bkash_sender_placeholder" placeholder="01XXXXXXXXX">
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Nagad Transaction Fields -->
+                                        <div class="row mb-3">
+                                            <div class="col-12">
+                                                <h6 class="text-muted mb-3">
+                                                    <i class="fas fa-mobile-alt me-1" style="color: #ff7900;"></i>Nagad Transaction Fields
+                                                </h6>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="nagad_transaction_label" class="form-label fw-medium">Transaction ID Label</label>
+                                                <input type="text" class="form-control" id="nagad_transaction_label" name="nagad_transaction_label" placeholder="Nagad Transaction ID *">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="nagad_transaction_placeholder" class="form-label fw-medium">Transaction ID Placeholder</label>
+                                                <input type="text" class="form-control" id="nagad_transaction_placeholder" name="nagad_transaction_placeholder" placeholder="Enter transaction ID after payment">
+                                            </div>
+                                            <div class="col-md-6 mt-3">
+                                                <label for="nagad_sender_label" class="form-label fw-medium">Sender Number Label</label>
+                                                <input type="text" class="form-control" id="nagad_sender_label" name="nagad_sender_label" placeholder="Sender Mobile Number *">
+                                            </div>
+                                            <div class="col-md-6 mt-3">
+                                                <label for="nagad_sender_placeholder" class="form-label fw-medium">Sender Number Placeholder</label>
+                                                <input type="text" class="form-control" id="nagad_sender_placeholder" name="nagad_sender_placeholder" placeholder="01XXXXXXXXX">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Order Summary Section -->
+                            <div class="mb-4">
+                                <h6 class="mb-3">Order Summary</h6>
+                                <div class="row mb-3">
+                                    <div class="col-md-3">
+                                        <label for="order_summary_title" class="form-label">Summary Title</label>
+                                        <input type="text" class="form-control" id="order_summary_title" name="order_summary_title">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="subtotal_label" class="form-label">Subtotal Label</label>
+                                        <input type="text" class="form-control" id="subtotal_label" name="subtotal_label">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="shipping_label" class="form-label">Shipping Label</label>
+                                        <input type="text" class="form-control" id="shipping_label" name="shipping_label">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="total_label" class="form-label">Total Label</label>
+                                        <input type="text" class="form-control" id="total_label" name="total_label">
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="place_order_button_text" class="form-label">Place Order Button Text</label>
+                                        <input type="text" class="form-control" id="place_order_button_text" name="place_order_button_text">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="primary_color" class="form-label">Primary Color</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">
+                                                <input type="color" class="form-control form-control-color p-0" id="primaryColorPicker" value="#930000">
+                                            </span>
+                                            <input type="text" class="form-control" id="primary_color" name="primary_color" value="#930000">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Trust & Security Section -->
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-shield-alt me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                                    <h6 class="mb-0">Trust & Security Elements</h6>
+                                </div>
+                                
+                                <!-- Display Options -->
+                                <div class="card border-0 shadow-sm mb-3">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-toggle-on me-2" style="color: var(--primary-color, #930000);"></i>Display Options</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-3">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="show_security_badges" name="show_security_badges" checked>
+                                                    <label class="form-check-label fw-medium" for="show_security_badges">
+                                                        <i class="fas fa-lock me-1 text-success"></i>Show Security Badges
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="show_trust_badges" name="show_trust_badges" checked>
+                                                    <label class="form-check-label fw-medium" for="show_trust_badges">
+                                                        <i class="fas fa-certificate me-1 text-warning"></i>Show Trust Badges
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="show_breadcrumb" name="show_breadcrumb" checked>
+                                                    <label class="form-check-label fw-medium" for="show_breadcrumb">
+                                                        <i class="fas fa-sitemap me-1 text-info"></i>Show Breadcrumb
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="show_order_summary" name="show_order_summary" checked>
+                                                    <label class="form-check-label fw-medium" for="show_order_summary">
+                                                        <i class="fas fa-list me-1 text-primary"></i>Show Order Summary
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Security & Trust Text -->
+                                <div class="card border-0 shadow-sm mb-3">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-shield-alt me-2" style="color: var(--primary-color, #930000);"></i>Security Badge Text</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <label for="trust_section_title" class="form-label fw-medium">Trust Section Title</label>
+                                                <input type="text" class="form-control" id="trust_section_title" name="trust_section_title" placeholder="Why shop with us?">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="security_ssl_text" class="form-label fw-medium">SSL Security Text</label>
+                                                <input type="text" class="form-control" id="security_ssl_text" name="security_ssl_text" placeholder="SSL Secured">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="security_safe_text" class="form-label fw-medium">Safe Checkout Text</label>
+                                                <input type="text" class="form-control" id="security_safe_text" name="security_safe_text" placeholder="Safe Checkout">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Trust Features -->
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-star me-2" style="color: var(--primary-color, #930000);"></i>Trust Features</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="fast_shipping_title" class="form-label fw-medium">
+                                                    <i class="fas fa-shipping-fast me-1 text-success"></i>Fast Shipping Title
+                                                </label>
+                                                <input type="text" class="form-control" id="fast_shipping_title" name="fast_shipping_title" placeholder="Fast Shipping">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="fast_shipping_description" class="form-label fw-medium">Fast Shipping Description</label>
+                                                <input type="text" class="form-control" id="fast_shipping_description" name="fast_shipping_description" placeholder="Free shipping on orders over $50">
+                                            </div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="easy_returns_title" class="form-label fw-medium">
+                                                    <i class="fas fa-undo-alt me-1 text-warning"></i>Easy Returns Title
+                                                </label>
+                                                <input type="text" class="form-control" id="easy_returns_title" name="easy_returns_title" placeholder="Easy Returns">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="easy_returns_description" class="form-label fw-medium">Easy Returns Description</label>
+                                                <input type="text" class="form-control" id="easy_returns_description" name="easy_returns_description" placeholder="30-day return policy">
+                                            </div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="support_title" class="form-label fw-medium">
+                                                    <i class="fas fa-headset me-1 text-info"></i>Support Title
+                                                </label>
+                                                <input type="text" class="form-control" id="support_title" name="support_title" placeholder="24/7 Support">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="support_description" class="form-label fw-medium">Support Description</label>
+                                                <input type="text" class="form-control" id="support_description" name="support_description" placeholder="Customer service available">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Breadcrumb Configuration -->
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-sitemap me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                                    <h6 class="mb-0">Breadcrumb Configuration</h6>
+                                </div>
+                                
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-link me-2" style="color: var(--primary-color, #930000);"></i>Breadcrumb Labels</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <label for="breadcrumb_home" class="form-label fw-medium">
+                                                    <i class="fas fa-home me-1 text-success"></i>Home Label
+                                                </label>
+                                                <input type="text" class="form-control" id="breadcrumb_home" name="breadcrumb_home" placeholder="Home">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="breadcrumb_cart" class="form-label fw-medium">
+                                                    <i class="fas fa-shopping-cart me-1 text-warning"></i>Cart Label
+                                                </label>
+                                                <input type="text" class="form-control" id="breadcrumb_cart" name="breadcrumb_cart" placeholder="Cart">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="breadcrumb_checkout" class="form-label fw-medium">
+                                                    <i class="fas fa-credit-card me-1 text-info"></i>Checkout Label
+                                                </label>
+                                                <input type="text" class="form-control" id="breadcrumb_checkout" name="breadcrumb_checkout" placeholder="Checkout">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Theme Customization -->
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-palette me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                                    <h6 class="mb-0">Theme Customization</h6>
+                                </div>
+                                
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-paint-brush me-2" style="color: var(--primary-color, #930000);"></i>Color Scheme</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <label for="primary_color" class="form-label fw-medium">Primary Color</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text p-1">
+                                                        <input type="color" class="form-control form-control-color border-0 p-0" id="primaryColorPicker" value="#930000" style="width: 30px; height: 30px;">
+                                                    </span>
+                                                    <input type="text" class="form-control" id="primary_color" name="primary_color" value="#930000" placeholder="#930000">
+                                                </div>
+                                                <div class="form-text">Main brand color for buttons and highlights</div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="button_color" class="form-label fw-medium">Button Color</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text p-1">
+                                                        <input type="color" class="form-control form-control-color border-0 p-0" id="buttonColorPicker" value="#930000" style="width: 30px; height: 30px;">
+                                                    </span>
+                                                    <input type="text" class="form-control" id="button_color" name="button_color" value="#930000" placeholder="#930000">
+                                                </div>
+                                                <div class="form-text">Color for action buttons</div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="background_color" class="form-label fw-medium">Background Color</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text p-1">
+                                                        <input type="color" class="form-control form-control-color border-0 p-0" id="backgroundColorPicker" value="#f8fafc" style="width: 30px; height: 30px;">
+                                                    </span>
+                                                    <input type="text" class="form-control" id="background_color" name="background_color" value="#f8fafc" placeholder="#f8fafc">
+                                                </div>
+                                                <div class="form-text">Background color for sections</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Loading & Success Messages -->
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-comment-dots me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                                    <h6 class="mb-0">Messages & Notifications</h6>
+                                </div>
+                                
+                                <!-- Loading Messages -->
+                                <div class="card border-0 shadow-sm mb-3">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-spinner me-2" style="color: var(--primary-color, #930000);"></i>Loading Messages</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <label for="loading_cart_message" class="form-label fw-medium">Loading Cart Message</label>
+                                                <input type="text" class="form-control" id="loading_cart_message" name="loading_cart_message" placeholder="Loading order items...">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="loading_shipping_message" class="form-label fw-medium">Loading Shipping Message</label>
+                                                <input type="text" class="form-control" id="loading_shipping_message" name="loading_shipping_message" placeholder="Loading shipping options...">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="processing_order_message" class="form-label fw-medium">Processing Order Message</label>
+                                                <input type="text" class="form-control" id="processing_order_message" name="processing_order_message" placeholder="Processing...">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Success/Error Messages -->
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-exclamation-circle me-2" style="color: var(--primary-color, #930000);"></i>Status Messages</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <label for="order_success_message" class="form-label fw-medium">
+                                                    <i class="fas fa-check-circle me-1 text-success"></i>Success Message
+                                                </label>
+                                                <input type="text" class="form-control" id="order_success_message" name="order_success_message" placeholder="Order placed successfully!">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="order_error_message" class="form-label fw-medium">
+                                                    <i class="fas fa-times-circle me-1 text-danger"></i>Error Message
+                                                </label>
+                                                <input type="text" class="form-control" id="order_error_message" name="order_error_message" placeholder="Error processing order. Please try again.">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="validation_error_message" class="form-label fw-medium">
+                                                    <i class="fas fa-exclamation-triangle me-1 text-warning"></i>Validation Error
+                                                </label>
+                                                <input type="text" class="form-control" id="validation_error_message" name="validation_error_message" placeholder="Please check your information and try again.">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-primary" id="saveCheckoutCustomizationBtn">
+                                    <i class="fas fa-save me-1"></i> Save Checkout Settings
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="resetCheckoutToDefaultsBtn">
+                                    <i class="fas fa-undo me-1"></i> Reset to Defaults
+                                </button>
+                                <button type="button" class="btn btn-outline-info" id="previewCheckoutBtn">
+                                    <i class="fas fa-eye me-1"></i> Preview Checkout
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -755,6 +1456,197 @@
 {% endblock %}
 
 {% block extra_js %}
+<style>
+/* Custom styles for professional checkout settings design */
+.card {
+    transition: box-shadow 0.15s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1) !important;
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.form-label {
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.form-label.fw-medium {
+    font-weight: 500;
+}
+
+.form-control:focus {
+    border-color: var(--bs-primary, #930000);
+    box-shadow: 0 0 0 0.2rem rgba(147, 0, 0, 0.25);
+}
+
+.form-control-color {
+    border-radius: 0.375rem;
+}
+
+.input-group-text {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+.text-primary {
+    color: var(--bs-primary, #930000) !important;
+}
+
+.nav-pills .nav-link {
+    color: #6c757d;
+    border-radius: 0.5rem;
+    margin-bottom: 0.25rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.nav-pills .nav-link:hover {
+    background-color: rgba(147, 0, 0, 0.1);
+    color: var(--bs-primary, #930000);
+}
+
+.nav-pills .nav-link.active {
+    background-color: var(--bs-primary, #930000);
+    color: white;
+}
+
+.form-check-input:checked {
+    background-color: var(--bs-primary, #930000);
+    border-color: var(--bs-primary, #930000);
+}
+
+.form-check-input:focus {
+    border-color: var(--bs-primary, #930000);
+    box-shadow: 0 0 0 0.25rem rgba(147, 0, 0, 0.25);
+}
+
+.btn-primary {
+    background-color: var(--bs-primary, #930000);
+    border-color: var(--bs-primary, #930000);
+}
+
+.btn-primary:hover {
+    background-color: #7a0000;
+    border-color: #7a0000;
+}
+
+.btn-outline-primary {
+    color: var(--bs-primary, #930000);
+    border-color: var(--bs-primary, #930000);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--bs-primary, #930000);
+    border-color: var(--bs-primary, #930000);
+}
+
+.shadow-sm {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+}
+
+.border-0 {
+    border: 0 !important;
+}
+
+.bg-light {
+    background-color: #f8f9fa !important;
+}
+
+/* Icon styling */
+.fa-mobile-alt, .fa-phone {
+    font-size: 0.875rem;
+}
+
+/* Color picker improvements */
+.form-control-color {
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+/* Form text styling */
+.form-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .col-md-3, .col-md-4, .col-md-6 {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Animation for alerts */
+.alert {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Textarea styling */
+textarea.form-control {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Button group spacing */
+.d-flex.gap-2 > * {
+    margin-right: 0.5rem;
+}
+
+.d-flex.gap-2 > *:last-child {
+    margin-right: 0;
+}
+
+/* Custom scrollbar for long forms */
+.card-body {
+    max-height: none;
+}
+
+/* Enhanced form section styling */
+.mb-4:last-child {
+    margin-bottom: 2rem !important;
+}
+
+/* Settings navigation styling */
+.nav-pills {
+    --bs-nav-pills-border-radius: 0.5rem;
+    --bs-nav-pills-link-active-bg: var(--bs-primary, #930000);
+}
+
+/* Card hover effects */
+.card-header:hover {
+    background-color: #e9ecef !important;
+}
+
+/* Icon colors for different payment methods */
+.text-bkash {
+    color: #E91E63;
+}
+
+.text-nagad {
+    color: #ff7900;
+}
+
+.text-cod {
+    color: #28a745;
+}
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Link color pickers to their text inputs
@@ -815,6 +1707,18 @@ document.addEventListener('DOMContentLoaded', function() {
             saveSettings('advanced');
         });
         
+        document.getElementById('saveCheckoutCustomizationBtn').addEventListener('click', function() {
+            saveCheckoutCustomization();
+        });
+        
+        document.getElementById('resetCheckoutToDefaultsBtn').addEventListener('click', function() {
+            resetCheckoutToDefaults();
+        });
+        
+        document.getElementById('previewCheckoutBtn').addEventListener('click', function() {
+            previewCheckout();
+        });
+        
         // Test email button
         document.getElementById('testEmailBtn').addEventListener('click', function() {
             sendTestEmail();
@@ -837,6 +1741,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Set up Email Template Modal
         setupEmailTemplateModal();
+        
+        // Load checkout customization on page load
+        loadCheckoutCustomization();
     }
     
     // Email Template Modal Setup
@@ -1043,6 +1950,186 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize settings on page load
     initSettings();
+    
+    // ===== CHECKOUT CUSTOMIZATION FUNCTIONS =====
+    
+    function loadCheckoutCustomization() {
+        console.log('Loading checkout customization settings...');
+        
+        fetch('/mb-admin/api/checkout-customization/active_settings/', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.settings) {
+                populateCheckoutForm(data.settings);
+                console.log('Checkout customization loaded successfully');
+            } else {
+                console.log('No checkout customization found, using defaults');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading checkout customization:', error);
+            showAlert('Failed to load checkout customization settings', 'danger');
+        });
+    }
+    
+    function populateCheckoutForm(settings) {
+        // Populate all form fields with settings data
+        Object.keys(settings).forEach(key => {
+            const element = document.getElementById(key);
+            if (element) {
+                if (element.type === 'checkbox') {
+                    element.checked = settings[key];
+                } else if (element.type === 'color') {
+                    element.value = settings[key] || '#930000';
+                } else {
+                    element.value = settings[key] || '';
+                }
+            }
+        });
+        
+        // Update color picker for primary color
+        const primaryColorPicker = document.getElementById('primaryColorPicker');
+        const primaryColorInput = document.getElementById('primary_color');
+        if (primaryColorPicker && primaryColorInput && settings.primary_color) {
+            primaryColorPicker.value = settings.primary_color;
+            primaryColorInput.value = settings.primary_color;
+        }
+    }
+    
+    function saveCheckoutCustomization() {
+        console.log('Saving checkout customization...');
+        
+        const form = document.getElementById('checkoutCustomizationForm');
+        const formData = new FormData(form);
+        
+        // Convert FormData to object
+        const settings = {};
+        for (const [key, value] of formData.entries()) {
+            settings[key] = value;
+        }
+        
+        // Handle checkboxes (they won't appear in FormData if unchecked)
+        const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            settings[checkbox.name] = checkbox.checked;
+        });
+        
+        // Make API call to save settings
+        fetch('/mb-admin/api/checkout-customization/bulk_update/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify(settings)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('Checkout customization saved successfully!', 'success');
+                console.log('Checkout customization saved:', data);
+            } else {
+                showAlert(`Failed to save: ${data.error || 'Unknown error'}`, 'danger');
+                console.error('Save error:', data);
+            }
+        })
+        .catch(error => {
+            console.error('Error saving checkout customization:', error);
+            showAlert('Error saving checkout customization', 'danger');
+        });
+    }
+    
+    function resetCheckoutToDefaults() {
+        if (!confirm('Are you sure you want to reset all checkout customization settings to defaults? This action cannot be undone.')) {
+            return;
+        }
+        
+        console.log('Resetting checkout customization to defaults...');
+        
+        fetch('/mb-admin/api/checkout-customization/reset_to_defaults/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('Checkout customization reset to defaults successfully!', 'success');
+                populateCheckoutForm(data.settings);
+                console.log('Reset successful:', data);
+            } else {
+                showAlert(`Failed to reset: ${data.error || 'Unknown error'}`, 'danger');
+                console.error('Reset error:', data);
+            }
+        })
+        .catch(error => {
+            console.error('Error resetting checkout customization:', error);
+            showAlert('Error resetting checkout customization', 'danger');
+        });
+    }
+    
+    function previewCheckout() {
+        // Open checkout page in new tab/window for preview
+        window.open('/checkout/', '_blank');
+    }
+    
+    // Helper functions for authentication and CSRF
+    function getAuthToken() {
+        // Return auth token if using token authentication
+        // For session-based auth, this might not be needed
+        return '';
+    }
+    
+    function getCsrfToken() {
+        // Get CSRF token from cookie or meta tag
+        const token = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (token) {
+            return token.value;
+        }
+        
+        // Try to get from cookie
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const [name, value] = cookie.trim().split('=');
+            if (name === 'csrftoken') {
+                return value;
+            }
+        }
+        
+        return '';
+    }
+    
+    // Setup color picker synchronization for checkout customization
+    const colorPickers = [
+        { picker: 'primaryColorPicker', input: 'primary_color' },
+        { picker: 'buttonColorPicker', input: 'button_color' },
+        { picker: 'backgroundColorPicker', input: 'background_color' }
+    ];
+    
+    colorPickers.forEach(pair => {
+        const picker = document.getElementById(pair.picker);
+        const input = document.getElementById(pair.input);
+        
+        if (picker && input) {
+            picker.addEventListener('input', function() {
+                input.value = this.value;
+            });
+            
+            input.addEventListener('input', function() {
+                if (this.value.startsWith('#') && (this.value.length === 4 || this.value.length === 7)) {
+                    picker.value = this.value;
+                }
+            });
+        }
+    });
 });
 </script>
 {% endblock %}

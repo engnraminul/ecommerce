@@ -295,8 +295,18 @@ def checkout(request):
         messages.warning(request, 'Your cart is empty. Add items before checkout.')
         return redirect('frontend:cart')
     
+    # Calculate totals
+    cart_items = cart_obj.items.all()
+    subtotal = sum(item.total_price for item in cart_items)
+    shipping_cost = 0  # You can implement shipping calculation logic here
+    total = subtotal + shipping_cost
+    
     context = {
         'cart': cart_obj,
+        'cart_items': cart_items,
+        'subtotal': subtotal,
+        'shipping_cost': shipping_cost,
+        'total': total,
         'is_guest': not request.user.is_authenticated,
     }
     return render(request, 'frontend/checkout.html', context)

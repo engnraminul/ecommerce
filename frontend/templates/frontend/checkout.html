@@ -6,18 +6,20 @@
 {% block content %}
     <div class="container">
         <!-- Breadcrumb -->
+        {% if checkout_customization.show_breadcrumb %}
         <nav class="breadcrumb">
-            <a href="{% url 'frontend:home' %}">Home</a>
+            <a href="{% url 'frontend:home' %}">{{ checkout_customization.breadcrumb_home|default:"Home" }}</a>
             <span class="breadcrumb-separator">/</span>
-            <a href="{% url 'frontend:cart' %}">Cart</a>
+            <a href="{% url 'frontend:cart' %}">{{ checkout_customization.breadcrumb_cart|default:"Cart" }}</a>
             <span class="breadcrumb-separator">/</span>
-            <span class="current">Checkout</span>
+            <span class="current">{{ checkout_customization.breadcrumb_checkout|default:"Checkout" }}</span>
         </nav>
+        {% endif %}
 
         <div class="checkout-page">
             <div class="page-header">
-                <h1 class="page-title">Checkout</h1>
-                <p class="page-subtitle">Complete your order</p>
+                <h1 class="page-title">{{ checkout_customization.page_title|default:"Checkout" }}</h1>
+                <p class="page-subtitle">{{ checkout_customization.page_subtitle|default:"Complete your order" }}</p>
             </div>
 
             <form class="checkout-form" id="checkout-form">
@@ -28,26 +30,32 @@
                         <div class="form-section">
                             <h2 class="section-title">
                                 <i class="fas fa-user"></i>
-                                Customer Information
+                                {{ checkout_customization.customer_section_title|default:"Customer Information" }}
                             </h2>
                             
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="full_name">Full Name</label>
-                                    <input type="text" id="full_name" name="full_name">
+                                    <label for="full_name">{{ checkout_customization.full_name_label|default:"Full Name" }}</label>
+                                    <input type="text" id="full_name" name="full_name" 
+                                           placeholder="{{ checkout_customization.full_name_placeholder|default:"" }}"
+                                           value="{{ checkout_customization.full_name_default|default:"" }}">
                                     <div class="field-error" id="full_name_error"></div>
                                 </div>
                             </div>
                             
                             <div class="form-row">
                                 <div class="form-group half">
-                                    <label for="email">Email Address *</label>
-                                    <input type="email" id="email" name="email" required>
+                                    <label for="email">{{ checkout_customization.email_label|default:"Email Address *" }}</label>
+                                    <input type="email" id="email" name="email"
+                                           placeholder="{{ checkout_customization.email_placeholder|default:"" }}"
+                                           value="{{ checkout_customization.email_default|default:"" }}">
                                     <div class="field-error" id="email_error"></div>
                                 </div>
                                 <div class="form-group half">
-                                    <label for="phone_number">Phone Number *</label>
-                                    <input type="tel" id="phone_number" name="phone_number" required>
+                                    <label for="phone_number">{{ checkout_customization.phone_label|default:"Phone Number *" }}</label>
+                                    <input type="tel" id="phone_number" name="phone_number" required
+                                           placeholder="{{ checkout_customization.phone_placeholder|default:"" }}"
+                                           value="{{ checkout_customization.phone_default|default:"" }}"> 
                                     <div class="field-error" id="phone_number_error"></div>
                                 </div>
                             </div>
@@ -57,15 +65,16 @@
                         <div class="form-section">
                             <h2 class="section-title">
                                 <i class="fas fa-shipping-fast"></i>
-                                Shipping Address
+                                {{ checkout_customization.shipping_section_title|default:"Shipping Address" }}
                             </h2>
                             
                             
                             
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="address">Street Address</label>
-                                    <textarea id="address" name="address" rows="3" placeholder="123 Main Street&#10;Apt 4B"></textarea>
+                                    <label for="address">{{ checkout_customization.address_label|default:"Street Address" }}</label>
+                                    <textarea id="address" name="address" rows="3" 
+                                              placeholder="{{ checkout_customization.address_placeholder|default:"" }}">{{ checkout_customization.address_default }}</textarea>
                                     <div class="field-error" id="address_error"></div>
                                 </div>
                             </div>
@@ -75,15 +84,15 @@
                         <div class="form-section">
                             <h2 class="section-title">
                                 <i class="fas fa-clipboard-list"></i>
-                                Order Instructions
+                                {{ checkout_customization.instructions_section_title|default:"Order Instructions" }}
                             </h2>
                             
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="order_instruction">Special Instructions (Optional)</label>
+                                    <label for="order_instruction">{{ checkout_customization.instructions_label|default:"Special Instructions (Optional)" }}</label>
                                     <textarea id="order_instruction" name="order_instruction" rows="4" 
-                                              placeholder="Any special delivery instructions, gift messages, or notes for your order..."></textarea>
-                                    <small class="help-text">Maximum 500 characters</small>
+                                              placeholder="{{ checkout_customization.instructions_placeholder|default:"Any special delivery instructions, gift messages, or notes for your order..." }}"></textarea>
+                                    <small class="help-text">{{ checkout_customization.instructions_help_text|default:"Maximum 500 characters" }}</small>
                                 </div>
                             </div>
                         </div>
@@ -92,24 +101,24 @@
                         <div class="form-section">
                             <h2 class="section-title">
                                 <i class="fas fa-truck"></i>
-                                Shipping Method
+                                {{ checkout_customization.shipping_method_section_title|default:"Shipping Method" }}
                             </h2>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>Delivery Location *</label>
+                                    <label>{{ checkout_customization.delivery_location_label|default:"Delivery Location *" }}</label>
                                     <div class="location-options">
                                         <div class="location-option">
                                             <input type="radio" id="location_dhaka" name="location" value="dhaka" checked required>
                                             <label for="location_dhaka">
                                                 <i class="fas fa-city"></i>
-                                                <span>Dhaka City</span>
+                                                <span>{{ checkout_customization.dhaka_location_label|default:"Dhaka City" }}</span>
                                             </label>
                                         </div>
                                         <div class="location-option">
                                             <input type="radio" id="location_outside" name="location" value="outside" required>
                                             <label for="location_outside">
                                                 <i class="fas fa-map-marker-alt"></i>
-                                                <span>Outside Dhaka</span>
+                                                <span>{{ checkout_customization.outside_location_label|default:"Outside Dhaka" }}</span>
                                             </label>
                                         </div>
                                     </div>
@@ -120,7 +129,7 @@
                                 <!-- Shipping options will be loaded dynamically -->
                                 <div class="shipping-loading">
                                     <i class="fas fa-spinner fa-spin"></i>
-                                    Loading shipping options...
+                                    {{ checkout_customization.loading_shipping_message|default:"Loading shipping options..." }}
                                 </div>
                             </div>
                         </div>
@@ -129,7 +138,7 @@
                         <div class="form-section">
                             <h2 class="section-title">
                                 <i class="fas fa-credit-card"></i>
-                                Payment Method
+                                {{ checkout_customization.payment_section_title|default:"Payment Method" }}
                             </h2>
                             
                             <div class="payment-options">
@@ -137,7 +146,7 @@
                                     <input type="radio" id="cod" name="payment_method" value="cod" checked>
                                     <label for="cod">
                                         <i class="fas fa-money-bill-wave"></i>
-                                        Cash on Delivery
+                                        {{ checkout_customization.cod_label|default:"Cash on Delivery" }}
                                     </label>
                                 </div>
                                 
@@ -145,7 +154,7 @@
                                     <input type="radio" id="bkash" name="payment_method" value="bkash">
                                     <label for="bkash">
                                         <i class="fas fa-mobile-alt"></i>
-                                        bKash
+                                        {{ checkout_customization.bkash_label|default:"bKash" }}
                                     </label>
                                 </div>
                                 
@@ -153,7 +162,7 @@
                                     <input type="radio" id="nagad" name="payment_method" value="nagad">
                                     <label for="nagad">
                                         <i class="fas fa-wallet"></i>
-                                        Nagad
+                                        {{ checkout_customization.nagad_label|default:"Nagad" }}
                                     </label>
                                 </div>
                             </div>
@@ -163,14 +172,14 @@
                                 <div class="payment-method-info">
                                     <div class="info-header">
                                         <i class="fas fa-mobile-alt"></i>
-                                        <h4>bKash Payment</h4>
+                                        <h4>{{ checkout_customization.bkash_label|default:"bKash" }} Payment</h4>
                                     </div>
                                     <div class="payment-instructions">
                                         <p><strong>Follow these steps:</strong></p>
                                         <ol>
                                             <li>Go to your bKash Mobile Menu by dialing *247#</li>
                                             <li>Choose "Send Money"</li>
-                                            <li>Enter Merchant bKash Account Number: <strong>01XXXXXXXXX</strong></li>
+                                            <li>Enter Merchant bKash Account Number: <strong>{{ checkout_customization.bkash_merchant_number|default:"01XXXXXXXXX" }}</strong></li>
                                             <li>Enter the total amount: <strong id="bkash-amount">$0.00</strong></li>
                                             <li>Enter a reference: Your phone number</li>
                                             <li>Now enter your bKash Mobile Menu PIN and confirm</li>
@@ -179,14 +188,16 @@
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="bkash_transaction_id">bKash Transaction ID *</label>
-                                        <input type="text" id="bkash_transaction_id" name="bkash_transaction_id" placeholder="Enter transaction ID after payment">
+                                        <label for="bkash_transaction_id">{{ checkout_customization.bkash_transaction_label|default:"bKash Transaction ID *" }}</label>
+                                        <input type="text" id="bkash_transaction_id" name="bkash_transaction_id" 
+                                               placeholder="{{ checkout_customization.bkash_transaction_placeholder|default:"Enter transaction ID after payment" }}">
                                     </div>
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="bkash_sender_number">Sender Mobile Number *</label>
-                                        <input type="tel" id="bkash_sender_number" name="bkash_sender_number" placeholder="01XXXXXXXXX">
+                                        <label for="bkash_sender_number">{{ checkout_customization.bkash_sender_label|default:"Sender Mobile Number *" }}</label>
+                                        <input type="tel" id="bkash_sender_number" name="bkash_sender_number" 
+                                               placeholder="{{ checkout_customization.bkash_sender_placeholder|default:"01XXXXXXXXX" }}">
                                     </div>
                                 </div>
                             </div>
@@ -196,14 +207,14 @@
                                 <div class="payment-method-info">
                                     <div class="info-header">
                                         <i class="fas fa-wallet"></i>
-                                        <h4>Nagad Payment</h4>
+                                        <h4>{{ checkout_customization.nagad_label|default:"Nagad" }} Payment</h4>
                                     </div>
                                     <div class="payment-instructions">
                                         <p><strong>Follow these steps:</strong></p>
                                         <ol>
                                             <li>Go to your Nagad Mobile Menu by dialing *167#</li>
                                             <li>Choose "Send Money"</li>
-                                            <li>Enter Merchant Nagad Account Number: <strong>01XXXXXXXXX</strong></li>
+                                            <li>Enter Merchant Nagad Account Number: <strong>{{ checkout_customization.nagad_merchant_number|default:"01XXXXXXXXX" }}</strong></li>
                                             <li>Enter the total amount: <strong id="nagad-amount">$0.00</strong></li>
                                             <li>Enter a reference: Your phone number</li>
                                             <li>Now enter your Nagad PIN and confirm</li>
@@ -212,14 +223,16 @@
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="nagad_transaction_id">Nagad Transaction ID *</label>
-                                        <input type="text" id="nagad_transaction_id" name="nagad_transaction_id" placeholder="Enter transaction ID after payment">
+                                        <label for="nagad_transaction_id">{{ checkout_customization.nagad_transaction_label|default:"Nagad Transaction ID *" }}</label>
+                                        <input type="text" id="nagad_transaction_id" name="nagad_transaction_id" 
+                                               placeholder="{{ checkout_customization.nagad_transaction_placeholder|default:"Enter transaction ID after payment" }}">
                                     </div>
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="nagad_sender_number">Sender Mobile Number *</label>
-                                        <input type="tel" id="nagad_sender_number" name="nagad_sender_number" placeholder="01XXXXXXXXX">
+                                        <label for="nagad_sender_number">{{ checkout_customization.nagad_sender_label|default:"Sender Mobile Number *" }}</label>
+                                        <input type="tel" id="nagad_sender_number" name="nagad_sender_number" 
+                                               placeholder="{{ checkout_customization.nagad_sender_placeholder|default:"01XXXXXXXXX" }}">
                                     </div>
                                 </div>
                             </div>
@@ -229,16 +242,11 @@
                                 <div class="payment-method-info">
                                     <div class="info-header">
                                         <i class="fas fa-money-bill-wave"></i>
-                                        <h4>Cash on Delivery</h4>
+                                        <h4>{{ checkout_customization.cod_label|default:"Cash on Delivery" }}</h4>
                                     </div>
                                     <div class="payment-instructions">
                                         <p><strong>Payment Information:</strong></p>
-                                        <ul>
-                                            <li>Pay cash when you receive your order</li>
-                                            <li>Make sure to have exact amount ready</li>
-                                            <li>Our delivery person will collect the payment</li>
-                                            <li>You can inspect the product before payment</li>
-                                        </ul>
+                                        {{ checkout_customization.cod_instructions|default:"<ul><li>Pay cash when you receive your order</li><li>Make sure to have exact amount ready</li><li>Our delivery person will collect the payment</li><li>You can inspect the product before payment</li></ul>"|safe }}
                                         <div class="cod-total">
                                             <strong>Total Amount to Pay: <span id="cod-amount">$0.00</span></strong>
                                         </div>
@@ -249,38 +257,39 @@
                     </div>
 
                     <!-- Order Summary Section -->
+                    {% if checkout_customization.show_order_summary %}
                     <div class="order-summary-section">
                         <div class="order-summary">
-                            <h3>Order Summary</h3>
+                            <h3>{{ checkout_customization.order_summary_title|default:"Order Summary" }}</h3>
                             
                             <div class="order-items" id="order-items">
                                 <!-- Items will be populated here -->
                                 <div class="summary-loading">
                                     <i class="fas fa-spinner fa-spin"></i>
-                                    Loading order items...
+                                    {{ checkout_customization.loading_cart_message|default:"Loading order items..." }}
                                 </div>
                             </div>
                             
                             <div class="order-totals">
                                 <div class="total-line">
-                                    <span>Subtotal:</span>
+                                    <span>{{ checkout_customization.subtotal_label|default:"Subtotal:" }}</span>
                                     <span id="order-subtotal">$0.00</span>
                                 </div>
                                 
                                 <div class="total-line">
-                                    <span>Shipping:</span>
+                                    <span>{{ checkout_customization.shipping_label|default:"Shipping:" }}</span>
                                     <span id="order-shipping">$0.00</span>
                                 </div>
                                 
                                 <div class="total-line">
-                                    <span>Tax:</span>
+                                    <span>{{ checkout_customization.tax_label|default:"Tax:" }}</span>
                                     <span id="order-tax">$0.00</span>
                                 </div>
                                 
                                 <div class="total-divider"></div>
                                 
                                 <div class="total-line grand-total">
-                                    <span>Total:</span>
+                                    <span>{{ checkout_customization.total_label|default:"Total:" }}</span>
                                     <span id="order-total">$0.00</span>
                                 </div>
                             </div>
@@ -288,48 +297,53 @@
                             <div class="checkout-actions">
                                 <button type="submit" class="place-order-btn" id="place-order-btn">
                                     <i class="fas fa-lock"></i>
-                                    Place Order
+                                    {{ checkout_customization.place_order_button_text|default:"Place Order" }}
                                 </button>
                                 
+                                {% if checkout_customization.show_security_badges %}
                                 <div class="security-badges">
                                     <div class="security-badge">
                                         <i class="fas fa-shield-alt"></i>
-                                        <span>SSL Secured</span>
+                                        <span>{{ checkout_customization.security_ssl_text|default:"SSL Secured" }}</span>
                                     </div>
                                     <div class="security-badge">
                                         <i class="fas fa-lock"></i>
-                                        <span>Safe Checkout</span>
+                                        <span>{{ checkout_customization.security_safe_text|default:"Safe Checkout" }}</span>
                                     </div>
                                 </div>
+                                {% endif %}
                             </div>
                         </div>
 
                         <!-- Trust Badges -->
+                        {% if checkout_customization.show_trust_badges %}
                         <div class="trust-badges">
-                            <h4>Why shop with us?</h4>
+                            <h4>{{ checkout_customization.trust_section_title|default:"Why shop with us?" }}</h4>
                             <div class="trust-item">
                                 <i class="fas fa-shipping-fast"></i>
                                 <div>
-                                    <strong>Fast Shipping</strong>
-                                    <p>Free shipping on orders over $50</p>
+                                    <strong>{{ checkout_customization.fast_shipping_title|default:"Fast Shipping" }}</strong>
+                                    <p>{{ checkout_customization.fast_shipping_description|default:"Free shipping on orders over $50" }}</p>
                                 </div>
                             </div>
                             <div class="trust-item">
                                 <i class="fas fa-undo"></i>
                                 <div>
-                                    <strong>Easy Returns</strong>
-                                    <p>30-day return policy</p>
+                                    <strong>{{ checkout_customization.easy_returns_title|default:"Easy Returns" }}</strong>
+                                    <p>{{ checkout_customization.easy_returns_description|default:"30-day return policy" }}</p>
                                 </div>
                             </div>
                             <div class="trust-item">
                                 <i class="fas fa-headset"></i>
                                 <div>
-                                    <strong>24/7 Support</strong>
-                                    <p>Customer service available</p>
+                                    <strong>{{ checkout_customization.support_title|default:"24/7 Support" }}</strong>
+                                    <p>{{ checkout_customization.support_description|default:"Customer service available" }}</p>
                                 </div>
                             </div>
                         </div>
+                        {% endif %}
                     </div>
+                    {% endif %}
                 </div>
             </form>
         </div>
@@ -338,13 +352,18 @@
 
 {% block extra_css %}
 <style>
-  
+    /* Dynamic Customization Variables */
+    :root {
+        --checkout-primary-color: {{ checkout_customization.primary_color|default:"#930000" }};
+        --checkout-button-color: {{ checkout_customization.button_color|default:"#930000" }};
+        --checkout-background-color: {{ checkout_customization.background_color|default:"#f8fafc" }};
+    }
 
     /* Page Layout */
     .checkout-page {
         padding: 2rem 0;
         min-height: 80vh;
-        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        background: linear-gradient(135deg, var(--checkout-background-color) 0%, #e2e8f0 100%);
     }
 
     .page-header {
@@ -1216,6 +1235,18 @@
 
 {% block extra_js %}
 <script>
+    // Checkout customization data for JavaScript
+    window.checkoutCustomization = {
+        loadingCartMessage: '{{ checkout_customization.loading_cart_message|default:"Loading order items..." }}',
+        loadingShippingMessage: '{{ checkout_customization.loading_shipping_message|default:"Loading shipping options..." }}',
+        processingOrderMessage: '{{ checkout_customization.processing_order_message|default:"Processing..." }}',
+        orderSuccessMessage: '{{ checkout_customization.order_success_message|default:"Order placed successfully!" }}',
+        orderErrorMessage: '{{ checkout_customization.order_error_message|default:"Error processing order. Please try again." }}',
+        validationErrorMessage: '{{ checkout_customization.validation_error_message|default:"Please check your information and try again." }}',
+        bkashMerchantNumber: '{{ checkout_customization.bkash_merchant_number|default:"01XXXXXXXXX" }}',
+        nagadMerchantNumber: '{{ checkout_customization.nagad_merchant_number|default:"01XXXXXXXXX" }}'
+    };
+
     document.addEventListener('DOMContentLoaded', function() {
         loadOrderSummary();
         setupFormValidation();
@@ -1622,7 +1653,7 @@
             const placeOrderBtn = document.getElementById('place-order-btn');
             const originalText = placeOrderBtn.innerHTML;
             placeOrderBtn.disabled = true;
-            placeOrderBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            placeOrderBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + window.checkoutCustomization.processingOrderMessage;
             
             // Collect form data
             const formData = new FormData(document.getElementById('checkout-form'));
@@ -1702,7 +1733,7 @@
                 } else if (data.order && data.order.order_number) {
                     console.log('Order created successfully:', data.order.order_number);
                     // Success - clear cart and redirect to order confirmation
-                    showNotification('Order placed successfully!', 'success');
+                    showNotification(window.checkoutCustomization.orderSuccessMessage, 'success');
                     
                     // Clear the cart
                     fetch('/api/v1/cart/clear/', {
@@ -1725,7 +1756,7 @@
             })
             .catch(error => {
                 console.error('Error processing order:', error);
-                showNotification('Error processing order. Please try again.', 'error');
+                showNotification(window.checkoutCustomization.orderErrorMessage, 'error');
             })
             .finally(() => {
                 placeOrderBtn.disabled = false;

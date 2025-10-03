@@ -23,6 +23,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+from dashboard.views import get_checkout_customization
 
 # API URL patterns
 api_urlpatterns = [
@@ -36,6 +37,9 @@ api_urlpatterns = [
     path('cart/', include('cart.urls')),
     path('orders/', include('orders.urls')),
     path('incomplete-orders/', include('incomplete_orders.urls')),
+    
+    # Checkout customization public API
+    path('checkout-customization/', get_checkout_customization, name='get_checkout_customization'),
 ]
 
 urlpatterns = [
