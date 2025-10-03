@@ -209,6 +209,11 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{% url 'dashboard:stock' %}" class="{% if active_page == 'stock' %}active{% endif %}">
+                        <i class="fas fa-warehouse"></i> Stock
+                    </a>
+                </li>
+                <li>
                     <a href="{% url 'dashboard:orders' %}" class="{% if active_page == 'orders' %}active{% endif %}">
                         <i class="fas fa-shopping-cart"></i> Orders
                     </a>

@@ -247,17 +247,10 @@ class OrderItemDashboardSerializer(serializers.ModelSerializer):
     """Serializer for order items in the dashboard"""
     variant_sku = serializers.SerializerMethodField()
     variant_display_name = serializers.SerializerMethodField()
-    product_id = serializers.IntegerField(source='product.id', read_only=True)
-    variant_id = serializers.IntegerField(source='variant.id', read_only=True)
-    product_stock = serializers.SerializerMethodField()
     
     class Meta:
         model = OrderItem
-        fields = [
-            'id', 'order', 'product_name', 'variant_name', 'variant_sku', 
-            'variant_display_name', 'quantity', 'unit_price', 'product_id', 
-            'variant_id', 'product_stock'
-        ]
+        fields = ['id', 'order', 'product_name', 'variant_name', 'variant_sku', 'variant_display_name', 'quantity', 'unit_price']
     
     def get_variant_sku(self, obj):
         """Get the full variant SKU"""
@@ -274,12 +267,6 @@ class OrderItemDashboardSerializer(serializers.ModelSerializer):
             else:
                 return obj.variant.name  # This should be "MW02 Black"
         return obj.product_name
-    
-    def get_product_stock(self, obj):
-        """Get current stock quantity"""
-        if obj.variant:
-            return obj.variant.stock_quantity
-        return obj.product.stock_quantity if hasattr(obj.product, 'stock_quantity') else 0
         
     def to_representation(self, instance):
         """Override to customize response data"""
@@ -321,3 +308,89 @@ class ExpenseDashboardSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['created_by'] = self.context['request'].user
         return super().create(validated_data)
+
+
+class StockManagementSerializer(serializers.ModelSerializer):
+    """Serializer for stock management of products"""
+    category_name = serializers.ReadOnlyField(source='category.name')
+    variant_count = serializers.SerializerMethodField()
+    total_variant_stock = serializers.SerializerMethodField()
+    is_low_stock = serializers.ReadOnlyField()
+    stock_status = serializers.SerializerMethodField()
+    stock_value = serializers.SerializerMethodField()
+    variants = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Product
+        fields = [
+            'id', 'name', 'sku', 'category_name', 'stock_quantity', 
+            'low_stock_threshold', 'track_inventory', 'cost_price', 'price',
+            'variant_count', 'total_variant_stock', 'is_low_stock', 
+            'stock_status', 'stock_value', 'variants', 'is_active'
+        ]
+        read_only_fields = ['id', 'name', 'sku', 'category_name', 'variant_count', 
+                           'total_variant_stock', 'is_low_stock', 'stock_status', 
+                           'stock_value', 'variants']
+    
+    def get_variant_count(self, obj):
+        return obj.variants.count()
+    
+    def get_total_variant_stock(self, obj):
+        return sum(variant.stock_quantity for variant in obj.variants.all())
+    
+    def get_stock_status(self, obj):
+        if not obj.track_inventory:
+            return 'not_tracked'
+        elif obj.stock_quantity == 0:
+            return 'out_of_stock'
+        elif obj.is_low_stock:
+            return 'low_stock'
+        else:
+            return 'in_stock'
+    
+    def get_stock_value(self, obj):
+        if obj.cost_price:
+            return float(obj.stock_quantity * obj.cost_price)
+        return 0
+    
+    def get_variants(self, obj):
+        return StockVariantManagementSerializer(obj.variants.all(), many=True).data
+
+
+class StockVariantManagementSerializer(serializers.ModelSerializer):
+    """Serializer for stock management of product variants"""
+    product_name = serializers.ReadOnlyField(source='product.name')
+    product_sku = serializers.ReadOnlyField(source='product.sku')
+    low_stock_threshold = serializers.ReadOnlyField(source='product.low_stock_threshold')
+    is_low_stock = serializers.SerializerMethodField()
+    stock_status = serializers.SerializerMethodField()
+    stock_value = serializers.SerializerMethodField()
+    effective_cost_price = serializers.ReadOnlyField()
+    
+    class Meta:
+        model = ProductVariant
+        fields = [
+            'id', 'name', 'sku', 'product_name', 'product_sku', 'stock_quantity',
+            'low_stock_threshold', 'is_low_stock', 'stock_status', 'stock_value',
+            'cost_price', 'effective_cost_price', 'price', 'size', 'color', 
+            'material', 'is_active', 'in_stock'
+        ]
+        read_only_fields = ['id', 'product_name', 'product_sku', 'low_stock_threshold',
+                           'is_low_stock', 'stock_status', 'stock_value', 'effective_cost_price']
+    
+    def get_is_low_stock(self, obj):
+        return obj.stock_quantity <= obj.product.low_stock_threshold
+    
+    def get_stock_status(self, obj):
+        if obj.stock_quantity == 0:
+            return 'out_of_stock'
+        elif self.get_is_low_stock(obj):
+            return 'low_stock'
+        else:
+            return 'in_stock'
+    
+    def get_stock_value(self, obj):
+        cost_price = obj.effective_cost_price
+        if cost_price:
+            return float(obj.stock_quantity * cost_price)
+        return 0

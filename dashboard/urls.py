@@ -12,6 +12,8 @@ router.register(r'categories', views.CategoryDashboardViewSet)
 router.register(r'products', views.ProductDashboardViewSet)
 router.register(r'variants', views.ProductVariantDashboardViewSet)
 router.register(r'product-images', views.ProductImageDashboardViewSet)
+router.register(r'stock', views.StockDashboardViewSet, basename='stock')
+router.register(r'stock-variants', views.StockVariantDashboardViewSet, basename='stock-variant')
 router.register(r'orders', views.OrderDashboardViewSet)
 router.register(r'incomplete-orders', views.IncompleteOrderDashboardViewSet)
 router.register(r'expenses', views.ExpenseDashboardViewSet)
@@ -51,6 +53,7 @@ urlpatterns = [
     path('login/', views.dashboard_login, name='login'),
     path('logout/', views.dashboard_logout, name='logout'),
     path('products/', views.dashboard_products, name='products'),
+    path('stock/', views.dashboard_stock, name='stock'),
     path('orders/', views.dashboard_orders, name='orders'),
     path('incomplete-orders/', views.dashboard_incomplete_orders, name='incomplete_orders'),
     path('users/', views.dashboard_users, name='users'),

@@ -426,6 +426,400 @@ class ProductImageDashboardViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+class StockDashboardViewSet(viewsets.ModelViewSet):
+    """
+    Stock management ViewSet for products and variants
+    """
+    queryset = Product.objects.select_related('category').prefetch_related('variants').filter(track_inventory=True)
+    permission_classes = [IsAdminUser]
+    filterset_fields = ['category', 'is_active']
+    search_fields = ['name', 'sku']
+    ordering_fields = ['name', 'stock_quantity', 'created_at']
+    ordering = ['name']
+    
+    def get_serializer_class(self):
+        """Return appropriate serializer based on action"""
+        from .serializers import StockManagementSerializer
+        return StockManagementSerializer
+    
+    def get_queryset(self):
+        """Enhanced queryset with search functionality"""
+        queryset = super().get_queryset()
+        
+        # Search by name or SKU
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(sku__icontains=search)
+            )
+        
+        # Filter by low stock
+        low_stock = self.request.query_params.get('low_stock')
+        if low_stock == 'true':
+            queryset = queryset.filter(stock_quantity__lte=F('low_stock_threshold'))
+        
+        # Filter by out of stock
+        out_of_stock = self.request.query_params.get('out_of_stock')
+        if out_of_stock == 'true':
+            queryset = queryset.filter(stock_quantity=0)
+        
+        return queryset
+    
+    @action(detail=True, methods=['post'])
+    def adjust_stock(self, request, pk=None):
+        """Adjust stock for a product"""
+        try:
+            product = self.get_object()
+            action_type = request.data.get('action')  # 'increase' or 'decrease'
+            quantity = int(request.data.get('quantity', 0))
+            reason = request.data.get('reason', '')
+            
+            if quantity <= 0:
+                return Response({'error': 'Quantity must be positive'}, status=400)
+            
+            old_stock = product.stock_quantity
+            
+            if action_type == 'increase':
+                product.stock_quantity += quantity
+            elif action_type == 'decrease':
+                if product.stock_quantity < quantity:
+                    return Response({'error': 'Insufficient stock'}, status=400)
+                product.stock_quantity -= quantity
+            else:
+                return Response({'error': 'Invalid action type'}, status=400)
+            
+            product.save()
+            
+            # Log the activity
+            try:
+                AdminActivity.objects.create(
+                    user=request.user,
+                    action=f'stock_{action_type}',
+                    model_name='Product',
+                    object_id=product.id,
+                    object_repr=f"{product.name}: {old_stock} → {product.stock_quantity} ({reason})",
+                    ip_address=self.get_client_ip(),
+                    user_agent=request.META.get('HTTP_USER_AGENT', '')
+                )
+            except Exception as e:
+                print(f"Error logging activity: {str(e)}")
+            
+            return Response({
+                'success': True,
+                'new_stock': product.stock_quantity,
+                'old_stock': old_stock,
+                'action': action_type,
+                'quantity': quantity
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
+    
+    @action(detail=False, methods=['get'])
+    def stock_summary(self, request):
+        """Get stock summary statistics"""
+        try:
+            total_products = Product.objects.filter(track_inventory=True).count()
+            low_stock_products = Product.objects.filter(
+                track_inventory=True,
+                stock_quantity__lte=F('low_stock_threshold')
+            ).count()
+            out_of_stock_products = Product.objects.filter(
+                track_inventory=True,
+                stock_quantity=0
+            ).count()
+            total_stock_value = Product.objects.filter(
+                track_inventory=True
+            ).aggregate(
+                total=Sum(F('stock_quantity') * F('cost_price'))
+            )['total'] or 0
+            
+            return Response({
+                'total_products': total_products,
+                'low_stock_products': low_stock_products,
+                'out_of_stock_products': out_of_stock_products,
+                'total_stock_value': float(total_stock_value)
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
+    
+    @action(detail=False, methods=['post'])
+    def bulk_adjust(self, request):
+        """Bulk stock adjustment for multiple products"""
+        try:
+            adjustments = request.data.get('adjustments', [])
+            if not adjustments:
+                return Response({'error': 'No adjustments provided'}, status=400)
+            
+            results = []
+            success_count = 0
+            error_count = 0
+            
+            for adjustment in adjustments:
+                try:
+                    product_id = adjustment.get('product_id')
+                    action = adjustment.get('action')  # 'increase' or 'decrease'
+                    quantity = int(adjustment.get('quantity', 0))
+                    reason = adjustment.get('reason', 'Bulk adjustment')
+                    
+                    if quantity <= 0:
+                        results.append({
+                            'product_id': product_id,
+                            'success': False,
+                            'error': 'Quantity must be positive'
+                        })
+                        error_count += 1
+                        continue
+                    
+                    product = Product.objects.get(id=product_id, track_inventory=True)
+                    old_stock = product.stock_quantity
+                    
+                    if action == 'increase':
+                        product.stock_quantity += quantity
+                    elif action == 'decrease':
+                        if product.stock_quantity < quantity:
+                            results.append({
+                                'product_id': product_id,
+                                'success': False,
+                                'error': 'Insufficient stock'
+                            })
+                            error_count += 1
+                            continue
+                        product.stock_quantity -= quantity
+                    else:
+                        results.append({
+                            'product_id': product_id,
+                            'success': False,
+                            'error': 'Invalid action type'
+                        })
+                        error_count += 1
+                        continue
+                    
+                    product.save()
+                    
+                    # Log the activity
+                    try:
+                        AdminActivity.objects.create(
+                            user=request.user,
+                            action=f'bulk_stock_{action}',
+                            model_name='Product',
+                            object_id=product.id,
+                            object_repr=f"{product.name}: {old_stock} → {product.stock_quantity} ({reason})",
+                            ip_address=self.get_client_ip(),
+                            user_agent=request.META.get('HTTP_USER_AGENT', '')
+                        )
+                    except Exception as e:
+                        print(f"Error logging activity: {str(e)}")
+                    
+                    results.append({
+                        'product_id': product_id,
+                        'success': True,
+                        'old_stock': old_stock,
+                        'new_stock': product.stock_quantity,
+                        'action': action,
+                        'quantity': quantity
+                    })
+                    success_count += 1
+                    
+                except Product.DoesNotExist:
+                    results.append({
+                        'product_id': product_id,
+                        'success': False,
+                        'error': 'Product not found'
+                    })
+                    error_count += 1
+                except Exception as e:
+                    results.append({
+                        'product_id': product_id,
+                        'success': False,
+                        'error': str(e)
+                    })
+                    error_count += 1
+            
+            return Response({
+                'success': True,
+                'results': results,
+                'summary': {
+                    'total': len(adjustments),
+                    'success': success_count,
+                    'errors': error_count
+                }
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
+    
+    @action(detail=False, methods=['get'])
+    def low_stock_report(self, request):
+        """Get detailed low stock report"""
+        try:
+            low_stock_products = Product.objects.filter(
+                track_inventory=True,
+                stock_quantity__lte=F('low_stock_threshold')
+            ).select_related('category').order_by('stock_quantity')
+            
+            serializer = self.get_serializer(low_stock_products, many=True)
+            return Response({
+                'count': low_stock_products.count(),
+                'products': serializer.data
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
+    
+    @action(detail=False, methods=['get'])
+    def export_stock_report(self, request):
+        """Export stock report as CSV"""
+        try:
+            import csv
+            from django.http import HttpResponse
+            from io import StringIO
+            
+            # Create CSV content
+            output = StringIO()
+            writer = csv.writer(output)
+            
+            # Write header
+            writer.writerow([
+                'Product Name', 'SKU', 'Category', 'Current Stock', 
+                'Low Stock Threshold', 'Stock Status', 'Stock Value (৳)', 'Variants Count'
+            ])
+            
+            # Get products
+            products = self.get_queryset()
+            for product in products:
+                stock_status = 'Out of Stock' if product.stock_quantity == 0 else (
+                    'Low Stock' if product.is_low_stock else 'In Stock'
+                )
+                stock_value = float(product.stock_quantity * product.cost_price) if product.cost_price else 0
+                
+                writer.writerow([
+                    product.name,
+                    product.sku or '',
+                    product.category.name if product.category else '',
+                    product.stock_quantity,
+                    product.low_stock_threshold,
+                    stock_status,
+                    stock_value,
+                    product.variants.count()
+                ])
+            
+            # Create response
+            response = HttpResponse(output.getvalue(), content_type='text/csv')
+            response['Content-Disposition'] = 'attachment; filename="stock_report.csv"'
+            return response
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
+    
+    def get_client_ip(self):
+        x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            return x_forwarded_for.split(',')[0]
+        return self.request.META.get('REMOTE_ADDR')
+
+
+class StockVariantDashboardViewSet(viewsets.ModelViewSet):
+    """
+    Stock management ViewSet for product variants
+    """
+    queryset = ProductVariant.objects.select_related('product').all()
+    permission_classes = [IsAdminUser]
+    filterset_fields = ['product', 'is_active']
+    search_fields = ['name', 'sku', 'product__name']
+    ordering_fields = ['name', 'stock_quantity', 'created_at']
+    ordering = ['product__name', 'name']
+    
+    def get_serializer_class(self):
+        """Return appropriate serializer based on action"""
+        from .serializers import StockVariantManagementSerializer
+        return StockVariantManagementSerializer
+    
+    def get_queryset(self):
+        """Enhanced queryset with search functionality"""
+        queryset = super().get_queryset()
+        
+        # Filter by product if specified
+        product_id = self.request.query_params.get('product')
+        if product_id:
+            queryset = queryset.filter(product_id=product_id)
+        
+        # Search by name, SKU, or product name
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(sku__icontains=search) |
+                Q(product__name__icontains=search)
+            )
+        
+        # Filter by low stock (using product's threshold)
+        low_stock = self.request.query_params.get('low_stock')
+        if low_stock == 'true':
+            queryset = queryset.filter(stock_quantity__lte=F('product__low_stock_threshold'))
+        
+        # Filter by out of stock
+        out_of_stock = self.request.query_params.get('out_of_stock')
+        if out_of_stock == 'true':
+            queryset = queryset.filter(stock_quantity=0)
+        
+        return queryset
+    
+    @action(detail=True, methods=['post'])
+    def adjust_stock(self, request, pk=None):
+        """Adjust stock for a variant"""
+        try:
+            variant = self.get_object()
+            action_type = request.data.get('action')  # 'increase' or 'decrease'
+            quantity = int(request.data.get('quantity', 0))
+            reason = request.data.get('reason', '')
+            
+            if quantity <= 0:
+                return Response({'error': 'Quantity must be positive'}, status=400)
+            
+            old_stock = variant.stock_quantity
+            
+            if action_type == 'increase':
+                variant.stock_quantity += quantity
+            elif action_type == 'decrease':
+                if variant.stock_quantity < quantity:
+                    return Response({'error': 'Insufficient stock'}, status=400)
+                variant.stock_quantity -= quantity
+            else:
+                return Response({'error': 'Invalid action type'}, status=400)
+            
+            variant.save()
+            
+            # Log the activity
+            try:
+                AdminActivity.objects.create(
+                    user=request.user,
+                    action=f'variant_stock_{action_type}',
+                    model_name='ProductVariant',
+                    object_id=variant.id,
+                    object_repr=f"{variant.product.name} - {variant.name}: {old_stock} → {variant.stock_quantity} ({reason})",
+                    ip_address=self.get_client_ip(),
+                    user_agent=request.META.get('HTTP_USER_AGENT', '')
+                )
+            except Exception as e:
+                print(f"Error logging activity: {str(e)}")
+            
+            return Response({
+                'success': True,
+                'new_stock': variant.stock_quantity,
+                'old_stock': old_stock,
+                'action': action_type,
+                'quantity': quantity
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
+    
+    def get_client_ip(self):
+        x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            return x_forwarded_for.split(',')[0]
+        return self.request.META.get('REMOTE_ADDR')
+
+
 class OrderDashboardViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderDashboardSerializer
@@ -1440,6 +1834,16 @@ def dashboard_expenses(request):
         'active_page': 'expenses'
     }
     return render(request, 'dashboard/expenses.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+@login_required
+@user_passes_test(is_admin)
+def dashboard_stock(request):
+    context = {
+        'active_page': 'stock'
+    }
+    return render(request, 'dashboard/stock.html', context)
 
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
