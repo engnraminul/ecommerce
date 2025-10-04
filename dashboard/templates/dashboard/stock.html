@@ -187,8 +187,8 @@
                         <label for="adjustmentAction" class="form-label">Action</label>
                         <select class="form-select" id="adjustmentAction" required>
                             <option value="">Select Action</option>
-                            <option value="increase">Increase Stock</option>
-                            <option value="decrease">Decrease Stock</option>
+                            <option value="stock_in">Stock In (Receive Inventory)</option>
+                            <option value="stock_out">Stock Out (Remove Inventory)</option>
                         </select>
                     </div>
                     
@@ -198,8 +198,27 @@
                     </div>
                     
                     <div class="mb-3">
+                        <label for="adjustmentUnitCost" class="form-label">Unit Cost (Optional)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">৳</span>
+                            <input type="number" class="form-control" id="adjustmentUnitCost" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        <small class="text-muted">Cost per unit for this stock activity</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="adjustmentReference" class="form-label">Reference Number (Optional)</label>
+                        <input type="text" class="form-control" id="adjustmentReference" placeholder="PO#, Invoice#, etc.">
+                    </div>
+                    
+                    <div class="mb-3">
                         <label for="adjustmentReason" class="form-label">Reason</label>
-                        <textarea class="form-control" id="adjustmentReason" rows="3" placeholder="Enter reason for stock adjustment..."></textarea>
+                        <textarea class="form-control" id="adjustmentReason" rows="3" placeholder="Enter reason for stock activity..." required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="adjustmentNotes" class="form-label">Additional Notes (Optional)</label>
+                        <textarea class="form-control" id="adjustmentNotes" rows="2" placeholder="Any additional notes..."></textarea>
                     </div>
                 </form>
             </div>
@@ -423,7 +442,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             Product: ${item.stock_quantity} | Variants: ${item.total_variant_stock}
                         </small>
                     ` : ''}
-                    ${effectiveCost > 0 ? `<small class="text-info d-block">Avg Cost: ৳${effectiveCost.toFixed(2)}</small>` : ''}
+                    
                 </td>
                 <td>${item.low_stock_threshold}</td>
                 <td>${stockStatus}</td>
@@ -438,14 +457,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         <button class="btn btn-sm btn-outline-primary mb-1" onclick="showVariantAdjustment(${item.id}, '${item.name}')">
                             <i class="fas fa-layer-group"></i> Adjust Variants
                         </button>
-                        <button class="btn btn-sm btn-outline-info" onclick="showProductVariants(${item.id})">
+                        <button class="btn btn-sm btn-outline-info mb-1" onclick="showProductVariants(${item.id})">
                             <i class="fas fa-list"></i> View Variants
                         </button>
                     ` : `
-                        <button class="btn btn-sm btn-outline-primary" onclick="openStockAdjustment(${item.id}, 'product', '${item.name}', ${effectiveStock})">
+                        <button class="btn btn-sm btn-outline-primary mb-1" onclick="openStockAdjustment(${item.id}, 'product', '${item.name}', ${effectiveStock})">
                             <i class="fas fa-edit"></i> Adjust Stock
                         </button>
                     `}
+                    <button class="btn btn-sm btn-outline-secondary" onclick="showStockActivity(${item.id}, '${item.name}')">
+                        <i class="fas fa-history"></i> Activity
+                    </button>
                 </td>
             `;
             tbody.appendChild(row);
@@ -558,7 +580,13 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('adjustmentCurrentStock').textContent = currentStock;
         document.getElementById('adjustmentAction').value = '';
         document.getElementById('adjustmentQuantity').value = '';
+        document.getElementById('adjustmentUnitCost').value = '';
+        document.getElementById('adjustmentReference').value = '';
         document.getElementById('adjustmentReason').value = '';
+        document.getElementById('adjustmentNotes').value = '';
+        
+        // Show all form fields
+        showAdjustmentForm();
         
         const modal = new bootstrap.Modal(document.getElementById('stockAdjustmentModal'));
         modal.show();
@@ -569,10 +597,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const itemType = document.getElementById('adjustmentItemType').value;
         const action = document.getElementById('adjustmentAction').value;
         const quantity = document.getElementById('adjustmentQuantity').value;
+        const unitCost = document.getElementById('adjustmentUnitCost').value;
+        const reference = document.getElementById('adjustmentReference').value;
         const reason = document.getElementById('adjustmentReason').value;
+        const notes = document.getElementById('adjustmentNotes').value;
         
-        if (!action || !quantity) {
-            alert('Please fill in all required fields.');
+        if (!action || !quantity || !reason) {
+            alert('Please fill in all required fields (Action, Quantity, and Reason).');
             return;
         }
         
@@ -581,20 +612,38 @@ document.addEventListener('DOMContentLoaded', function() {
         if (itemType === 'variant') {
             // For variants, use the stock-variants endpoint
             endpoint = `/mb-admin/api/stock-variants/${itemId}/adjust_stock/`;
+        } else {
+            // For products, use the stock endpoint
+            endpoint = `/mb-admin/api/stock/${itemId}/adjust_stock/`;
+        }
+        
+        // If it's a product adjustment, we need to add variant_id if one is selected
+        if (itemType === 'variant') {
             data = {
                 action: action,
                 quantity: parseInt(quantity),
-                reason: reason
+                reason: reason,
+                unit_cost: unitCost ? parseFloat(unitCost) : null,
+                reference_number: reference,
+                notes: notes
             };
         } else {
-            // For products, use the stock endpoint with variant_id if needed
-            endpoint = `/mb-admin/api/stock/${itemId}/adjust_stock/`;
             data = {
                 action: action,
                 quantity: parseInt(quantity),
-                reason: reason
+                reason: reason,
+                unit_cost: unitCost ? parseFloat(unitCost) : null,
+                reference_number: reference,
+                notes: notes,
+                variant_id: itemType === 'variant' ? itemId : null
             };
         }
+        
+        // Show loading state
+        const saveBtn = document.getElementById('saveStockAdjustmentBtn');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+        saveBtn.disabled = true;
         
         fetch(endpoint, {
             method: 'POST',
@@ -620,18 +669,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 loadStockData();
                 
                 // Show appropriate success message
-                let message;
+                let message = '';
+                const actionDisplay = action === 'stock_in' ? 'Stock In' : 'Stock Out';
+                
                 if (response.variant_adjusted) {
-                    message = `Variant "${response.variant_name}" stock ${action}d successfully. New stock: ${response.new_stock}`;
+                    message = `${actionDisplay} completed for variant "${response.variant_name}". New stock: ${response.new_stock}`;
                 } else if (response.has_variants) {
                     // Product with variants - user needs to select variant
                     alert('This product has variants. Please select a specific variant to adjust.');
                     return;
                 } else {
-                    message = `Stock ${action}d successfully. New stock: ${response.new_stock}`;
+                    message = `${actionDisplay} completed successfully. New stock: ${response.new_stock}`;
+                }
+                
+                if (response.total_cost) {
+                    message += ` (Total cost: ৳${response.total_cost})`;
                 }
                 
                 showSuccessMessage(message);
+                
+                // Show activity tracking notification
+                if (response.activity_id) {
+                    showActivityNotification(response.activity_id, actionDisplay);
+                }
             } else {
                 alert('Error: ' + (response.error || 'Unknown error'));
             }
@@ -639,6 +699,11 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Stock adjustment error:', error);
             alert('Error: ' + error.message);
+        })
+        .finally(() => {
+            // Restore button state
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
         });
     }
     
@@ -758,6 +823,164 @@ document.addEventListener('DOMContentLoaded', function() {
     // Make functions available globally for onclick handlers
     window.openStockAdjustment = openStockAdjustment;
     window.showVariantAdjustment = showVariantAdjustment;
+    window.showStockActivity = showStockActivity;
+    
+    function showStockActivity(productId, productName) {
+        // Fetch and display stock activity history
+        fetch(`/mb-admin/api/stock/${productId}/stock_activity_history/?limit=20`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                showActivityModal(productName, data.activities);
+            })
+            .catch(error => {
+                console.error('Error fetching activity history:', error);
+                alert('Error loading activity history: ' + error.message);
+            });
+    }
+    
+    function showActivityModal(productName, activities) {
+        // Create activity modal content
+        let modalContent = `
+            <div class="modal fade" id="activityModal" tabindex="-1" aria-labelledby="activityModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="activityModalLabel">
+                                <i class="fas fa-history me-2"></i>Stock Activity History: ${productName}
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            ${activities.length > 0 ? `
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Activity</th>
+                                                <th>Item</th>
+                                                <th>Change</th>
+                                                <th>Stock After</th>
+                                                <th>Cost</th>
+                                                <th>User</th>
+                                                <th>Reason</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${activities.map(activity => `
+                                                <tr>
+                                                    <td>
+                                                        <small>${new Date(activity.activity_date).toLocaleDateString()}</small><br>
+                                                        <small class="text-muted">${new Date(activity.activity_date).toLocaleTimeString()}</small>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-${activity.activity_type === 'stock_in' ? 'success' : 'warning'}">
+                                                            ${activity.activity_type_display}
+                                                        </span>
+                                                        ${activity.batch_number ? `<br><small class="text-muted">Batch: ${activity.batch_number}</small>` : ''}
+                                                    </td>
+                                                    <td>
+                                                        <div class="fw-bold">${activity.item_type}</div>
+                                                        ${activity.variant_name ? `<small class="text-muted">${activity.variant_name}</small>` : ''}
+                                                    </td>
+                                                    <td>
+                                                        <span class="fw-bold text-${activity.quantity_changed > 0 ? 'success' : 'danger'}">
+                                                            ${activity.quantity_changed > 0 ? '+' : ''}${activity.quantity_changed}
+                                                        </span><br>
+                                                        <small class="text-muted">${activity.quantity_before} → ${activity.quantity_after}</small>
+                                                    </td>
+                                                    <td class="fw-bold">${activity.quantity_after}</td>
+                                                    <td>
+                                                        ${activity.unit_cost ? `৳${activity.unit_cost}` : '-'}<br>
+                                                        ${activity.total_cost ? `<small class="text-muted">Total: ৳${activity.total_cost}</small>` : ''}
+                                                    </td>
+                                                    <td>${activity.created_by}</td>
+                                                    <td>
+                                                        <div class="text-truncate" style="max-width: 150px;" title="${activity.reason}">
+                                                            ${activity.reason}
+                                                        </div>
+                                                        ${activity.reference_number ? `<small class="text-muted">Ref: ${activity.reference_number}</small>` : ''}
+                                                    </td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ` : `
+                                <div class="text-center py-4">
+                                    <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                                    <h5 class="text-muted">No Activity History</h5>
+                                    <p class="text-muted">No stock activities have been recorded for this product yet.</p>
+                                </div>
+                            `}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal if any
+        const existingModal = document.getElementById('activityModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Add modal to body
+        document.body.insertAdjacentHTML('beforeend', modalContent);
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('activityModal'));
+        modal.show();
+        
+        // Remove modal from DOM when hidden
+        document.getElementById('activityModal').addEventListener('hidden.bs.modal', function() {
+            this.remove();
+        });
+    }
+    
+    function showActivityNotification(activityId, actionType) {
+        // Show a toast notification for successful activity
+        const toastHtml = `
+            <div class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="fas fa-check-circle me-2"></i>
+                        ${actionType} activity logged successfully! Activity ID: #${activityId}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+        
+        // Create toast container if it doesn't exist
+        let toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            document.body.appendChild(toastContainer);
+        }
+        
+        // Add toast
+        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+        
+        // Show toast
+        const toastElement = toastContainer.lastElementChild;
+        const toast = new bootstrap.Toast(toastElement, { delay: 4000 });
+        toast.show();
+        
+        // Remove toast element after it's hidden
+        toastElement.addEventListener('hidden.bs.toast', function() {
+            this.remove();
+        });
+    }
     
     // New function for variant adjustment
     function showVariantAdjustment(productId, productName) {
@@ -835,16 +1058,26 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('adjustmentCurrentStock').textContent = currentStock;
         
         // Show adjustment form
-        document.getElementById('adjustmentAction').closest('.mb-3').style.display = 'block';
-        document.getElementById('adjustmentQuantity').closest('.mb-3').style.display = 'block';
-        document.getElementById('adjustmentReason').closest('.mb-3').style.display = 'block';
-        document.getElementById('saveStockAdjustmentBtn').style.display = 'block';
+        showAdjustmentForm();
         
         // Clear form
         document.getElementById('adjustmentAction').value = '';
         document.getElementById('adjustmentQuantity').value = '';
+        document.getElementById('adjustmentUnitCost').value = '';
+        document.getElementById('adjustmentReference').value = '';
         document.getElementById('adjustmentReason').value = '';
+        document.getElementById('adjustmentNotes').value = '';
     };
+    
+    function showAdjustmentForm() {
+        document.getElementById('adjustmentAction').closest('.mb-3').style.display = 'block';
+        document.getElementById('adjustmentQuantity').closest('.mb-3').style.display = 'block';
+        document.getElementById('adjustmentUnitCost').closest('.mb-3').style.display = 'block';
+        document.getElementById('adjustmentReference').closest('.mb-3').style.display = 'block';
+        document.getElementById('adjustmentReason').closest('.mb-3').style.display = 'block';
+        document.getElementById('adjustmentNotes').closest('.mb-3').style.display = 'block';
+        document.getElementById('saveStockAdjustmentBtn').style.display = 'block';
+    }
 });
 </script>
 {% endblock %}

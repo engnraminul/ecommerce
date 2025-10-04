@@ -470,20 +470,33 @@ class StockDashboardViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def adjust_stock(self, request, pk=None):
         """
-        Intelligent stock adjustment for products:
-        - If product has variants, this endpoint will return variant information
-        - For actual variant adjustment, use the variant endpoint
-        - For products without variants, adjust product stock directly
+        Professional stock adjustment with activity tracking
+        Uses "Stock In" and "Stock Out" terminology with comprehensive logging
         """
+        from inventory.services import StockActivityService
+        
         try:
             product = self.get_object()
-            action_type = request.data.get('action')  # 'increase' or 'decrease'
+            action_type = request.data.get('action')  # 'stock_in' or 'stock_out'
             quantity = int(request.data.get('quantity', 0))
             reason = request.data.get('reason', '')
             variant_id = request.data.get('variant_id')  # Optional: specific variant
+            unit_cost = request.data.get('unit_cost')
+            reference_number = request.data.get('reference_number', '')
+            notes = request.data.get('notes', '')
             
             if quantity <= 0:
                 return Response({'error': 'Quantity must be positive'}, status=400)
+            
+            if action_type not in ['stock_in', 'stock_out']:
+                return Response({'error': 'Invalid action type. Use "stock_in" or "stock_out"'}, status=400)
+            
+            # Convert unit_cost to Decimal if provided
+            if unit_cost:
+                try:
+                    unit_cost = Decimal(str(unit_cost))
+                except (ValueError, TypeError):
+                    unit_cost = None
             
             # Check if product has variants
             active_variants = product.variants.filter(is_active=True)
@@ -510,83 +523,91 @@ class StockDashboardViewSet(viewsets.ModelViewSet):
                 # Adjust specific variant
                 try:
                     variant = active_variants.get(id=variant_id)
-                    old_stock = variant.stock_quantity
                     
-                    if action_type == 'increase':
-                        variant.stock_quantity += quantity
-                    elif action_type == 'decrease':
-                        if variant.stock_quantity < quantity:
-                            return Response({'error': 'Insufficient variant stock'}, status=400)
-                        variant.stock_quantity -= quantity
-                    else:
-                        return Response({'error': 'Invalid action type'}, status=400)
-                    
-                    variant.save()
-                    
-                    # Log the activity
-                    try:
-                        AdminActivity.objects.create(
+                    # Use StockActivityService for professional tracking
+                    if action_type == 'stock_in':
+                        activity = StockActivityService.stock_in(
+                            item=variant,
+                            quantity=quantity,
+                            reason=reason,
                             user=request.user,
-                            action=f'variant_stock_{action_type}',
-                            model_name='ProductVariant',
-                            object_id=variant.id,
-                            object_repr=f"{product.name} - {variant.name}: {old_stock} → {variant.stock_quantity} ({reason})",
-                            ip_address=self.get_client_ip(),
-                            user_agent=request.META.get('HTTP_USER_AGENT', '')
+                            request=request,
+                            unit_cost=unit_cost,
+                            reference_number=reference_number,
+                            notes=notes
                         )
-                    except Exception as e:
-                        print(f"Error logging activity: {str(e)}")
+                        action_display = "increased"
+                    else:  # stock_out
+                        activity = StockActivityService.stock_out(
+                            item=variant,
+                            quantity=quantity,
+                            reason=reason,
+                            user=request.user,
+                            request=request,
+                            reference_number=reference_number,
+                            notes=notes
+                        )
+                        action_display = "decreased"
                     
                     return Response({
                         'success': True,
                         'variant_adjusted': True,
                         'variant_name': variant.name,
                         'new_stock': variant.stock_quantity,
-                        'old_stock': old_stock,
+                        'old_stock': activity.quantity_before,
                         'action': action_type,
-                        'quantity': quantity
+                        'action_display': action_display,
+                        'quantity': quantity,
+                        'activity_id': activity.id,
+                        'total_cost': float(activity.total_cost) if activity.total_cost else None
                     })
                     
                 except ProductVariant.DoesNotExist:
                     return Response({'error': 'Variant not found'}, status=400)
+                except ValueError as e:
+                    return Response({'error': str(e)}, status=400)
             
             else:
                 # Product has no variants - adjust product stock
-                old_stock = product.stock_quantity
-                
-                if action_type == 'increase':
-                    product.stock_quantity += quantity
-                elif action_type == 'decrease':
-                    if product.stock_quantity < quantity:
-                        return Response({'error': 'Insufficient stock'}, status=400)
-                    product.stock_quantity -= quantity
-                else:
-                    return Response({'error': 'Invalid action type'}, status=400)
-                
-                product.save()
-                
-                # Log the activity
                 try:
-                    AdminActivity.objects.create(
-                        user=request.user,
-                        action=f'stock_{action_type}',
-                        model_name='Product',
-                        object_id=product.id,
-                        object_repr=f"{product.name}: {old_stock} → {product.stock_quantity} ({reason})",
-                        ip_address=self.get_client_ip(),
-                        user_agent=request.META.get('HTTP_USER_AGENT', '')
-                    )
-                except Exception as e:
-                    print(f"Error logging activity: {str(e)}")
+                    if action_type == 'stock_in':
+                        activity = StockActivityService.stock_in(
+                            item=product,
+                            quantity=quantity,
+                            reason=reason,
+                            user=request.user,
+                            request=request,
+                            unit_cost=unit_cost,
+                            reference_number=reference_number,
+                            notes=notes
+                        )
+                        action_display = "increased"
+                    else:  # stock_out
+                        activity = StockActivityService.stock_out(
+                            item=product,
+                            quantity=quantity,
+                            reason=reason,
+                            user=request.user,
+                            request=request,
+                            reference_number=reference_number,
+                            notes=notes
+                        )
+                        action_display = "decreased"
+                    
+                    return Response({
+                        'success': True,
+                        'variant_adjusted': False,
+                        'new_stock': product.stock_quantity,
+                        'old_stock': activity.quantity_before,
+                        'action': action_type,
+                        'action_display': action_display,
+                        'quantity': quantity,
+                        'activity_id': activity.id,
+                        'total_cost': float(activity.total_cost) if activity.total_cost else None
+                    })
                 
-                return Response({
-                    'success': True,
-                    'variant_adjusted': False,
-                    'new_stock': product.stock_quantity,
-                    'old_stock': old_stock,
-                    'action': action_type,
-                    'quantity': quantity
-                })
+                except ValueError as e:
+                    return Response({'error': str(e)}, status=400)
             
         except Exception as e:
             return Response({'error': str(e)}, status=500)
@@ -866,6 +887,72 @@ class StockDashboardViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=500)
     
+    @action(detail=True, methods=['get'])
+    def stock_activity_history(self, request, pk=None):
+        """Get stock activity history for a product"""
+        from inventory.services import StockActivityService
+        from inventory.models import StockActivity
+        
+        try:
+            product = self.get_object()
+            limit = int(request.query_params.get('limit', 50))
+            activity_type = request.query_params.get('activity_type', None)
+            
+            # Get activities for this product
+            activities = StockActivityService.get_item_stock_history(
+                item=product,
+                limit=limit,
+                activity_type=activity_type
+            )
+            
+            # Also get activities for variants
+            variant_activities = []
+            for variant in product.variants.filter(is_active=True):
+                variant_activities.extend(
+                    StockActivityService.get_item_stock_history(
+                        item=variant,
+                        limit=limit,
+                        activity_type=activity_type
+                    )
+                )
+            
+            # Combine and sort by date
+            all_activities = activities + variant_activities
+            all_activities.sort(key=lambda x: x.activity_date, reverse=True)
+            
+            # Format response
+            activities_data = []
+            for activity in all_activities[:limit]:
+                activities_data.append({
+                    'id': activity.id,
+                    'activity_type': activity.activity_type,
+                    'activity_type_display': activity.get_activity_type_display(),
+                    'item_type': 'Product' if activity.is_product else 'Variant',
+                    'item_name': activity.item_name,
+                    'variant_name': activity.variant_name,
+                    'quantity_before': activity.quantity_before,
+                    'quantity_changed': activity.quantity_changed,
+                    'quantity_after': activity.quantity_after,
+                    'unit_cost': float(activity.unit_cost) if activity.unit_cost else None,
+                    'total_cost': float(activity.total_cost) if activity.total_cost else None,
+                    'reason': activity.reason,
+                    'reference_number': activity.reference_number,
+                    'notes': activity.notes,
+                    'created_by': activity.created_by.username,
+                    'activity_date': activity.activity_date.isoformat(),
+                    'created_at': activity.created_at.isoformat(),
+                    'status': activity.status,
+                    'batch_number': activity.batch.batch_number if activity.batch else None
+                })
+            
+            return Response({
+                'count': len(activities_data),
+                'activities': activities_data
+            })
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
+    
     def get_client_ip(self):
         x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
@@ -921,26 +1008,73 @@ class StockVariantDashboardViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def adjust_stock(self, request, pk=None):
-        """Adjust stock for a variant"""
+        """Professional variant stock adjustment with activity tracking"""
+        from inventory.services import StockActivityService
+        
         try:
             variant = self.get_object()
-            action_type = request.data.get('action')  # 'increase' or 'decrease'
+            action_type = request.data.get('action')  # 'stock_in' or 'stock_out'
             quantity = int(request.data.get('quantity', 0))
             reason = request.data.get('reason', '')
+            unit_cost = request.data.get('unit_cost')
+            reference_number = request.data.get('reference_number', '')
+            notes = request.data.get('notes', '')
             
             if quantity <= 0:
                 return Response({'error': 'Quantity must be positive'}, status=400)
             
-            old_stock = variant.stock_quantity
+            if action_type not in ['stock_in', 'stock_out']:
+                return Response({'error': 'Invalid action type. Use "stock_in" or "stock_out"'}, status=400)
             
-            if action_type == 'increase':
-                variant.stock_quantity += quantity
-            elif action_type == 'decrease':
-                if variant.stock_quantity < quantity:
-                    return Response({'error': 'Insufficient stock'}, status=400)
-                variant.stock_quantity -= quantity
-            else:
-                return Response({'error': 'Invalid action type'}, status=400)
+            # Convert unit_cost to Decimal if provided
+            if unit_cost:
+                try:
+                    unit_cost = Decimal(str(unit_cost))
+                except (ValueError, TypeError):
+                    unit_cost = None
+            
+            # Use StockActivityService for professional tracking
+            try:
+                if action_type == 'stock_in':
+                    activity = StockActivityService.stock_in(
+                        item=variant,
+                        quantity=quantity,
+                        reason=reason,
+                        user=request.user,
+                        request=request,
+                        unit_cost=unit_cost,
+                        reference_number=reference_number,
+                        notes=notes
+                    )
+                    action_display = "increased"
+                else:  # stock_out
+                    activity = StockActivityService.stock_out(
+                        item=variant,
+                        quantity=quantity,
+                        reason=reason,
+                        user=request.user,
+                        request=request,
+                        reference_number=reference_number,
+                        notes=notes
+                    )
+                    action_display = "decreased"
+                
+                return Response({
+                    'success': True,
+                    'new_stock': variant.stock_quantity,
+                    'old_stock': activity.quantity_before,
+                    'action': action_type,
+                    'action_display': action_display,
+                    'quantity': quantity,
+                    'activity_id': activity.id,
+                    'total_cost': float(activity.total_cost) if activity.total_cost else None
+                })
+                
+            except ValueError as e:
+                return Response({'error': str(e)}, status=400)
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
             
             variant.save()
             

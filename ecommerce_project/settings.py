@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'fraud_checker.apps.FraudCheckerConfig',
     'dashboard.apps.DashboardConfig',
     'settings.apps.SettingsConfig',
+    'inventory.apps.InventoryConfig',
 ]
 
 MIDDLEWARE = [
