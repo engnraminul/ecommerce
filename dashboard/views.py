@@ -469,71 +469,171 @@ class StockDashboardViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def adjust_stock(self, request, pk=None):
-        """Adjust stock for a product"""
+        """
+        Intelligent stock adjustment for products:
+        - If product has variants, this endpoint will return variant information
+        - For actual variant adjustment, use the variant endpoint
+        - For products without variants, adjust product stock directly
+        """
         try:
             product = self.get_object()
             action_type = request.data.get('action')  # 'increase' or 'decrease'
             quantity = int(request.data.get('quantity', 0))
             reason = request.data.get('reason', '')
+            variant_id = request.data.get('variant_id')  # Optional: specific variant
             
             if quantity <= 0:
                 return Response({'error': 'Quantity must be positive'}, status=400)
             
-            old_stock = product.stock_quantity
+            # Check if product has variants
+            active_variants = product.variants.filter(is_active=True)
             
-            if action_type == 'increase':
-                product.stock_quantity += quantity
-            elif action_type == 'decrease':
-                if product.stock_quantity < quantity:
-                    return Response({'error': 'Insufficient stock'}, status=400)
-                product.stock_quantity -= quantity
+            if active_variants.exists():
+                if not variant_id:
+                    # Return variant information for user to choose
+                    variants_data = []
+                    for variant in active_variants:
+                        variants_data.append({
+                            'id': variant.id,
+                            'name': variant.name,
+                            'sku': variant.sku,
+                            'current_stock': variant.stock_quantity,
+                            'cost_price': float(variant.effective_cost_price or 0)
+                        })
+                    
+                    return Response({
+                        'has_variants': True,
+                        'message': 'This product has variants. Please specify which variant to adjust.',
+                        'variants': variants_data
+                    }, status=400)
+                
+                # Adjust specific variant
+                try:
+                    variant = active_variants.get(id=variant_id)
+                    old_stock = variant.stock_quantity
+                    
+                    if action_type == 'increase':
+                        variant.stock_quantity += quantity
+                    elif action_type == 'decrease':
+                        if variant.stock_quantity < quantity:
+                            return Response({'error': 'Insufficient variant stock'}, status=400)
+                        variant.stock_quantity -= quantity
+                    else:
+                        return Response({'error': 'Invalid action type'}, status=400)
+                    
+                    variant.save()
+                    
+                    # Log the activity
+                    try:
+                        AdminActivity.objects.create(
+                            user=request.user,
+                            action=f'variant_stock_{action_type}',
+                            model_name='ProductVariant',
+                            object_id=variant.id,
+                            object_repr=f"{product.name} - {variant.name}: {old_stock} → {variant.stock_quantity} ({reason})",
+                            ip_address=self.get_client_ip(),
+                            user_agent=request.META.get('HTTP_USER_AGENT', '')
+                        )
+                    except Exception as e:
+                        print(f"Error logging activity: {str(e)}")
+                    
+                    return Response({
+                        'success': True,
+                        'variant_adjusted': True,
+                        'variant_name': variant.name,
+                        'new_stock': variant.stock_quantity,
+                        'old_stock': old_stock,
+                        'action': action_type,
+                        'quantity': quantity
+                    })
+                    
+                except ProductVariant.DoesNotExist:
+                    return Response({'error': 'Variant not found'}, status=400)
+            
             else:
-                return Response({'error': 'Invalid action type'}, status=400)
+                # Product has no variants - adjust product stock
+                old_stock = product.stock_quantity
+                
+                if action_type == 'increase':
+                    product.stock_quantity += quantity
+                elif action_type == 'decrease':
+                    if product.stock_quantity < quantity:
+                        return Response({'error': 'Insufficient stock'}, status=400)
+                    product.stock_quantity -= quantity
+                else:
+                    return Response({'error': 'Invalid action type'}, status=400)
+                
+                product.save()
+                
+                # Log the activity
+                try:
+                    AdminActivity.objects.create(
+                        user=request.user,
+                        action=f'stock_{action_type}',
+                        model_name='Product',
+                        object_id=product.id,
+                        object_repr=f"{product.name}: {old_stock} → {product.stock_quantity} ({reason})",
+                        ip_address=self.get_client_ip(),
+                        user_agent=request.META.get('HTTP_USER_AGENT', '')
+                    )
+                except Exception as e:
+                    print(f"Error logging activity: {str(e)}")
+                
+                return Response({
+                    'success': True,
+                    'variant_adjusted': False,
+                    'new_stock': product.stock_quantity,
+                    'old_stock': old_stock,
+                    'action': action_type,
+                    'quantity': quantity
+                })
             
-            product.save()
-            
-            # Log the activity
-            try:
-                AdminActivity.objects.create(
-                    user=request.user,
-                    action=f'stock_{action_type}',
-                    model_name='Product',
-                    object_id=product.id,
-                    object_repr=f"{product.name}: {old_stock} → {product.stock_quantity} ({reason})",
-                    ip_address=self.get_client_ip(),
-                    user_agent=request.META.get('HTTP_USER_AGENT', '')
-                )
-            except Exception as e:
-                print(f"Error logging activity: {str(e)}")
-            
-            return Response({
-                'success': True,
-                'new_stock': product.stock_quantity,
-                'old_stock': old_stock,
-                'action': action_type,
-                'quantity': quantity
-            })
         except Exception as e:
             return Response({'error': str(e)}, status=500)
     
     @action(detail=False, methods=['get'])
     def stock_summary(self, request):
-        """Get stock summary statistics"""
+        """Get stock summary statistics with intelligent variant handling"""
         try:
             total_products = Product.objects.filter(track_inventory=True).count()
-            low_stock_products = Product.objects.filter(
-                track_inventory=True,
-                stock_quantity__lte=F('low_stock_threshold')
-            ).count()
-            out_of_stock_products = Product.objects.filter(
-                track_inventory=True,
-                stock_quantity=0
-            ).count()
-            total_stock_value = Product.objects.filter(
-                track_inventory=True
-            ).aggregate(
-                total=Sum(F('stock_quantity') * F('cost_price'))
-            )['total'] or 0
+            
+            # Calculate statistics considering variants
+            low_stock_products = 0
+            out_of_stock_products = 0
+            total_stock_value = 0
+            
+            for product in Product.objects.filter(track_inventory=True).prefetch_related('variants'):
+                variants = product.variants.filter(is_active=True)
+                
+                if variants.exists():
+                    # Product has variants - check variant stock
+                    variant_stocks = [v.stock_quantity for v in variants]
+                    total_variant_stock = sum(variant_stocks)
+                    
+                    # Check if any variant is low stock
+                    if any(stock <= product.low_stock_threshold for stock in variant_stocks):
+                        low_stock_products += 1
+                    
+                    # Check if all variants are out of stock
+                    if total_variant_stock == 0:
+                        out_of_stock_products += 1
+                    
+                    # Calculate variant stock value
+                    for variant in variants:
+                        cost_price = variant.effective_cost_price
+                        if cost_price:
+                            total_stock_value += variant.stock_quantity * cost_price
+                else:
+                    # Product has no variants - use product stock
+                    if product.stock_quantity <= product.low_stock_threshold:
+                        low_stock_products += 1
+                    
+                    if product.stock_quantity == 0:
+                        out_of_stock_products += 1
+                    
+                    # Calculate product stock value
+                    if product.cost_price:
+                        total_stock_value += product.stock_quantity * product.cost_price
             
             return Response({
                 'total_products': total_products,
@@ -668,7 +768,7 @@ class StockDashboardViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def export_stock_report(self, request):
-        """Export stock report as CSV"""
+        """Export intelligent stock report as CSV"""
         try:
             import csv
             from django.http import HttpResponse
@@ -680,32 +780,87 @@ class StockDashboardViewSet(viewsets.ModelViewSet):
             
             # Write header
             writer.writerow([
-                'Product Name', 'SKU', 'Category', 'Current Stock', 
-                'Low Stock Threshold', 'Stock Status', 'Stock Value (৳)', 'Variants Count'
+                'Product Name', 'SKU', 'Category', 'Stock Management Type',
+                'Effective Stock', 'Effective Cost Price (৳)', 'Stock Value (৳)', 
+                'Low Stock Threshold', 'Stock Status', 'Variants Count'
             ])
             
             # Get products
-            products = self.get_queryset()
+            products = self.get_queryset().prefetch_related('variants')
             for product in products:
-                stock_status = 'Out of Stock' if product.stock_quantity == 0 else (
-                    'Low Stock' if product.is_low_stock else 'In Stock'
-                )
-                stock_value = float(product.stock_quantity * product.cost_price) if product.cost_price else 0
+                variants = product.variants.filter(is_active=True)
                 
-                writer.writerow([
-                    product.name,
-                    product.sku or '',
-                    product.category.name if product.category else '',
-                    product.stock_quantity,
-                    product.low_stock_threshold,
-                    stock_status,
-                    stock_value,
-                    product.variants.count()
-                ])
+                if variants.exists():
+                    # Product has variants
+                    total_stock = sum(v.stock_quantity for v in variants)
+                    total_value = sum(
+                        v.stock_quantity * (v.effective_cost_price or 0) 
+                        for v in variants
+                    )
+                    avg_cost = total_value / total_stock if total_stock > 0 else 0
+                    
+                    stock_status = 'Out of Stock' if total_stock == 0 else (
+                        'Low Stock' if any(v.stock_quantity <= product.low_stock_threshold for v in variants) 
+                        else 'In Stock'
+                    )
+                    
+                    writer.writerow([
+                        product.name,
+                        product.sku or '',
+                        product.category.name if product.category else '',
+                        'Variant Level',
+                        total_stock,
+                        round(avg_cost, 2),
+                        round(total_value, 2),
+                        product.low_stock_threshold,
+                        stock_status,
+                        variants.count()
+                    ])
+                    
+                    # Add individual variant rows
+                    for variant in variants:
+                        variant_value = variant.stock_quantity * (variant.effective_cost_price or 0)
+                        variant_status = 'Out of Stock' if variant.stock_quantity == 0 else (
+                            'Low Stock' if variant.stock_quantity <= product.low_stock_threshold 
+                            else 'In Stock'
+                        )
+                        
+                        writer.writerow([
+                            f"  └─ {variant.name}",
+                            variant.sku or '',
+                            '',
+                            'Variant',
+                            variant.stock_quantity,
+                            variant.effective_cost_price or 0,
+                            round(variant_value, 2),
+                            product.low_stock_threshold,
+                            variant_status,
+                            ''
+                        ])
+                else:
+                    # Product has no variants
+                    stock_status = 'Out of Stock' if product.stock_quantity == 0 else (
+                        'Low Stock' if product.stock_quantity <= product.low_stock_threshold 
+                        else 'In Stock'
+                    )
+                    stock_value = product.stock_quantity * (product.cost_price or 0)
+                    
+                    writer.writerow([
+                        product.name,
+                        product.sku or '',
+                        product.category.name if product.category else '',
+                        'Product Level',
+                        product.stock_quantity,
+                        product.cost_price or 0,
+                        round(stock_value, 2),
+                        product.low_stock_threshold,
+                        stock_status,
+                        0
+                    ])
             
             # Create response
             response = HttpResponse(output.getvalue(), content_type='text/csv')
-            response['Content-Disposition'] = 'attachment; filename="stock_report.csv"'
+            response['Content-Disposition'] = 'attachment; filename="intelligent_stock_report.csv"'
             return response
             
         except Exception as e:

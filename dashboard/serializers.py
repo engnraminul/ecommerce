@@ -311,50 +311,162 @@ class ExpenseDashboardSerializer(serializers.ModelSerializer):
 
 
 class StockManagementSerializer(serializers.ModelSerializer):
-    """Serializer for stock management of products"""
+    """
+    Serializer for intelligent stock management of products and variants.
+    If product has variants, work with variant stock/cost, else use product stock/cost.
+    """
     category_name = serializers.ReadOnlyField(source='category.name')
     variant_count = serializers.SerializerMethodField()
+    has_variants = serializers.SerializerMethodField()
+    effective_stock_quantity = serializers.SerializerMethodField()
+    effective_cost_price = serializers.SerializerMethodField()
     total_variant_stock = serializers.SerializerMethodField()
-    is_low_stock = serializers.ReadOnlyField()
+    total_variant_value = serializers.SerializerMethodField()
+    is_low_stock = serializers.SerializerMethodField()
     stock_status = serializers.SerializerMethodField()
     stock_value = serializers.SerializerMethodField()
     variants = serializers.SerializerMethodField()
+    stock_management_type = serializers.SerializerMethodField()
     
     class Meta:
         model = Product
         fields = [
             'id', 'name', 'sku', 'category_name', 'stock_quantity', 
             'low_stock_threshold', 'track_inventory', 'cost_price', 'price',
-            'variant_count', 'total_variant_stock', 'is_low_stock', 
-            'stock_status', 'stock_value', 'variants', 'is_active'
+            'variant_count', 'has_variants', 'effective_stock_quantity', 
+            'effective_cost_price', 'total_variant_stock', 'total_variant_value',
+            'is_low_stock', 'stock_status', 'stock_value', 'variants', 
+            'stock_management_type', 'is_active'
         ]
         read_only_fields = ['id', 'name', 'sku', 'category_name', 'variant_count', 
-                           'total_variant_stock', 'is_low_stock', 'stock_status', 
-                           'stock_value', 'variants']
+                           'has_variants', 'effective_stock_quantity', 'effective_cost_price',
+                           'total_variant_stock', 'total_variant_value', 'is_low_stock', 
+                           'stock_status', 'stock_value', 'variants', 'stock_management_type']
     
     def get_variant_count(self, obj):
-        return obj.variants.count()
+        return obj.variants.filter(is_active=True).count()
+    
+    def get_has_variants(self, obj):
+        """Check if product has active variants"""
+        return obj.variants.filter(is_active=True).exists()
+    
+    def get_effective_stock_quantity(self, obj):
+        """
+        Return appropriate stock quantity:
+        - If has variants: sum of all variant stock
+        - If no variants: product stock
+        """
+        if self.get_has_variants(obj):
+            return sum(variant.stock_quantity for variant in obj.variants.filter(is_active=True))
+        return obj.stock_quantity
+    
+    def get_effective_cost_price(self, obj):
+        """
+        Return appropriate cost price:
+        - If has variants: weighted average cost price of variants
+        - If no variants: product cost price
+        """
+        if self.get_has_variants(obj):
+            variants = obj.variants.filter(is_active=True)
+            total_cost = 0
+            total_quantity = 0
+            
+            for variant in variants:
+                variant_cost = variant.effective_cost_price
+                if variant_cost and variant.stock_quantity > 0:
+                    total_cost += variant_cost * variant.stock_quantity
+                    total_quantity += variant.stock_quantity
+            
+            if total_quantity > 0:
+                return total_cost / total_quantity
+            
+            # Fallback to average cost price if no stock
+            costs = [v.effective_cost_price for v in variants if v.effective_cost_price]
+            return sum(costs) / len(costs) if costs else 0
+        
+        return obj.cost_price or 0
     
     def get_total_variant_stock(self, obj):
-        return sum(variant.stock_quantity for variant in obj.variants.all())
+        """Total stock across all variants"""
+        return sum(variant.stock_quantity for variant in obj.variants.filter(is_active=True))
+    
+    def get_total_variant_value(self, obj):
+        """Total stock value across all variants"""
+        total_value = 0
+        for variant in obj.variants.filter(is_active=True):
+            cost_price = variant.effective_cost_price
+            if cost_price:
+                total_value += variant.stock_quantity * cost_price
+        return float(total_value)
+    
+    def get_is_low_stock(self, obj):
+        """
+        Check if stock is low:
+        - If has variants: check if any variant is low stock
+        - If no variants: check product stock
+        """
+        if self.get_has_variants(obj):
+            return any(
+                variant.stock_quantity <= obj.low_stock_threshold 
+                for variant in obj.variants.filter(is_active=True)
+            )
+        return obj.stock_quantity <= obj.low_stock_threshold
     
     def get_stock_status(self, obj):
+        """
+        Get stock status based on effective stock management:
+        - If has variants: based on variant stock levels
+        - If no variants: based on product stock
+        """
         if not obj.track_inventory:
             return 'not_tracked'
-        elif obj.stock_quantity == 0:
-            return 'out_of_stock'
-        elif obj.is_low_stock:
-            return 'low_stock'
+        
+        if self.get_has_variants(obj):
+            variants = obj.variants.filter(is_active=True)
+            if not variants.exists():
+                return 'no_variants'
+            
+            total_stock = sum(v.stock_quantity for v in variants)
+            if total_stock == 0:
+                return 'out_of_stock'
+            elif any(v.stock_quantity <= obj.low_stock_threshold for v in variants):
+                return 'low_stock'
+            else:
+                return 'in_stock'
         else:
-            return 'in_stock'
+            if obj.stock_quantity == 0:
+                return 'out_of_stock'
+            elif obj.stock_quantity <= obj.low_stock_threshold:
+                return 'low_stock'
+            else:
+                return 'in_stock'
     
     def get_stock_value(self, obj):
-        if obj.cost_price:
-            return float(obj.stock_quantity * obj.cost_price)
+        """
+        Calculate stock value based on cost price:
+        - If has variants: sum of (variant_stock × variant_cost_price)
+        - If no variants: product_stock × product_cost_price
+        """
+        if self.get_has_variants(obj):
+            return self.get_total_variant_value(obj)
+        
+        cost_price = obj.cost_price
+        if cost_price:
+            return float(obj.stock_quantity * cost_price)
         return 0
     
+    def get_stock_management_type(self, obj):
+        """Indicate whether stock is managed at product or variant level"""
+        return 'variant' if self.get_has_variants(obj) else 'product'
+    
     def get_variants(self, obj):
-        return StockVariantManagementSerializer(obj.variants.all(), many=True).data
+        """Return variant data only if product has variants"""
+        if self.get_has_variants(obj):
+            return StockVariantManagementSerializer(
+                obj.variants.filter(is_active=True), 
+                many=True
+            ).data
+        return []
 
 
 class StockVariantManagementSerializer(serializers.ModelSerializer):

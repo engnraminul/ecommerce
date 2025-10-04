@@ -130,10 +130,10 @@
                         <th>Product</th>
                         <th>SKU</th>
                         <th>Category</th>
-                        <th>Current Stock</th>
+                        <th>Stock Information</th>
                         <th>Low Stock Threshold</th>
                         <th>Stock Status</th>
-                        <th>Stock Value</th>
+                        <th>Stock Value (Cost Based)</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -399,31 +399,53 @@ document.addEventListener('DOMContentLoaded', function() {
         data.forEach(function(item) {
             const stockStatus = getStockStatusBadge(item.stock_status);
             const stockValue = item.stock_value ? '৳' + parseFloat(item.stock_value).toLocaleString() : '-';
+            const effectiveStock = item.effective_stock_quantity || item.stock_quantity;
+            const effectiveCost = item.effective_cost_price || item.cost_price || 0;
             
             const row = document.createElement('tr');
+            
+            // Add stock management type indicator
+            const managementType = item.stock_management_type === 'variant' ? 
+                '<span class="badge bg-info ms-1">Variants</span>' : 
+                '<span class="badge bg-secondary ms-1">Direct</span>';
+            
             row.innerHTML = `
                 <td>
-                    <div class="fw-bold">${item.name}</div>
-                    ${item.variant_count > 0 ? `<small class="text-muted">${item.variant_count} variants</small>` : ''}
+                    <div class="fw-bold">${item.name} ${managementType}</div>
+                    ${item.has_variants ? `<small class="text-muted">${item.variant_count} active variants</small>` : ''}
                 </td>
                 <td>${item.sku || '-'}</td>
                 <td>${item.category_name || '-'}</td>
                 <td>
-                    <span class="fw-bold">${item.stock_quantity}</span>
-                    ${item.variant_count > 0 ? `<br><small class="text-muted">Variants: ${item.total_variant_stock}</small>` : ''}
+                    <div class="fw-bold text-${effectiveStock > 0 ? 'success' : 'danger'}">${effectiveStock}</div>
+                    ${item.has_variants ? `
+                        <small class="text-muted">
+                            Product: ${item.stock_quantity} | Variants: ${item.total_variant_stock}
+                        </small>
+                    ` : ''}
+                    ${effectiveCost > 0 ? `<small class="text-info d-block">Avg Cost: ৳${effectiveCost.toFixed(2)}</small>` : ''}
                 </td>
                 <td>${item.low_stock_threshold}</td>
                 <td>${stockStatus}</td>
-                <td>${stockValue}</td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="openStockAdjustment(${item.id}, 'product', '${item.name}', ${item.stock_quantity})">
-                        <i class="fas fa-edit"></i> Adjust
-                    </button>
-                    ${item.variant_count > 0 ? `
-                    <button class="btn btn-sm btn-outline-info" onclick="showProductVariants(${item.id})">
-                        <i class="fas fa-list"></i> Variants
-                    </button>
+                    <div class="fw-bold">${stockValue}</div>
+                    ${item.has_variants && item.total_variant_value ? `
+                        <small class="text-muted">Variant Total: ৳${parseFloat(item.total_variant_value).toLocaleString()}</small>
                     ` : ''}
+                </td>
+                <td>
+                    ${item.has_variants ? `
+                        <button class="btn btn-sm btn-outline-primary mb-1" onclick="showVariantAdjustment(${item.id}, '${item.name}')">
+                            <i class="fas fa-layer-group"></i> Adjust Variants
+                        </button>
+                        <button class="btn btn-sm btn-outline-info" onclick="showProductVariants(${item.id})">
+                            <i class="fas fa-list"></i> View Variants
+                        </button>
+                    ` : `
+                        <button class="btn btn-sm btn-outline-primary" onclick="openStockAdjustment(${item.id}, 'product', '${item.name}', ${effectiveStock})">
+                            <i class="fas fa-edit"></i> Adjust Stock
+                        </button>
+                    `}
                 </td>
             `;
             tbody.appendChild(row);
@@ -554,15 +576,25 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        const endpoint = itemType === 'product' ? 
-            `/mb-admin/api/stock/${itemId}/adjust_stock/` : 
-            `/mb-admin/api/stock-variants/${itemId}/adjust_stock/`;
+        let endpoint, data;
         
-        const data = {
-            action: action,
-            quantity: parseInt(quantity),
-            reason: reason
-        };
+        if (itemType === 'variant') {
+            // For variants, use the stock-variants endpoint
+            endpoint = `/mb-admin/api/stock-variants/${itemId}/adjust_stock/`;
+            data = {
+                action: action,
+                quantity: parseInt(quantity),
+                reason: reason
+            };
+        } else {
+            // For products, use the stock endpoint with variant_id if needed
+            endpoint = `/mb-admin/api/stock/${itemId}/adjust_stock/`;
+            data = {
+                action: action,
+                quantity: parseInt(quantity),
+                reason: reason
+            };
+        }
         
         fetch(endpoint, {
             method: 'POST',
@@ -574,7 +606,9 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
+                return response.json().then(err => {
+                    throw new Error(err.error || `HTTP ${response.status}`);
+                });
             }
             return response.json();
         })
@@ -585,8 +619,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 loadStockSummary();
                 loadStockData();
                 
-                // Show success message
-                showSuccessMessage(`Stock ${action}d successfully. New stock: ${response.new_stock}`);
+                // Show appropriate success message
+                let message;
+                if (response.variant_adjusted) {
+                    message = `Variant "${response.variant_name}" stock ${action}d successfully. New stock: ${response.new_stock}`;
+                } else if (response.has_variants) {
+                    // Product with variants - user needs to select variant
+                    alert('This product has variants. Please select a specific variant to adjust.');
+                    return;
+                } else {
+                    message = `Stock ${action}d successfully. New stock: ${response.new_stock}`;
+                }
+                
+                showSuccessMessage(message);
             } else {
                 alert('Error: ' + (response.error || 'Unknown error'));
             }
@@ -712,6 +757,94 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Make functions available globally for onclick handlers
     window.openStockAdjustment = openStockAdjustment;
+    window.showVariantAdjustment = showVariantAdjustment;
+    
+    // New function for variant adjustment
+    function showVariantAdjustment(productId, productName) {
+        // First, get the product variants
+        fetch(`/mb-admin/api/stock/${productId}/`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.variants && data.variants.length > 0) {
+                    // Create variant selection modal
+                    showVariantSelectionModal(productId, productName, data.variants);
+                } else {
+                    alert('No variants found for this product.');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching variants:', error);
+                alert('Error loading variants: ' + error.message);
+            });
+    }
+    
+    function showVariantSelectionModal(productId, productName, variants) {
+        // Update modal content
+        document.getElementById('adjustmentProductName').innerHTML = `
+            <strong>${productName}</strong>
+            <div class="mt-2">
+                <small class="text-muted">Select a variant to adjust:</small>
+            </div>
+        `;
+        
+        document.getElementById('adjustmentCurrentStock').innerHTML = `
+            <div class="row">
+                ${variants.map(variant => `
+                    <div class="col-md-6 mb-2">
+                        <div class="border rounded p-2">
+                            <strong>${variant.name}</strong><br>
+                            <small class="text-muted">SKU: ${variant.sku || 'N/A'}</small><br>
+                            <span class="badge bg-${variant.stock_quantity > 0 ? 'success' : 'danger'}">
+                                Stock: ${variant.stock_quantity}
+                            </span>
+                            ${variant.effective_cost_price ? `<br><small>Cost: ৳${variant.effective_cost_price}</small>` : ''}
+                            <button class="btn btn-sm btn-primary mt-1 w-100" 
+                                    onclick="selectVariantForAdjustment(${variant.id}, '${variant.name}', ${variant.stock_quantity}, '${productName}')">
+                                Select This Variant
+                            </button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        
+        // Hide adjustment form initially
+        document.getElementById('adjustmentAction').closest('.mb-3').style.display = 'none';
+        document.getElementById('adjustmentQuantity').closest('.mb-3').style.display = 'none';
+        document.getElementById('adjustmentReason').closest('.mb-3').style.display = 'none';
+        document.getElementById('saveStockAdjustmentBtn').style.display = 'none';
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('stockAdjustmentModal'));
+        modal.show();
+    }
+    
+    window.selectVariantForAdjustment = function(variantId, variantName, currentStock, productName) {
+        // Set up the form for variant adjustment
+        document.getElementById('adjustmentItemId').value = variantId;
+        document.getElementById('adjustmentItemType').value = 'variant';
+        document.getElementById('adjustmentProductName').innerHTML = `
+            <strong>${productName}</strong><br>
+            <small class="text-info">Variant: ${variantName}</small>
+        `;
+        document.getElementById('adjustmentCurrentStock').textContent = currentStock;
+        
+        // Show adjustment form
+        document.getElementById('adjustmentAction').closest('.mb-3').style.display = 'block';
+        document.getElementById('adjustmentQuantity').closest('.mb-3').style.display = 'block';
+        document.getElementById('adjustmentReason').closest('.mb-3').style.display = 'block';
+        document.getElementById('saveStockAdjustmentBtn').style.display = 'block';
+        
+        // Clear form
+        document.getElementById('adjustmentAction').value = '';
+        document.getElementById('adjustmentQuantity').value = '';
+        document.getElementById('adjustmentReason').value = '';
+    };
 });
 </script>
 {% endblock %}
