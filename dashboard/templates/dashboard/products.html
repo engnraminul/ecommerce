@@ -86,42 +86,56 @@
     </div>
 </div>
 
-<!-- Product Variants Section -->
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Product Variants</h5>
-        <button class="btn btn-sm btn-success" id="addVariantBtn" disabled data-bs-toggle="modal" data-bs-target="#addVariantModal">
-            <i class="fas fa-plus-circle me-1"></i> Add Variant
-        </button>
-    </div>
-    <div class="card-body">
-        <div id="selectProductMessage" class="text-center py-4">
-            <i class="fas fa-hand-pointer fa-2x mb-3 text-secondary"></i>
-            <p>Select a product from the table above to manage its variants.</p>
-        </div>
-        
-        <div id="variantsContainer" style="display: none;">
-            <h6 id="selectedProductName" class="mb-3 border-bottom pb-2"></h6>
-            
-            <div class="table-responsive">
-                <table class="table table-sm table-striped">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>SKU</th>
-                            <th>Name & Image</th>
-                            <th>Color</th>
-                            <th>Size</th>
-                            <th>Selling Price</th>
-                            <th>Compare Price</th>
-                            <th>Cost Price</th>
-                            <th>Stock</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="variantsTableBody"></tbody>
-                </table>
+<!-- Product Variants Modal -->
+<div class="modal fade" id="productVariantsModal" tabindex="-1" aria-labelledby="productVariantsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productVariantsModalLabel">
+                    <i class="fas fa-list me-2"></i>Product Variants
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 id="selectedProductName" class="mb-0"></h6>
+                    <button class="btn btn-sm btn-success" id="addVariantBtn" disabled data-bs-toggle="modal" data-bs-target="#addVariantModal">
+                        <i class="fas fa-plus-circle me-1"></i> Add Variant
+                    </button>
+                </div>
+                
+                <div id="selectProductMessage" class="text-center py-4">
+                    <i class="fas fa-hand-pointer fa-2x mb-3 text-secondary"></i>
+                    <p>Select a product from the table to manage its variants.</p>
+                </div>
+                
+                <div id="variantsContainer" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>SKU</th>
+                                    <th>Name & Image</th>
+                                    <th>Color</th>
+                                    <th>Size</th>
+                                    <th>Selling Price</th>
+                                    <th>Compare Price</th>
+                                    <th>Cost Price</th>
+                                    <th>Stock</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="variantsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Close
+                </button>
             </div>
         </div>
     </div>
@@ -233,7 +247,8 @@
                                     <div class="row">
                                         <div class="col-md-4">
                                             <label for="productStockQuantity" class="form-label">Stock Quantity</label>
-                                            <input type="number" class="form-control" id="productStockQuantity" name="stock_quantity" min="0" value="0">
+                                            <input type="number" class="form-control" id="productStockQuantity" name="stock_quantity" min="0" value="0" readonly>
+                                            <small class="text-muted">Managed through Stock Management</small>
                                         </div>
                                         <div class="col-md-4">
                                             <label for="productLowStockThreshold" class="form-label">Low Stock Threshold</label>
@@ -555,7 +570,8 @@
                                     <div class="row">
                                         <div class="col-md-4">
                                             <label for="editProductStockQuantity" class="form-label">Stock Quantity</label>
-                                            <input type="number" class="form-control" id="editProductStockQuantity" name="stock_quantity" min="0" value="0">
+                                            <input type="number" class="form-control" id="editProductStockQuantity" name="stock_quantity" min="0" value="0" readonly>
+                                            <small class="text-muted">Managed through Stock Management</small>
                                         </div>
                                         <div class="col-md-4">
                                             <label for="editProductLowStockThreshold" class="form-label">Low Stock Threshold</label>
@@ -858,7 +874,8 @@
                                     <div class="row mt-3">
                                         <div class="col-md-6">
                                             <label for="variantStock" class="form-label">Stock Quantity</label>
-                                            <input type="number" class="form-control" id="variantStock" name="stock_quantity" min="0" value="0">
+                                            <input type="number" class="form-control" id="variantStock" name="stock_quantity" min="0" value="0" readonly>
+                                            <small class="text-muted">Managed through Stock Management</small>
                                         </div>
                                     </div>
                                 </div>
@@ -1005,7 +1022,8 @@
                                     <div class="row mt-3">
                                         <div class="col-md-6">
                                             <label for="editVariantStock" class="form-label">Stock Quantity</label>
-                                            <input type="number" class="form-control" id="editVariantStock" name="stock_quantity" min="0" required>
+                                            <input type="number" class="form-control" id="editVariantStock" name="stock_quantity" min="0" required readonly>
+                                            <small class="text-muted">Managed through Stock Management</small>
                                         </div>
                                     </div>
                                 </div>
@@ -1079,6 +1097,34 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Readonly stock fields styling */
+input[readonly] {
+    background-color: #f8f9fa !important;
+    cursor: not-allowed;
+    border-color: #dee2e6;
+}
+
+input[readonly]:focus {
+    box-shadow: none;
+    border-color: #dee2e6;
+}
+
+/* Modal styling improvements */
+.modal-xl {
+    max-width: 75%;
+}
+
+@media (max-width: 768px) {
+    .modal-xl {
+        max-width: 98%;
+        margin: 0.5rem;
+    }
+}
+</style>
 {% endblock %}
 
 {% block extra_js %}
@@ -1339,6 +1385,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('selectedProductName').textContent = productName;
                 document.getElementById('variantProductId').value = selectedProductId;
                 document.getElementById('addVariantBtn').disabled = false;
+                
+                // Show the variants modal
+                const modal = new bootstrap.Modal(document.getElementById('productVariantsModal'));
+                modal.show();
+                
+                // Load variants after modal is shown
                 loadProductVariants(selectedProductId);
             });
         });
@@ -1672,7 +1724,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show loading indicator
         document.getElementById('variantsTableBody').innerHTML = `
             <tr>
-                <td colspan="9" class="text-center py-3">
+                <td colspan="11" class="text-center py-3">
                     <div class="spinner-border spinner-border-sm text-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
@@ -1690,7 +1742,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error loading variants:', error);
                 document.getElementById('variantsTableBody').innerHTML = `
                     <tr>
-                        <td colspan="7" class="text-center py-3 text-danger">
+                        <td colspan="11" class="text-center py-3 text-danger">
                             <i class="fas fa-exclamation-circle me-2"></i>
                             Failed to load variants.
                         </td>
@@ -1706,7 +1758,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!variants || variants.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="9" class="text-center py-3">
+                    <td colspan="11" class="text-center py-3">
                         No variants found for this product. 
                         <button class="btn btn-sm btn-link add-first-variant-btn">
                             Add your first variant
