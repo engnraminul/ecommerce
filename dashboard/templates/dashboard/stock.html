@@ -5,6 +5,32 @@
 {% block page_title %}Stock Management{% endblock %}
 
 {% block content %}
+<!-- Toast Notification Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 11000;">
+    <!-- Toast notifications will be added here dynamically -->
+</div>
+
+<!-- Professional Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmationModalLabel">
+                    <i class="fas fa-question-circle me-2 text-warning"></i>Confirm Action
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmationMessage">Are you sure you want to proceed?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmActionBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Stock Summary Cards -->
 <div class="row mb-4">
     <div class="col-md-3">
@@ -151,6 +177,28 @@
             <p class="mt-2">Loading stock data...</p>
         </div>
         
+        <!-- Pagination for Stock List -->
+        <div id="stockPagination" class="row mt-3" style="display: none;">
+            <div class="col-md-6">
+                <div class="d-flex align-items-center">
+                    <span class="text-muted">Showing </span>
+                    <span id="stockStartRecord" class="fw-bold mx-1">1</span>
+                    <span class="text-muted"> to </span>
+                    <span id="stockEndRecord" class="fw-bold mx-1">15</span>
+                    <span class="text-muted"> of </span>
+                    <span id="stockTotalRecords" class="fw-bold mx-1">0</span>
+                    <span class="text-muted"> entries</span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <nav aria-label="Stock pagination">
+                    <ul id="stockPaginationList" class="pagination pagination-sm justify-content-end mb-0">
+                        <!-- Pagination buttons will be inserted here -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        
         <!-- Empty state -->
         <div id="stockEmptyState" class="text-center py-4" style="display: none;">
             <i class="fas fa-box fa-3x text-muted mb-3"></i>
@@ -240,6 +288,13 @@ document.addEventListener('DOMContentLoaded', function() {
     let variantData = [];
     let categories = [];
     
+    // Pagination variables
+    let currentStockPage = 1;
+    let stockItemsPerPage = 15;
+    let totalStockItems = 0;
+    let currentActivityPage = 1;
+    let activityItemsPerPage = 10;
+    
     // Initialize the page
     loadStockSummary();
     loadCategories();
@@ -263,9 +318,234 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('stockSearchInput').addEventListener('input', function() {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(function() {
+            currentStockPage = 1; // Reset to first page when searching
             applyFilters();
         }, 500);
     });
+    
+    // Professional Toast Notification System
+    function showToast(message, type = 'success', duration = 4000) {
+        const toastContainer = document.querySelector('.toast-container');
+        const toastId = 'toast-' + Date.now();
+        
+        const bgClass = {
+            'success': 'bg-success',
+            'error': 'bg-danger',
+            'warning': 'bg-warning',
+            'info': 'bg-info'
+        }[type] || 'bg-success';
+        
+        const icon = {
+            'success': 'fas fa-check-circle',
+            'error': 'fas fa-exclamation-circle',
+            'warning': 'fas fa-exclamation-triangle',
+            'info': 'fas fa-info-circle'
+        }[type] || 'fas fa-check-circle';
+        
+        const toastHtml = `
+            <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="${icon} me-2"></i>${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+        
+        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+        
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, { delay: duration });
+        toast.show();
+        
+        toastElement.addEventListener('hidden.bs.toast', function() {
+            this.remove();
+        });
+    }
+    
+    // Professional Confirmation Dialog
+    function showConfirmation(message, onConfirm, onCancel = null) {
+        document.getElementById('confirmationMessage').textContent = message;
+        
+        const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+        
+        // Clear any existing event listeners
+        const newConfirmBtn = document.getElementById('confirmActionBtn').cloneNode(true);
+        document.getElementById('confirmActionBtn').parentNode.replaceChild(newConfirmBtn, document.getElementById('confirmActionBtn'));
+        
+        newConfirmBtn.addEventListener('click', function() {
+            modal.hide();
+            if (onConfirm) onConfirm();
+        });
+        
+        if (onCancel) {
+            document.getElementById('confirmationModal').addEventListener('hidden.bs.modal', onCancel, { once: true });
+        }
+        
+        modal.show();
+    }
+    
+    // Pagination System for Stock Data
+    function renderStockPagination() {
+        const totalPages = Math.ceil(totalStockItems / stockItemsPerPage);
+        
+        if (totalPages <= 1) {
+            document.getElementById('stockPagination').style.display = 'none';
+            return;
+        }
+        
+        document.getElementById('stockPagination').style.display = 'block';
+        
+        // Update record count display
+        const startRecord = ((currentStockPage - 1) * stockItemsPerPage) + 1;
+        const endRecord = Math.min(currentStockPage * stockItemsPerPage, totalStockItems);
+        
+        document.getElementById('stockStartRecord').textContent = startRecord;
+        document.getElementById('stockEndRecord').textContent = endRecord;
+        document.getElementById('stockTotalRecords').textContent = totalStockItems;
+        
+        // Build pagination buttons
+        const paginationList = document.getElementById('stockPaginationList');
+        paginationList.innerHTML = '';
+        
+        // Previous button
+        const prevLi = document.createElement('li');
+        prevLi.className = `page-item ${currentStockPage === 1 ? 'disabled' : ''}`;
+        prevLi.innerHTML = `<a class="page-link" href="#" onclick="changeStockPage(${currentStockPage - 1})">Previous</a>`;
+        paginationList.appendChild(prevLi);
+        
+        // Page numbers
+        const startPage = Math.max(1, currentStockPage - 2);
+        const endPage = Math.min(totalPages, currentStockPage + 2);
+        
+        if (startPage > 1) {
+            const firstLi = document.createElement('li');
+            firstLi.className = 'page-item';
+            firstLi.innerHTML = `<a class="page-link" href="#" onclick="changeStockPage(1)">1</a>`;
+            paginationList.appendChild(firstLi);
+            
+            if (startPage > 2) {
+                const ellipsisLi = document.createElement('li');
+                ellipsisLi.className = 'page-item disabled';
+                ellipsisLi.innerHTML = `<span class="page-link">...</span>`;
+                paginationList.appendChild(ellipsisLi);
+            }
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const li = document.createElement('li');
+            li.className = `page-item ${i === currentStockPage ? 'active' : ''}`;
+            li.innerHTML = `<a class="page-link" href="#" onclick="changeStockPage(${i})">${i}</a>`;
+            paginationList.appendChild(li);
+        }
+        
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                const ellipsisLi = document.createElement('li');
+                ellipsisLi.className = 'page-item disabled';
+                ellipsisLi.innerHTML = `<span class="page-link">...</span>`;
+                paginationList.appendChild(ellipsisLi);
+            }
+            
+            const lastLi = document.createElement('li');
+            lastLi.className = 'page-item';
+            lastLi.innerHTML = `<a class="page-link" href="#" onclick="changeStockPage(${totalPages})">${totalPages}</a>`;
+            paginationList.appendChild(lastLi);
+        }
+        
+        // Next button
+        const nextLi = document.createElement('li');
+        nextLi.className = `page-item ${currentStockPage === totalPages ? 'disabled' : ''}`;
+        nextLi.innerHTML = `<a class="page-link" href="#" onclick="changeStockPage(${currentStockPage + 1})">Next</a>`;
+        paginationList.appendChild(nextLi);
+    }
+    
+    // Global function for changing stock page
+    window.changeStockPage = function(page) {
+        const totalPages = Math.ceil(totalStockItems / stockItemsPerPage);
+        if (page < 1 || page > totalPages) return;
+        
+        currentStockPage = page;
+        renderStockTableWithPagination();
+        renderStockPagination();
+        
+        // Scroll to top of table
+        document.getElementById('stockTable').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    
+    function renderStockTableWithPagination() {
+        const startIndex = (currentStockPage - 1) * stockItemsPerPage;
+        const endIndex = startIndex + stockItemsPerPage;
+        const pageData = stockData.slice(startIndex, endIndex);
+        
+        renderStockTable(pageData);
+    }
+    
+    // Activity Pagination System
+    function renderActivityPagination(activities, modalBodySelector) {
+        const totalPages = Math.ceil(activities.length / activityItemsPerPage);
+        
+        if (totalPages <= 1) {
+            return activities; // Return all activities if no pagination needed
+        }
+        
+        // Create pagination controls
+        const paginationHtml = `
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div>
+                    <small class="text-muted">
+                        Showing ${((currentActivityPage - 1) * activityItemsPerPage) + 1} to 
+                        ${Math.min(currentActivityPage * activityItemsPerPage, activities.length)} of 
+                        ${activities.length} activities
+                    </small>
+                </div>
+                <div>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-secondary" 
+                                onclick="changeActivityPage(${currentActivityPage - 1})" 
+                                ${currentActivityPage === 1 ? 'disabled' : ''}>
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" disabled>
+                            Page ${currentActivityPage} of ${totalPages}
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" 
+                                onclick="changeActivityPage(${currentActivityPage + 1})" 
+                                ${currentActivityPage === totalPages ? 'disabled' : ''}>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Add pagination controls to modal
+        const modalBody = document.querySelector(modalBodySelector);
+        if (modalBody) {
+            modalBody.insertAdjacentHTML('beforeend', paginationHtml);
+        }
+        
+        // Return paginated data
+        const startIndex = (currentActivityPage - 1) * activityItemsPerPage;
+        const endIndex = startIndex + activityItemsPerPage;
+        return activities.slice(startIndex, endIndex);
+    }
+    
+    // Global function for changing activity page
+    window.changeActivityPage = function(page) {
+        const totalActivities = window.currentActivities ? window.currentActivities.length : 0;
+        const totalPages = Math.ceil(totalActivities / activityItemsPerPage);
+        
+        if (page < 1 || page > totalPages) return;
+        
+        currentActivityPage = page;
+        
+        // Re-render the activity modal with new page
+        if (window.currentProductName && window.currentActivities) {
+            showActivityModal(window.currentProductName, window.currentActivities);
+        }
+    };
     
     // CSRF token helper function
     function getCookie(name) {
@@ -299,6 +579,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Failed to load stock summary:', error);
+                showToast('Failed to load stock summary', 'error');
                 // Show error in summary cards
                 document.getElementById('totalProducts').textContent = 'Error';
                 document.getElementById('lowStockProducts').textContent = 'Error';
@@ -328,6 +609,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Failed to load categories:', error);
+                showToast('Failed to load categories', 'error');
             });
     }
     
@@ -346,7 +628,10 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (currentView === 'products') {
                     stockData = data.results || data;
-                    renderStockTable(stockData);
+                    totalStockItems = stockData.length;
+                    currentStockPage = 1; // Reset to first page
+                    renderStockTableWithPagination();
+                    renderStockPagination();
                 } else {
                     variantData = data.results || data;
                     renderVariantTable(variantData);
@@ -355,6 +640,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Failed to load stock data:', error);
+                showToast('Failed to load stock data', 'error');
                 hideLoading();
                 showEmptyState();
             });
@@ -367,6 +653,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (currentView === 'variants') {
             button.innerHTML = '<i class="fas fa-box me-1"></i> Show Products';
             updateTableHeader('variants');
+            // Hide pagination for variants view (not implemented yet)
+            document.getElementById('stockPagination').style.display = 'none';
             if (variantData.length === 0) {
                 loadStockData();
             } else {
@@ -375,7 +663,9 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             button.innerHTML = '<i class="fas fa-exchange-alt me-1"></i> Toggle Variant View';
             updateTableHeader('products');
-            renderStockTable(stockData);
+            currentStockPage = 1; // Reset pagination
+            renderStockTableWithPagination();
+            renderStockPagination();
         }
     }
     
@@ -553,7 +843,11 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(data => {
                 if (currentView === 'products') {
-                    renderStockTable(data.results || data);
+                    stockData = data.results || data;
+                    totalStockItems = stockData.length;
+                    currentStockPage = 1; // Reset to first page when filtering
+                    renderStockTableWithPagination();
+                    renderStockPagination();
                 } else {
                     renderVariantTable(data.results || data);
                 }
@@ -561,6 +855,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Failed to apply filters:', error);
+                showToast('Failed to apply filters', 'error');
                 hideLoading();
             });
     }
@@ -570,6 +865,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('categoryFilter').value = '';
         document.getElementById('stockStatusFilter').value = '';
         document.getElementById('activeFilter').value = '';
+        currentStockPage = 1; // Reset pagination
         applyFilters();
     }
     
@@ -603,7 +899,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const notes = document.getElementById('adjustmentNotes').value;
         
         if (!action || !quantity || !reason) {
-            alert('Please fill in all required fields (Action, Quantity, and Reason).');
+            showToast('Please fill in all required fields (Action, Quantity, and Reason)', 'warning');
             return;
         }
         
@@ -676,7 +972,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     message = `${actionDisplay} completed for variant "${response.variant_name}". New stock: ${response.new_stock}`;
                 } else if (response.has_variants) {
                     // Product with variants - user needs to select variant
-                    alert('This product has variants. Please select a specific variant to adjust.');
+                    showToast('This product has variants. Please select a specific variant to adjust.', 'warning');
                     return;
                 } else {
                     message = `${actionDisplay} completed successfully. New stock: ${response.new_stock}`;
@@ -686,19 +982,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     message += ` (Total cost: ৳${response.total_cost})`;
                 }
                 
-                showSuccessMessage(message);
+                showToast(message, 'success');
                 
                 // Show activity tracking notification
                 if (response.activity_id) {
-                    showActivityNotification(response.activity_id, actionDisplay);
+                    setTimeout(() => {
+                        showToast(`${actionDisplay} activity logged successfully! Activity ID: #${response.activity_id}`, 'info', 3000);
+                    }, 1000);
                 }
             } else {
-                alert('Error: ' + (response.error || 'Unknown error'));
+                showToast('Error: ' + (response.error || 'Unknown error'), 'error');
             }
         })
         .catch(error => {
             console.error('Stock adjustment error:', error);
-            alert('Error: ' + error.message);
+            showToast('Error: ' + error.message, 'error');
         })
         .finally(() => {
             // Restore button state
@@ -716,35 +1014,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(data => {
-                let content = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-2"></i>';
-                content += `Found ${data.count} products with low stock.</div>`;
-                
-                if (data.count > 0) {
-                    content += '<div class="table-responsive"><table class="table table-sm table-striped">';
-                    content += '<thead><tr><th>Product</th><th>SKU</th><th>Current Stock</th><th>Threshold</th><th>Status</th></tr></thead><tbody>';
-                    
-                    data.products.forEach(function(product) {
-                        const status = getStockStatusBadge(product.stock_status);
-                        content += `<tr>
-                            <td>${product.name}</td>
-                            <td>${product.sku || '-'}</td>
-                            <td>${product.stock_quantity}</td>
-                            <td>${product.low_stock_threshold}</td>
-                            <td>${status}</td>
-                        </tr>`;
-                    });
-                    
-                    content += '</tbody></table></div>';
+                if (data.count === 0) {
+                    showToast('No low stock products found!', 'info');
                 } else {
-                    content += '<p class="text-center text-muted mt-3">No low stock products found.</p>';
+                    showToast(`Found ${data.count} products with low stock. Check the report for details.`, 'warning');
+                    // You can implement a more detailed modal here if needed
                 }
-                
-                // Create and show modal (simplified)
-                alert(content.replace(/<[^>]*>/g, '')); // Strip HTML for alert
             })
             .catch(error => {
                 console.error('Failed to load low stock report:', error);
-                alert('Failed to load low stock report');
+                showToast('Failed to load low stock report', 'error');
             });
     }
     
@@ -762,6 +1041,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (active) currentFilters.append('is_active', active);
         
         const url = `/mb-admin/api/stock/export_stock_report/?${currentFilters.toString()}`;
+        
+        showToast('Preparing stock report for export...', 'info');
         window.open(url, '_blank');
     }
     
@@ -769,6 +1050,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('stockLoadingIndicator').style.display = 'block';
         document.getElementById('stockTable').style.display = 'none';
         document.getElementById('stockEmptyState').style.display = 'none';
+        document.getElementById('stockPagination').style.display = 'none';
     }
     
     function hideLoading() {
@@ -779,6 +1061,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function showEmptyState() {
         document.getElementById('stockEmptyState').style.display = 'block';
         document.getElementById('stockTable').style.display = 'none';
+        document.getElementById('stockPagination').style.display = 'none';
     }
     
     function hideEmptyState() {
@@ -786,39 +1069,35 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('stockTable').style.display = 'table';
     }
     
-    function showSuccessMessage(message) {
-        // Simple alert for now - could be enhanced with toast notifications
-        alert(message);
-    }
-    
-    // Global function for showing product variants
-    window.showProductVariants = function(productId) {
-        if (currentView !== 'variants') {
-            toggleView();
-        }
-        
-        // Filter variants by product
-        const params = new URLSearchParams();
-        params.append('product', productId);
-        
-        showLoading();
-        
-        fetch(`/mb-admin/api/stock-variants/?${params.toString()}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                renderVariantTable(data.results || data);
-                hideLoading();
-            })
-            .catch(error => {
-                console.error('Failed to load product variants:', error);
-                hideLoading();
-            });
-    };
+        // Global function for showing product variants
+        window.showProductVariants = function(productId) {
+            if (currentView !== 'variants') {
+                toggleView();
+            }
+            
+            // Filter variants by product
+            const params = new URLSearchParams();
+            params.append('product', productId);
+            
+            showLoading();
+            
+            fetch(`/mb-admin/api/stock-variants/?${params.toString()}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    renderVariantTable(data.results || data);
+                    hideLoading();
+                })
+                .catch(error => {
+                    console.error('Failed to load product variants:', error);
+                    showToast('Failed to load product variants', 'error');
+                    hideLoading();
+                });
+        };
     
     // Make functions available globally for onclick handlers
     window.openStockAdjustment = openStockAdjustment;
@@ -826,8 +1105,11 @@ document.addEventListener('DOMContentLoaded', function() {
     window.showStockActivity = showStockActivity;
     
     function showStockActivity(productId, productName) {
+        // Reset activity pagination
+        currentActivityPage = 1;
+        
         // Fetch and display stock activity history
-        fetch(`/mb-admin/api/stock/${productId}/stock_activity_history/?limit=20`)
+        fetch(`/mb-admin/api/stock/${productId}/stock_activity_history/?limit=100`) // Get more records for pagination
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}`);
@@ -835,19 +1117,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(data => {
+                // Store for pagination
+                window.currentActivities = data.activities;
+                window.currentProductName = productName;
                 showActivityModal(productName, data.activities);
             })
             .catch(error => {
                 console.error('Error fetching activity history:', error);
-                alert('Error loading activity history: ' + error.message);
+                showToast('Error loading activity history: ' + error.message, 'error');
             });
     }
     
     function showActivityModal(productName, activities) {
+        // Reset pagination for new modal
+        currentActivityPage = 1;
+        
+        // Get paginated activities
+        const paginatedActivities = getPaginatedActivities(activities);
+        
         // Create activity modal content
         let modalContent = `
             <div class="modal fade" id="activityModal" tabindex="-1" aria-labelledby="activityModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
+                <div class="modal-dialog modal-xl">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="activityModalLabel">
@@ -859,9 +1150,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             ${activities.length > 0 ? `
                                 <div class="table-responsive">
                                     <table class="table table-sm table-hover">
-                                        <thead>
+                                        <thead class="table-dark">
                                             <tr>
-                                                <th>Date</th>
+                                                <th>Date/Time</th>
                                                 <th>Activity</th>
                                                 <th>Item</th>
                                                 <th>Change</th>
@@ -872,10 +1163,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            ${activities.map(activity => `
+                                            ${paginatedActivities.map(activity => `
                                                 <tr>
                                                     <td>
-                                                        <small>${new Date(activity.activity_date).toLocaleDateString()}</small><br>
+                                                        <small class="fw-bold">${new Date(activity.activity_date).toLocaleDateString()}</small><br>
                                                         <small class="text-muted">${new Date(activity.activity_date).toLocaleTimeString()}</small>
                                                     </td>
                                                     <td>
@@ -899,7 +1190,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                                         ${activity.unit_cost ? `৳${activity.unit_cost}` : '-'}<br>
                                                         ${activity.total_cost ? `<small class="text-muted">Total: ৳${activity.total_cost}</small>` : ''}
                                                     </td>
-                                                    <td>${activity.created_by}</td>
+                                                    <td>
+                                                        <span class="fw-bold">${activity.created_by}</span>
+                                                    </td>
                                                     <td>
                                                         <div class="text-truncate" style="max-width: 150px;" title="${activity.reason}">
                                                             ${activity.reason}
@@ -911,8 +1204,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                         </tbody>
                                     </table>
                                 </div>
+                                ${renderActivityPaginationControls(activities.length)}
                             ` : `
-                                <div class="text-center py-4">
+                                <div class="text-center py-5">
                                     <i class="fas fa-history fa-3x text-muted mb-3"></i>
                                     <h5 class="text-muted">No Activity History</h5>
                                     <p class="text-muted">No stock activities have been recorded for this product yet.</p>
@@ -944,6 +1238,50 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('activityModal').addEventListener('hidden.bs.modal', function() {
             this.remove();
         });
+    }
+    
+    function getPaginatedActivities(activities) {
+        const startIndex = (currentActivityPage - 1) * activityItemsPerPage;
+        const endIndex = startIndex + activityItemsPerPage;
+        return activities.slice(startIndex, endIndex);
+    }
+    
+    function renderActivityPaginationControls(totalActivities) {
+        const totalPages = Math.ceil(totalActivities / activityItemsPerPage);
+        
+        if (totalPages <= 1) {
+            return '';
+        }
+        
+        const startRecord = ((currentActivityPage - 1) * activityItemsPerPage) + 1;
+        const endRecord = Math.min(currentActivityPage * activityItemsPerPage, totalActivities);
+        
+        return `
+            <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                <div>
+                    <small class="text-muted">
+                        Showing ${startRecord} to ${endRecord} of ${totalActivities} activities
+                    </small>
+                </div>
+                <div>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-secondary" 
+                                onclick="changeActivityPage(${currentActivityPage - 1})" 
+                                ${currentActivityPage === 1 ? 'disabled' : ''}>
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" disabled>
+                            Page ${currentActivityPage} of ${totalPages}
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" 
+                                onclick="changeActivityPage(${currentActivityPage + 1})" 
+                                ${currentActivityPage === totalPages ? 'disabled' : ''}>
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
     }
     
     function showActivityNotification(activityId, actionType) {
@@ -997,12 +1335,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Create variant selection modal
                     showVariantSelectionModal(productId, productName, data.variants);
                 } else {
-                    alert('No variants found for this product.');
+                    showToast('No variants found for this product.', 'warning');
                 }
             })
             .catch(error => {
                 console.error('Error fetching variants:', error);
-                alert('Error loading variants: ' + error.message);
+                showToast('Error loading variants: ' + error.message, 'error');
             });
     }
     
