@@ -454,6 +454,13 @@ def update_shipping_address(request, order_id):
         
         serializer.save()
         
+        # Also update the order's customer_notes if delivery_instructions were provided
+        # This ensures consistency between delivery_instructions and customer_notes
+        if 'delivery_instructions' in request.data:
+            delivery_instructions = request.data.get('delivery_instructions', '').strip()
+            order.customer_notes = delivery_instructions
+            order.save()
+        
         return Response({
             'success': True,
             'message': 'Shipping address updated successfully',

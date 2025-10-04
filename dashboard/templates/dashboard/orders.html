@@ -3006,6 +3006,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const country = address.country || '';
                 const phone = address.phone || '';
                 const sku = order.sku || order.order_number || '';
+                // Check multiple sources for order instructions:
+                // 1. Order customer_notes (from checkout)
+                // 2. Order instructions field 
+                // 3. Shipping address delivery_instructions (from address edit)
+                const orderInstruction = order.customer_notes || order.instructions || 
+                    (order.shipping_address && order.shipping_address.delivery_instructions) || '';
                 
                 addressText = `
                     <div class="copy-text" data-value="${fullName}">
@@ -3021,6 +3027,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div id="orderProductsList">
                         <strong>Products:</strong> <span id="orderProductsText">Loading products...</span>
                     </div>
+
                 `;
             } catch (error) {
                 console.error('Error formatting shipping address:', error, order.shipping_address);
@@ -3035,8 +3042,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Set order instructions (if available)
         const orderInstructionsContainer = document.getElementById('orderInstructionsContainer');
-        if (order.instructions || order.customer_notes) {
-            document.getElementById('orderDetailInstructions').textContent = order.instructions || order.customer_notes;
+        // Check multiple sources for instructions:
+        // 1. Order instructions field
+        // 2. Order customer_notes (from checkout)  
+        // 3. Shipping address delivery_instructions (from address edit)
+        const instructionText = order.instructions || order.customer_notes || 
+            (order.shipping_address && order.shipping_address.delivery_instructions) || '';
+        
+        if (instructionText && instructionText.trim()) {
+            document.getElementById('orderDetailInstructions').textContent = instructionText;
             orderInstructionsContainer.style.display = 'block'; // Show the container
         } else {
             document.getElementById('orderDetailInstructions').textContent = 'No special instructions provided.';
@@ -5224,7 +5238,15 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('editAddressLine1').value = address.address_line_1 || '';
         document.getElementById('editPhone').value = address.phone || '';
         document.getElementById('editEmail').value = address.email || '';
-        document.getElementById('editDeliveryInstructions').value = address.delivery_instructions || '';
+        
+        // For delivery instructions, check multiple sources:
+        // 1. Shipping address delivery_instructions
+        // 2. Order customer_notes (from original checkout)
+        // 3. Order instructions field
+        const deliveryInstructions = address.delivery_instructions || 
+            currentOrder.customer_notes || 
+            currentOrder.instructions || '';
+        document.getElementById('editDeliveryInstructions').value = deliveryInstructions;
         
         const modal = new bootstrap.Modal(document.getElementById('editAddressModal'));
         modal.show();
@@ -5439,7 +5461,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const modal = bootstrap.Modal.getInstance(document.getElementById('editAddressModal'));
                 modal.hide();
                 
-                // Refresh order details
+                // Refresh order details to reflect the changes
                 loadOrderDetails(currentOrderId);
                 
                 Swal.fire({
@@ -5461,6 +5483,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 text: error.message,
                 icon: 'error'
             });
+        }
+    }
+    
+    // Helper function to update note displays after address changes
+    function updateNoteDisplays(order) {
+        // Update separate order instructions container
+        const orderInstructionsContainer = document.getElementById('orderInstructionsContainer');
+        // Check multiple sources for instructions:
+        // 1. Order instructions field
+        // 2. Order customer_notes (from checkout)  
+        // 3. Shipping address delivery_instructions (from address edit)
+        const instructionText = order.instructions || order.customer_notes || 
+            (order.shipping_address && order.shipping_address.delivery_instructions) || '';
+        
+        if (instructionText && instructionText.trim()) {
+            document.getElementById('orderDetailInstructions').textContent = instructionText;
+            orderInstructionsContainer.style.display = 'block';
+        } else {
+            document.getElementById('orderDetailInstructions').textContent = 'No special instructions provided.';
+            orderInstructionsContainer.style.display = 'none';
         }
     }
     
