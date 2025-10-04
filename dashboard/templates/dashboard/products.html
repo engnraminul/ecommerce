@@ -1041,6 +1041,10 @@
                                             <img id="editCurrentImage" src="" alt="Current Variant Image" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
                                             <br>
                                             <small class="text-muted">Current variant image</small>
+                                            <br>
+                                            <button type="button" class="btn btn-sm btn-outline-danger mt-2" id="removeCurrentVariantImageBtn">
+                                                <i class="fas fa-trash-alt me-1"></i> Remove Current Image
+                                            </button>
                                         </div>
                                     </div>
                                     
@@ -1094,6 +1098,43 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('updateProductBtn').addEventListener('click', updateProduct);
     document.getElementById('saveVariantBtn').addEventListener('click', saveVariant);
     document.getElementById('updateVariantBtn').addEventListener('click', updateVariant);
+    
+    // Remove current variant image functionality
+    document.addEventListener('click', function(event) {
+        if (event.target && event.target.id === 'removeCurrentVariantImageBtn') {
+            if (confirm('Are you sure you want to remove the current variant image?')) {
+                const variantId = document.getElementById('editVariantId').value;
+                
+                // Call the API to remove the image
+                fetch(`/mb-admin/api/variants/${variantId}/remove_image/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Hide the current image container
+                        document.getElementById('editCurrentImageContainer').style.display = 'none';
+                        
+                        // Refresh the variants list to show updated state
+                        if (selectedProductId) {
+                            loadProductVariants(selectedProductId);
+                        }
+                        
+                        showAlert('Variant image removed successfully!', 'success');
+                    } else {
+                        showAlert(data.message || 'Failed to remove image.', 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error removing image:', error);
+                    showAlert('Failed to remove image.', 'danger');
+                });
+            }
+        }
+    });
     
     // Image preview functionality
     document.getElementById('productImages').addEventListener('change', function() {
@@ -1782,6 +1823,12 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.set('price', parseFloat(formData.get('price')));
         formData.set('stock_quantity', parseInt(formData.get('stock_quantity')) || 0);
         
+        // Only include image if a file is actually selected
+        const imageInput = document.getElementById('variantImage');
+        if (!imageInput.files || imageInput.files.length === 0 || !imageInput.files[0]) {
+            formData.delete('image');
+        }
+        
         fetch('/mb-admin/api/variants/', {
             method: 'POST',
             headers: {
@@ -1866,6 +1913,12 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.set('is_active', formData.get('is_active') === 'true');
         formData.set('price', parseFloat(formData.get('price')));
         formData.set('stock_quantity', parseInt(formData.get('stock_quantity')) || 0);
+        
+        // Only include image if a new file is actually selected
+        const imageInput = document.getElementById('editVariantImage');
+        if (!imageInput.files || imageInput.files.length === 0 || !imageInput.files[0]) {
+            formData.delete('image');
+        }
         
         fetch(`/mb-admin/api/variants/${variantId}/`, {
             method: 'PUT',

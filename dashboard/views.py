@@ -325,6 +325,32 @@ class ProductVariantDashboardViewSet(viewsets.ModelViewSet):
             print(f"Error logging activity: {str(e)}")
         instance.delete()
     
+    @action(detail=True, methods=['post'])
+    def remove_image(self, request, pk=None):
+        """Remove the variant image"""
+        variant = self.get_object()
+        
+        if variant.image:
+            # Delete the image file
+            variant.image.delete(save=False)
+            variant.image = None
+            variant.save(update_fields=['image'])
+            
+            try:
+                self.log_activity('removed_image', variant)
+            except Exception as e:
+                print(f"Error logging activity: {str(e)}")
+            
+            return Response({
+                'success': True,
+                'message': 'Variant image removed successfully'
+            })
+        else:
+            return Response({
+                'success': False,
+                'message': 'Variant has no image to remove'
+            }, status=400)
+    
     def log_activity(self, action, instance):
         try:
             AdminActivity.objects.create(

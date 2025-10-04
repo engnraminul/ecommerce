@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Products Test</title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <div id="test">Loading...</div>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM loaded');
+        
+        function loadProducts() {
+            console.log('Loading products...');
+            fetch('/mb-admin/api/products/')
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Data received:', data);
+                    document.getElementById('test').innerHTML = 'Products loaded: ' + (data.count || 0);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('test').innerHTML = 'Error: ' + error.message;
+                });
+        }
+        
+        loadProducts();
+    });
+    </script>
+</body>
+</html>
