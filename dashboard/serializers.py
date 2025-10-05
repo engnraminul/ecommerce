@@ -74,15 +74,15 @@ class ProductDashboardSerializer(serializers.ModelSerializer):
             'cost_price': float(variant.cost_price) if variant.cost_price else float(obj.cost_price or 0),
             'stock_quantity': variant.stock_quantity or 0,
             'is_active': variant.is_active,
-            'image_url': variant.image.url if variant.image else None
+            'image_url': variant.image_url if variant.image_url else None
         } for variant in variants]
     
     def get_image_url(self, obj):
         # Try to get the first image from productimage_set
         if hasattr(obj, 'productimage_set') and obj.productimage_set.exists():
             first_image = obj.productimage_set.first()
-            if first_image and first_image.image:
-                return first_image.image.url
+            if first_image and first_image.image_url:
+                return first_image.image_url
         return None
 
 class ProductDetailSerializer(serializers.ModelSerializer):
@@ -141,7 +141,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
                 'stock_quantity': variant.stock_quantity or 0,
                 'sales_count': sales_count,
                 'is_active': variant.is_active,
-                'image_url': variant.image.url if variant.image else None
+                'image_url': variant.image_url if variant.image_url else None
             })
         
         return variants_data
@@ -150,8 +150,8 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         # Try to get the first image from productimage_set
         if hasattr(obj, 'productimage_set') and obj.productimage_set.exists():
             first_image = obj.productimage_set.first()
-            if first_image and first_image.image:
-                return first_image.image.url
+            if first_image and first_image.image_url:
+                return first_image.image_url
         return None
     
     def validate_slug(self, value):
