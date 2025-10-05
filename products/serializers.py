@@ -27,10 +27,12 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class ProductImageSerializer(serializers.ModelSerializer):
     """Product image serializer"""
+    image_url = serializers.ReadOnlyField()
+    
     class Meta:
         model = ProductImage
-        fields = ('id', 'image', 'alt_text', 'is_primary', 'created_at')
-        read_only_fields = ('id', 'created_at')
+        fields = ('id', 'image', 'image_url', 'alt_text', 'is_primary', 'created_at')
+        read_only_fields = ('id', 'image_url', 'created_at')
 
 
 class ProductVariantSerializer(serializers.ModelSerializer):

@@ -23,7 +23,7 @@
                 <div class="product-images">
                     <div class="main-image-container">
                         {% if product.images.exists %}
-                            <img src="{{ product.images.first.image.url }}" 
+                            <img src="{{ product.images.first.image_url }}" 
                                  alt="{{ product.name }}" 
                                  id="main-product-image"
                                  class="main-image"
@@ -54,7 +54,7 @@
                     {% if product.images.count > 1 %}
                     <div class="thumbnail-gallery">
                         {% for image in product.images.all %}
-                        <img src="{{ image.image.url }}" 
+                        <img src="{{ image.image_url }}" 
                              alt="{{ product.name }}" 
                              class="gallery-thumbnail {% if forloop.first %}active{% endif %}"
                              onclick="changeMainImage(this.src)"
@@ -152,7 +152,7 @@
                                         title="{% for word in first_variant.name.split %}{% if forloop.first %}{{ word }}{% endif %}{% endfor %}">
                                 {% endwith %}
                                     {% if first_variant.image %}
-                                    <img src="{{ first_variant.image.url }}" 
+                                    <img src="{{ first_variant.image_url }}" 
                                          alt="{% for word in first_variant.name.split %}{% if forloop.first %}{{ word }}{% endif %}{% endfor %}" 
                                          class="variant-thumbnail"
                                          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
@@ -220,7 +220,7 @@
                                 "stock": {{ variant.stock_quantity }},
                                 "inStock": {{ variant.in_stock|yesno:"true,false" }},
                                 "sku": "{{ variant.sku|escapejs }}",
-                                "image": "{% if variant.image %}{{ variant.image.url }}{% else %}{{ MEDIA_URL }}default.webp{% endif %}",
+                                "image": "{% if variant.image %}{{ variant.image_url }}{% else %}{{ MEDIA_URL }}default.webp{% endif %}",
                                 "isDefault": {{ variant.is_default|yesno:"true,false" }}
                             }{% if not forloop.last %},{% endif %}
                             {% endif %}
@@ -527,10 +527,10 @@
                                 <div class="review-images">
                                     {% for image in review.images.all %}
                                     <div class="review-image-item">
-                                        <img src="{{ image.image.url }}" 
+                                        <img src="{{ image.image_url }}" 
                                              alt="Review image" 
                                              class="review-image"
-                                             onclick="openReviewImageModal('{{ image.image.url }}', '{{ image.caption|default:"Review image"|escapejs }}')"
+                                             onclick="openReviewImageModal('{{ image.image_url }}', '{{ image.caption|default:"Review image"|escapejs }}')"
                                              loading="lazy">
                                         {% if image.caption %}
                                         <small class="image-caption">{{ image.caption }}</small>
@@ -615,7 +615,7 @@
                 <div class="product-card">
                     <div class="product-image-container">
                         {% if related_product.images.exists %}
-                            <img src="{{ related_product.images.first.image.url }}" 
+                            <img src="{{ related_product.images.first.image_url }}" 
                                  alt="{{ related_product.name }}" 
                                  class="product-image"
                                  onerror="this.onerror=null; this.src='{{ MEDIA_URL }}default.webp';">

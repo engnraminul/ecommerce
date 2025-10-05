@@ -18,7 +18,7 @@
                 <a href="{% url 'frontend:category_products' category.slug %}" class="category-link">
                     <div class="category-image-container">
                         {% if category.image %}
-                            <img src="{{ category.image.url }}" 
+                            <img src="{{ category.image_url }}" 
                                  alt="{{ category.name }}" 
                                  class="category-image"
                                  onerror="this.onerror=null; this.src='{{ MEDIA_URL }}default.webp';">

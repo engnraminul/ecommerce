@@ -39,6 +39,7 @@ class ProductDashboardSerializer(serializers.ModelSerializer):
     variant_count = serializers.SerializerMethodField()
     base_price = serializers.ReadOnlyField(source='price')  # Map 'base_price' to 'price'
     variants = serializers.SerializerMethodField()
+    images = serializers.SerializerMethodField()
     image_url = serializers.SerializerMethodField()
     
     class Meta:
@@ -51,8 +52,13 @@ class ProductDashboardSerializer(serializers.ModelSerializer):
             'weight', 'dimensions', 'shipping_type', 'has_express_shipping',
             'custom_shipping_dhaka', 'custom_shipping_outside', 'custom_express_shipping',
             'meta_title', 'meta_description', 'youtube_video_url',
-            'created_at', 'updated_at', 'variant_count', 'variants', 'image_url'
+            'created_at', 'updated_at', 'variant_count', 'variants', 'images', 'image_url'
         ]
+    
+    def get_images(self, obj):
+        """Get all images for this product"""
+        images = obj.images.all()
+        return ProductImageDashboardSerializer(images, many=True).data
     
     def get_variant_count(self, obj):
         return obj.variants.count()
@@ -84,6 +90,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     category_name = serializers.ReadOnlyField(source='category.name')
     variant_count = serializers.SerializerMethodField()
     variants = serializers.SerializerMethodField()
+    images = serializers.SerializerMethodField()
     image_url = serializers.SerializerMethodField()
     
     class Meta:
@@ -96,9 +103,14 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'weight', 'dimensions', 'shipping_type', 'has_express_shipping',
             'custom_shipping_dhaka', 'custom_shipping_outside', 'custom_express_shipping',
             'meta_title', 'meta_description', 'youtube_video_url',
-            'created_at', 'updated_at', 'variant_count', 'variants', 'image_url'
+            'created_at', 'updated_at', 'variant_count', 'variants', 'images', 'image_url'
         ]
         read_only_fields = ['created_at', 'updated_at']
+    
+    def get_images(self, obj):
+        """Get all images for this product"""
+        images = obj.images.all()
+        return ProductImageDashboardSerializer(images, many=True).data
     
     def get_variant_count(self, obj):
         return obj.variants.count()
@@ -182,12 +194,35 @@ class ProductVariantDashboardSerializer(serializers.ModelSerializer):
                  'discount_percentage', 'profit_margin']
 
 class ProductImageDashboardSerializer(serializers.ModelSerializer):
+    # Add optional fields for media library support
+    image_url_input = serializers.CharField(required=False, write_only=True)
+    filename = serializers.CharField(required=False, write_only=True)
+    uploaded_image = serializers.ImageField(required=False, write_only=True)
+    
+    # Add read-only field for the image_url property
+    image_url = serializers.ReadOnlyField()
+    
+    # Add computed field for consistent image access
+    image_display = serializers.SerializerMethodField()
+    
     class Meta:
         model = ProductImage
-        fields = ['id', 'product', 'image', 'alt_text', 'is_primary', 'created_at']
-        read_only_fields = ['created_at']
+        fields = ['id', 'product', 'image', 'alt_text', 'is_primary', 'created_at', 'image_url', 'image_url_input', 'filename', 'uploaded_image', 'image_display']
+        read_only_fields = ['created_at', 'image_url']
+        extra_kwargs = {
+            'image': {'required': False}  # Make image optional since we'll set it programmatically
+        }
+    
+    def get_image_display(self, obj):
+        """Return the proper image URL for display"""
+        return obj.image_url
     
     def validate(self, data):
+        # Only require image source when creating a new image
+        if not self.instance:  # Creating new image
+            if not data.get('uploaded_image') and not data.get('image_url_input'):
+                raise serializers.ValidationError("Either 'uploaded_image' file or 'image_url_input' must be provided.")
+        
         # Handle primary image logic
         if 'is_primary' in data:
             product = data.get('product') or (self.instance.product if self.instance else None)
@@ -206,6 +241,32 @@ class ProductImageDashboardSerializer(serializers.ModelSerializer):
                         ).update(is_primary=False)
                 # If setting to False, no additional logic needed - just update this image
         return data
+    
+    def create(self, validated_data):
+        # Handle different image sources
+        image_url_input = validated_data.pop('image_url_input', None)
+        filename = validated_data.pop('filename', None)
+        uploaded_image = validated_data.pop('uploaded_image', None)
+        
+        if image_url_input:
+            # Media library image - store the URL directly
+            validated_data['image'] = image_url_input
+        elif uploaded_image:
+            # File upload - save the file and store the path
+            from django.core.files.storage import default_storage
+            import uuid
+            import os
+            
+            # Generate unique filename
+            file_extension = os.path.splitext(uploaded_image.name)[1]
+            unique_filename = f"{uuid.uuid4().hex}{file_extension}"
+            file_path = f"products/{unique_filename}"
+            
+            # Save the file
+            saved_path = default_storage.save(file_path, uploaded_image)
+            validated_data['image'] = f"/media/{saved_path}"
+        
+        return super().create(validated_data)
 
 class ShippingAddressDashboardSerializer(serializers.ModelSerializer):
     class Meta:

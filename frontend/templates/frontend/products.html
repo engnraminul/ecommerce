@@ -92,7 +92,7 @@
                 {% for product in products %}
                 <div class="product-card fade-in">
                     <div class="product-image-container">
-                        <img src="{% if product.images.exists %}{{ product.images.first.image.url }}{% else %}{{ MEDIA_URL }}default.webp{% endif %}" 
+                        <img src="{% if product.images.exists %}{{ product.images.first.image_url }}{% else %}{{ MEDIA_URL }}default.webp{% endif %}" 
                              alt="{{ product.name }}" 
                              class="product-image"
                              onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjMyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjhmOWZhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzZjNzU3ZCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';">

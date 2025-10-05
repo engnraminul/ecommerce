@@ -59,9 +59,9 @@
                                 <div class="order-item">
                                     <div class="item-image">
                                         {% if item.variant and item.variant.image %}
-                                            <img src="{{ item.variant.image.url }}" alt="{{ item.product.name }} - {{ item.variant.color_name|default:item.variant.size }}" onerror="this.src='{% if item.product.images.first %}{{ item.product.images.first.image.url }}{% else %}/media/default.webp{% endif %}'">
+                                            <img src="{{ item.variant.image_url }}" alt="{{ item.product.name }} - {{ item.variant.color_name|default:item.variant.size }}" onerror="this.src='{% if item.product.images.first %}{{ item.product.images.first.image_url }}{% else %}/media/default.webp{% endif %}'">
                                         {% elif item.product.images.first %}
-                                            <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.name }}" onerror="this.src='/media/default.webp'">
+                                            <img src="{{ item.product.images.first.image_url }}" alt="{{ item.product.name }}" onerror="this.src='/media/default.webp'">
                                         {% else %}
                                             <img src="/media/default.webp" alt="{{ item.product.name }}">
                                         {% endif %}

@@ -305,7 +305,7 @@ class Product(models.Model):
 class ProductImage(models.Model):
     """Product image model for multiple images per product"""
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='products/')
+    image = models.URLField(max_length=500, help_text="URL or path to the image file")
     alt_text = models.CharField(max_length=200, blank=True)
     is_primary = models.BooleanField(default=False)
     
@@ -316,6 +316,34 @@ class ProductImage(models.Model):
     
     def __str__(self):
         return f"Image for {self.product.name}"
+    
+    def save(self, *args, **kwargs):
+        # Ensure only one primary image per product
+        if self.is_primary:
+            # Set all other images for this product to not primary
+            ProductImage.objects.filter(product=self.product, is_primary=True).update(is_primary=False)
+        
+        super().save(*args, **kwargs)
+        
+        # If no primary image exists for this product, make this one primary
+        if not ProductImage.objects.filter(product=self.product, is_primary=True).exists():
+            self.is_primary = True
+            # Use update instead of save to avoid recursion and duplicate save
+            ProductImage.objects.filter(id=self.id).update(is_primary=True)
+    
+    @property
+    def image_url(self):
+        """Get the full URL for the image"""
+        if self.image.startswith('http'):
+            return self.image
+        else:
+            # If it's a relative path, check if it already includes /media/
+            if self.image.startswith('/media/'):
+                return self.image
+            else:
+                # If it's just a path like 'products/image.jpg', prepend the media URL
+                from django.conf import settings
+                return f"{settings.MEDIA_URL.rstrip('/')}/{self.image.lstrip('/')}"
 
 
 class ProductVariant(models.Model):

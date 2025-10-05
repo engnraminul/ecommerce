@@ -2,6 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
 from . import order_views
+from . import media_api
 from orders import order_edit_views
 
 router = DefaultRouter()
@@ -47,6 +48,11 @@ urlpatterns = [
     
     # Checkout customization public API
     path('api/checkout-customization/', views.get_checkout_customization, name='get_checkout_customization'),
+    
+    # Media Library API
+    path('api/media/', media_api.list_media_files, name='list_media_files'),
+    path('api/media/upload/', media_api.upload_media_file, name='upload_media_file'),
+    path('api/media/<str:file_id>/delete/', media_api.delete_media_file, name='delete_media_file'),
     
     # Frontend views for the dashboard SPA
     path('', views.dashboard_home, name='home'),

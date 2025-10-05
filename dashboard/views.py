@@ -381,6 +381,8 @@ class ProductImageDashboardViewSet(viewsets.ModelViewSet):
     ordering = ['-is_primary', 'created_at']
     
     def perform_create(self, serializer):
+        # The serializer now handles both file uploads and media library URLs
+        # No special processing needed here
         instance = serializer.save()
         try:
             self.log_activity('created', instance)

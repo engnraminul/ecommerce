@@ -34,10 +34,10 @@
     <div class="review-images">
         {% for image in review.images.all %}
         <div class="review-image-item">
-            <img src="{{ image.image.url }}" 
+            <img src="{{ image.image_url }}" 
                  alt="Review image" 
                  class="review-image"
-                 onclick="openReviewImageModal('{{ image.image.url }}', '{{ image.caption|default:"Review image"|escapejs }}')"
+                 onclick="openReviewImageModal('{{ image.image_url }}', '{{ image.caption|default:"Review image"|escapejs }}')"
                  loading="lazy">
             {% if image.caption %}
             <small class="image-caption">{{ image.caption }}</small>

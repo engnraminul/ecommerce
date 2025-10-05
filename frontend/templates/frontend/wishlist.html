@@ -24,7 +24,7 @@
                         <div class="wishlist-item" data-id="{{ item.id }}">
                             <div class="wishlist-image">
                                 {% if item.product.images.first %}
-                                    <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.name }}" loading="lazy">
+                                    <img src="{{ item.product.images.first.image_url }}" alt="{{ item.product.name }}" loading="lazy">
                                 {% else %}
                                     <img src="{% static 'frontend/img/default-product.png' %}" alt="Default Image" loading="lazy">
                                 {% endif %}

@@ -427,8 +427,13 @@
                                 <div class="card-body">
                                     <div class="mb-3">
                                         <label for="productImages" class="form-label">Upload Images</label>
-                                        <input type="file" class="form-control" id="productImages" name="images" multiple accept="image/*">
-                                        <small class="text-muted">Select multiple images (JPG, PNG, WebP). Maximum 10 images per product.</small>
+                                        <div class="d-grid gap-2">
+                                            <button type="button" class="btn btn-outline-primary" id="openMediaLibraryBtn">
+                                                <i class="fas fa-images me-2"></i>Choose from Media Library
+                                            </button>
+                                            <small class="text-muted">Select images from media library or upload new ones</small>
+                                        </div>
+                                        <input type="file" class="form-control d-none" id="productImages" name="images" multiple accept="image/*">
                                     </div>
                                     
                                     <div id="imagePreview" class="row g-2" style="display: none;">
@@ -759,12 +764,13 @@
                                     <!-- Add New Images -->
                                     <div class="mb-3">
                                         <label for="editProductImages" class="form-label">Upload New Images</label>
-                                        <input type="file" class="form-control" id="editProductImages" name="images" multiple accept="image/*">
-                                        <small class="text-muted">Select new images to add (JPG, PNG, WebP). Maximum 10 images total.</small>
-                                    </div>
-                                    
-                                    <div id="editImagePreview" class="row g-2" style="display: none;">
-                                        <!-- New image previews will be shown here -->
+                                        <div class="d-grid gap-2">
+                                            <button type="button" class="btn btn-outline-primary" id="editOpenMediaLibraryBtn">
+                                                <i class="fas fa-images me-2"></i>Choose from Media Library
+                                            </button>
+                                            <small class="text-muted">Select images from media library or upload new ones</small>
+                                        </div>
+                                        <input type="file" class="form-control d-none" id="editProductImages" name="images" multiple accept="image/*">
                                     </div>
                                 </div>
                             </div>
@@ -1097,6 +1103,139 @@
         </div>
     </div>
 </div>
+
+<!-- Media Library Modal -->
+<div class="modal fade" id="mediaLibraryModal" tabindex="-1" aria-labelledby="mediaLibraryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mediaLibraryModalLabel">
+                    <i class="fas fa-photo-video me-2"></i>Media Library
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- Sidebar -->
+                    <div class="col-md-3">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h6 class="mb-0">Upload New Files</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <input type="file" class="form-control" id="mediaUploadInput" multiple accept="image/*,video/*">
+                                    <small class="text-muted">Select images or videos to upload</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="mediaUploadDirectory" class="form-label">Upload to:</label>
+                                    <select class="form-select" id="mediaUploadDirectory">
+                                        <option value="products">Products</option>
+                                        <option value="variants">Variants</option>
+                                        <option value="reviews">Reviews</option>
+                                    </select>
+                                </div>
+                                
+                                <button type="button" class="btn btn-primary w-100" id="uploadMediaBtn" disabled>
+                                    <i class="fas fa-upload me-1"></i> Upload Files
+                                </button>
+                                
+                                <div id="uploadProgress" class="mt-3" style="display: none;">
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Main Content -->
+                    <div class="col-md-9">
+                        <!-- Filters -->
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row g-2">
+                                    <div class="col-md-3">
+                                        <input type="text" class="form-control" id="mediaSearchInput" placeholder="Search files...">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select class="form-select" id="mediaTypeFilter">
+                                            <option value="all">All Files</option>
+                                            <option value="images">Images Only</option>
+                                            <option value="videos">Videos Only</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select class="form-select" id="mediaDirectoryFilter">
+                                            <option value="">All Directories</option>
+                                            <option value="products">Products</option>
+                                            <option value="variants">Variants</option>
+                                            <option value="reviews">Reviews</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-primary w-100" id="applyMediaFiltersBtn">
+                                            <i class="fas fa-filter me-1"></i> Apply
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Media Grid -->
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="mediaGridContainer">
+                                    <div class="text-center py-5">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-2">Loading media files...</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Media Grid -->
+                                <div id="mediaGrid" class="row g-3" style="display: none;">
+                                    <!-- Media items will be loaded here -->
+                                </div>
+                                
+                                <!-- Pagination -->
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <div>
+                                        <span id="mediaTotalCount">0</span> files
+                                    </div>
+                                    <div>
+                                        <nav aria-label="Media pagination">
+                                            <ul class="pagination pagination-sm" id="mediaPagination">
+                                                <!-- Pagination will be generated dynamically -->
+                                            </ul>
+                                        </nav>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="d-flex justify-content-between w-100">
+                    <div>
+                        <span id="selectedMediaCount">0</span> files selected
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i> Cancel
+                        </button>
+                        <button type="button" class="btn btn-primary" id="useSelectedMediaBtn" disabled>
+                            <i class="fas fa-check me-1"></i> Use Selected
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_css %}
@@ -1124,6 +1263,135 @@ input[readonly]:focus {
         margin: 0.5rem;
     }
 }
+
+/* Media Library Styles */
+.media-item {
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.media-item:hover {
+    border-color: #007bff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.media-item.selected {
+    border-color: #28a745;
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
+.media-item.selected::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #28a745;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.media-item-image {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.media-item-info {
+    padding: 8px;
+    background: white;
+    border-radius: 0 0 6px 6px;
+}
+
+.media-item-filename {
+    font-size: 12px;
+    font-weight: 500;
+    color: #333;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.media-item-meta {
+    font-size: 10px;
+    color: #666;
+    margin-top: 2px;
+}
+
+.media-upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    transition: border-color 0.2s ease;
+}
+
+.media-upload-area.dragover {
+    border-color: #007bff;
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+.media-item-actions {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.media-item:hover .media-item-actions {
+    opacity: 1;
+}
+
+.media-item-delete {
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.media-item-delete:hover {
+    background: #dc3545;
+}
+
+/* Loading animations */
+.media-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.upload-progress-item {
+    border: 1px dashed #ccc;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 10px;
+    background: #f8f9fa;
+}
+
+.upload-progress-item .progress {
+    height: 4px;
+    margin-top: 8px;
+}
 </style>
 {% endblock %}
 
@@ -1132,6 +1400,9 @@ input[readonly]:focus {
 document.addEventListener('DOMContentLoaded', function() {
     let currentPage = 1;
     let selectedProductId = null;
+    let currentMediaPage = 1;
+    let selectedMediaFiles = [];
+    let mediaLibraryCallback = null;
     
     // Initial data loading
     loadCategories();
@@ -1144,6 +1415,26 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('updateProductBtn').addEventListener('click', updateProduct);
     document.getElementById('saveVariantBtn').addEventListener('click', saveVariant);
     document.getElementById('updateVariantBtn').addEventListener('click', updateVariant);
+    
+    // Media Library Event Listeners
+    document.getElementById('openMediaLibraryBtn').addEventListener('click', function() {
+        openMediaLibrary('add');
+    });
+    
+    document.getElementById('editOpenMediaLibraryBtn').addEventListener('click', function() {
+        openMediaLibrary('edit');
+    });
+    
+    document.getElementById('applyMediaFiltersBtn').addEventListener('click', function() {
+        loadMediaFiles(1);
+    });
+    
+    document.getElementById('mediaUploadInput').addEventListener('change', function() {
+        document.getElementById('uploadMediaBtn').disabled = this.files.length === 0;
+    });
+    
+    document.getElementById('uploadMediaBtn').addEventListener('click', uploadMediaFiles);
+    document.getElementById('useSelectedMediaBtn').addEventListener('click', useSelectedMedia);
     
     // Remove current variant image functionality
     document.addEventListener('click', function(event) {
@@ -1185,10 +1476,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Image preview functionality
     document.getElementById('productImages').addEventListener('change', function() {
         handleImagePreview(this.files, 'imagePreview');
-    });
-    
-    document.getElementById('editProductImages').addEventListener('change', function() {
-        handleImagePreview(this.files, 'editImagePreview');
     });
     
     // Variant image preview functionality
@@ -1475,13 +1762,27 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.image-preview-card').forEach(card => {
             const fileIndex = parseInt(card.dataset.fileIndex);
             const altTextInput = card.querySelector('input[type="text"]');
-            const isPrimary = card.querySelector('.primary-image-btn').classList.contains('btn-warning');
+            const primaryBtn = card.querySelector('.primary-image-btn');
+            const isPrimary = primaryBtn.classList.contains('btn-warning');
             
-            if (imageFiles[fileIndex]) {
+            // Check if this is a media library file
+            const mediaFileData = card.dataset.mediaFile;
+            if (mediaFileData) {
+                // This is from media library
+                const mediaFile = JSON.parse(mediaFileData);
+                imageData.push({
+                    media_file: mediaFile,
+                    alt_text: altTextInput ? altTextInput.value : mediaFile.filename,
+                    is_primary: isPrimary,
+                    is_from_library: true
+                });
+            } else if (imageFiles[fileIndex]) {
+                // This is an uploaded file
                 imageData.push({
                     file: imageFiles[fileIndex],
                     alt_text: altTextInput ? altTextInput.value : '',
-                    is_primary: isPrimary
+                    is_primary: isPrimary,
+                    is_from_library: false
                 });
             }
         });
@@ -1529,12 +1830,26 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function uploadProductImages(productId, imageData) {
+        // Ensure at least one image is marked as primary
+        const hasPrimary = imageData.some(img => img.is_primary);
+        if (!hasPrimary && imageData.length > 0) {
+            imageData[0].is_primary = true;
+        }
+        
         const uploadPromises = imageData.map((imageInfo, index) => {
             const formData = new FormData();
             formData.append('product', productId);
-            formData.append('image', imageInfo.file);
             formData.append('alt_text', imageInfo.alt_text);
             formData.append('is_primary', imageInfo.is_primary);
+            
+            if (imageInfo.is_from_library) {
+                // For media library files, send the URL directly
+                formData.append('image_url', imageInfo.media_file.url);
+                formData.append('filename', imageInfo.media_file.filename);
+            } else {
+                // For uploaded files, send the file
+                formData.append('uploaded_image', imageInfo.file);
+            }
             
             return fetch('/mb-admin/api/product-images/', {
                 method: 'POST',
@@ -1639,25 +1954,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Store new images separately (they'll be uploaded after product update)
-        const imageFiles = document.getElementById('editProductImages').files;
-        const imageData = [];
-        
-        // Get alt text and primary info from preview cards
-        document.querySelectorAll('#editImagePreview .image-preview-card').forEach(card => {
-            const fileIndex = parseInt(card.dataset.fileIndex);
-            const altTextInput = card.querySelector('input[type="text"]');
-            const isPrimary = card.querySelector('.primary-image-btn').classList.contains('btn-warning');
-            
-            if (imageFiles[fileIndex]) {
-                imageData.push({
-                    file: imageFiles[fileIndex],
-                    alt_text: altTextInput ? altTextInput.value : '',
-                    is_primary: isPrimary
-                });
-            }
-        });
-
         // Remove images from formData for product update
         formData.delete('images');
 
@@ -1677,10 +1973,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(product => {
-            // Upload new images after product update
-            if (imageData.length > 0) {
-                return uploadProductImages(product.id, imageData).then(() => product);
-            }
             return product;
         })
         .then(data => {
@@ -2055,6 +2347,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
+        
+        // Fallback to meta tag for CSRF token
+        if (!cookieValue && name === 'csrftoken') {
+            const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+            if (csrfMeta) {
+                cookieValue = csrfMeta.getAttribute('content');
+            }
+        }
+        
         return cookieValue;
     }
     
@@ -2149,7 +2450,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     col.innerHTML = `
                         <div class="card current-image-card" data-image-id="${image.id}">
                             <div class="position-relative">
-                                <img src="${image.image}" class="card-img-top" style="height: 100px; object-fit: cover;">
+                                <img src="${image.image_url || image.image}" class="card-img-top" style="height: 100px; object-fit: cover;" alt="${image.alt_text || ''}">
                                 <div class="position-absolute top-0 end-0 p-1">
                                     <button type="button" class="btn btn-sm btn-danger delete-current-image-btn" data-image-id="${image.id}">
                                         <i class="fas fa-trash"></i>
@@ -2381,21 +2682,6 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
     }
     
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-    
     function showAlert(message, type = 'info') {
         const alertContainer = document.createElement('div');
         alertContainer.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
@@ -2415,6 +2701,500 @@ document.addEventListener('DOMContentLoaded', function() {
                 alertContainer.parentNode.removeChild(alertContainer);
             }
         }, 5000);
+    }
+    
+    // ================================
+    // MEDIA LIBRARY FUNCTIONS
+    // ================================
+    
+    function openMediaLibrary(mode = 'add') {
+        selectedMediaFiles = [];
+        mediaLibraryCallback = mode;
+        updateSelectedMediaCount();
+        
+        // Show the modal
+        const modal = new bootstrap.Modal(document.getElementById('mediaLibraryModal'));
+        modal.show();
+        
+        // Load media files
+        loadMediaFiles(1);
+    }
+    
+    function loadMediaFiles(page = 1) {
+        currentMediaPage = page;
+        const searchTerm = document.getElementById('mediaSearchInput').value.trim();
+        const typeFilter = document.getElementById('mediaTypeFilter').value;
+        const directoryFilter = document.getElementById('mediaDirectoryFilter').value;
+        
+        let url = `/mb-admin/api/media/?page=${page}&per_page=12`;
+        
+        if (searchTerm) {
+            url += `&search=${encodeURIComponent(searchTerm)}`;
+        }
+        
+        if (typeFilter && typeFilter !== 'all') {
+            url += `&type=${typeFilter}`;
+        }
+        
+        if (directoryFilter) {
+            url += `&directory=${directoryFilter}`;
+        }
+        
+        // Show loading
+        document.getElementById('mediaGridContainer').style.display = 'block';
+        document.getElementById('mediaGrid').style.display = 'none';
+        document.getElementById('mediaGridContainer').innerHTML = `
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading media files...</p>
+            </div>
+        `;
+        
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load media files');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    displayMediaFiles(data.files);
+                    updateMediaPagination(data);
+                    document.getElementById('mediaTotalCount').textContent = data.total || 0;
+                } else {
+                    throw new Error(data.message || 'Unknown error');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading media files:', error);
+                document.getElementById('mediaGridContainer').innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-exclamation-triangle fa-2x text-warning mb-3"></i>
+                        <p>Error loading media files: ${error.message}</p>
+                        <button class="btn btn-outline-primary" onclick="loadMediaFiles(${currentMediaPage})">
+                            <i class="fas fa-redo me-1"></i> Retry
+                        </button>
+                    </div>
+                `;
+            });
+    }
+    
+    function displayMediaFiles(files) {
+        const mediaGrid = document.getElementById('mediaGrid');
+        const mediaGridContainer = document.getElementById('mediaGridContainer');
+        
+        mediaGrid.innerHTML = '';
+        
+        if (!files || files.length === 0) {
+            mediaGridContainer.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-images fa-3x text-muted mb-3"></i>
+                    <h5>No media files found</h5>
+                    <p class="text-muted">Upload some files to get started</p>
+                </div>
+            `;
+            return;
+        }
+        
+        files.forEach(file => {
+            const mediaItem = createMediaItem(file);
+            mediaGrid.appendChild(mediaItem);
+        });
+        
+        mediaGridContainer.style.display = 'none';
+        mediaGrid.style.display = 'flex';
+    }
+    
+    function createMediaItem(file) {
+        const col = document.createElement('div');
+        col.className = 'col-md-3 col-sm-4 col-6';
+        
+        const isSelected = selectedMediaFiles.some(f => f.id === file.id);
+        
+        col.innerHTML = `
+            <div class="media-item ${isSelected ? 'selected' : ''}" data-file-id="${file.id}" data-file-url="${file.url}" data-file-name="${file.filename}">
+                <div class="media-item-actions">
+                    <button type="button" class="media-item-delete" onclick="deleteMediaFile('${file.id}')" title="Delete file">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                ${file.is_image ? 
+                    `<img src="${file.url}" alt="${file.filename}" class="media-item-image" loading="lazy">` :
+                    `<div class="media-item-image d-flex align-items-center justify-content-center bg-light">
+                        <i class="fas fa-file fa-2x text-muted"></i>
+                    </div>`
+                }
+                <div class="media-item-info">
+                    <div class="media-item-filename" title="${file.filename}">${file.filename}</div>
+                    <div class="media-item-meta">
+                        ${file.size_formatted} • ${file.modified_date_formatted}
+                        ${file.dimensions ? ` • ${file.dimensions}` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Add click event listener
+        const mediaItem = col.querySelector('.media-item');
+        mediaItem.addEventListener('click', function(e) {
+            // Don't trigger selection when clicking delete button
+            if (e.target.closest('.media-item-delete')) {
+                return;
+            }
+            
+            toggleMediaSelection(file);
+        });
+        
+        return col;
+    }
+    
+    function toggleMediaSelection(file) {
+        const existingIndex = selectedMediaFiles.findIndex(f => f.id === file.id);
+        
+        if (existingIndex > -1) {
+            selectedMediaFiles.splice(existingIndex, 1);
+        } else {
+            selectedMediaFiles.push(file);
+        }
+        
+        // Update UI
+        const mediaItem = document.querySelector(`[data-file-id="${file.id}"]`);
+        if (mediaItem) {
+            mediaItem.classList.toggle('selected');
+        }
+        
+        updateSelectedMediaCount();
+    }
+    
+    function updateSelectedMediaCount() {
+        const count = selectedMediaFiles.length;
+        document.getElementById('selectedMediaCount').textContent = count;
+        document.getElementById('useSelectedMediaBtn').disabled = count === 0;
+    }
+    
+    function updateMediaPagination(data) {
+        const pagination = document.getElementById('mediaPagination');
+        pagination.innerHTML = '';
+        
+        if (data.total_pages <= 1) return;
+        
+        // Previous button
+        const prevLi = document.createElement('li');
+        prevLi.className = `page-item ${currentMediaPage === 1 ? 'disabled' : ''}`;
+        prevLi.innerHTML = `<a class="page-link" href="#" data-page="${currentMediaPage - 1}">Previous</a>`;
+        pagination.appendChild(prevLi);
+        
+        // Page numbers
+        let startPage = Math.max(1, currentMediaPage - 2);
+        let endPage = Math.min(data.total_pages, startPage + 4);
+        
+        if (endPage - startPage < 4) {
+            startPage = Math.max(1, endPage - 4);
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const li = document.createElement('li');
+            li.className = `page-item ${i === currentMediaPage ? 'active' : ''}`;
+            li.innerHTML = `<a class="page-link" href="#" data-page="${i}">${i}</a>`;
+            pagination.appendChild(li);
+        }
+        
+        // Next button
+        const nextLi = document.createElement('li');
+        nextLi.className = `page-item ${currentMediaPage === data.total_pages ? 'disabled' : ''}`;
+        nextLi.innerHTML = `<a class="page-link" href="#" data-page="${currentMediaPage + 1}">Next</a>`;
+        pagination.appendChild(nextLi);
+        
+        // Add event listeners to pagination links
+        document.querySelectorAll('#mediaPagination .page-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const page = parseInt(this.dataset.page);
+                if (page && page !== currentMediaPage) {
+                    loadMediaFiles(page);
+                }
+            });
+        });
+    }
+    
+    function uploadMediaFiles() {
+        const fileInput = document.getElementById('mediaUploadInput');
+        const directory = document.getElementById('mediaUploadDirectory').value;
+        const files = Array.from(fileInput.files);
+        
+        if (files.length === 0) {
+            showAlert('Please select files to upload', 'warning');
+            return;
+        }
+        
+        const uploadProgress = document.getElementById('uploadProgress');
+        const progressBar = uploadProgress.querySelector('.progress-bar');
+        
+        uploadProgress.style.display = 'block';
+        document.getElementById('uploadMediaBtn').disabled = true;
+        
+        let completed = 0;
+        const total = files.length;
+        
+        // Upload files one by one
+        const uploadPromises = files.map(file => {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('directory', directory);
+            
+            return fetch('/mb-admin/api/media/upload/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                completed++;
+                const progress = (completed / total) * 100;
+                progressBar.style.width = progress + '%';
+                
+                if (!data.success) {
+                    throw new Error(data.message || 'Upload failed');
+                }
+                
+                return data;
+            });
+        });
+        
+        Promise.all(uploadPromises)
+            .then(results => {
+                showAlert(`Successfully uploaded ${results.length} file(s)!`, 'success');
+                
+                // Clear the file input
+                fileInput.value = '';
+                
+                // Reload media files
+                loadMediaFiles(1);
+            })
+            .catch(error => {
+                console.error('Upload error:', error);
+                showAlert('Error uploading files: ' + error.message, 'danger');
+            })
+            .finally(() => {
+                uploadProgress.style.display = 'none';
+                progressBar.style.width = '0%';
+                document.getElementById('uploadMediaBtn').disabled = false;
+            });
+    }
+    
+    function deleteMediaFile(fileId) {
+        if (!confirm('Are you sure you want to delete this file? This action cannot be undone.')) {
+            return;
+        }
+        
+        fetch(`/mb-admin/api/media/${fileId}/delete/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('File deleted successfully!', 'success');
+                
+                // Remove from selected files if it was selected
+                selectedMediaFiles = selectedMediaFiles.filter(f => f.id !== fileId);
+                updateSelectedMediaCount();
+                
+                // Reload media files
+                loadMediaFiles(currentMediaPage);
+            } else {
+                showAlert(data.message || 'Failed to delete file', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Delete error:', error);
+            showAlert('Error deleting file: ' + error.message, 'danger');
+        });
+    }
+    
+    function useSelectedMedia() {
+        if (selectedMediaFiles.length === 0) {
+            showAlert('Please select at least one file', 'warning');
+            return;
+        }
+        
+        // Process selected files based on the callback mode
+        if (mediaLibraryCallback === 'add') {
+            // For add product form
+            processSelectedFilesForAdd();
+        } else if (mediaLibraryCallback === 'edit') {
+            // For edit product form
+            processSelectedFilesForEdit();
+        }
+        
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('mediaLibraryModal'));
+        modal.hide();
+        
+        // Reset selection
+        selectedMediaFiles = [];
+        updateSelectedMediaCount();
+    }
+    
+    function processSelectedFilesForAdd() {
+        const previewContainer = document.getElementById('imagePreview');
+        previewContainer.innerHTML = '';
+        previewContainer.style.display = 'block';
+        
+        selectedMediaFiles.forEach((file, index) => {
+            if (file.is_image) {
+                const previewCard = createImagePreviewCard(file, index, true);
+                previewContainer.appendChild(previewCard);
+            }
+        });
+        
+        // Show image management container
+        const imageManagementContainer = document.getElementById('imageManagementContainer');
+        if (imageManagementContainer) {
+            imageManagementContainer.style.display = 'block';
+        }
+        
+        showAlert(`Added ${selectedMediaFiles.length} image(s) from media library!`, 'success');
+    }
+    
+    function processSelectedFilesForEdit() {
+        const productId = document.getElementById('editProductId').value;
+        
+        console.log('processSelectedFilesForEdit called');
+        console.log('Product ID:', productId);
+        console.log('Selected media files:', selectedMediaFiles);
+        
+        if (!productId) {
+            showAlert('Product ID not found. Please close and reopen the edit modal.', 'danger');
+            return;
+        }
+        
+        if (selectedMediaFiles.length === 0) {
+            showAlert('No media files selected.', 'warning');
+            return;
+        }
+        
+        // Create product images directly from selected media files
+        const imagePromises = selectedMediaFiles.map(file => {
+            const formData = new FormData();
+            formData.append('product', productId);
+            formData.append('image_url_input', file.url);
+            formData.append('alt_text', file.filename);
+            formData.append('is_primary', 'false');
+            
+            return fetch('/mb-admin/api/product-images/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData
+            });
+        });
+        
+        Promise.all(imagePromises)
+            .then(responses => {
+                // Check if all responses are successful
+                const failedResponses = responses.filter(response => !response.ok);
+                if (failedResponses.length > 0) {
+                    console.error('Some requests failed:', failedResponses);
+                    showAlert(`Failed to add ${failedResponses.length} image(s). Check console for details.`, 'danger');
+                }
+                
+                return Promise.all(responses.map(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        return response.text().then(text => {
+                            console.error('Failed response:', response.status, text);
+                            throw new Error(`HTTP ${response.status}: ${text}`);
+                        });
+                    }
+                }));
+            })
+            .then(results => {
+                console.log('Successfully created images:', results);
+                // Reload current images to show the newly added ones
+                loadCurrentProductImages(productId);
+                showAlert(`Added ${selectedMediaFiles.length} image(s) from media library!`, 'success');
+            })
+            .catch(error => {
+                console.error('Error adding images:', error);
+                showAlert('Failed to add some images. Check console for details.', 'danger');
+            });
+    }
+    
+    function createImagePreviewCard(file, index, isAdd = true) {
+        const col = document.createElement('div');
+        col.className = 'col-6 col-md-4 col-lg-3';
+        col.dataset.fileIndex = index;
+        col.dataset.mediaFile = JSON.stringify(file);
+        
+        col.innerHTML = `
+            <div class="card image-preview-card">
+                <div class="position-relative">
+                    <img src="${file.url}" class="card-img-top" style="height: 100px; object-fit: cover;" alt="${file.filename}">
+                    <div class="position-absolute top-0 end-0 p-1">
+                        <button type="button" class="btn btn-sm btn-danger remove-image-btn" data-file-index="${index}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="position-absolute top-0 start-0 p-1">
+                        <button type="button" class="btn btn-sm ${index === 0 ? 'btn-warning' : 'btn-outline-warning'} primary-image-btn" data-file-index="${index}" title="Set as primary">
+                            <i class="fas fa-star"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-2">
+                    <small class="text-muted">${index === 0 ? 'Primary Image' : `Image ${index + 1}`}</small>
+                    <div class="mb-2">
+                        <small class="text-muted">${file.size_formatted || 'Unknown size'}</small>
+                    </div>
+                    <div class="mb-2">
+                        <input type="text" class="form-control form-control-sm" placeholder="Alt text" value="${file.filename}" data-file-index="${index}" maxlength="200">
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Add event listeners
+        const primaryBtn = col.querySelector('.primary-image-btn');
+        const removeBtn = col.querySelector('.remove-image-btn');
+        
+        primaryBtn.addEventListener('click', function() {
+            // Remove primary status from all other images
+            const allPrimaryBtns = document.querySelectorAll('.primary-image-btn');
+            allPrimaryBtns.forEach(btn => {
+                btn.classList.remove('btn-warning');
+                btn.classList.add('btn-outline-warning');
+            });
+            
+            // Set this as primary
+            this.classList.remove('btn-outline-warning');
+            this.classList.add('btn-warning');
+        });
+        
+        removeBtn.addEventListener('click', function() {
+            col.remove();
+            
+            // If this was the primary image and there are other images, make the first one primary
+            if (primaryBtn.classList.contains('btn-warning')) {
+                const remainingCards = document.querySelectorAll('.image-preview-card');
+                if (remainingCards.length > 0) {
+                    const firstPrimaryBtn = remainingCards[0].querySelector('.primary-image-btn');
+                    firstPrimaryBtn.classList.remove('btn-outline-warning');
+                    firstPrimaryBtn.classList.add('btn-warning');
+                }
+            }
+        });
+        
+        return col;
     }
 });
 </script>
