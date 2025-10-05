@@ -45,21 +45,9 @@ class CartManager {
                 cartData = await response.json();
                 console.log('Cart data from v1 API:', cartData);
             } catch (error) {
-                console.warn('Failed to fetch from primary API, trying fallback:', error);
-                // Try the old API endpoint as fallback
-                try {
-                    const fallbackResponse = await fetch('/api/cart/preview/', { 
-                        headers,
-                        cache: 'no-store'
-                    });
-                    if (!fallbackResponse.ok) throw error; // Re-throw original error if fallback fails
-                    cartData = await fallbackResponse.json();
-                    console.log('Cart data from fallback API:', cartData);
-                } catch (fallbackError) {
-                    console.error('All API attempts failed:', fallbackError);
-                    // Default empty cart if both attempts fail
-                    cartData = { items: [] };
-                }
+                console.error('Failed to fetch cart data:', error);
+                // Default empty cart if API fails
+                cartData = { items: [] };
             }
             
             // Get cart summary - handle both endpoints for compatibility

@@ -34,14 +34,15 @@ class CartItemSerializer(serializers.ModelSerializer):
     
     def get_product_image(self, obj):
         """Get product primary image URL"""
-        if obj.variant and hasattr(obj.variant, 'image') and obj.variant.image:
-            return self.context['request'].build_absolute_uri(obj.variant.image.url)
+        if obj.variant and obj.variant.image_url:
+            # For URL-based variant images, use image_url property
+            return obj.variant.image_url
         elif obj.product:
             primary_image = obj.product.images.filter(is_primary=True).first()
             if primary_image:
-                return self.context['request'].build_absolute_uri(primary_image.image.url)
+                return primary_image.image_url
             elif obj.product.images.exists():
-                return self.context['request'].build_absolute_uri(obj.product.images.first().image.url)
+                return obj.product.images.first().image_url
         return None
     
     def validate_product_id(self, value):
