@@ -911,13 +911,23 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="mb-3">
-                                        <label for="variantImage" class="form-label">Upload Image</label>
-                                        <input type="file" class="form-control" id="variantImage" name="image" accept="image/*">
-                                        <small class="text-muted">Optional: Specific image for this variant</small>
+                                        <label class="form-label">Choose Image</label>
+                                        <div class="d-grid gap-2">
+                                            <button type="button" class="btn btn-outline-primary" id="variantOpenMediaLibraryBtn">
+                                                <i class="fas fa-images me-2"></i>Choose from Media Library
+                                            </button>
+                                            <small class="text-muted">Select image from media library</small>
+                                        </div>
+                                        <input type="file" class="form-control d-none" id="variantImage" name="image" accept="image/*">
                                     </div>
                                     
                                     <div id="variantImagePreview" class="text-center" style="display: none;">
                                         <img id="variantImagePreviewImg" src="" alt="Variant Preview" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
+                                        <div class="mt-2">
+                                            <button type="button" class="btn btn-sm btn-outline-danger" id="removeVariantImageBtn">
+                                                <i class="fas fa-times me-1"></i>Remove Image
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1074,15 +1084,23 @@
                                     
                                     <!-- New Image Upload -->
                                     <div class="mb-3">
-                                        <label for="editVariantImage" class="form-label">Upload New Image</label>
-                                        <input type="file" class="form-control" id="editVariantImage" name="image" accept="image/*">
-                                        <small class="text-muted">Leave empty to keep current image</small>
+                                        <label class="form-label">Choose New Image</label>
+                                        <div class="d-grid gap-2">
+                                            <button type="button" class="btn btn-outline-primary" id="editVariantOpenMediaLibraryBtn">
+                                                <i class="fas fa-images me-2"></i>Choose from Media Library
+                                            </button>
+                                            <small class="text-muted">Select image from media library</small>
+                                        </div>
+                                        <input type="file" class="form-control d-none" id="editVariantImage" name="image" accept="image/*">
                                     </div>
                                     
                                     <div id="editVariantImagePreview" class="text-center" style="display: none;">
                                         <img id="editVariantImagePreviewImg" src="" alt="New Variant Preview" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
-                                        <br>
-                                        <small class="text-success">New image preview</small>
+                                        <div class="mt-2">
+                                            <button type="button" class="btn btn-sm btn-outline-danger" id="removeNewVariantImageBtn">
+                                                <i class="fas fa-times me-1"></i>Remove New Image
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1435,6 +1453,32 @@ document.addEventListener('DOMContentLoaded', function() {
     
     document.getElementById('uploadMediaBtn').addEventListener('click', uploadMediaFiles);
     document.getElementById('useSelectedMediaBtn').addEventListener('click', useSelectedMedia);
+    
+    // Variant Media Library Event Listeners
+    document.getElementById('variantOpenMediaLibraryBtn').addEventListener('click', function() {
+        openMediaLibrary('variant');
+    });
+    
+    document.getElementById('editVariantOpenMediaLibraryBtn').addEventListener('click', function() {
+        openMediaLibrary('editVariant');
+    });
+    
+    // Remove variant image previews
+    document.addEventListener('click', function(event) {
+        if (event.target && event.target.id === 'removeVariantImageBtn') {
+            const previewContainer = document.getElementById('variantImagePreview');
+            previewContainer.style.display = 'none';
+            previewContainer.dataset.selectedImageUrl = '';
+            previewContainer.dataset.selectedImageAlt = '';
+        }
+        
+        if (event.target && event.target.id === 'removeNewVariantImageBtn') {
+            const previewContainer = document.getElementById('editVariantImagePreview');
+            previewContainer.style.display = 'none';
+            previewContainer.dataset.selectedImageUrl = '';
+            previewContainer.dataset.selectedImageAlt = '';
+        }
+    });
     
     // Remove current variant image functionality
     document.addEventListener('click', function(event) {
@@ -2074,8 +2118,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>${variant.sku}</td>
                 <td>
                     <div class="d-flex align-items-center">
-                        ${variant.image ? 
-                            `<img src="${variant.image}" alt="${variant.name}" class="me-2" style="width: 30px; height: 30px; object-fit: cover; border-radius: 4px;">` : 
+                        ${variant.image_url ? 
+                            `<img src="${variant.image_url}" alt="${variant.name}" class="me-2" style="width: 30px; height: 30px; object-fit: cover; border-radius: 4px;">` : 
                             `<div class="me-2 bg-light d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; border-radius: 4px;"><i class="fas fa-image text-muted" style="font-size: 12px;"></i></div>`
                         }
                         <span>${variant.name}</span>
@@ -2167,9 +2211,20 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.set('price', parseFloat(formData.get('price')));
         formData.set('stock_quantity', parseInt(formData.get('stock_quantity')) || 0);
         
-        // Only include image if a file is actually selected
+        // Handle image from media library or file upload
         const imageInput = document.getElementById('variantImage');
-        if (!imageInput.files || imageInput.files.length === 0 || !imageInput.files[0]) {
+        const variantImagePreview = document.getElementById('variantImagePreview');
+        
+        // Check if image was selected from media library
+        if (variantImagePreview.dataset.selectedImageUrl) {
+            formData.append('image_url_input', variantImagePreview.dataset.selectedImageUrl);
+            formData.delete('image'); // Remove file input
+        } else if (imageInput.files && imageInput.files.length > 0 && imageInput.files[0]) {
+            // File upload - keep the file in formData
+            formData.append('uploaded_image', imageInput.files[0]);
+            formData.delete('image'); // Remove the original image field
+        } else {
+            // No image selected
             formData.delete('image');
         }
         
@@ -2207,6 +2262,8 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(`/mb-admin/api/variants/${variantId}/`)
             .then(response => response.json())
             .then(variant => {
+                console.log('Loading variant details:', variant);
+                
                 document.getElementById('editVariantId').value = variant.id;
                 document.getElementById('editVariantProductId').value = variant.product;
                 document.getElementById('editVariantSKU').value = variant.sku;
@@ -2224,16 +2281,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 const currentImageContainer = document.getElementById('editCurrentImageContainer');
                 const currentImage = document.getElementById('editCurrentImage');
                 
-                if (variant.image) {
-                    currentImage.src = variant.image;
+                console.log('Variant image_url:', variant.image_url);
+                
+                if (variant.image_url) {
+                    currentImage.src = variant.image_url;
                     currentImageContainer.style.display = 'block';
                 } else {
                     currentImageContainer.style.display = 'none';
                 }
                 
-                // Reset the new image preview
-                document.getElementById('editVariantImagePreview').style.display = 'none';
+                // Reset the new image preview and clear any previous media library selection
+                const editVariantImagePreview = document.getElementById('editVariantImagePreview');
+                editVariantImagePreview.style.display = 'none';
+                editVariantImagePreview.dataset.selectedImageUrl = '';
+                editVariantImagePreview.dataset.selectedImageAlt = '';
                 document.getElementById('editVariantImage').value = '';
+                
+                // Clear any previous media selections
+                selectedMediaFiles = [];
                 
                 // Show the modal
                 const modal = new bootstrap.Modal(document.getElementById('editVariantModal'));
@@ -2258,9 +2323,27 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.set('price', parseFloat(formData.get('price')));
         formData.set('stock_quantity', parseInt(formData.get('stock_quantity')) || 0);
         
-        // Only include image if a new file is actually selected
+        // Handle image from media library or file upload
         const imageInput = document.getElementById('editVariantImage');
-        if (!imageInput.files || imageInput.files.length === 0 || !imageInput.files[0]) {
+        const editVariantImagePreview = document.getElementById('editVariantImagePreview');
+        
+        console.log('updateVariant - checking image sources:');
+        console.log('Media library URL:', editVariantImagePreview.dataset.selectedImageUrl);
+        console.log('File input files:', imageInput.files?.length);
+        
+        // Check if image was selected from media library
+        if (editVariantImagePreview.dataset.selectedImageUrl) {
+            console.log('Using media library image:', editVariantImagePreview.dataset.selectedImageUrl);
+            formData.append('image_url_input', editVariantImagePreview.dataset.selectedImageUrl);
+            formData.delete('image'); // Remove file input
+        } else if (imageInput.files && imageInput.files.length > 0 && imageInput.files[0]) {
+            // File upload - keep the file in formData
+            console.log('Using file upload:', imageInput.files[0].name);
+            formData.append('uploaded_image', imageInput.files[0]);
+            formData.delete('image'); // Remove the original image field
+        } else {
+            // No new image selected - keep current image
+            console.log('No new image selected - keeping current');
             formData.delete('image');
         }
         
@@ -3032,6 +3115,12 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (mediaLibraryCallback === 'edit') {
             // For edit product form
             processSelectedFilesForEdit();
+        } else if (mediaLibraryCallback === 'variant') {
+            // For add variant form
+            processSelectedFilesForVariant();
+        } else if (mediaLibraryCallback === 'editVariant') {
+            // For edit variant form
+            processSelectedFilesForEditVariant();
         }
         
         // Close the modal
@@ -3128,6 +3217,53 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error adding images:', error);
                 showAlert('Failed to add some images. Check console for details.', 'danger');
             });
+    }
+    
+    function processSelectedFilesForVariant() {
+        // Only allow one image for variants
+        const file = selectedMediaFiles[0];
+        if (!file) {
+            showAlert('Please select an image for the variant.', 'warning');
+            return;
+        }
+        
+        // Show preview and store the URL for when saving the variant
+        const previewContainer = document.getElementById('variantImagePreview');
+        const previewImg = document.getElementById('variantImagePreviewImg');
+        
+        previewImg.src = file.url;
+        previewContainer.style.display = 'block';
+        
+        // Store the selected file URL in a data attribute for later use
+        previewContainer.dataset.selectedImageUrl = file.url;
+        previewContainer.dataset.selectedImageAlt = file.filename;
+        
+        showAlert('Variant image selected from media library!', 'success');
+    }
+    
+    function processSelectedFilesForEditVariant() {
+        console.log('processSelectedFilesForEditVariant called with files:', selectedMediaFiles);
+        
+        // Only allow one image for variants
+        const file = selectedMediaFiles[0];
+        if (!file) {
+            showAlert('Please select an image for the variant.', 'warning');
+            return;
+        }
+        
+        // Show preview and store the URL for when updating the variant
+        const previewContainer = document.getElementById('editVariantImagePreview');
+        const previewImg = document.getElementById('editVariantImagePreviewImg');
+        
+        previewImg.src = file.url;
+        previewContainer.style.display = 'block';
+        
+        // Store the selected file URL in a data attribute for later use
+        previewContainer.dataset.selectedImageUrl = file.url;
+        previewContainer.dataset.selectedImageAlt = file.filename;
+        
+        console.log('Preview set with URL:', file.url);
+        showAlert('Variant image selected from media library!', 'success');
     }
     
     function createImagePreviewCard(file, index, isAdd = true) {

@@ -369,7 +369,7 @@ class ProductVariant(models.Model):
     material = models.CharField(max_length=50, blank=True)
     
     # Variant image (for color swatches, size variations, etc.)
-    image = models.ImageField(upload_to='variants/', blank=True, null=True)
+    image = models.URLField(max_length=500, blank=True, null=True, help_text="URL or path to the variant image file")
     
     # Default variant for this product
     is_default = models.BooleanField(default=False, help_text="Mark this as the default variant for the product")
@@ -407,6 +407,23 @@ class ProductVariant(models.Model):
     def effective_cost_price(self):
         """Return variant cost price or fall back to product cost price"""
         return self.cost_price or self.product.cost_price
+    
+    @property
+    def image_url(self):
+        """Get the full URL for the variant image"""
+        if not self.image:
+            return None
+            
+        if self.image.startswith('http'):
+            return self.image
+        else:
+            # If it's a relative path, check if it already includes /media/
+            if self.image.startswith('/media/'):
+                return self.image
+            else:
+                # If it's just a path like 'variants/image.jpg', prepend the media URL
+                from django.conf import settings
+                return f"{settings.MEDIA_URL.rstrip('/')}/{self.image.lstrip('/')}"
     
     @property
     def discount_percentage(self):

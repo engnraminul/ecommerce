@@ -186,12 +186,80 @@ class ProductVariantDashboardSerializer(serializers.ModelSerializer):
     discount_percentage = serializers.ReadOnlyField()
     profit_margin = serializers.ReadOnlyField()
     
+    # Add optional fields for media library support
+    image_url_input = serializers.CharField(required=False, write_only=True)
+    uploaded_image = serializers.ImageField(required=False, write_only=True)
+    
+    # Add read-only field for the image_url property
+    image_url = serializers.ReadOnlyField()
+    
     class Meta:
         model = ProductVariant
         fields = ['id', 'product', 'product_name', 'sku', 'name', 'color', 'size', 'material', 
                  'price', 'compare_price', 'cost_price', 'stock_quantity', 'is_active', 'image',
                  'effective_price', 'effective_compare_price', 'effective_cost_price', 
-                 'discount_percentage', 'profit_margin']
+                 'discount_percentage', 'profit_margin', 'image_url_input', 'uploaded_image', 'image_url']
+        extra_kwargs = {
+            'image': {'required': False}  # Make image optional since we'll set it programmatically
+        }
+    
+    def validate(self, data):
+        # Only validate image source when creating new variant and image data is provided
+        if not self.instance and (data.get('image_url_input') or data.get('uploaded_image')):
+            # If image data is provided, ensure we have either uploaded file or URL
+            if not data.get('uploaded_image') and not data.get('image_url_input'):
+                raise serializers.ValidationError("Either 'uploaded_image' file or 'image_url_input' must be provided.")
+        
+        return data
+    
+    def create(self, validated_data):
+        # Handle different image sources
+        image_url_input = validated_data.pop('image_url_input', None)
+        uploaded_image = validated_data.pop('uploaded_image', None)
+        
+        if image_url_input:
+            # Media library image - store the URL directly
+            validated_data['image'] = image_url_input
+        elif uploaded_image:
+            # File upload - save the file and store the path
+            from django.core.files.storage import default_storage
+            import uuid
+            import os
+            
+            # Generate unique filename
+            file_extension = os.path.splitext(uploaded_image.name)[1]
+            unique_filename = f"{uuid.uuid4().hex}{file_extension}"
+            file_path = f"variants/{unique_filename}"
+            
+            # Save the file
+            saved_path = default_storage.save(file_path, uploaded_image)
+            validated_data['image'] = f"/{default_storage.url(saved_path).lstrip('/')}"
+        
+        return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        # Handle image updates
+        image_url_input = validated_data.pop('image_url_input', None)
+        uploaded_image = validated_data.pop('uploaded_image', None)
+        
+        if image_url_input:
+            validated_data['image'] = image_url_input
+        elif uploaded_image:
+            # File upload - save the file and store the path
+            from django.core.files.storage import default_storage
+            import uuid
+            import os
+            
+            # Generate unique filename
+            file_extension = os.path.splitext(uploaded_image.name)[1]
+            unique_filename = f"{uuid.uuid4().hex}{file_extension}"
+            file_path = f"variants/{unique_filename}"
+            
+            # Save the file
+            saved_path = default_storage.save(file_path, uploaded_image)
+            validated_data['image'] = f"/{default_storage.url(saved_path).lstrip('/')}"
+        
+        return super().update(instance, validated_data)
 
 class ProductImageDashboardSerializer(serializers.ModelSerializer):
     # Add optional fields for media library support

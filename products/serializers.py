@@ -38,14 +38,15 @@ class ProductImageSerializer(serializers.ModelSerializer):
 class ProductVariantSerializer(serializers.ModelSerializer):
     """Product variant serializer"""
     effective_price = serializers.ReadOnlyField()
+    image_url = serializers.ReadOnlyField()
     
     class Meta:
         model = ProductVariant
         fields = (
             'id', 'name', 'sku', 'size', 'color', 'material',
-            'price', 'effective_price', 'stock_quantity', 'is_default', 'is_active'
+            'price', 'effective_price', 'stock_quantity', 'is_default', 'is_active', 'image', 'image_url'
         )
-        read_only_fields = ('id', 'sku', 'effective_price')
+        read_only_fields = ('id', 'sku', 'effective_price', 'image_url')
 
 
 class ReviewSerializer(serializers.ModelSerializer):
