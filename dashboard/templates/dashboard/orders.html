@@ -952,9 +952,6 @@
                             </ul>
                         </div>
                     </div>
-                    <div>
-                        <span class="badge" id="orderDetailPaymentStatus"></span>
-                    </div>
                 </div>
                 
                 <!-- Order Summary Cards -->
@@ -2972,24 +2969,7 @@ document.addEventListener('DOMContentLoaded', function() {
         statusElement.className = `badge ${statusBadgeClass}`;
         statusElement.textContent = formatStatusName(order.status);
         
-        // Set payment status with badge style
-        const paymentStatusElement = document.getElementById('orderDetailPaymentStatus');
-        let paymentStatusClass;
-        switch (order.payment_status) {
-            case 'paid':
-                paymentStatusClass = 'bg-success text-white';
-                break;
-            case 'unpaid':
-                paymentStatusClass = 'bg-danger text-white';
-                break;
-            case 'refunded':
-                paymentStatusClass = 'bg-warning text-dark';
-                break;
-            default:
-                paymentStatusClass = 'bg-secondary text-white';
-        }
-        paymentStatusElement.className = `badge ${paymentStatusClass}`;
-        paymentStatusElement.textContent = order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1);
+        
         
         // Set total amount
         document.getElementById('orderDetailTotal').textContent = `$${order.total_amount}`;

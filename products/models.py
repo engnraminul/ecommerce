@@ -305,7 +305,7 @@ class Product(models.Model):
 class ProductImage(models.Model):
     """Product image model for multiple images per product"""
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
-    image = models.URLField(max_length=500, help_text="URL or path to the image file")
+    image = models.CharField(max_length=500, help_text="URL or path to the image file")
     alt_text = models.CharField(max_length=200, blank=True)
     is_primary = models.BooleanField(default=False)
     
@@ -369,7 +369,7 @@ class ProductVariant(models.Model):
     material = models.CharField(max_length=50, blank=True)
     
     # Variant image (for color swatches, size variations, etc.)
-    image = models.URLField(max_length=500, blank=True, null=True, help_text="URL or path to the variant image file")
+    image = models.CharField(max_length=500, blank=True, null=True, help_text="URL or path to the variant image file")
     
     # Default variant for this product
     is_default = models.BooleanField(default=False, help_text="Mark this as the default variant for the product")

@@ -196,7 +196,7 @@ class ProductVariantDashboardSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductVariant
         fields = ['id', 'product', 'product_name', 'sku', 'name', 'color', 'size', 'material', 
-                 'price', 'compare_price', 'cost_price', 'stock_quantity', 'is_active', 'image',
+                 'price', 'compare_price', 'cost_price', 'stock_quantity', 'in_stock', 'is_default', 'is_active', 'image',
                  'effective_price', 'effective_compare_price', 'effective_cost_price', 
                  'discount_percentage', 'profit_margin', 'image_url_input', 'uploaded_image', 'image_url']
         extra_kwargs = {

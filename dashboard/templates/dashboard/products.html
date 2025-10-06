@@ -1051,14 +1051,33 @@
                             <!-- Status -->
                             <div class="card mb-3">
                                 <div class="card-header">
-                                    <h6 class="mb-0"><i class="fas fa-toggle-on me-2"></i>Status</h6>
+                                    <h6 class="mb-0"><i class="fas fa-toggle-on me-2"></i>Status & Options</h6>
                                 </div>
                                 <div class="card-body">
-                                    <label for="editVariantStatus" class="form-label">Status</label>
-                                    <select class="form-select" id="editVariantStatus" name="is_active">
-                                        <option value="true">Active</option>
-                                        <option value="false">Inactive</option>
-                                    </select>
+                                    <div class="mb-3">
+                                        <label for="editVariantStatus" class="form-label">Status</label>
+                                        <select class="form-select" id="editVariantStatus" name="is_active">
+                                            <option value="true">Active</option>
+                                            <option value="false">Inactive</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="editVariantInStock" class="form-label">In Stock</label>
+                                        <select class="form-select" id="editVariantInStock" name="in_stock">
+                                            <option value="true">In Stock</option>
+                                            <option value="false">Out of Stock</option>
+                                        </select>
+                                        <small class="text-muted">Control stock availability independently of quantity</small>
+                                    </div>
+                                    
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="editVariantIsDefault" name="is_default">
+                                        <label class="form-check-label" for="editVariantIsDefault">
+                                            <strong>Set as Default Variant</strong>
+                                        </label>
+                                        <small class="form-text text-muted d-block">This will be the default variant shown for the product. Only one variant can be default per product.</small>
+                                    </div>
                                 </div>
                             </div>
 
@@ -2159,9 +2178,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 </td>
                 <td>${variant.stock_quantity}</td>
                 <td>
-                    <span class="badge ${variant.is_active ? 'bg-success' : 'bg-secondary'}">
-                        ${variant.is_active ? 'Active' : 'Inactive'}
-                    </span>
+                    <div class="d-flex flex-column align-items-start">
+                        <span class="badge ${variant.is_active ? 'bg-success' : 'bg-secondary'} mb-1">
+                            ${variant.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                        ${variant.is_default ? 
+                            '<span class="badge bg-primary"><i class="fas fa-star me-1"></i>Default</span>' : 
+                            ''
+                        }
+                        ${!variant.in_stock ? 
+                            '<span class="badge bg-warning text-dark">Out of Stock</span>' : 
+                            ''
+                        }
+                    </div>
                 </td>
                 <td>
                     <div class="btn-group btn-group-sm" role="group">
@@ -2276,6 +2305,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('editVariantCostPrice').value = variant.cost_price || '';
                 document.getElementById('editVariantStock').value = variant.stock_quantity;
                 document.getElementById('editVariantStatus').value = variant.is_active.toString();
+                document.getElementById('editVariantInStock').value = variant.in_stock ? variant.in_stock.toString() : 'true';
+                document.getElementById('editVariantIsDefault').checked = variant.is_default || false;
                 
                 // Handle current variant image
                 const currentImageContainer = document.getElementById('editCurrentImageContainer');
@@ -2320,6 +2351,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Convert string values to proper types for non-file fields
         formData.set('is_active', formData.get('is_active') === 'true');
+        formData.set('in_stock', formData.get('in_stock') === 'true');
+        formData.set('is_default', document.getElementById('editVariantIsDefault').checked);
         formData.set('price', parseFloat(formData.get('price')));
         formData.set('stock_quantity', parseInt(formData.get('stock_quantity')) || 0);
         

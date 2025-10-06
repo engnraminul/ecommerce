@@ -189,16 +189,16 @@
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="bkash_transaction_id">{{ checkout_customization.bkash_transaction_label|default:"bKash Transaction ID *" }}</label>
-                                        <input type="text" id="bkash_transaction_id" name="bkash_transaction_id" 
-                                               placeholder="{{ checkout_customization.bkash_transaction_placeholder|default:"Enter transaction ID after payment" }}">
+                                        <label for="bkash_sender_number">{{ checkout_customization.bkash_sender_label|default:"Your Mobile Number (From which you sent money) *" }}</label>
+                                        <input type="tel" id="bkash_sender_number" name="bkash_sender_number" 
+                                               placeholder="{{ checkout_customization.bkash_sender_placeholder|default:"01XXXXXXXXX - Your phone number" }}">
                                     </div>
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="bkash_sender_number">{{ checkout_customization.bkash_sender_label|default:"Sender Mobile Number *" }}</label>
-                                        <input type="tel" id="bkash_sender_number" name="bkash_sender_number" 
-                                               placeholder="{{ checkout_customization.bkash_sender_placeholder|default:"01XXXXXXXXX" }}">
+                                        <label for="bkash_transaction_id">{{ checkout_customization.bkash_transaction_label|default:"bKash Transaction ID (TrxID from SMS) *" }}</label>
+                                        <input type="text" id="bkash_transaction_id" name="bkash_transaction_id" 
+                                               placeholder="{{ checkout_customization.bkash_transaction_placeholder|default:"Example: 8A4D5F2C1B - From your SMS receipt" }}">
                                     </div>
                                 </div>
                             </div>
@@ -224,16 +224,16 @@
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="nagad_transaction_id">{{ checkout_customization.nagad_transaction_label|default:"Nagad Transaction ID *" }}</label>
-                                        <input type="text" id="nagad_transaction_id" name="nagad_transaction_id" 
-                                               placeholder="{{ checkout_customization.nagad_transaction_placeholder|default:"Enter transaction ID after payment" }}">
+                                        <label for="nagad_sender_number">{{ checkout_customization.nagad_sender_label|default:"Your Mobile Number (From which you sent money) *" }}</label>
+                                        <input type="tel" id="nagad_sender_number" name="nagad_sender_number" 
+                                               placeholder="{{ checkout_customization.nagad_sender_placeholder|default:"01XXXXXXXXX - Your phone number" }}">
                                     </div>
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="nagad_sender_number">{{ checkout_customization.nagad_sender_label|default:"Sender Mobile Number *" }}</label>
-                                        <input type="tel" id="nagad_sender_number" name="nagad_sender_number" 
-                                               placeholder="{{ checkout_customization.nagad_sender_placeholder|default:"01XXXXXXXXX" }}">
+                                        <label for="nagad_transaction_id">{{ checkout_customization.nagad_transaction_label|default:"Nagad Transaction ID (TrxID from SMS) *" }}</label>
+                                        <input type="text" id="nagad_transaction_id" name="nagad_transaction_id" 
+                                               placeholder="{{ checkout_customization.nagad_transaction_placeholder|default:"Example: 8A4D5F2C1B - From your SMS receipt" }}">
                                     </div>
                                 </div>
                             </div>
@@ -1600,7 +1600,7 @@
             if (paymentMethod) {
                 switch(paymentMethod.value) {
                     case 'bkash':
-                        const bkashFields = ['bkash_transaction_id', 'bkash_sender_number'];
+                        const bkashFields = ['bkash_sender_number', 'bkash_transaction_id'];
                         
                         bkashFields.forEach(fieldName => {
                             const field = document.getElementById(fieldName);
@@ -1614,7 +1614,7 @@
                         break;
                         
                     case 'nagad':
-                        const nagadFields = ['nagad_transaction_id', 'nagad_sender_number'];
+                        const nagadFields = ['nagad_sender_number', 'nagad_transaction_id'];
                         
                         nagadFields.forEach(fieldName => {
                             const field = document.getElementById(fieldName);
