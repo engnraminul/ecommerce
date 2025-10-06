@@ -1216,7 +1216,7 @@
                     <label for="editQuantityProductName" class="form-label">Product</label>
                     <input type="text" class="form-control" id="editQuantityProductName" readonly>
                 </div>
-                <div class="mb-3" id="editQuantityVariantContainer" style="display: none;">
+                <div class="mb-3" id="editQuantityVariantContainer">
                     <label for="editQuantityVariantSelect" class="form-label">Variant</label>
                     <select class="form-select" id="editQuantityVariantSelect">
                         <option value="">Select a variant...</option>
@@ -2782,6 +2782,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function loadOrderDetails(orderId) {
         console.log(`Loading order details for ID: ${orderId}`);
         
+        // Set current order ID to ensure it's available for other functions
+        currentOrderId = orderId;
+        
         // First, load order data
         fetch(`/mb-admin/api/orders/${orderId}/`)
             .then(response => {
@@ -2969,7 +2972,7 @@ document.addEventListener('DOMContentLoaded', function() {
         statusElement.className = `badge ${statusBadgeClass}`;
         statusElement.textContent = formatStatusName(order.status);
         
-        
+         
         
         // Set total amount
         document.getElementById('orderDetailTotal').textContent = `$${order.total_amount}`;

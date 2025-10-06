@@ -381,7 +381,7 @@ class OrderItemDashboardSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = OrderItem
-        fields = ['id', 'order', 'product_name', 'variant_name', 'variant_sku', 'variant_display_name', 'quantity', 'unit_price']
+        fields = ['id', 'order', 'product', 'variant', 'product_name', 'variant_name', 'variant_sku', 'variant_display_name', 'quantity', 'unit_price']
     
     def get_variant_sku(self, obj):
         """Get the full variant SKU"""

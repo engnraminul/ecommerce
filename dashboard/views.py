@@ -295,6 +295,14 @@ class ProductDashboardViewSet(viewsets.ModelViewSet):
         if x_forwarded_for:
             return x_forwarded_for.split(',')[0]
         return self.request.META.get('REMOTE_ADDR')
+    
+    @action(detail=True, methods=['get'])
+    def variants(self, request, pk=None):
+        """Get all variants for a specific product"""
+        product = self.get_object()
+        variants = ProductVariant.objects.filter(product=product, is_active=True)
+        serializer = ProductVariantDashboardSerializer(variants, many=True)
+        return Response(serializer.data)
 
 class ProductVariantDashboardViewSet(viewsets.ModelViewSet):
     queryset = ProductVariant.objects.all()

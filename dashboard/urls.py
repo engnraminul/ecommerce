@@ -37,6 +37,9 @@ urlpatterns = [
     path('api/orders/<int:order_id>/edit/courier-info/', order_edit_views.update_courier_info, name='update_courier_info'),
     path('api/orders/edit/available-products/', order_edit_views.get_available_products, name='get_available_products'),
     
+    # Product variant nested endpoints
+    path('api/products/<int:product_id>/variants/<int:variant_id>/', views.ProductVariantDashboardViewSet.as_view({'get': 'retrieve'}), name='product_variant_detail'),
+    
     # Add an explicit path for add_to_curier that matches the JavaScript URL
     path('api/orders/<int:pk>/add_to_curier/', views.OrderDashboardViewSet.as_view({'post': 'add_to_curier'}), name='order_add_to_curier'),
     path('api/statistics/', views.DashboardStatisticsView.as_view(), name='statistics'),
