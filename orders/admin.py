@@ -70,6 +70,14 @@ class OrderAdmin(admin.ModelAdmin):
                 'discount_amount', 'coupon_code', 'coupon_discount', 'total_amount', 'cost_price'
             )
         }),
+        ('Payment Method', {
+            'fields': (
+                'payment_method', 'payment_method_display_name', 
+                'bkash_transaction_id', 'bkash_sender_number',
+                'nagad_transaction_id', 'nagad_sender_number'
+            ),
+            'classes': ('collapse',)
+        }),
         ('Customer Info', {
             'fields': ('customer_email', 'customer_phone')
         }),

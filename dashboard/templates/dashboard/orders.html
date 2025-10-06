@@ -1029,6 +1029,39 @@
                         </div>
                     </div>
                     
+                    <!-- Payment Method Info Card -->
+                    <div class="col-md-6" id="paymentMethodContainer">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-3 text-muted">
+                                    <i class="fas fa-credit-card me-2"></i>Payment Method
+                                </h6>
+                                <div id="paymentMethodDetails">
+                                    <dl class="row mb-0">
+                                        <dt class="col-sm-4 text-muted">Method</dt>
+                                        <dd class="col-sm-8" id="orderDetailPaymentMethod">-</dd>
+                                        
+                                        <div id="bkashPaymentDetails" style="display: none;">
+                                            <dt class="col-sm-4 text-muted">Transaction ID</dt>
+                                            <dd class="col-sm-8" id="orderDetailBkashTransactionId">-</dd>
+                                            
+                                            <dt class="col-sm-4 text-muted">Sender Number</dt>
+                                            <dd class="col-sm-8" id="orderDetailBkashSenderNumber">-</dd>
+                                        </div>
+                                        
+                                        <div id="nagadPaymentDetails" style="display: none;">
+                                            <dt class="col-sm-4 text-muted">Transaction ID</dt>
+                                            <dd class="col-sm-8" id="orderDetailNagadTransactionId">-</dd>
+                                            
+                                            <dt class="col-sm-4 text-muted">Sender Number</dt>
+                                            <dd class="col-sm-8" id="orderDetailNagadSenderNumber">-</dd>
+                                        </div>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     
                     <!-- Customer Info Card -->
                     <!-- <div class="col-md-6">
@@ -3055,6 +3088,42 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             document.getElementById('orderDetailInstructions').textContent = 'No special instructions provided.';
             orderInstructionsContainer.style.display = 'none'; // Hide the container
+        }
+        
+        // Set payment method information
+        const paymentMethodContainer = document.getElementById('paymentMethodContainer');
+        const paymentMethodDisplay = document.getElementById('orderDetailPaymentMethod');
+        const bkashDetails = document.getElementById('bkashPaymentDetails');
+        const nagadDetails = document.getElementById('nagadPaymentDetails');
+        
+        // Hide all payment detail sections first
+        bkashDetails.style.display = 'none';
+        nagadDetails.style.display = 'none';
+        
+        if (order.payment_method) {
+            // Show payment method display name or method
+            paymentMethodDisplay.textContent = order.payment_method_display_name || order.payment_method;
+            
+            // Show specific payment details based on method
+            if (order.payment_method === 'bkash') {
+                if (order.bkash_transaction_id || order.bkash_sender_number) {
+                    bkashDetails.style.display = 'block';
+                    document.getElementById('orderDetailBkashTransactionId').textContent = order.bkash_transaction_id || '-';
+                    document.getElementById('orderDetailBkashSenderNumber').textContent = order.bkash_sender_number || '-';
+                }
+            } else if (order.payment_method === 'nagad') {
+                if (order.nagad_transaction_id || order.nagad_sender_number) {
+                    nagadDetails.style.display = 'block';
+                    document.getElementById('orderDetailNagadTransactionId').textContent = order.nagad_transaction_id || '-';
+                    document.getElementById('orderDetailNagadSenderNumber').textContent = order.nagad_sender_number || '-';
+                }
+            }
+            
+            // Show the payment method container
+            paymentMethodContainer.style.display = 'block';
+        } else {
+            // Hide payment method container if no payment method data
+            paymentMethodContainer.style.display = 'none';
         }
         
         // Set up status change dropdown

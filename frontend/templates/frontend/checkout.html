@@ -45,19 +45,20 @@
                             
                             <div class="form-row">
                                 <div class="form-group half">
-                                    <label for="email">{{ checkout_customization.email_label|default:"Email Address *" }}</label>
-                                    <input type="email" id="email" name="email"
-                                           placeholder="{{ checkout_customization.email_placeholder|default:"" }}"
-                                           value="{{ checkout_customization.email_default|default:"" }}">
-                                    <div class="field-error" id="email_error"></div>
-                                </div>
-                                <div class="form-group half">
                                     <label for="phone_number">{{ checkout_customization.phone_label|default:"Phone Number *" }}</label>
                                     <input type="tel" id="phone_number" name="phone_number" required
                                            placeholder="{{ checkout_customization.phone_placeholder|default:"" }}"
                                            value="{{ checkout_customization.phone_default|default:"" }}"> 
                                     <div class="field-error" id="phone_number_error"></div>
                                 </div>
+                                <div class="form-group half">
+                                    <label for="email">{{ checkout_customization.email_label|default:"Email Address (optional)" }}</label>
+                                    <input type="email" id="email" name="email"
+                                           placeholder="{{ checkout_customization.email_placeholder|default:"" }}"
+                                           value="{{ checkout_customization.email_default|default:"" }}">
+                                    <div class="field-error" id="email_error"></div>
+                                </div>
+
                             </div>
                         </div>
 
@@ -1569,7 +1570,6 @@
             
             // Required fields
             const requiredFields = [
-                'email',
                 'phone_number'
             ];
             
@@ -1663,6 +1663,17 @@
             const selectedLocationRadio = document.querySelector('input[name="location"]:checked');
             const selectedLocation = selectedLocationRadio ? selectedLocationRadio.value : 'dhaka';
             
+            // Get selected payment method
+            const selectedPaymentMethod = document.querySelector('input[name="payment_method"]:checked');
+            const paymentMethod = selectedPaymentMethod ? selectedPaymentMethod.value : 'cod';
+            
+            // Get payment method display name
+            let paymentMethodDisplayName = '';
+            if (selectedPaymentMethod) {
+                const label = selectedPaymentMethod.nextElementSibling;
+                paymentMethodDisplayName = label ? label.textContent.trim() : '';
+            }
+            
             // Prepare order data in the expected format for CreateOrderSerializer
             const orderData = {
                 shipping_address: {
@@ -1685,7 +1696,14 @@
                 shipping_location: selectedLocation || 'dhaka',
                 // Include guest order fields
                 guest_email: formData.get('email') || '',
-                guest_phone: formData.get('phone_number') || ''
+                guest_phone: formData.get('phone_number') || '',
+                // Payment method data
+                payment_method: paymentMethod,
+                payment_method_display_name: paymentMethodDisplayName,
+                bkash_transaction_id: formData.get('bkash_transaction_id') || '',
+                bkash_sender_number: formData.get('bkash_sender_number') || '',
+                nagad_transaction_id: formData.get('nagad_transaction_id') || '',
+                nagad_sender_number: formData.get('nagad_sender_number') || ''
             };
             
             console.log('Order data being sent:', orderData);

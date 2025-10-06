@@ -54,6 +54,22 @@ class Order(models.Model):
     coupon_code = models.CharField(max_length=50, blank=True)
     coupon_discount = models.DecimalField(max_digits=8, decimal_places=2, default=0)
     
+    # Payment method information
+    PAYMENT_METHOD_CHOICES = [
+        ('cod', 'Cash on Delivery'),
+        ('bkash', 'bKash'),
+        ('nagad', 'Nagad'),
+    ]
+    
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='cod')
+    payment_method_display_name = models.CharField(max_length=100, blank=True)  # Store the display name
+    
+    # Mobile wallet payment details
+    bkash_transaction_id = models.CharField(max_length=100, blank=True)
+    bkash_sender_number = models.CharField(max_length=15, blank=True)
+    nagad_transaction_id = models.CharField(max_length=100, blank=True)
+    nagad_sender_number = models.CharField(max_length=15, blank=True)
+    
     # Customer information (stored for record keeping)
     customer_email = models.EmailField()
     customer_phone = models.CharField(max_length=15, blank=True)

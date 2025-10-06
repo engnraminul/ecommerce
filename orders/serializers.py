@@ -107,6 +107,19 @@ class CreateOrderSerializer(serializers.Serializer):
     guest_email = serializers.EmailField(required=False, allow_blank=True)
     guest_phone = serializers.CharField(required=False, allow_blank=True)
     
+    # Payment method fields
+    payment_method = serializers.ChoiceField(
+        choices=[('cod', 'Cash on Delivery'), ('bkash', 'bKash'), ('nagad', 'Nagad')],
+        default='cod'
+    )
+    payment_method_display_name = serializers.CharField(required=False, allow_blank=True)
+    
+    # Mobile wallet payment details
+    bkash_transaction_id = serializers.CharField(required=False, allow_blank=True)
+    bkash_sender_number = serializers.CharField(required=False, allow_blank=True)
+    nagad_transaction_id = serializers.CharField(required=False, allow_blank=True)
+    nagad_sender_number = serializers.CharField(required=False, allow_blank=True)
+    
     def validate_coupon_code(self, value):
         if value:
             from cart.models import Coupon
@@ -120,6 +133,34 @@ class CreateOrderSerializer(serializers.Serializer):
             except Coupon.DoesNotExist:
                 raise serializers.ValidationError("Invalid coupon code.")
         return value.upper() if value else value
+    
+    def validate(self, data):
+        """Validate payment method data"""
+        payment_method = data.get('payment_method', 'cod')
+        
+        # Validate bKash payment data
+        if payment_method == 'bkash':
+            if not data.get('bkash_transaction_id'):
+                raise serializers.ValidationError({
+                    'bkash_transaction_id': 'bKash transaction ID is required for bKash payment.'
+                })
+            if not data.get('bkash_sender_number'):
+                raise serializers.ValidationError({
+                    'bkash_sender_number': 'Sender mobile number is required for bKash payment.'
+                })
+        
+        # Validate Nagad payment data
+        if payment_method == 'nagad':
+            if not data.get('nagad_transaction_id'):
+                raise serializers.ValidationError({
+                    'nagad_transaction_id': 'Nagad transaction ID is required for Nagad payment.'
+                })
+            if not data.get('nagad_sender_number'):
+                raise serializers.ValidationError({
+                    'nagad_sender_number': 'Sender mobile number is required for Nagad payment.'
+                })
+        
+        return data
     
     def create(self, validated_data):
         from cart.models import Cart, CouponUsage
@@ -225,6 +266,22 @@ class CreateOrderSerializer(serializers.Serializer):
         if not user and not customer_email:
             raise serializers.ValidationError("Email is required for guest orders.")
         
+        # Get payment method data
+        payment_method = validated_data.get('payment_method', 'cod')
+        payment_method_display_name = validated_data.get('payment_method_display_name', '')
+        
+        # Set payment status based on payment method
+        if payment_method == 'cod':
+            payment_status = 'cod_confirmed'
+            if not payment_method_display_name:
+                payment_method_display_name = 'Cash on Delivery'
+        else:
+            payment_status = 'pending'  # For mobile wallets, require manual confirmation
+            if payment_method == 'bkash' and not payment_method_display_name:
+                payment_method_display_name = 'bKash'
+            elif payment_method == 'nagad' and not payment_method_display_name:
+                payment_method_display_name = 'Nagad'
+        
         # Create order
         order = Order.objects.create(
             user=user,
@@ -232,7 +289,7 @@ class CreateOrderSerializer(serializers.Serializer):
             guest_email=customer_email if not user else '',
             session_id=request.session.session_key if not user else '',
             status='pending',
-            payment_status='pending',  # Will be set to 'cod_confirmed' for COD
+            payment_status=payment_status,
             subtotal=subtotal,
             shipping_cost=shipping_cost,
             tax_amount=tax_amount,
@@ -242,7 +299,14 @@ class CreateOrderSerializer(serializers.Serializer):
             total_amount=total_amount,
             customer_email=customer_email,
             customer_phone=customer_phone,
-            customer_notes=validated_data.get('customer_notes', '')
+            customer_notes=validated_data.get('customer_notes', ''),
+            # Payment method data
+            payment_method=payment_method,
+            payment_method_display_name=payment_method_display_name,
+            bkash_transaction_id=validated_data.get('bkash_transaction_id', ''),
+            bkash_sender_number=validated_data.get('bkash_sender_number', ''),
+            nagad_transaction_id=validated_data.get('nagad_transaction_id', ''),
+            nagad_sender_number=validated_data.get('nagad_sender_number', ''),
         )
         
         # Create shipping address
