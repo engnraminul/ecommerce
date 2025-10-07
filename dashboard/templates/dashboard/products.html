@@ -2933,7 +2933,7 @@ document.addEventListener('DOMContentLoaded', function() {
         col.innerHTML = `
             <div class="media-item ${isSelected ? 'selected' : ''}" data-file-id="${file.id}" data-file-url="${file.url}" data-file-name="${file.filename}">
                 <div class="media-item-actions">
-                    <button type="button" class="media-item-delete" onclick="deleteMediaFile('${file.id}')" title="Delete file">
+                    <button type="button" class="media-item-delete" data-file-id="${file.id}" title="Delete file">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -2953,8 +2953,19 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
         
-        // Add click event listener
+        // Add event listeners
         const mediaItem = col.querySelector('.media-item');
+        const deleteBtn = col.querySelector('.media-item-delete');
+        
+        // Delete button event listener
+        deleteBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation(); // Prevent triggering the media item selection
+            const fileId = this.dataset.fileId;
+            deleteMediaFile(fileId);
+        });
+        
+        // Media item selection event listener
         mediaItem.addEventListener('click', function(e) {
             // Don't trigger selection when clicking delete button
             if (e.target.closest('.media-item-delete')) {
@@ -3104,14 +3115,27 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function deleteMediaFile(fileId) {
+        if (!fileId) {
+            showAlert('Invalid file ID', 'danger');
+            return;
+        }
+        
         if (!confirm('Are you sure you want to delete this file? This action cannot be undone.')) {
+            return;
+        }
+        
+        // Get CSRF token
+        const csrfToken = getCookie('csrftoken');
+        
+        if (!csrfToken) {
+            showAlert('CSRF token not found. Please refresh the page and try again.', 'danger');
             return;
         }
         
         fetch(`/mb-admin/api/media/${fileId}/delete/`, {
             method: 'DELETE',
             headers: {
-                'X-CSRFToken': getCookie('csrftoken')
+                'X-CSRFToken': csrfToken
             }
         })
         .then(response => response.json())

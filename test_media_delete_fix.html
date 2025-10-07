@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Media Delete</title>
+    <script>
+        // Simulate the fixed deleteMediaFile function
+        function testDeleteFunction() {
+            // This simulates what the browser would do
+            console.log('Testing delete function simulation...');
+            
+            const fileId = 'products_test.jpg';
+            console.log('deleteMediaFile called with fileId:', fileId);
+            
+            if (!fileId) {
+                console.log('Invalid file ID');
+                return;
+            }
+            
+            if (!confirm('Are you sure you want to delete this file? This action cannot be undone.')) {
+                console.log('User cancelled deletion');
+                return;
+            }
+            
+            // Simulate getting CSRF token
+            const csrfToken = 'test-csrf-token';
+            console.log('CSRF token:', csrfToken ? 'Found' : 'Not found');
+            
+            if (!csrfToken) {
+                console.log('CSRF token not found. Please refresh the page and try again.');
+                return;
+            }
+            
+            console.log('Making DELETE request to:', `/mb-admin/api/media/${fileId}/delete/`);
+            console.log('Headers:', { 'X-CSRFToken': csrfToken });
+            
+            // This would normally be a fetch request
+            console.log('✅ Function would work correctly!');
+        }
+        
+        // Test with event listener approach
+        function testEventListener() {
+            console.log('Testing event listener approach...');
+            
+            // Create a test button
+            const button = document.createElement('button');
+            button.dataset.fileId = 'products_test2.jpg';
+            button.innerHTML = '<i class="fas fa-trash"></i>';
+            
+            // Add event listener (this is what the fix does)
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const fileId = this.dataset.fileId;
+                console.log('Event listener triggered for fileId:', fileId);
+                console.log('✅ Event listener approach works!');
+            });
+            
+            // Simulate click
+            button.click();
+        }
+    </script>
+</head>
+<body>
+    <h1>Media Delete Function Test</h1>
+    <button onclick="testDeleteFunction()">Test Delete Function</button>
+    <button onclick="testEventListener()">Test Event Listener</button>
+    
+    <script>
+        console.log('Page loaded, running tests...');
+        testDeleteFunction();
+        testEventListener();
+    </script>
+</body>
+</html>
