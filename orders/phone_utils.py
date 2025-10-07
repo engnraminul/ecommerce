@@ -3,6 +3,24 @@ Phone number utilities for Bangladesh phone numbers
 """
 import re
 
+def convert_bangla_to_english_digits(text):
+    """
+    Convert Bangla digits to English digits
+    
+    Bangla digits: ০১২৩৪৫৬৭৮৯
+    English digits: 0123456789
+    """
+    bangla_to_english = {
+        '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4',
+        '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9'
+    }
+    
+    # Convert each Bangla digit to English
+    for bangla, english in bangla_to_english.items():
+        text = text.replace(bangla, english)
+    
+    return text
+
 def normalize_bangladeshi_phone(phone):
     """
     Normalize a Bangladeshi phone number to the standard format: 01XXXXXXXXX
@@ -18,11 +36,15 @@ def normalize_bangladeshi_phone(phone):
     - (+880) 1777-173040
     - 0177-7173040
     - +880-1777-173040
+    - ০১৭৭৭১৭৩০৪০ (Bangla digits)
     
     Returns: Normalized phone number (01XXXXXXXXX) or original if invalid
     """
     if not phone:
         return ''
+    
+    # First convert Bangla digits to English digits
+    phone = convert_bangla_to_english_digits(phone)
     
     # Remove all non-digit characters
     digits = re.sub(r'\D', '', phone)

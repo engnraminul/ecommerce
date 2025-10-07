@@ -1837,8 +1837,27 @@
         }
         
         // Phone number validation and normalization
+        function convertBanglaToEnglishDigits(text) {
+            if (!text) return '';
+            
+            const banglaToEnglish = {
+                '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4',
+                '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9'
+            };
+            
+            // Convert each Bangla digit to English
+            for (const [bangla, english] of Object.entries(banglaToEnglish)) {
+                text = text.replace(new RegExp(bangla, 'g'), english);
+            }
+            
+            return text;
+        }
+        
         function normalizePhoneNumber(phone) {
             if (!phone) return '';
+            
+            // First convert Bangla digits to English digits
+            phone = convertBanglaToEnglishDigits(phone);
             
             // Remove all non-digit characters
             let digits = phone.replace(/\D/g, '');
@@ -1866,7 +1885,7 @@
                 return {
                     isValid: false,
                     normalized: normalized,
-                    error: 'Phone number must be at least 11 digits'
+                    error: 'নাম্বার ভূল হয়েছে। ১১ ডিজিটের সঠিক নাম্বার দিন।'
                 };
             }
             
@@ -1875,7 +1894,7 @@
                 return {
                     isValid: false,
                     normalized: normalized,
-                    error: 'Please enter a valid Bangladesh phone number'
+                    error: 'দয়া করে একটি বৈধ বাংলাদেশ ফোন নম্বর দিন'
                 };
             }
             
@@ -1902,8 +1921,22 @@
                 const phoneError = document.getElementById(fieldId + '_error');
                 
                 if (phoneField) {
-                    // Real-time validation as user types
+                    // Real-time validation and conversion as user types
                     phoneField.addEventListener('input', function() {
+                        // Convert Bangla digits to English in real-time
+                        const originalValue = this.value;
+                        const convertedValue = convertBanglaToEnglishDigits(originalValue);
+                        
+                        // Update field value if conversion happened
+                        if (originalValue !== convertedValue) {
+                            // Store cursor position
+                            const cursorPosition = this.selectionStart;
+                            this.value = convertedValue;
+                            // Restore cursor position
+                            this.setSelectionRange(cursorPosition, cursorPosition);
+                        }
+                        
+                        // Validate the converted phone number
                         const validation = validatePhoneNumber(this.value);
                         
                         if (this.value && !validation.isValid) {
@@ -1924,6 +1957,9 @@
                     // Normalize on blur
                     phoneField.addEventListener('blur', function() {
                         if (this.value) {
+                            // Convert Bangla digits first
+                            this.value = convertBanglaToEnglishDigits(this.value);
+                            
                             const validation = validatePhoneNumber(this.value);
                             this.value = validation.normalized;
                             
