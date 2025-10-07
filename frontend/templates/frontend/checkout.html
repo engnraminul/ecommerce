@@ -998,19 +998,56 @@
         font-size: 1.2rem;
         font-weight: 600;
         cursor: pointer;
-        transition: var(--transition);
+        transition: all 0.3s ease;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 0.75rem;
         margin-bottom: 1.5rem;
         box-shadow: 0 6px 20px rgba(147, 0, 0, 0.3);
+        position: relative;
+        overflow: hidden;
+        animation: pulseButton 2s infinite;
+    }
+
+    .place-order-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.6s ease;
+    }
+
+    .place-order-btn:hover::before {
+        left: 100%;
+    }
+
+    .place-order-btn::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.6s ease, height 0.6s ease;
+    }
+
+    .place-order-btn:active::after {
+        width: 300px;
+        height: 300px;
     }
 
     .place-order-btn:hover {
         background: linear-gradient(135deg, #b91c1c, var(--primary-color));
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(147, 0, 0, 0.4);
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 10px 30px rgba(147, 0, 0, 0.5);
+        animation: none;
     }
 
     .place-order-btn:disabled {
@@ -1018,6 +1055,95 @@
         cursor: not-allowed;
         transform: none;
         box-shadow: none;
+        animation: none;
+    }
+
+    .place-order-btn i {
+        animation: lockShake 2s infinite;
+        font-size: 1.3rem;
+    }
+
+    .place-order-btn:hover i {
+        animation: lockRotate 0.5s ease;
+    }
+
+    /* পালস এনিমেশন - বাটনের জন্য */
+    @keyframes pulseButton {
+        0% {
+            box-shadow: 0 6px 20px rgba(147, 0, 0, 0.3), 0 0 0 0 rgba(147, 0, 0, 0.7);
+        }
+        50% {
+            box-shadow: 0 8px 25px rgba(147, 0, 0, 0.4), 0 0 0 10px rgba(147, 0, 0, 0.2);
+        }
+        100% {
+            box-shadow: 0 6px 20px rgba(147, 0, 0, 0.3), 0 0 0 0 rgba(147, 0, 0, 0);
+        }
+    }
+
+    /* লক আইকনের জন্য ছোট কাঁপানো এনিমেশন */
+    @keyframes lockShake {
+        0%, 50%, 100% {
+            transform: rotate(0deg);
+        }
+        10%, 30% {
+            transform: rotate(-3deg);
+        }
+        20%, 40% {
+            transform: rotate(3deg);
+        }
+    }
+
+    /* হোভারে লক আইকন ঘোরানো */
+    @keyframes lockRotate {
+        0% {
+            transform: rotate(0deg);
+        }
+        25% {
+            transform: rotate(-10deg);
+        }
+        75% {
+            transform: rotate(10deg);
+        }
+        100% {
+            transform: rotate(0deg);
+        }
+    }
+
+    /* গ্লো ইফেক্ট বাটনের চারপাশে */
+    .place-order-btn {
+        position: relative;
+    }
+
+    .place-order-btn::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+        border-radius: 14px;
+        opacity: 0;
+        z-index: -1;
+        background-size: 400%;
+        animation: glowing 3s linear infinite;
+        transition: opacity 0.3s ease;
+    }
+
+    .place-order-btn:hover::before {
+        opacity: 1;
+    }
+
+    @keyframes glowing {
+        0% {
+            background-position: 0 0;
+        }
+        50% {
+            background-position: 400% 0;
+        }
+        100% {
+            background-position: 0 0;
+        }
     }
 
     .security-badges {
@@ -1191,6 +1317,67 @@
         }
     }
     
+    /* অতিরিক্ত এনিমেশন */
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {
+            transform: translateY(0) scale(1);
+        }
+        40% {
+            transform: translateY(-8px) scale(1.05);
+        }
+        60% {
+            transform: translateY(-4px) scale(1.02);
+        }
+    }
+
+    @keyframes clickPulse {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(0.95);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    /* ফর্ম কমপ্লিট হলে বিশেষ ইফেক্ট */
+    .place-order-btn.form-complete {
+        background: linear-gradient(135deg, #28a745, #20c997) !important;
+        box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+    }
+
+    .place-order-btn.form-complete:hover {
+        background: linear-gradient(135deg, #20c997, #28a745) !important;
+        transform: translateY(-4px) scale(1.05);
+        box-shadow: 0 12px 35px rgba(40, 167, 69, 0.6);
+    }
+
+    /* পালসিং ডট ইন্ডিকেটর */
+    .place-order-btn.form-complete::after {
+        content: '';
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 8px;
+        height: 8px;
+        background: #fff;
+        border-radius: 50%;
+        animation: pulsingDot 1s infinite;
+    }
+
+    @keyframes pulsingDot {
+        0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.5;
+            transform: scale(1.2);
+        }
+    }
+    
     @keyframes slideIn {
         from {
             transform: translateX(100%);
@@ -1254,6 +1441,89 @@
         setupPaymentMethodToggle();
         setupLocationChangeListener();
         setupPhoneValidation();
+        setupButtonAnimation();
+        
+        // বাটন এনিমেশন সেটআপ
+        function setupButtonAnimation() {
+            const placeOrderBtn = document.getElementById('place-order-btn');
+            const form = document.getElementById('checkout-form');
+            
+            // ফর্ম ফিল্ড চেক করার জন্য
+            const requiredFields = [
+                'phone_number',
+                'address'
+            ];
+            
+            // ফর্মের অবস্থা চেক করা
+            function checkFormCompletion() {
+                let isFormComplete = true;
+                
+                // প্রয়োজনীয় ফিল্ড চেক
+                requiredFields.forEach(fieldName => {
+                    const field = document.getElementById(fieldName);
+                    if (field && !field.value.trim()) {
+                        isFormComplete = false;
+                    }
+                });
+                
+                // পেমেন্ট মেথড চেক
+                const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
+                if (!paymentMethod) {
+                    isFormComplete = false;
+                }
+                
+                // লোকেশন চেক
+                const location = document.querySelector('input[name="location"]:checked');
+                if (!location) {
+                    isFormComplete = false;
+                }
+                
+                // বাটনের ক্লাস আপডেট
+                if (isFormComplete) {
+                    placeOrderBtn.classList.add('form-complete');
+                    placeOrderBtn.style.animation = 'pulseButton 1.5s infinite, bounce 2s infinite';
+                    
+                    // টুলটিপ দেখানো
+                    if (!placeOrderBtn.dataset.tooltipAdded) {
+                        placeOrderBtn.title = 'এখনি অর্ডার করুন! ✨';
+                        placeOrderBtn.dataset.tooltipAdded = 'true';
+                    }
+                } else {
+                    placeOrderBtn.classList.remove('form-complete');
+                    placeOrderBtn.style.animation = 'pulseButton 2s infinite';
+                    placeOrderBtn.title = 'প্রথমে সব তথ্য পূরণ করুন';
+                }
+            }
+            
+            // ইভেন্ট লিসেনার যোগ করা
+            requiredFields.forEach(fieldName => {
+                const field = document.getElementById(fieldName);
+                if (field) {
+                    field.addEventListener('input', checkFormCompletion);
+                    field.addEventListener('change', checkFormCompletion);
+                }
+            });
+            
+            // পেমেন্ট মেথড এবং লোকেশনের জন্য
+            document.addEventListener('change', function(e) {
+                if (e.target.name === 'payment_method' || e.target.name === 'location') {
+                    checkFormCompletion();
+                }
+            });
+            
+            // প্রাথমিক চেক
+            checkFormCompletion();
+            
+            // বাটনে ক্লিক ইফেক্ট
+            placeOrderBtn.addEventListener('click', function(e) {
+                if (!this.disabled) {
+                    this.style.animation = 'clickPulse 0.3s ease';
+                    setTimeout(() => {
+                        this.style.animation = 'pulseButton 1.5s infinite, bounce 2s infinite';
+                    }, 300);
+                }
+            });
+        }
         
         // Setup location change listener
         function setupLocationChangeListener() {
