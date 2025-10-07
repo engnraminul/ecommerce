@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from products.models import Product, ProductVariant
 from cart.models import Coupon
+from .phone_utils import normalize_bangladeshi_phone
 import uuid
 
 User = get_user_model()
@@ -106,6 +107,14 @@ class Order(models.Model):
         return f"Guest Order {self.order_number} - {self.customer_email}"
     
     def save(self, *args, **kwargs):
+        # Normalize phone numbers before saving
+        if self.customer_phone:
+            self.customer_phone = normalize_bangladeshi_phone(self.customer_phone)
+        if self.bkash_sender_number:
+            self.bkash_sender_number = normalize_bangladeshi_phone(self.bkash_sender_number)
+        if self.nagad_sender_number:
+            self.nagad_sender_number = normalize_bangladeshi_phone(self.nagad_sender_number)
+            
         if not self.order_number:
             # Get the last order number to generate sequential number
             last_order = Order.objects.filter(

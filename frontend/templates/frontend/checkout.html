@@ -47,7 +47,7 @@
                                 <div class="form-group half">
                                     <label for="phone_number">{{ checkout_customization.phone_label|default:"Phone Number *" }}</label>
                                     <input type="tel" id="phone_number" name="phone_number" required
-                                           placeholder="{{ checkout_customization.phone_placeholder|default:"" }}"
+                                           placeholder="{{ checkout_customization.phone_placeholder|default:"01777173040 (11 digits)" }}"
                                            value="{{ checkout_customization.phone_default|default:"" }}"> 
                                     <div class="field-error" id="phone_number_error"></div>
                                 </div>
@@ -1253,6 +1253,7 @@
         setupFormValidation();
         setupPaymentMethodToggle();
         setupLocationChangeListener();
+        setupPhoneValidation();
         
         // Setup location change listener
         function setupLocationChangeListener() {
@@ -1565,6 +1566,116 @@
             });
         }
         
+        // Phone number validation and normalization
+        function normalizePhoneNumber(phone) {
+            if (!phone) return '';
+            
+            // Remove all non-digit characters
+            let digits = phone.replace(/\D/g, '');
+            
+            // Handle different formats
+            if (digits.startsWith('880')) {
+                // Remove country code 880 and add 0 prefix
+                digits = '0' + digits.substring(3);
+            } else if (digits.startsWith('88')) {
+                // Remove country code 88 and add 0 prefix  
+                digits = '0' + digits.substring(2);
+            } else if (!digits.startsWith('0')) {
+                // Add 0 prefix if not present
+                digits = '0' + digits;
+            }
+            
+            return digits;
+        }
+        
+        function validatePhoneNumber(phone) {
+            const normalized = normalizePhoneNumber(phone);
+            
+            // Check if normalized phone has at least 11 digits
+            if (normalized.length < 11) {
+                return {
+                    isValid: false,
+                    normalized: normalized,
+                    error: 'Phone number must be at least 11 digits'
+                };
+            }
+            
+            // Check if it's a valid Bangladesh number (starts with 01)
+            if (!normalized.startsWith('01')) {
+                return {
+                    isValid: false,
+                    normalized: normalized,
+                    error: 'Please enter a valid Bangladesh phone number'
+                };
+            }
+            
+            // Limit to 11 digits for Bangladesh mobile numbers
+            const finalNumber = normalized.substring(0, 11);
+            
+            return {
+                isValid: true,
+                normalized: finalNumber,
+                error: null
+            };
+        }
+        
+        // Setup phone number validation
+        function setupPhoneValidation() {
+            const phoneFields = [
+                'phone_number',
+                'bkash_sender_number', 
+                'nagad_sender_number'
+            ];
+            
+            phoneFields.forEach(fieldId => {
+                const phoneField = document.getElementById(fieldId);
+                const phoneError = document.getElementById(fieldId + '_error');
+                
+                if (phoneField) {
+                    // Real-time validation as user types
+                    phoneField.addEventListener('input', function() {
+                        const validation = validatePhoneNumber(this.value);
+                        
+                        if (this.value && !validation.isValid) {
+                            if (phoneError) {
+                                showFieldError(phoneField, phoneError, validation.error);
+                            } else {
+                                phoneField.style.borderColor = 'var(--danger-color)';
+                            }
+                        } else {
+                            if (phoneError) {
+                                hideFieldError(phoneField, phoneError);
+                            } else {
+                                phoneField.style.borderColor = 'var(--border-color)';
+                            }
+                        }
+                    });
+                    
+                    // Normalize on blur
+                    phoneField.addEventListener('blur', function() {
+                        if (this.value) {
+                            const validation = validatePhoneNumber(this.value);
+                            this.value = validation.normalized;
+                            
+                            if (!validation.isValid) {
+                                if (phoneError) {
+                                    showFieldError(phoneField, phoneError, validation.error);
+                                } else {
+                                    phoneField.style.borderColor = 'var(--danger-color)';
+                                }
+                            } else {
+                                if (phoneError) {
+                                    hideFieldError(phoneField, phoneError);
+                                } else {
+                                    phoneField.style.borderColor = 'var(--border-color)';
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+        }
+        
         function validateForm() {
             let isValid = true;
             
@@ -1585,6 +1696,22 @@
                 }
             });
             
+            // Phone number validation
+            const phoneField = document.getElementById('phone_number');
+            const phoneError = document.getElementById('phone_number_error');
+            
+            if (phoneField && phoneField.value) {
+                const validation = validatePhoneNumber(phoneField.value);
+                if (!validation.isValid) {
+                    showFieldError(phoneField, phoneError, validation.error);
+                    isValid = false;
+                } else {
+                    // Update field with normalized value
+                    phoneField.value = validation.normalized;
+                    hideFieldError(phoneField, phoneError);
+                }
+            }
+            
             // Email validation
             const emailField = document.getElementById('email');
             const emailError = document.getElementById('email_error');
@@ -1600,31 +1727,57 @@
             if (paymentMethod) {
                 switch(paymentMethod.value) {
                     case 'bkash':
-                        const bkashFields = ['bkash_sender_number', 'bkash_transaction_id'];
+                        // Validate bKash sender number
+                        const bkashSenderField = document.getElementById('bkash_sender_number');
+                        const bkashTransactionField = document.getElementById('bkash_transaction_id');
                         
-                        bkashFields.forEach(fieldName => {
-                            const field = document.getElementById(fieldName);
-                            if (field && !field.value.trim()) {
-                                field.style.borderColor = 'var(--danger-color)';
+                        if (bkashSenderField && !bkashSenderField.value.trim()) {
+                            bkashSenderField.style.borderColor = 'var(--danger-color)';
+                            isValid = false;
+                        } else if (bkashSenderField) {
+                            const validation = validatePhoneNumber(bkashSenderField.value);
+                            if (!validation.isValid) {
+                                bkashSenderField.style.borderColor = 'var(--danger-color)';
                                 isValid = false;
-                            } else if (field) {
-                                field.style.borderColor = 'var(--border-color)';
+                            } else {
+                                bkashSenderField.value = validation.normalized;
+                                bkashSenderField.style.borderColor = 'var(--border-color)';
                             }
-                        });
+                        }
+                        
+                        if (bkashTransactionField && !bkashTransactionField.value.trim()) {
+                            bkashTransactionField.style.borderColor = 'var(--danger-color)';
+                            isValid = false;
+                        } else if (bkashTransactionField) {
+                            bkashTransactionField.style.borderColor = 'var(--border-color)';
+                        }
                         break;
                         
                     case 'nagad':
-                        const nagadFields = ['nagad_sender_number', 'nagad_transaction_id'];
+                        // Validate Nagad sender number
+                        const nagadSenderField = document.getElementById('nagad_sender_number');
+                        const nagadTransactionField = document.getElementById('nagad_transaction_id');
                         
-                        nagadFields.forEach(fieldName => {
-                            const field = document.getElementById(fieldName);
-                            if (field && !field.value.trim()) {
-                                field.style.borderColor = 'var(--danger-color)';
+                        if (nagadSenderField && !nagadSenderField.value.trim()) {
+                            nagadSenderField.style.borderColor = 'var(--danger-color)';
+                            isValid = false;
+                        } else if (nagadSenderField) {
+                            const validation = validatePhoneNumber(nagadSenderField.value);
+                            if (!validation.isValid) {
+                                nagadSenderField.style.borderColor = 'var(--danger-color)';
                                 isValid = false;
-                            } else if (field) {
-                                field.style.borderColor = 'var(--border-color)';
+                            } else {
+                                nagadSenderField.value = validation.normalized;
+                                nagadSenderField.style.borderColor = 'var(--border-color)';
                             }
-                        });
+                        }
+                        
+                        if (nagadTransactionField && !nagadTransactionField.value.trim()) {
+                            nagadTransactionField.style.borderColor = 'var(--danger-color)';
+                            isValid = false;
+                        } else if (nagadTransactionField) {
+                            nagadTransactionField.style.borderColor = 'var(--border-color)';
+                        }
                         break;
                         
                     case 'cod':

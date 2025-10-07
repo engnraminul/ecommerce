@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Order, OrderItem, ShippingAddress, OrderStatusHistory, Invoice, RefundRequest
 from products.serializers import ProductListSerializer, ProductVariantSerializer
 from users.serializers import AddressSerializer
+from .phone_utils import validate_bangladeshi_phone
 
 
 class ShippingAddressSerializer(serializers.ModelSerializer):
@@ -23,6 +24,15 @@ class ShippingAddressSerializer(serializers.ModelSerializer):
             'postal_code', 'country', 'phone', 'email',
             'delivery_instructions', 'full_address'
         )
+    
+    def validate_phone(self, phone):
+        """Validate shipping address phone number"""
+        if phone:
+            validation_result = validate_bangladeshi_phone(phone)
+            if not validation_result['is_valid']:
+                raise serializers.ValidationError(validation_result['error'])
+            return validation_result['normalized']
+        return phone
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -135,8 +145,17 @@ class CreateOrderSerializer(serializers.Serializer):
         return value.upper() if value else value
     
     def validate(self, data):
-        """Validate payment method data"""
+        """Validate payment method data and phone numbers"""
         payment_method = data.get('payment_method', 'cod')
+        
+        # Validate phone numbers
+        if data.get('guest_phone'):
+            phone_validation = validate_bangladeshi_phone(data['guest_phone'])
+            if not phone_validation['is_valid']:
+                raise serializers.ValidationError({
+                    'guest_phone': phone_validation['error']
+                })
+            data['guest_phone'] = phone_validation['normalized']
         
         # Validate bKash payment data
         if payment_method == 'bkash':
@@ -148,6 +167,14 @@ class CreateOrderSerializer(serializers.Serializer):
                 raise serializers.ValidationError({
                     'bkash_sender_number': 'Sender mobile number is required for bKash payment.'
                 })
+            else:
+                # Validate bKash sender number
+                phone_validation = validate_bangladeshi_phone(data['bkash_sender_number'])
+                if not phone_validation['is_valid']:
+                    raise serializers.ValidationError({
+                        'bkash_sender_number': phone_validation['error']
+                    })
+                data['bkash_sender_number'] = phone_validation['normalized']
         
         # Validate Nagad payment data
         if payment_method == 'nagad':
@@ -159,6 +186,14 @@ class CreateOrderSerializer(serializers.Serializer):
                 raise serializers.ValidationError({
                     'nagad_sender_number': 'Sender mobile number is required for Nagad payment.'
                 })
+            else:
+                # Validate Nagad sender number
+                phone_validation = validate_bangladeshi_phone(data['nagad_sender_number'])
+                if not phone_validation['is_valid']:
+                    raise serializers.ValidationError({
+                        'nagad_sender_number': phone_validation['error']
+                    })
+                data['nagad_sender_number'] = phone_validation['normalized']
         
         return data
     
