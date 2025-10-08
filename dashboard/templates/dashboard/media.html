@@ -119,6 +119,7 @@
         background: #fafafa;
         transition: all 0.3s ease;
         cursor: pointer;
+        position: relative;
     }
 
     .upload-zone:hover {
@@ -129,6 +130,19 @@
     .upload-zone.dragover {
         border-color: var(--primary-color);
         background: rgba(147, 0, 0, 0.1);
+    }
+
+    .upload-zone.processing {
+        pointer-events: none;
+        opacity: 0.7;
+    }
+
+    .upload-zone-content {
+        pointer-events: none;
+    }
+
+    .upload-zone-content button {
+        pointer-events: all;
     }
 
     .filters-container {
@@ -566,8 +580,33 @@ document.addEventListener('DOMContentLoaded', function() {
     const browseFilesBtn = document.getElementById('browseFilesBtn');
     const startUploadBtn = document.getElementById('startUploadBtn');
 
-    uploadZone.addEventListener('click', () => fileInput.click());
-    browseFilesBtn.addEventListener('click', () => fileInput.click());
+    uploadZone.addEventListener('click', (e) => {
+        // Only trigger file input if not clicking on the browse button or its children
+        if (!e.target.closest('#browseFilesBtn')) {
+            console.log('Upload zone clicked - opening file dialog');
+            fileInput.click();
+        }
+    });
+    
+    browseFilesBtn.addEventListener('click', (e) => {
+        console.log('Browse button clicked - opening file dialog');
+        e.stopPropagation(); // Prevent event bubbling to upload zone
+        e.preventDefault();   // Prevent any default behavior
+        
+        // Add visual feedback
+        browseFilesBtn.disabled = true;
+        browseFilesBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Opening...';
+        
+        setTimeout(() => {
+            fileInput.click();
+            
+            // Reset button after a short delay
+            setTimeout(() => {
+                browseFilesBtn.disabled = false;
+                browseFilesBtn.innerHTML = '<i class="fas fa-folder-open me-1"></i> Browse Files';
+            }, 1000);
+        }, 100);
+    });
     fileInput.addEventListener('change', handleFileSelection);
     startUploadBtn.addEventListener('click', startUpload);
 
@@ -874,10 +913,35 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Upload functionality
+    let isProcessingFileSelection = false;
+    let fileSelectionTimeout = null;
+    
     function handleFileSelection() {
-        const files = Array.from(fileInput.files);
-        displaySelectedFiles(files);
-        document.getElementById('startUploadBtn').disabled = files.length === 0;
+        console.log('File selection triggered, processing:', isProcessingFileSelection);
+        
+        // Clear any existing timeout
+        if (fileSelectionTimeout) {
+            clearTimeout(fileSelectionTimeout);
+        }
+        
+        // Prevent multiple rapid calls
+        if (isProcessingFileSelection) {
+            console.log('Already processing file selection, ignoring');
+            return;
+        }
+        
+        isProcessingFileSelection = true;
+        uploadZone.classList.add('processing');
+        
+        fileSelectionTimeout = setTimeout(() => {
+            const files = Array.from(fileInput.files);
+            console.log('Processing', files.length, 'selected files');
+            displaySelectedFiles(files);
+            document.getElementById('startUploadBtn').disabled = files.length === 0;
+            
+            isProcessingFileSelection = false;
+            uploadZone.classList.remove('processing');
+        }, 200);
     }
 
     function displaySelectedFiles(files) {
@@ -930,9 +994,21 @@ document.addEventListener('DOMContentLoaded', function() {
         uploadZone.classList.remove('dragover');
         
         const files = Array.from(e.dataTransfer.files);
-        fileInput.files = e.dataTransfer.files;
-        displaySelectedFiles(files);
-        document.getElementById('startUploadBtn').disabled = files.length === 0;
+        
+        // Use a flag to prevent change event processing
+        isProcessingFileSelection = true;
+        
+        // Set the files
+        const dt = new DataTransfer();
+        files.forEach(file => dt.items.add(file));
+        fileInput.files = dt.files;
+        
+        // Process the files directly and reset flag
+        setTimeout(() => {
+            displaySelectedFiles(files);
+            document.getElementById('startUploadBtn').disabled = files.length === 0;
+            isProcessingFileSelection = false;
+        }, 50);
     }
 
     function startUpload() {
