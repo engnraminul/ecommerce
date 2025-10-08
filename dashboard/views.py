@@ -2088,6 +2088,14 @@ def dashboard_products(request):
 
 @login_required
 @user_passes_test(is_admin)
+def dashboard_media(request):
+    context = {
+        'active_page': 'media'
+    }
+    return render(request, 'dashboard/media.html', context)
+
+@login_required
+@user_passes_test(is_admin)
 def dashboard_orders(request):
     context = {
         'active_page': 'orders'

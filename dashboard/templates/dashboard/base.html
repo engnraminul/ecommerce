@@ -210,6 +210,11 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{% url 'dashboard:media' %}" class="{% if active_page == 'media' %}active{% endif %}">
+                        <i class="fas fa-images"></i> Media
+                    </a>
+                </li>
+                <li>
                     <a href="{% url 'dashboard:stock' %}" class="{% if active_page == 'stock' %}active{% endif %}">
                         <i class="fas fa-warehouse"></i> Stock
                     </a>

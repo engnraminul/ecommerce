@@ -1,0 +1,1273 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Media Management - MB Admin Dashboard{% endblock %}
+{% block page_title %}Media Library{% endblock %}
+
+{% block extra_css %}
+<style>
+    .media-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .media-item {
+        background: white;
+        border: 2px solid #e5e5e5;
+        border-radius: 8px;
+        padding: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .media-item:hover {
+        border-color: var(--primary-color);
+        box-shadow: 0 4px 15px rgba(147, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .media-item.selected {
+        border-color: var(--primary-color);
+        background-color: rgba(147, 0, 0, 0.05);
+    }
+
+    .media-item-image {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+        border-radius: 6px;
+        margin-bottom: 10px;
+    }
+
+    .media-item-placeholder {
+        width: 100%;
+        height: 180px;
+        background: #f8f9fa;
+        border: 2px dashed #dee2e6;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10px;
+        font-size: 2.5rem;
+        color: #6c757d;
+    }
+
+    .media-item-info {
+        text-align: center;
+    }
+
+    .media-item-filename {
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+        word-break: break-word;
+        color: #333;
+    }
+
+    .media-item-meta {
+        font-size: 0.8rem;
+        color: #666;
+        margin-bottom: 10px;
+    }
+
+    .media-item-actions {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .media-item:hover .media-item-actions {
+        opacity: 1;
+    }
+
+    .media-item-action-btn {
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 5px 8px;
+        margin-left: 5px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .media-item-action-btn:hover {
+        background: rgba(0, 0, 0, 0.9);
+    }
+
+    .media-item-action-btn.btn-danger {
+        background: rgba(220, 38, 38, 0.9);
+    }
+
+    .media-item-action-btn.btn-danger:hover {
+        background: rgba(185, 28, 28, 1);
+    }
+
+    .upload-zone {
+        border: 2px dashed #ccc;
+        border-radius: 8px;
+        padding: 40px;
+        text-align: center;
+        background: #fafafa;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .upload-zone:hover {
+        border-color: var(--primary-color);
+        background: rgba(147, 0, 0, 0.05);
+    }
+
+    .upload-zone.dragover {
+        border-color: var(--primary-color);
+        background: rgba(147, 0, 0, 0.1);
+    }
+
+    .filters-container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+    .stats-container {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+    }
+
+    .edit-filename-input {
+        width: 100%;
+        padding: 5px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        margin-top: 5px;
+    }
+
+    .media-item.editing .media-item-filename {
+        display: none;
+    }
+
+    .media-item:not(.editing) .edit-filename-input {
+        display: none;
+    }
+
+    .bulk-actions {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        display: none;
+    }
+
+    .bulk-actions.show {
+        display: block;
+    }
+
+    .selected-count {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+
+    .progress-container {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        display: none;
+    }
+
+    .progress-container.show {
+        display: block;
+    }
+
+    @media (max-width: 768px) {
+        .media-grid {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .media-item {
+            padding: 10px;
+        }
+
+        .media-item-image {
+            height: 150px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Media Library</h2>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-secondary" id="selectAllBtn">
+                <i class="fas fa-check-square me-1"></i> Select All
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="clearSelectionBtn">
+                <i class="fas fa-times me-1"></i> Clear Selection
+            </button>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                <i class="fas fa-upload me-1"></i> Upload Files
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Container -->
+    <div class="stats-container">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-images fa-2x text-primary me-3"></i>
+                    <div>
+                        <h5 class="mb-0" id="totalFilesCount">0</h5>
+                        <small class="text-muted">Total Files</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-check-square fa-2x text-success me-3"></i>
+                    <div>
+                        <h5 class="mb-0" id="selectedFilesCount">0</h5>
+                        <small class="text-muted">Selected Files</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-hdd fa-2x text-info me-3"></i>
+                    <div>
+                        <h5 class="mb-0" id="totalSizeDisplay">0 MB</h5>
+                        <small class="text-muted">Total Size</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-folder fa-2x text-warning me-3"></i>
+                    <div>
+                        <h5 class="mb-0" id="directoriesCount">0</h5>
+                        <small class="text-muted">Directories</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="bulk-actions" id="bulkActions">
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="selected-count">
+                <span id="bulkSelectedCount">0</span> files selected
+            </span>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-primary" id="bulkDownloadBtn">
+                    <i class="fas fa-download me-1"></i> Download Selected
+                </button>
+                <button type="button" class="btn btn-outline-warning" id="bulkMoveBtn">
+                    <i class="fas fa-folder me-1"></i> Move to Directory
+                </button>
+                <button type="button" class="btn btn-outline-danger" id="bulkDeleteBtn">
+                    <i class="fas fa-trash me-1"></i> Delete Selected
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Container -->
+    <div class="progress-container" id="progressContainer">
+        <h6>Upload Progress</h6>
+        <div class="progress mb-2">
+            <div class="progress-bar" role="progressbar" id="uploadProgressBar" style="width: 0%"></div>
+        </div>
+        <div class="d-flex justify-content-between">
+            <small id="uploadStatus">Preparing...</small>
+            <small id="uploadSpeed">0 KB/s</small>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-container">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label for="searchInput" class="form-label">Search</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Search files...">
+                    <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label for="typeFilter" class="form-label">File Type</label>
+                <select class="form-select" id="typeFilter">
+                    <option value="all">All Types</option>
+                    <option value="image">Images</option>
+                    <option value="video">Videos</option>
+                    <option value="document">Documents</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="directoryFilter" class="form-label">Directory</label>
+                <select class="form-select" id="directoryFilter">
+                    <option value="">All Directories</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="sortBy" class="form-label">Sort By</label>
+                <select class="form-select" id="sortBy">
+                    <option value="date_desc">Date (Newest)</option>
+                    <option value="date_asc">Date (Oldest)</option>
+                    <option value="name_asc">Name (A-Z)</option>
+                    <option value="name_desc">Name (Z-A)</option>
+                    <option value="size_desc">Size (Largest)</option>
+                    <option value="size_asc">Size (Smallest)</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-primary" id="applyFiltersBtn">
+                        <i class="fas fa-filter me-1"></i> Apply Filters
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="resetFiltersBtn">
+                        <i class="fas fa-undo me-1"></i> Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Media Grid -->
+    <div class="position-relative">
+        <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 mb-0">Loading media files...</p>
+            </div>
+        </div>
+
+        <div id="mediaContainer">
+            <div id="emptyState" class="text-center py-5" style="display: none;">
+                <i class="fas fa-images fa-4x text-muted mb-3"></i>
+                <h4>No Media Files Found</h4>
+                <p class="text-muted">Upload some files to get started or adjust your filters.</p>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                    <i class="fas fa-upload me-1"></i> Upload Your First File
+                </button>
+            </div>
+
+            <div class="media-grid" id="mediaGrid">
+                <!-- Media items will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <nav aria-label="Media pagination" class="mt-4">
+        <ul class="pagination justify-content-center" id="mediaPagination">
+            <!-- Pagination will be loaded here -->
+        </ul>
+    </nav>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadModalLabel">Upload Media Files</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="uploadDirectory" class="form-label">Directory</label>
+                    <div class="input-group">
+                        <select class="form-select" id="uploadDirectory">
+                            <option value="">Root Directory</option>
+                            <option value="products">Products</option>
+                            <option value="banners">Banners</option>
+                            <option value="avatars">Avatars</option>
+                            <option value="documents">Documents</option>
+                        </select>
+                        <button class="btn btn-outline-secondary" type="button" id="createDirectoryBtn">
+                            <i class="fas fa-plus"></i> New
+                        </button>
+                    </div>
+                    <div class="form-text">Select or create a directory to organize your files</div>
+                </div>
+
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-zone-content">
+                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                        <h5>Drag & Drop Files Here</h5>
+                        <p class="text-muted mb-3">or click to browse</p>
+                        <input type="file" id="fileInput" multiple accept="image/*,video/*,.pdf,.doc,.docx,.txt" style="display: none;">
+                        <button type="button" class="btn btn-outline-primary" id="browseFilesBtn">
+                            <i class="fas fa-folder-open me-1"></i> Browse Files
+                        </button>
+                    </div>
+                </div>
+
+                <div id="selectedFiles" class="mt-3" style="display: none;">
+                    <h6>Selected Files:</h6>
+                    <div id="filesList"></div>
+                </div>
+
+                <div id="uploadProgressModal" class="mt-3" style="display: none;">
+                    <h6>Upload Progress</h6>
+                    <div class="progress mb-2">
+                        <div class="progress-bar" role="progressbar" id="modalProgressBar" style="width: 0%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <small id="modalUploadStatus">Preparing...</small>
+                        <small id="modalUploadSpeed">0 KB/s</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="startUploadBtn" disabled>
+                    <i class="fas fa-upload me-1"></i> Start Upload
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit File Modal -->
+<div class="modal fade" id="editFileModal" tabindex="-1" aria-labelledby="editFileModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editFileModalLabel">Edit File</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editFileForm">
+                    <input type="hidden" id="editFileId">
+                    <div class="mb-3">
+                        <label for="editFileName" class="form-label">File Name</label>
+                        <input type="text" class="form-control" id="editFileName" required>
+                        <div class="form-text">File extension will be preserved</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editFileDirectory" class="form-label">Directory</label>
+                        <select class="form-select" id="editFileDirectory">
+                            <option value="">Root Directory</option>
+                            <option value="products">Products</option>
+                            <option value="banners">Banners</option>
+                            <option value="avatars">Avatars</option>
+                            <option value="documents">Documents</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editFileAltText" class="form-label">Alt Text (for images)</label>
+                        <input type="text" class="form-control" id="editFileAltText" placeholder="Describe the image...">
+                        <div class="form-text">Improves accessibility and SEO</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveFileChangesBtn">
+                    <i class="fas fa-save me-1"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Directory Modal -->
+<div class="modal fade" id="createDirectoryModal" tabindex="-1" aria-labelledby="createDirectoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createDirectoryModalLabel">Create New Directory</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createDirectoryForm">
+                    <div class="mb-3">
+                        <label for="newDirectoryName" class="form-label">Directory Name</label>
+                        <input type="text" class="form-control" id="newDirectoryName" required pattern="^[a-zA-Z0-9_-]+$">
+                        <div class="form-text">Only letters, numbers, underscores, and hyphens are allowed</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="createDirectoryBtn2">
+                    <i class="fas fa-folder-plus me-1"></i> Create Directory
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentPage = 1;
+    let selectedFiles = [];
+    let totalFiles = 0;
+    let totalSize = 0;
+    let directories = [];
+
+    // Initialize
+    loadMediaFiles();
+    loadDirectories();
+
+    // Event Listeners
+    document.getElementById('applyFiltersBtn').addEventListener('click', () => loadMediaFiles(1));
+    document.getElementById('resetFiltersBtn').addEventListener('click', resetFilters);
+    document.getElementById('selectAllBtn').addEventListener('click', selectAllFiles);
+    document.getElementById('clearSelectionBtn').addEventListener('click', clearSelection);
+    document.getElementById('clearSearchBtn').addEventListener('click', clearSearch);
+
+    // Upload functionality
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const browseFilesBtn = document.getElementById('browseFilesBtn');
+    const startUploadBtn = document.getElementById('startUploadBtn');
+
+    uploadZone.addEventListener('click', () => fileInput.click());
+    browseFilesBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', handleFileSelection);
+    startUploadBtn.addEventListener('click', startUpload);
+
+    // Drag and drop
+    uploadZone.addEventListener('dragover', handleDragOver);
+    uploadZone.addEventListener('dragleave', handleDragLeave);
+    uploadZone.addEventListener('drop', handleDrop);
+
+    // Bulk actions
+    document.getElementById('bulkDeleteBtn').addEventListener('click', bulkDelete);
+    document.getElementById('createDirectoryBtn').addEventListener('click', () => {
+        const modal = new bootstrap.Modal(document.getElementById('createDirectoryModal'));
+        modal.show();
+    });
+    document.getElementById('createDirectoryBtn2').addEventListener('click', createDirectory);
+
+    // Edit file
+    document.getElementById('saveFileChangesBtn').addEventListener('click', saveFileChanges);
+
+    function loadMediaFiles(page = 1) {
+        currentPage = page;
+        showLoading();
+        
+        const params = new URLSearchParams({
+            page: page,
+            per_page: 20,
+            search: document.getElementById('searchInput').value.trim(),
+            type: document.getElementById('typeFilter').value,
+            directory: document.getElementById('directoryFilter').value,
+            sort: document.getElementById('sortBy').value
+        });
+
+        fetch(`/mb-admin/api/media/?${params}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayMediaFiles(data.files);
+                    updatePagination(data);
+                    updateStats(data);
+                } else {
+                    showError('Failed to load media files: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading media files:', error);
+                showError('Failed to load media files');
+            })
+            .finally(() => {
+                hideLoading();
+            });
+    }
+
+    function displayMediaFiles(files) {
+        const mediaGrid = document.getElementById('mediaGrid');
+        const emptyState = document.getElementById('emptyState');
+        
+        mediaGrid.innerHTML = '';
+        
+        if (!files || files.length === 0) {
+            emptyState.style.display = 'block';
+            mediaGrid.style.display = 'none';
+            return;
+        }
+        
+        emptyState.style.display = 'none';
+        mediaGrid.style.display = 'grid';
+        
+        files.forEach(file => {
+            const mediaItem = createMediaItem(file);
+            mediaGrid.appendChild(mediaItem);
+        });
+    }
+
+    function createMediaItem(file) {
+        const div = document.createElement('div');
+        div.className = 'media-item';
+        div.dataset.fileId = file.id;
+        
+        const isSelected = selectedFiles.some(f => f.id === file.id);
+        if (isSelected) {
+            div.classList.add('selected');
+        }
+        
+        div.innerHTML = `
+            <div class="media-item-actions">
+                <button type="button" class="media-item-action-btn" onclick="editFile('${file.id}')" title="Edit">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="media-item-action-btn" onclick="downloadFile('${file.id}')" title="Download">
+                    <i class="fas fa-download"></i>
+                </button>
+                <button type="button" class="media-item-action-btn btn-danger" onclick="deleteFile('${file.id}')" title="Delete">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            ${file.is_image ? 
+                `<img src="${file.url}" alt="${file.filename}" class="media-item-image" loading="lazy">` :
+                `<div class="media-item-placeholder">
+                    <i class="fas ${getFileIcon(file.filename)}"></i>
+                </div>`
+            }
+            <div class="media-item-info">
+                <div class="media-item-filename" title="${file.filename}">${file.filename}</div>
+                <input type="text" class="edit-filename-input" value="${getFilenameWithoutExtension(file.filename)}">
+                <div class="media-item-meta">
+                    ${file.size_formatted} • ${file.modified_date_formatted}
+                    ${file.dimensions ? ` • ${file.dimensions}` : ''}
+                </div>
+            </div>
+        `;
+        
+        div.addEventListener('click', (e) => {
+            if (!e.target.closest('.media-item-actions') && !e.target.closest('.edit-filename-input')) {
+                toggleFileSelection(file);
+            }
+        });
+        
+        return div;
+    }
+
+    function getFileIcon(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        const iconMap = {
+            'pdf': 'fa-file-pdf',
+            'doc': 'fa-file-word',
+            'docx': 'fa-file-word',
+            'xls': 'fa-file-excel',
+            'xlsx': 'fa-file-excel',
+            'ppt': 'fa-file-powerpoint',
+            'pptx': 'fa-file-powerpoint',
+            'txt': 'fa-file-alt',
+            'mp4': 'fa-file-video',
+            'avi': 'fa-file-video',
+            'mov': 'fa-file-video',
+            'mp3': 'fa-file-audio',
+            'wav': 'fa-file-audio',
+            'zip': 'fa-file-archive',
+            'rar': 'fa-file-archive'
+        };
+        return iconMap[ext] || 'fa-file';
+    }
+
+    function getFilenameWithoutExtension(filename) {
+        return filename.substring(0, filename.lastIndexOf('.')) || filename;
+    }
+
+    function toggleFileSelection(file) {
+        const existingIndex = selectedFiles.findIndex(f => f.id === file.id);
+        const mediaItem = document.querySelector(`[data-file-id="${file.id}"]`);
+        
+        if (existingIndex > -1) {
+            selectedFiles.splice(existingIndex, 1);
+            mediaItem.classList.remove('selected');
+        } else {
+            selectedFiles.push(file);
+            mediaItem.classList.add('selected');
+        }
+        
+        updateSelectionUI();
+    }
+
+    function updateSelectionUI() {
+        const count = selectedFiles.length;
+        document.getElementById('selectedFilesCount').textContent = count;
+        document.getElementById('bulkSelectedCount').textContent = count;
+        
+        const bulkActions = document.getElementById('bulkActions');
+        if (count > 0) {
+            bulkActions.classList.add('show');
+        } else {
+            bulkActions.classList.remove('show');
+        }
+    }
+
+    function selectAllFiles() {
+        // Get all currently visible media items
+        const mediaItems = document.querySelectorAll('.media-item');
+        
+        mediaItems.forEach(item => {
+            if (!item.classList.contains('selected')) {
+                const fileId = item.dataset.fileId;
+                
+                // Create a simple file object for tracking
+                const fileData = {
+                    id: fileId,
+                    filename: item.querySelector('.media-item-filename').textContent.trim()
+                };
+                
+                selectedFiles.push(fileData);
+                item.classList.add('selected');
+            }
+        });
+        
+        updateSelectionUI();
+    }
+
+    function clearSelection() {
+        selectedFiles = [];
+        document.querySelectorAll('.media-item.selected').forEach(item => {
+            item.classList.remove('selected');
+        });
+        updateSelectionUI();
+    }
+
+    function clearSearch() {
+        document.getElementById('searchInput').value = '';
+        loadMediaFiles(1);
+    }
+
+    function resetFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('typeFilter').value = 'all';
+        document.getElementById('directoryFilter').value = '';
+        document.getElementById('sortBy').value = 'date_desc';
+        loadMediaFiles(1);
+    }
+
+    function updateStats(data) {
+        document.getElementById('totalFilesCount').textContent = data.total || 0;
+        document.getElementById('totalSizeDisplay').textContent = data.total_size_formatted || '0 MB';
+        document.getElementById('directoriesCount').textContent = data.directories ? data.directories.length : 0;
+        
+        // Update directory dropdowns with found directories
+        if (data.directories) {
+            updateDirectoryDropdowns(data.directories);
+        }
+    }
+
+    function updatePagination(data) {
+        const pagination = document.getElementById('mediaPagination');
+        pagination.innerHTML = '';
+        
+        if (data.total_pages <= 1) return;
+        
+        // Previous button
+        const prevLi = document.createElement('li');
+        prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+        prevLi.innerHTML = `<a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>`;
+        pagination.appendChild(prevLi);
+        
+        // Page numbers
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(data.total_pages, startPage + 4);
+        
+        if (endPage - startPage < 4) {
+            startPage = Math.max(1, endPage - 4);
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const li = document.createElement('li');
+            li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+            li.innerHTML = `<a class="page-link" href="#" data-page="${i}">${i}</a>`;
+            pagination.appendChild(li);
+        }
+        
+        // Next button
+        const nextLi = document.createElement('li');
+        nextLi.className = `page-item ${currentPage === data.total_pages ? 'disabled' : ''}`;
+        nextLi.innerHTML = `<a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>`;
+        pagination.appendChild(nextLi);
+        
+        // Add event listeners
+        document.querySelectorAll('#mediaPagination .page-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const page = parseInt(this.dataset.page);
+                if (page && page !== currentPage) {
+                    loadMediaFiles(page);
+                }
+            });
+        });
+    }
+
+    function showLoading() {
+        document.getElementById('loadingOverlay').style.display = 'flex';
+    }
+
+    function hideLoading() {
+        document.getElementById('loadingOverlay').style.display = 'none';
+    }
+
+    function showError(message) {
+        showAlert(message, 'danger');
+    }
+
+    function showAlert(message, type = 'info') {
+        const alertContainer = document.createElement('div');
+        alertContainer.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertContainer.style.top = '20px';
+        alertContainer.style.right = '20px';
+        alertContainer.style.zIndex = '9999';
+        alertContainer.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(alertContainer);
+        
+        setTimeout(() => {
+            if (alertContainer.parentNode) {
+                alertContainer.parentNode.removeChild(alertContainer);
+            }
+        }, 5000);
+    }
+
+    // Upload functionality
+    function handleFileSelection() {
+        const files = Array.from(fileInput.files);
+        displaySelectedFiles(files);
+        document.getElementById('startUploadBtn').disabled = files.length === 0;
+    }
+
+    function displaySelectedFiles(files) {
+        const container = document.getElementById('selectedFiles');
+        const filesList = document.getElementById('filesList');
+        
+        if (files.length === 0) {
+            container.style.display = 'none';
+            return;
+        }
+        
+        container.style.display = 'block';
+        filesList.innerHTML = '';
+        
+        files.forEach(file => {
+            const div = document.createElement('div');
+            div.className = 'd-flex justify-content-between align-items-center py-1 border-bottom';
+            div.innerHTML = `
+                <div>
+                    <strong>${file.name}</strong>
+                    <br>
+                    <small class="text-muted">Type: ${file.type || 'Unknown'}</small>
+                </div>
+                <span class="text-muted">${formatFileSize(file.size)}</span>
+            `;
+            filesList.appendChild(div);
+        });
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+    }
+
+    function handleDragLeave(e) {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        
+        const files = Array.from(e.dataTransfer.files);
+        fileInput.files = e.dataTransfer.files;
+        displaySelectedFiles(files);
+        document.getElementById('startUploadBtn').disabled = files.length === 0;
+    }
+
+    function startUpload() {
+        const files = Array.from(fileInput.files);
+        const directory = document.getElementById('uploadDirectory').value;
+        
+        if (files.length === 0) {
+            showAlert('Please select files to upload', 'warning');
+            return;
+        }
+        
+        document.getElementById('uploadProgressModal').style.display = 'block';
+        document.getElementById('startUploadBtn').disabled = true;
+        
+        uploadFiles(files, directory);
+    }
+
+    function uploadFiles(files, directory) {
+        let completed = 0;
+        const total = files.length;
+        
+        // Update initial status
+        document.getElementById('modalUploadStatus').textContent = `Uploading ${total} file(s)...`;
+        
+        const uploadPromises = files.map((file, index) => {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('directory', directory);
+            
+            return fetch('/mb-admin/api/media/upload/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                completed++;
+                const progress = (completed / total) * 100;
+                document.getElementById('modalProgressBar').style.width = progress + '%';
+                document.getElementById('modalUploadStatus').textContent = `Uploaded ${completed}/${total} files - ${file.name}`;
+                
+                if (!data.success) {
+                    console.error(`Failed to upload ${file.name}:`, data.message);
+                    throw new Error(`${file.name}: ${data.message || 'Upload failed'}`);
+                }
+                
+                return data;
+            })
+            .catch(error => {
+                completed++;
+                const progress = (completed / total) * 100;
+                document.getElementById('modalProgressBar').style.width = progress + '%';
+                
+                console.error(`Error uploading ${file.name}:`, error);
+                throw error;
+            });
+        });
+        
+        Promise.allSettled(uploadPromises)
+            .then(results => {
+                const successful = results.filter(r => r.status === 'fulfilled').length;
+                const failed = results.filter(r => r.status === 'rejected').length;
+                
+                if (successful > 0) {
+                    showAlert(`Successfully uploaded ${successful} file(s)!`, 'success');
+                }
+                
+                if (failed > 0) {
+                    const failedFiles = results
+                        .filter(r => r.status === 'rejected')
+                        .map(r => r.reason.message || 'Unknown error')
+                        .join(', ');
+                    showAlert(`Failed to upload ${failed} file(s): ${failedFiles}`, 'warning');
+                }
+                
+                // Close modal and refresh
+                const modal = bootstrap.Modal.getInstance(document.getElementById('uploadModal'));
+                modal.hide();
+                loadMediaFiles(1);
+                loadDirectories();
+            })
+            .finally(() => {
+                document.getElementById('uploadProgressModal').style.display = 'none';
+                document.getElementById('modalProgressBar').style.width = '0%';
+                document.getElementById('modalUploadStatus').textContent = 'Preparing...';
+                document.getElementById('startUploadBtn').disabled = false;
+                fileInput.value = '';
+                document.getElementById('selectedFiles').style.display = 'none';
+            });
+    }
+
+    function loadDirectories() {
+        // Load available directories from the API response
+        // This will be populated when we load media files
+        fetch('/mb-admin/api/media/?per_page=1')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.directories) {
+                    updateDirectoryDropdowns(data.directories);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading directories:', error);
+            });
+    }
+
+    function updateDirectoryDropdowns(directories) {
+        const directoryFilter = document.getElementById('directoryFilter');
+        const uploadDirectory = document.getElementById('uploadDirectory');
+        const editFileDirectory = document.getElementById('editFileDirectory');
+        
+        // Clear existing options (except first option for filter)
+        directoryFilter.innerHTML = '<option value="">All Directories</option>';
+        uploadDirectory.innerHTML = '<option value="">Root Directory</option>';
+        editFileDirectory.innerHTML = '<option value="">Root Directory</option>';
+        
+        // Add predefined options
+        const predefinedDirs = ['products', 'banners', 'avatars', 'documents'];
+        predefinedDirs.forEach(dir => {
+            directoryFilter.appendChild(new Option(dir.charAt(0).toUpperCase() + dir.slice(1), dir));
+            uploadDirectory.appendChild(new Option(dir.charAt(0).toUpperCase() + dir.slice(1), dir));
+            editFileDirectory.appendChild(new Option(dir.charAt(0).toUpperCase() + dir.slice(1), dir));
+        });
+        
+        // Add any additional directories found
+        directories.forEach(dir => {
+            if (!predefinedDirs.includes(dir)) {
+                directoryFilter.appendChild(new Option(dir.charAt(0).toUpperCase() + dir.slice(1), dir));
+                uploadDirectory.appendChild(new Option(dir.charAt(0).toUpperCase() + dir.slice(1), dir));
+                editFileDirectory.appendChild(new Option(dir.charAt(0).toUpperCase() + dir.slice(1), dir));
+            }
+        });
+    }
+
+    function createDirectory() {
+        const name = document.getElementById('newDirectoryName').value.trim();
+        if (!name) {
+            showAlert('Please enter a directory name', 'warning');
+            return;
+        }
+        
+        // Validate directory name
+        if (!/^[a-zA-Z0-9_-]+$/.test(name)) {
+            showAlert('Directory name can only contain letters, numbers, underscores, and hyphens', 'warning');
+            return;
+        }
+        
+        fetch('/mb-admin/api/media/directories/create/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ name: name })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('Directory created successfully!', 'success');
+                
+                // Add to directory dropdowns
+                const displayName = name.charAt(0).toUpperCase() + name.slice(1);
+                document.getElementById('uploadDirectory').appendChild(new Option(displayName, name));
+                document.getElementById('directoryFilter').appendChild(new Option(displayName, name));
+                document.getElementById('editFileDirectory').appendChild(new Option(displayName, name));
+                
+                const modal = bootstrap.Modal.getInstance(document.getElementById('createDirectoryModal'));
+                modal.hide();
+                document.getElementById('newDirectoryName').value = '';
+                
+                // Reload directories and files
+                loadDirectories();
+                loadMediaFiles(1);
+            } else {
+                showAlert(data.message || 'Failed to create directory', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error creating directory:', error);
+            showAlert('Error creating directory', 'danger');
+        });
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        
+        if (!cookieValue && name === 'csrftoken') {
+            const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+            if (csrfMeta) {
+                cookieValue = csrfMeta.getAttribute('content');
+            }
+        }
+        
+        return cookieValue;
+    }
+
+    // Global functions for inline event handlers
+    window.editFile = function(fileId) {
+        // Load file data and show edit modal
+        const parts = fileId.split('_', 2);
+        if (parts.length !== 2) return;
+        
+        const [directory, filename] = parts;
+        const filenameWithoutExt = getFilenameWithoutExtension(filename);
+        
+        document.getElementById('editFileId').value = fileId;
+        document.getElementById('editFileName').value = filenameWithoutExt;
+        document.getElementById('editFileDirectory').value = directory;
+        document.getElementById('editFileAltText').value = '';
+        
+        const modal = new bootstrap.Modal(document.getElementById('editFileModal'));
+        modal.show();
+    };
+
+    window.downloadFile = function(fileId) {
+        // Implement download functionality
+        window.open(`/mb-admin/api/media/${fileId}/download/`, '_blank');
+    };
+
+    window.deleteFile = function(fileId) {
+        if (!confirm('Are you sure you want to delete this file? This action cannot be undone.')) {
+            return;
+        }
+        
+        fetch(`/mb-admin/api/media/${fileId}/delete/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('File deleted successfully!', 'success');
+                
+                // Remove from selection if selected
+                selectedFiles = selectedFiles.filter(f => f.id !== fileId);
+                updateSelectionUI();
+                
+                loadMediaFiles(currentPage);
+            } else {
+                showAlert(data.message || 'Failed to delete file', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Delete error:', error);
+            showAlert('Error deleting file', 'danger');
+        });
+    };
+
+    function bulkDelete() {
+        if (selectedFiles.length === 0) {
+            showAlert('Please select files to delete', 'warning');
+            return;
+        }
+        
+        if (!confirm(`Are you sure you want to delete ${selectedFiles.length} selected file(s)? This action cannot be undone.`)) {
+            return;
+        }
+        
+        const deletePromises = selectedFiles.map(file => 
+            fetch(`/mb-admin/api/media/${file.id}/delete/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+        );
+        
+        Promise.all(deletePromises)
+            .then(responses => {
+                const successCount = responses.filter(r => r.ok).length;
+                showAlert(`Successfully deleted ${successCount} file(s)!`, 'success');
+                clearSelection();
+                loadMediaFiles(currentPage);
+            })
+            .catch(error => {
+                console.error('Bulk delete error:', error);
+                showAlert('Error deleting files', 'danger');
+            });
+    }
+
+    function saveFileChanges() {
+        const fileId = document.getElementById('editFileId').value;
+        const fileName = document.getElementById('editFileName').value.trim();
+        const directory = document.getElementById('editFileDirectory').value;
+        const altText = document.getElementById('editFileAltText').value.trim();
+        
+        if (!fileName) {
+            showAlert('Please enter a file name', 'warning');
+            return;
+        }
+        
+        const data = {
+            filename: fileName,
+            directory: directory,
+            alt_text: altText
+        };
+        
+        fetch(`/mb-admin/api/media/${fileId}/edit/`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('File updated successfully!', 'success');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editFileModal'));
+                modal.hide();
+                loadMediaFiles(currentPage);
+            } else {
+                showAlert(data.message || 'Failed to update file', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Update error:', error);
+            showAlert('Error updating file', 'danger');
+        });
+    }
+});
+</script>
+{% endblock %}

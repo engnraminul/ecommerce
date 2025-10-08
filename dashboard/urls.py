@@ -55,13 +55,17 @@ urlpatterns = [
     # Media Library API
     path('api/media/', media_api.list_media_files, name='list_media_files'),
     path('api/media/upload/', media_api.upload_media_file, name='upload_media_file'),
+    path('api/media/<str:file_id>/edit/', media_api.edit_media_file, name='edit_media_file'),
+    path('api/media/<str:file_id>/download/', media_api.download_media_file, name='download_media_file'),
     path('api/media/<str:file_id>/delete/', media_api.delete_media_file, name='delete_media_file'),
+    path('api/media/directories/create/', media_api.create_directory, name='create_media_directory'),
     
     # Frontend views for the dashboard SPA
     path('', views.dashboard_home, name='home'),
     path('login/', views.dashboard_login, name='login'),
     path('logout/', views.dashboard_logout, name='logout'),
     path('products/', views.dashboard_products, name='products'),
+    path('media/', views.dashboard_media, name='media'),
     path('stock/', views.dashboard_stock, name='stock'),
     path('orders/', views.dashboard_orders, name='orders'),
     path('incomplete-orders/', views.dashboard_incomplete_orders, name='incomplete_orders'),
