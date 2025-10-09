@@ -43,7 +43,20 @@
                             </div>
                             <div class="info-item">
                                 <span class="label">Payment Method:</span>
-                                <span class="value">{{ order.payment_method|default:"Cash on Delivery" }}</span>
+                                <div class="value payment-method-details">
+                                    <div class="payment-method-name">{{ order.payment_method_display_name|default:order.get_payment_method_display }}</div>
+                                    {% if order.payment_method == 'bkash' and order.bkash_transaction_id %}
+                                        <div class="payment-details">
+                                            <small class="payment-account">Account: {{ order.bkash_sender_number }}</small>
+                                            <small class="payment-transaction">TxnID: {{ order.bkash_transaction_id }}</small>
+                                        </div>
+                                    {% elif order.payment_method == 'nagad' and order.nagad_transaction_id %}
+                                        <div class="payment-details">
+                                            <small class="payment-account">Account: {{ order.nagad_sender_number }}</small>
+                                            <small class="payment-transaction">TxnID: {{ order.nagad_transaction_id }}</small>
+                                        </div>
+                                    {% endif %}
+                                </div>
                             </div>
                             <div class="info-item">
                                 <span class="label">Total Amount:</span>
@@ -69,10 +82,13 @@
                                     <div class="item-details">
                                         <h4 class="item-name">{{ item.product.name }}</h4>
                                         {% if item.variant %}
-                                            <div class="item-variant">
-                                                {% if item.variant.color_name %}Color: {{ item.variant.color_name }}{% endif %}
-                                                {% if item.variant.size %}{% if item.variant.color_name %}, {% endif %}Size: {{ item.variant.size }}{% endif %}
-                                            </div>
+                                            {% if item.variant.sku %}
+                                                <div class="item-sku">SKU: {{ item.variant.sku }}</div>
+                                            {% endif %}
+                                        {% else %}
+                                            {% if item.product.sku %}
+                                                <div class="item-sku">SKU: {{ item.product.sku }}</div>
+                                            {% endif %}
                                         {% endif %}
                                         <div class="item-price">
                                             <span class="unit-price">${{ item.unit_price }} each</span>
@@ -155,10 +171,6 @@
                         <i class="fas fa-home"></i>
                         Continue Shopping
                     </a>
-                    <button onclick="printOrder()" class="btn btn-secondary">
-                        <i class="fas fa-print"></i>
-                        Print Order
-                    </button>
                 </div>
 
                 <!-- What's Next -->
@@ -313,6 +325,37 @@
         font-size: 1rem;
     }
 
+    /* Payment Method Details Styling */
+    .payment-method-details {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .payment-method-name {
+        font-weight: 600;
+        color: var(--dark-color);
+    }
+
+    .payment-details {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        margin-top: 0.25rem;
+    }
+
+    .payment-account,
+    .payment-transaction {
+        color: var(--secondary-color);
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .payment-transaction {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+
     .total-amount {
         color: var(--primary-color) !important;
         font-size: 1.25rem !important;
@@ -390,6 +433,17 @@
         color: var(--secondary-color);
         font-size: 0.9rem;
         margin-bottom: 0.5rem;
+    }
+
+    .item-sku {
+        color: var(--primary-color);
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        background: rgba(var(--primary-color-rgb, 147, 0, 0), 0.1);
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        display: inline-block;
     }
 
     .item-price {
@@ -699,11 +753,18 @@
         }
     }
 
-    /* Print Styles - Professional Invoice Design */
+    /* Print Styles - Match PDF Design Exactly */
     @media print {
         @page {
             size: A4;
             margin: 0.5in;
+        }
+        
+        /* Reset everything for print */
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            box-sizing: border-box !important;
         }
         
         /* Hide everything except order details when printing */
@@ -723,6 +784,7 @@
         /* Hide navigation, buttons, and unnecessary sections */
         .breadcrumb,
         .success-header,
+        .save-invoice-section,
         .action-buttons,
         .whats-next-section,
         nav,
@@ -732,15 +794,15 @@
             visibility: hidden !important;
         }
         
-        /* Reset positioning for print */
+        /* Print Layout - Match PDF Design */
         body, html {
-            background: white !important;
-            color: black !important;
-            font-size: 12px !important;
-            line-height: 1.4 !important;
             margin: 0 !important;
             padding: 0 !important;
-            height: auto !important;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+            font-size: 12px !important;
+            background: white !important;
+            color: #000 !important;
+            line-height: 1.4 !important;
         }
         
         .container {
@@ -748,365 +810,352 @@
             padding: 0 !important;
             max-width: none !important;
             width: 100% !important;
-            height: auto !important;
-            display: block !important;
         }
         
         .order-confirmation-page {
             padding: 0 !important;
             margin: 0 !important;
-            height: auto !important;
-            min-height: auto !important;
-            display: block !important;
         }
         
         .order-details-section {
-            position: static !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            max-width: none !important;
-            height: auto !important;
-            display: block !important;
+            max-width: 800px !important;
+            margin: 0 auto !important;
+            padding: 20px !important;
         }
         
-        /* Professional Invoice Layout */
-        .order-summary-card {
-            position: static !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            margin: 0 !important;
-            box-shadow: none !important;
-            border: none !important;
-            page-break-inside: avoid;
-            background: white !important;
+        /* Add PDF-style header */
+        .order-details-section::before {
+            content: '' !important;
+            display: block !important;
             width: 100% !important;
-            height: auto !important;
-            display: block !important;
-            transform: none !important;
-        }
-        
-        /* Invoice Header */
-        .card-header {
-            background: white !important;
-            color: black !important;
-            border-bottom: 3px solid #000 !important;
-            padding: 5px 0 !important;
-            margin-bottom: 5px !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-            display: block !important;
+            height: 60px !important;
+            background: linear-gradient(135deg, #930000, #20c997) !important;
+            margin: -20px -20px 20px -20px !important;
+            border-radius: 8px !important;
             position: relative !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
         
-        .card-header::before {
-            content: "Order Information" !important;
+        .order-details-section::after {
+            content: 'www.manobbazar.com                                                📞 📱 01777173040' !important;
             display: block !important;
+            position: absolute !important;
+            top: 15px !important;
+            left: 20px !important;
+            right: 20px !important;
+            color: white !important;
             font-size: 18px !important;
             font-weight: bold !important;
-            color: #000 !important;
-            margin: 0 0 10px 0 !important;
-            padding: 0 !important;
-            border: none !important;
-            text-align: left !important;
-            line-height: 1.2 !important;
+            z-index: 10 !important;
+            white-space: pre !important;
         }
         
-        .card-header::after {
-            content: "INVOICE" !important;
-            display: block !important;
-            font-size: 28px !important;
-            font-weight: bold !important;
-            color: #000 !important;
-            position: absolute !important;
-            top: 5px !important;
-            right: 0 !important;
-            text-align: right !important;
+        /* Order Summary Card - Match PDF Design */
+        .order-summary-card {
+            background: white !important;
+            border-radius: 8px !important;
+            box-shadow: none !important;
+            border: 1px solid #ddd !important;
+            margin: 0 !important;
+            overflow: visible !important;
         }
         
-        /* Company Contact Info */
-        .card-header .company-info {
-            display: block !important;
-            position: absolute !important;
-            bottom: -25px !important;
-            left: 0 !important;
-            font-size: 12px !important;
-            color: #000 !important;
-            line-height: 1.4 !important;
+        /* Card Header - Match PDF Design */
+        .card-header {
+            background: #f8f9fa !important;
+            padding: 20px !important;
+            border-bottom: 2px solid #dee2e6 !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 1rem !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
-             
+        
         .card-header h2 {
-            display: none !important;
+            font-size: 20px !important;
+            font-weight: 600 !important;
+            color: #333 !important;
+            margin: 0 !important;
         }
         
         .order-number {
-            background: #000 !important;
+            background: #930000 !important;
             color: white !important;
-            padding: 8px 15px !important;
+            padding: 8px 16px !important;
+            border-radius: 20px !important;
+            font-weight: 600 !important;
             font-size: 14px !important;
-            font-weight: bold !important;
-            position: absolute !important;
-            top: 35px !important;
-            right: 0 !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
         
         /* Card Body */
         .card-body {
-            padding: 0 !important;
-            margin-top: 30px !important;
+            padding: 20px !important;
         }
         
-        /* Order Info - Horizontal Layout */
+        /* Order Info Grid - Match PDF Design */
         .order-info-grid {
-            display: flex !important;
-            justify-content: space-between !important;
-            gap: 30px !important;
-            margin-bottom: 25px !important;
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 15px !important;
+            margin-bottom: 20px !important;
             padding: 15px !important;
-            background: #f8f8f8 !important;
-            border: 1px solid #ddd !important;
-            flex-wrap: wrap !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+            background: #f8f9fa !important;
+            border-radius: 8px !important;
+            border: 1px solid #dee2e6 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
         
         .info-item {
-            display: block !important;
-            margin-bottom: 8px !important;
-            min-width: 150px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 5px !important;
         }
         
         .info-item .label {
-            color: #333 !important;
+            color: #6c757d !important;
             font-size: 12px !important;
-            font-weight: bold !important;
+            font-weight: 600 !important;
             text-transform: uppercase !important;
-            display: block !important;
-            margin-bottom: 3px !important;
+            letter-spacing: 0.5px !important;
         }
         
         .info-item .value {
-            color: #000 !important;
-            font-weight: bold !important;
+            color: #333 !important;
+            font-weight: 600 !important;
             font-size: 14px !important;
-            display: block !important;
         }
         
-        .total-amount {
-            color: #000 !important;
-            font-weight: bold !important;
+        .order-total-amount {
+            color: #930000 !important;
             font-size: 16px !important;
+            font-weight: bold !important;
         }
         
-        /* Items Table */
+        /* Payment Method Details */
+        .payment-method-details {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.25rem !important;
+        }
+        
+        .payment-method-name {
+            font-weight: 600 !important;
+            color: #333 !important;
+        }
+        
+        .payment-details {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.15rem !important;
+            margin-top: 0.25rem !important;
+        }
+        
+        .payment-account,
+        .payment-transaction {
+            color: #6c757d !important;
+            font-size: 11px !important;
+            font-weight: 500 !important;
+        }
+        
+        .payment-transaction {
+            color: #930000 !important;
+            font-weight: 600 !important;
+        }
+        
+        /* Order Items - Match PDF Design */
         .order-items-section h3 {
             font-size: 16px !important;
-            font-weight: bold !important;
-            color: #000 !important;
-            margin: 20px 0 10px 0 !important;
-            border-bottom: 2px solid #000 !important;
-            padding-bottom: 5px !important;
+            font-weight: 600 !important;
+            color: #333 !important;
+            margin-bottom: 15px !important;
+            border-bottom: 2px solid #dee2e6 !important;
+            padding-bottom: 8px !important;
         }
         
         .items-list {
-            display: table !important;
-            width: 100% !important;
-            border-collapse: collapse !important;
-            margin-bottom: 20px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 10px !important;
         }
         
         .order-item {
-            display: table-row !important;
-            background: white !important;
-            border: none !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-        
-        .order-item.table-header {
-            background: #f5f5f5 !important;
-            font-weight: bold !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-        }
-        
-        .order-item.table-header .item-image,
-        .order-item.table-header .item-details,
-        .order-item.table-header .item-total {
-            background: #f5f5f5 !important;
-            font-weight: bold !important;
-            text-align: center !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+            display: flex !important;
+            align-items: center !important;
+            gap: 15px !important;
+            padding: 15px !important;
+            background: #f8f9fa !important;
+            border-radius: 8px !important;
+            border: 1px solid #dee2e6 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
         
         .item-image {
-            display: table-cell !important;
             width: 60px !important;
-            height: auto !important;
-            vertical-align: top !important;
-            padding: 10px 5px !important;
-            border-bottom: 1px solid #ddd !important;
-            text-align: center !important;
+            height: 60px !important;
+            border-radius: 8px !important;
+            overflow: hidden !important;
+            background: white !important;
+            flex-shrink: 0 !important;
+            border: 1px solid #dee2e6 !important;
         }
         
         .item-image img {
-            width: 50px !important;
-            height: 50px !important;
+            width: 100% !important;
+            height: 100% !important;
             object-fit: cover !important;
-            border: 1px solid #ddd !important;
         }
         
         .item-details {
-            display: table-cell !important;
-            vertical-align: top !important;
-            padding: 10px 10px !important;
-            border-bottom: 1px solid #ddd !important;
+            flex: 1 !important;
         }
         
         .item-name {
-            font-size: 13px !important;
-            font-weight: bold !important;
-            color: #000 !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            color: #333 !important;
             margin-bottom: 5px !important;
         }
         
         .item-variant {
-            color: #666 !important;
-            font-size: 11px !important;
+            color: #6c757d !important;
+            font-size: 12px !important;
             margin-bottom: 5px !important;
         }
         
-        .item-price {
-            display: block !important;
+        .item-sku {
+            color: #930000 !important;
             font-size: 11px !important;
-            color: #666 !important;
+            font-weight: 600 !important;
+            margin-bottom: 5px !important;
+            background: rgba(147, 0, 0, 0.1) !important;
+            padding: 2px 6px !important;
+            border-radius: 3px !important;
+            display: inline-block !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        
+        .item-price {
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px !important;
+            font-size: 12px !important;
         }
         
         .unit-price {
-            color: #666 !important;
-            margin-right: 10px !important;
+            color: #6c757d !important;
         }
         
         .quantity {
-            background: #000 !important;
+            background: #930000 !important;
             color: white !important;
-            padding: 2px 8px !important;
-            font-size: 10px !important;
-            font-weight: bold !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+            padding: 3px 8px !important;
+            border-radius: 12px !important;
+            font-weight: 600 !important;
+            font-size: 11px !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
         
         .item-total {
-            display: table-cell !important;
-            vertical-align: top !important;
-            padding: 10px 10px !important;
-            border-bottom: 1px solid #ddd !important;
-            text-align: right !important;
-            font-size: 13px !important;
+            font-size: 16px !important;
             font-weight: bold !important;
-            color: #000 !important;
-            width: 100px !important;
+            color: #930000 !important;
+            text-align: right !important;
+            min-width: 80px !important;
         }
         
-        /* Order Totals - Right Aligned */
+        /* Order Totals - Match PDF Design */
         .order-totals {
-            background: white !important;
-            padding: 0 !important;
-            margin: 20px 0 30px auto !important;
-            width: 300px !important;
-            border: 2px solid #000 !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+            margin-top: 20px !important;
+            padding: 15px !important;
+            background: #f8f9fa !important;
+            border-radius: 8px !important;
+            border: 1px solid #dee2e6 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
         
         .total-line {
             display: flex !important;
             justify-content: space-between !important;
-            padding: 8px 15px !important;
-            font-size: 12px !important;
-            border-bottom: 1px solid #ddd !important;
-        }
-        
-        .total-line:last-child {
-            border-bottom: none !important;
+            align-items: center !important;
+            padding: 8px 0 !important;
+            font-size: 14px !important;
         }
         
         .total-line.grand-total {
+            font-size: 18px !important;
             font-weight: bold !important;
-            font-size: 14px !important;
-            color: #000 !important;
-            background: #f5f5f5 !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+            color: #930000 !important;
+            border-top: 2px solid #dee2e6 !important;
+            margin-top: 10px !important;
+            padding-top: 10px !important;
         }
         
         .total-divider {
-            display: none !important;
+            height: 2px !important;
+            background: #dee2e6 !important;
+            margin: 10px 0 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
         
-        /* Shipping Address - Bottom Left */
+        /* Shipping Address - Match PDF Design */
         .shipping-address-section {
-            margin-top: 30px !important;
-            page-break-inside: avoid !important;
+            margin-top: 20px !important;
         }
         
         .shipping-address-section h3 {
-            font-size: 14px !important;
-            font-weight: bold !important;
-            color: #000 !important;
-            margin-bottom: 10px !important;
-            border-bottom: 1px solid #000 !important;
-            padding-bottom: 5px !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            color: #333 !important;
+            margin-bottom: 15px !important;
+            border-bottom: 2px solid #dee2e6 !important;
+            padding-bottom: 8px !important;
         }
         
         .address-card {
-            background: white !important;
+            background: #f8f9fa !important;
             padding: 15px !important;
-            border: 1px solid #000 !important;
-            max-width: 300px !important;
+            border-radius: 8px !important;
+            border: 1px solid #dee2e6 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
         
         .address-name {
-            font-weight: bold !important;
-            color: #000 !important;
-            margin-bottom: 5px !important;
-            font-size: 13px !important;
+            font-weight: 600 !important;
+            color: #333 !important;
+            margin-bottom: 8px !important;
+            font-size: 14px !important;
         }
         
         .address-details {
-            color: #000 !important;
-            line-height: 1.4 !important;
-            margin-bottom: 5px !important;
-            font-size: 12px !important;
+            color: #6c757d !important;
+            line-height: 1.5 !important;
+            margin-bottom: 8px !important;
+            font-size: 13px !important;
         }
         
         .address-phone {
-            color: #000 !important;
-            font-weight: bold !important;
-            font-size: 12px !important;
+            color: #930000 !important;
+            font-weight: 600 !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 5px !important;
+            font-size: 13px !important;
         }
         
-        .address-phone i {
-            margin-right: 5px !important;
-        }
-        
-        /* Remove any gaps and ensure single page */
-        * {
-            page-break-inside: avoid !important;
-        }
-        
-        .order-items-section,
-        .order-totals,
-        .shipping-address-section {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-        }
-        
-        /* Ensure all colors are preserved */
+        /* Status colors */
         .status-pending,
         .status-processing,
         .status-shipped {
@@ -1124,175 +1173,8 @@
         console.log('Order confirmation page loaded');
     });
     
-    function printOrder() {
-        // Add company contact info to header
-        const cardHeader = document.querySelector('.card-header');
-        if (cardHeader && !cardHeader.querySelector('.company-info')) {
-            const companyInfo = document.createElement('div');
-            companyInfo.className = 'company-info';
-            cardHeader.appendChild(companyInfo);
-        }
-        
-        // Create table structure for better print layout
-        const itemsList = document.querySelector('.items-list');
-        let originalContent = '';
-        if (itemsList) {
-            // Store original content
-            originalContent = itemsList.innerHTML;
-            
-            // Create table header
-            const tableHeader = `
-                <div class="order-item table-header">
-                    <div class="item-image">Image</div>
-                    <div class="item-details">Product Details</div>
-                    <div class="item-total">Total</div>
-                </div>
-            `;
-            
-            // Add header before items
-            itemsList.innerHTML = tableHeader + originalContent;
-        }
-        
-        // Hide all elements that shouldn't be printed
-        const elementsToHide = [
-            '.breadcrumb',
-            '.success-header', 
-            '.action-buttons',
-            '.whats-next-section',
-            'nav',
-            'header',
-            'footer'
-        ];
-        
-        // Store original display values
-        const originalDisplays = {};
-        
-        elementsToHide.forEach(selector => {
-            const elements = document.querySelectorAll(selector);
-            elements.forEach((element, index) => {
-                const key = `${selector}-${index}`;
-                originalDisplays[key] = element.style.display;
-                element.style.display = 'none';
-            });
-        });
-        
-        // Add print-specific title with company info
-        const originalTitle = document.title;
-        document.title = "Invoice - www.manobbazar.com";
-        
-        // Try to minimize browser print headers by opening in new window
-        const printWindow = window.open('', '_blank', 'width=1024,height=768,scrollbars=yes,resizable=yes,toolbar=yes,menubar=yes');
-        if (printWindow) {
-            printWindow.document.write(`
-                <html>
-                <head>
-                    <title>Invoice - www.manobbazar.com</title>
-                    <style>
-                        @page { 
-                            margin: 0.5in;
-                            @top-left { content: "www.manobbazar.com"; }
-                            @top-right { content: "📞 01777173040"; }
-                        }
-                        body { margin: 0; padding: 5px; font-family: Arial, sans-serif; font-size: 12px; background: white; }
-                        .pdf-header {
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: center;
-                            margin-bottom: 5px;
-                            padding: 5px;
-                            border-bottom: 2px solid #000;
-                            background: #f8f8f8;
-                        }
-                        .pdf-header .company-url {
-                            font-size: 16px;
-                            font-weight: bold;
-                            color: #000;
-                        }
-                        .pdf-header .company-phone {
-                            font-size: 14px;
-                            font-weight: bold;
-                            color: #000;
-                        }
-                        ${document.querySelector('style').innerHTML}
-                    </style>
-                </head>
-                <body>
-                    <div class="pdf-header">
-                        <div class="company-url">www.manobbazar.com</div>
-                        <div class="company-phone">📞 📱 01777173040</div>
-                    </div>
-                    ${document.querySelector('.order-summary-card').outerHTML}
-                </body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.focus();
-            setTimeout(() => {
-                printWindow.print();
-                printWindow.close();
-            }, 500);
-            
-            // Restore original title
-            document.title = originalTitle;
-            return;
-        }
-        
-        // Set up the page for printing
-        const orderCard = document.querySelector('.order-summary-card');
-        if (orderCard) {
-            orderCard.style.pageBreakInside = 'avoid';
-            orderCard.style.position = 'static';
-            orderCard.style.transform = 'none';
-            orderCard.style.top = '0';
-            orderCard.style.margin = '0';
-        }
-        
-        // Ensure body positioning for print
-        document.body.style.position = 'static';
-        document.body.style.margin = '0';
-        document.body.style.padding = '0';
-        
-        // Set container positioning
-        const container = document.querySelector('.container');
-        if (container) {
-            container.style.position = 'static';
-            container.style.margin = '0';
-            container.style.padding = '0';
-            container.style.transform = 'none';
-        }
-        
-        // Trigger print dialog
-        window.print();
-        
-        // Restore original styles and content after printing
-        setTimeout(() => {
-            elementsToHide.forEach(selector => {
-                const elements = document.querySelectorAll(selector);
-                elements.forEach((element, index) => {
-                    const key = `${selector}-${index}`;
-                    element.style.display = originalDisplays[key] || '';
-                });
-            });
-            
-            // Restore original content
-            if (itemsList && originalContent) {
-                itemsList.innerHTML = originalContent;
-            }
-            
-            // Remove company info
-            const companyInfo = document.querySelector('.company-info');
-            if (companyInfo) {
-                companyInfo.remove();
-            }
-            
-            // Restore original title
-            document.title = originalTitle;
-        }, 100);
-    }
-    
-    // Save as PDF function
+    // Save as PDF function - Use same design as image function
     function saveAsPDF() {
-        // Use the same approach as image function but for PDF
         const orderCard = document.querySelector('.order-summary-card');
         if (!orderCard) return;
         
@@ -1325,7 +1207,7 @@
         
         // Add header and content to the temp container (same as image function)
         tempContainer.innerHTML = 
-            '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px 20px; border-radius: 8px; background: ' + primaryColor + '; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">' +
+            '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px 20px; border-radius: 8px; background: linear-gradient(135deg, ' + primaryColor + ', #20c997); color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">' +
                 '<div style="font-size: 18px; font-weight: bold; color: white;">www.manobbazar.com</div>' +
                 '<div style="font-size: 14px; font-weight: bold; color: white; background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 15px;">📞 📱 01777173040</div>' +
             '</div>';
@@ -1333,87 +1215,106 @@
         tempContainer.appendChild(clonedCard);
         document.body.appendChild(tempContainer);
         
-        // Now open print window with the exact rendered content
-        const printWindow = window.open('', '_blank', 'width=1024,height=768,scrollbars=yes,resizable=yes,toolbar=yes,menubar=yes');
-        if (printWindow) {
-            // Get all the computed styles from the current page
-            const allStyles = Array.from(document.styleSheets)
-                .map(styleSheet => {
-                    try {
-                        return Array.from(styleSheet.cssRules)
-                            .map(rule => rule.cssText)
-                            .join('\n');
-                    } catch (e) {
-                        return '';
-                    }
-                }).join('\n');
-            
-            printWindow.document.write(`
-                <html>
-                <head>
-                    <title>Invoice {{ order.order_number }} - www.manobbazar.com</title>
-                    <meta charset="UTF-8">
-                    <style>
-                        @page { 
-                            size: A4; 
-                            margin: 0.5in;
-                        }
-                        
-                        body { 
-                            margin: 0; 
-                            padding: 0; 
-                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                            font-size: 12px; 
-                            background: white; 
-                            color: #000;
-                            line-height: 1.4;
-                        }
-                        
-                        .pdf-container {
-                            max-width: 800px;
-                            margin: 0 auto;
-                            padding: 20px;
-                            background: white;
-                        }
-                        
-                        /* Include all the page styles */
-                        ${allStyles}
-                        
-                        /* Override for PDF specific styling */
-                        .save-invoice-section,
-                        .action-buttons,
-                        .whats-next-section {
-                            display: none !important;
-                        }
-                        
-                        /* Ensure colors are preserved */
-                        * {
-                            -webkit-print-color-adjust: exact !important;
-                            print-color-adjust: exact !important;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="pdf-container">
-                        ${tempContainer.innerHTML}
-                    </div>
-                </body>
-                </html>
-            `);
-            
-            printWindow.document.close();
-            printWindow.focus();
-            
-            // Clean up temp container
-            document.body.removeChild(tempContainer);
-            
-            // Trigger print after a short delay
-            setTimeout(function() {
-                printWindow.print();
-            }, 1000);
+        // Use html2canvas to generate the image first, then convert to PDF
+        if (typeof html2canvas === 'undefined') {
+            // Load html2canvas library if not already loaded
+            const script = document.createElement('script');
+            script.src = 'https://html2canvas.hertzen.com/dist/html2canvas.min.js';
+            script.onload = function() {
+                generatePDFFromCanvas();
+            };
+            document.head.appendChild(script);
         } else {
-            // Clean up if window failed to open
-            document.body.removeChild(tempContainer);
+            generatePDFFromCanvas();
+        }
+        
+        function generatePDFFromCanvas() {
+            html2canvas(tempContainer, {
+                backgroundColor: '#ffffff',
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                width: 800,
+                height: tempContainer.scrollHeight + 40
+            }).then(canvas => {
+                // Clean up temp container
+                document.body.removeChild(tempContainer);
+                
+                // Create a new window with the canvas content for PDF printing
+                const printWindow = window.open('', '_blank', 'width=1024,height=768,scrollbars=yes,resizable=yes,toolbar=yes,menubar=yes');
+                if (printWindow) {
+                    const imgData = canvas.toDataURL('image/png');
+                    
+                    printWindow.document.write(`
+                        <html>
+                        <head>
+                            <title>Invoice {{ order.order_number }} - www.manobbazar.com</title>
+                            <meta charset="UTF-8">
+                            <style>
+                                @page { 
+                                    size: A4; 
+                                    margin: 0.5in;
+                                }
+                                
+                                body { 
+                                    margin: 0; 
+                                    padding: 0; 
+                                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                                    background: white; 
+                                    display: flex;
+                                    justify-content: center;
+                                    align-items: flex-start;
+                                    min-height: 100vh;
+                                }
+                                
+                                .invoice-image {
+                                    max-width: 100%;
+                                    height: auto;
+                                    margin: 20px;
+                                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                                    border-radius: 8px;
+                                }
+                                
+                                @media print {
+                                    body {
+                                        margin: 0;
+                                        padding: 0;
+                                    }
+                                    
+                                    .invoice-image {
+                                        max-width: 100%;
+                                        width: 100%;
+                                        height: auto;
+                                        margin: 0;
+                                        box-shadow: none;
+                                        border-radius: 0;
+                                        page-break-inside: avoid;
+                                    }
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            <img src="${imgData}" alt="Invoice" class="invoice-image">
+                        </body>
+                        </html>
+                    `);
+                    
+                    printWindow.document.close();
+                    printWindow.focus();
+                    
+                    // Trigger print after a short delay
+                    setTimeout(function() {
+                        printWindow.print();
+                    }, 1000);
+                } else {
+                    alert('Unable to open print window. Please allow pop-ups for this site.');
+                }
+            }).catch(error => {
+                // Clean up temp container
+                document.body.removeChild(tempContainer);
+                console.error('Error generating PDF preview:', error);
+                alert('Error generating PDF preview. Please try again.');
+            });
         }
     }
     
