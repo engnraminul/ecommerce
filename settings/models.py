@@ -1,5 +1,114 @@
 from django.db import models
 
+class SiteSettings(models.Model):
+    """Model for storing general site settings and content"""
+    
+    # Site Identity
+    site_name = models.CharField(max_length=200, default="My Brand Store")
+    site_tagline = models.CharField(max_length=300, default="Your one-stop shop for quality products")
+    site_logo = models.ImageField(upload_to='site_logos/', blank=True, null=True)
+    site_favicon = models.ImageField(upload_to='site_favicons/', blank=True, null=True)
+    
+    # Contact Information
+    contact_phone = models.CharField(max_length=20, default="+1 123-456-7890")
+    contact_email = models.EmailField(default="contact@mybrandstore.com")
+    contact_address = models.TextField(default="123 Main Street, City, State 12345, Country")
+    
+    # Footer Information
+    footer_logo = models.ImageField(upload_to='footer_logos/', blank=True, null=True)
+    footer_short_text = models.TextField(default="Brief description about your store that appears in the footer")
+    facebook_link = models.URLField(blank=True, null=True, help_text="Facebook page URL")
+    youtube_link = models.URLField(blank=True, null=True, help_text="YouTube channel URL")
+    
+    # Quick Links Configuration
+    quick_links_title = models.CharField(max_length=100, default="Quick Links")
+    customer_service_title = models.CharField(max_length=100, default="Customer Service")
+    
+    # Quick Links - Text and URLs
+    home_text = models.CharField(max_length=50, default="Home")
+    home_url = models.CharField(max_length=200, default="/")
+    
+    products_text = models.CharField(max_length=50, default="Products")
+    products_url = models.CharField(max_length=200, default="/products")
+    
+    categories_text = models.CharField(max_length=50, default="Categories")
+    categories_url = models.CharField(max_length=200, default="/categories")
+    
+    about_text = models.CharField(max_length=50, default="About Us")
+    about_url = models.CharField(max_length=200, default="/about")
+    
+    contact_text = models.CharField(max_length=50, default="Contact")
+    contact_url = models.CharField(max_length=200, default="/contact")
+    
+    # Customer Service Links
+    track_order_text = models.CharField(max_length=50, default="Track Order")
+    track_order_url = models.CharField(max_length=200, default="/track-order")
+    
+    return_policy_text = models.CharField(max_length=50, default="Return Policy")
+    return_policy_url = models.CharField(max_length=200, default="/return-policy")
+    
+    shipping_info_text = models.CharField(max_length=50, default="Shipping Info")
+    shipping_info_url = models.CharField(max_length=200, default="/shipping-info")
+    
+    fraud_checker_text = models.CharField(max_length=50, default="Fraud Checker")
+    fraud_checker_url = models.CharField(max_length=200, default="/fraud-checker")
+    
+    faq_text = models.CharField(max_length=50, default="FAQ")
+    faq_url = models.CharField(max_length=200, default="/faq")
+    
+    # Footer Copyright
+    copyright_text = models.CharField(max_length=200, default="© 2024 My Brand Store. All rights reserved.")
+    
+    # Home Page - Why Shop With Us Section
+    why_shop_section_title = models.CharField(max_length=200, default="Why Shop With Us?")
+    
+    # Feature 1
+    feature1_title = models.CharField(max_length=100, default="Fast Delivery")
+    feature1_subtitle = models.CharField(max_length=200, default="Quick & reliable shipping")
+    
+    # Feature 2
+    feature2_title = models.CharField(max_length=100, default="Quality Products")
+    feature2_subtitle = models.CharField(max_length=200, default="Premium quality guaranteed")
+    
+    # Feature 3
+    feature3_title = models.CharField(max_length=100, default="24/7 Support")
+    feature3_subtitle = models.CharField(max_length=200, default="Round the clock assistance")
+    
+    # Feature 4
+    feature4_title = models.CharField(max_length=100, default="Secure Payment")
+    feature4_subtitle = models.CharField(max_length=200, default="Safe & secure transactions")
+    
+    # Metadata
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Site Settings"
+        verbose_name_plural = "Site Settings"
+
+    def __str__(self):
+        return f"Site Settings - {self.site_name} (Updated: {self.updated_at.strftime('%Y-%m-%d %H:%M')})"
+
+    @classmethod
+    def get_active_settings(cls):
+        """Get the active site settings"""
+        try:
+            return cls.objects.filter(is_active=True).first()
+        except cls.DoesNotExist:
+            # Return default settings if none exist
+            return cls()
+
+    def get_current_year(self):
+        """Get current year for copyright text"""
+        from datetime import datetime
+        return datetime.now().year
+
+    def get_copyright_text_with_year(self):
+        """Replace {year} placeholder with current year"""
+        return self.copyright_text.replace('{year}', str(self.get_current_year()))
+
+
 class Curier(models.Model):
     """Model for storing courier API credentials"""
     name = models.CharField(max_length=100, default="Default")

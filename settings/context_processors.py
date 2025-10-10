@@ -1,4 +1,20 @@
-from .models import CheckoutCustomization
+from .models import SiteSettings, CheckoutCustomization
+
+def site_settings(request):
+    """
+    Context processor to make site settings available in all templates
+    """
+    try:
+        site_settings = SiteSettings.get_active_settings()
+        return {
+            'site_settings': site_settings
+        }
+    except Exception as e:
+        # Return empty dict if there's an error
+        print(f"Error loading site settings: {e}")
+        return {
+            'site_settings': SiteSettings()  # Default instance
+        }
 
 def checkout_customization(request):
     """

@@ -38,63 +38,400 @@
                     <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                         <h5 class="mb-4">General Settings</h5>
                         <form id="generalSettingsForm">
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="storeName" class="form-label">Store Name</label>
-                                    <input type="text" class="form-control" id="storeName" name="store_name" value="My Brand Store">
+                            {% csrf_token %}
+                            
+                            <!-- Site Identity Section -->
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-store me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                                    <h6 class="mb-0">Site Identity</h6>
                                 </div>
-                                <div class="col-md-6">
-                                    <label for="storeEmail" class="form-label">Store Email</label>
-                                    <input type="email" class="form-control" id="storeEmail" name="store_email" value="contact@mybrandstore.com">
+                                
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-tag me-2" style="color: var(--primary-color, #930000);"></i>Site Information</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="siteName" class="form-label fw-medium">Site Name</label>
+                                                <input type="text" class="form-control" id="siteName" name="site_name" value="{{ site_settings.site_name|default:'My Brand Store' }}" placeholder="My Brand Store">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="siteTagline" class="form-label fw-medium">Site Tagline</label>
+                                                <input type="text" class="form-control" id="siteTagline" name="site_tagline" value="{{ site_settings.site_tagline|default:'Your one-stop shop for quality products' }}" placeholder="Your one-stop shop for quality products">
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Logo and Favicon Upload -->
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-medium">Site Logo</label>
+                                                <div class="card p-3 mb-3">
+                                                    <div class="text-center">
+                                                        <svg width="200" height="100" class="img-fluid mb-3" style="max-height: 100px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;">
+                                                            <rect width="200" height="100" fill="#f8f9fa"/>
+                                                            <text x="100" y="55" text-anchor="middle" fill="#6c757d" font-family="Arial, sans-serif" font-size="14">Site Logo</text>
+                                                        </svg>
+                                                        <div>
+                                                            <input type="file" class="form-control d-none" id="siteLogo" name="site_logo" accept="image/*">
+                                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="document.getElementById('siteLogo').click()">
+                                                                <i class="fas fa-upload me-1"></i> Upload Logo
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-outline-danger ms-2">
+                                                                <i class="fas fa-trash-alt me-1"></i> Remove
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-medium">Favicon</label>
+                                                <div class="card p-3 mb-3">
+                                                    <div class="text-center">
+                                                        <svg width="32" height="32" class="img-fluid mb-3" style="max-height: 32px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;">
+                                                            <rect width="32" height="32" fill="#f8f9fa"/>
+                                                            <text x="16" y="20" text-anchor="middle" fill="#6c757d" font-family="Arial, sans-serif" font-size="10">Icon</text>
+                                                        </svg>
+                                                        <div>
+                                                            <input type="file" class="form-control d-none" id="siteFavicon" name="site_favicon" accept="image/*">
+                                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="document.getElementById('siteFavicon').click()">
+                                                                <i class="fas fa-upload me-1"></i> Upload Favicon
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-outline-danger ms-2">
+                                                                <i class="fas fa-trash-alt me-1"></i> Remove
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="storePhone" class="form-label">Store Phone</label>
-                                    <input type="tel" class="form-control" id="storePhone" name="store_phone" value="+1 123-456-7890">
+                            <!-- Contact Information Section -->
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-address-book me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                                    <h6 class="mb-0">Contact Information</h6>
                                 </div>
-                                <div class="col-md-6">
-                                    <label for="storeCurrency" class="form-label">Currency</label>
-                                    <select class="form-select" id="storeCurrency" name="store_currency">
-                                        <option value="USD" selected>USD - US Dollar</option>
-                                        <option value="EUR">EUR - Euro</option>
-                                        <option value="GBP">GBP - British Pound</option>
-                                        <option value="CAD">CAD - Canadian Dollar</option>
-                                        <option value="AUD">AUD - Australian Dollar</option>
-                                    </select>
+                                
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-phone me-2" style="color: var(--primary-color, #930000);"></i>Contact Details</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="contactPhone" class="form-label fw-medium">Phone Number</label>
+                                                <input type="tel" class="form-control" id="contactPhone" name="contact_phone" value="{{ site_settings.contact_phone|default:'+1 123-456-7890' }}" placeholder="+1 123-456-7890">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="contactEmail" class="form-label fw-medium">Email Address</label>
+                                                <input type="email" class="form-control" id="contactEmail" name="contact_email" value="{{ site_settings.contact_email|default:'contact@mybrandstore.com' }}" placeholder="contact@mybrandstore.com">
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="contactAddress" class="form-label fw-medium">Business Address</label>
+                                            <textarea class="form-control" id="contactAddress" name="contact_address" rows="3" placeholder="123 Main Street, City, State 12345, Country">{{ site_settings.contact_address|default:'123 Main Street, City, State 12345, Country' }}</textarea>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             
-                            <div class="mb-3">
-                                <label for="storeAddress" class="form-label">Store Address</label>
-                                <textarea class="form-control" id="storeAddress" name="store_address" rows="3">123 Main Street, City, State 12345, Country</textarea>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="storeDescription" class="form-label">Store Description</label>
-                                <textarea class="form-control" id="storeDescription" name="store_description" rows="3">Your one-stop shop for quality products.</textarea>
-                            </div>
-                            
-                            <div class="row mb-4">
-                                <div class="col-md-6">
-                                    <label for="timeZone" class="form-label">Time Zone</label>
-                                    <select class="form-select" id="timeZone" name="time_zone">
-                                        <option value="UTC" selected>UTC</option>
-                                        <option value="America/New_York">Eastern Time (ET)</option>
-                                        <option value="America/Chicago">Central Time (CT)</option>
-                                        <option value="America/Denver">Mountain Time (MT)</option>
-                                        <option value="America/Los_Angeles">Pacific Time (PT)</option>
-                                        <option value="Europe/London">London (GMT)</option>
-                                    </select>
+                            <!-- Footer Information Section -->
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-window-minimize me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                                    <h6 class="mb-0">Footer Information</h6>
                                 </div>
-                                <div class="col-md-6">
-                                    <label for="dateFormat" class="form-label">Date Format</label>
-                                    <select class="form-select" id="dateFormat" name="date_format">
-                                        <option value="MM/DD/YYYY" selected>MM/DD/YYYY</option>
-                                        <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                                        <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                                    </select>
+                                
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-info-circle me-2" style="color: var(--primary-color, #930000);"></i>Footer Content</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Footer Logo -->
+                                        <div class="mb-3">
+                                            <label class="form-label fw-medium">Footer Logo</label>
+                                            <div class="card p-3 mb-3">
+                                                <div class="text-center">
+                                                    <svg width="150" height="75" class="img-fluid mb-3" style="max-height: 75px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;">
+                                                        <rect width="150" height="75" fill="#f8f9fa"/>
+                                                        <text x="75" y="42" text-anchor="middle" fill="#6c757d" font-family="Arial, sans-serif" font-size="12">Footer Logo</text>
+                                                    </svg>
+                                                    <div>
+                                                        <input type="file" class="form-control d-none" id="footerLogo" name="footer_logo" accept="image/*">
+                                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="document.getElementById('footerLogo').click()">
+                                                            <i class="fas fa-upload me-1"></i> Upload Footer Logo
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger ms-2">
+                                                            <i class="fas fa-trash-alt me-1"></i> Remove
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="footerShortText" class="form-label fw-medium">Footer Short Description</label>
+                                            <textarea class="form-control" id="footerShortText" name="footer_short_text" rows="3" placeholder="Brief description about your store that appears in the footer">{{ site_settings.footer_short_text|default:'Brief description about your store that appears in the footer' }}</textarea>
+                                        </div>
+                                        
+                                        <!-- Social Media Links -->
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="facebookLink" class="form-label fw-medium">
+                                                    <i class="fab fa-facebook-f me-1" style="color: #1877f2;"></i>Facebook Page URL
+                                                </label>
+                                                <input type="url" class="form-control" id="facebookLink" name="facebook_link" value="{{ site_settings.facebook_link|default:'' }}" placeholder="https://facebook.com/yourpage">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="youtubeLink" class="form-label fw-medium">
+                                                    <i class="fab fa-youtube me-1" style="color: #ff0000;"></i>YouTube Channel URL
+                                                </label>
+                                                <input type="url" class="form-control" id="youtubeLink" name="youtube_link" value="{{ site_settings.youtube_link|default:'' }}" placeholder="https://youtube.com/yourchannel">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Quick Links Section -->
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-link me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                                    <h6 class="mb-0">Quick Links Configuration</h6>
+                                </div>
+                                
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-list me-2" style="color: var(--primary-color, #930000);"></i>Quick Links Settings</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="quickLinksTitle" class="form-label fw-medium">Quick Links Section Title</label>
+                                                <input type="text" class="form-control" id="quickLinksTitle" name="quick_links_title" value="{{ site_settings.quick_links_title|default:'Quick Links' }}" placeholder="Quick Links">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="customerServiceTitle" class="form-label fw-medium">Customer Service Section Title</label>
+                                                <input type="text" class="form-control" id="customerServiceTitle" name="customer_service_title" value="{{ site_settings.customer_service_title|default:'Customer Service' }}" placeholder="Customer Service">
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Quick Links Text and URL Fields -->
+                                        <div class="mb-4">
+                                            <h6 class="text-muted mb-3">Quick Links Configuration</h6>
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label for="homeText" class="form-label fw-medium">Home Link Text</label>
+                                                    <input type="text" class="form-control" id="homeText" name="home_text" placeholder="Home">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="homeUrl" class="form-label fw-medium">Home Link URL</label>
+                                                    <input type="url" class="form-control" id="homeUrl" name="home_url" placeholder="/">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="productsText" class="form-label fw-medium">Products Link Text</label>
+                                                    <input type="text" class="form-control" id="productsText" name="products_text" placeholder="Products">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="productsUrl" class="form-label fw-medium">Products Link URL</label>
+                                                    <input type="url" class="form-control" id="productsUrl" name="products_url" placeholder="/products">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="categoriesText" class="form-label fw-medium">Categories Link Text</label>
+                                                    <input type="text" class="form-control" id="categoriesText" name="categories_text" placeholder="Categories">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="categoriesUrl" class="form-label fw-medium">Categories Link URL</label>
+                                                    <input type="url" class="form-control" id="categoriesUrl" name="categories_url" placeholder="/categories">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="aboutText" class="form-label fw-medium">About Us Link Text</label>
+                                                    <input type="text" class="form-control" id="aboutText" name="about_text" placeholder="About Us">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="aboutUrl" class="form-label fw-medium">About Us Link URL</label>
+                                                    <input type="url" class="form-control" id="aboutUrl" name="about_url" placeholder="/about">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="contactText" class="form-label fw-medium">Contact Link Text</label>
+                                                    <input type="text" class="form-control" id="contactText" name="contact_text" placeholder="Contact">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="contactUrl" class="form-label fw-medium">Contact Link URL</label>
+                                                    <input type="url" class="form-control" id="contactUrl" name="contact_url" placeholder="/contact">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Customer Service Links -->
+                                        <div class="mb-3">
+                                            <h6 class="text-muted mb-3">Customer Service Links Configuration</h6>
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label for="trackOrderText" class="form-label fw-medium">Track Order Link Text</label>
+                                                    <input type="text" class="form-control" id="trackOrderText" name="track_order_text" placeholder="Track Order">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="trackOrderUrl" class="form-label fw-medium">Track Order Link URL</label>
+                                                    <input type="url" class="form-control" id="trackOrderUrl" name="track_order_url" placeholder="/track-order">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="returnPolicyText" class="form-label fw-medium">Return Policy Link Text</label>
+                                                    <input type="text" class="form-control" id="returnPolicyText" name="return_policy_text" placeholder="Return Policy">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="returnPolicyUrl" class="form-label fw-medium">Return Policy Link URL</label>
+                                                    <input type="url" class="form-control" id="returnPolicyUrl" name="return_policy_url" placeholder="/return-policy">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="shippingInfoText" class="form-label fw-medium">Shipping Info Link Text</label>
+                                                    <input type="text" class="form-control" id="shippingInfoText" name="shipping_info_text" placeholder="Shipping Info">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="shippingInfoUrl" class="form-label fw-medium">Shipping Info Link URL</label>
+                                                    <input type="url" class="form-control" id="shippingInfoUrl" name="shipping_info_url" placeholder="/shipping-info">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="fraudCheckerText" class="form-label fw-medium">Fraud Checker Link Text</label>
+                                                    <input type="text" class="form-control" id="fraudCheckerText" name="fraud_checker_text" placeholder="Fraud Checker">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="fraudCheckerUrl" class="form-label fw-medium">Fraud Checker Link URL</label>
+                                                    <input type="url" class="form-control" id="fraudCheckerUrl" name="fraud_checker_url" placeholder="/fraud-checker">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="faqText" class="form-label fw-medium">FAQ Link Text</label>
+                                                    <input type="text" class="form-control" id="faqText" name="faq_text" placeholder="FAQ">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="faqUrl" class="form-label fw-medium">FAQ Link URL</label>
+                                                    <input type="url" class="form-control" id="faqUrl" name="faq_url" placeholder="/faq">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Footer Copyright Section -->
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-copyright me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                                    <h6 class="mb-0">Footer Copyright</h6>
+                                </div>
+                                
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-file-alt me-2" style="color: var(--primary-color, #930000);"></i>Copyright Information</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="copyrightText" class="form-label fw-medium">Copyright Text</label>
+                                            <input type="text" class="form-control" id="copyrightText" name="copyright_text" value="{{ site_settings.copyright_text|default:'© 2024 My Brand Store. All rights reserved.' }}" placeholder="© 2024 My Brand Store. All rights reserved.">
+                                            <div class="form-text">Use {year} to automatically display current year</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Home Page - Why Shop With Us Section -->
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-home me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                                    <h6 class="mb-0">Home Page - Why Shop With Us</h6>
+                                </div>
+                                
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-star me-2" style="color: var(--primary-color, #930000);"></i>Features Grid (4 Items)</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="whyShopSectionTitle" class="form-label fw-medium">Section Title</label>
+                                            <input type="text" class="form-control" id="whyShopSectionTitle" name="why_shop_section_title" value="{{ site_settings.why_shop_section_title|default:'Why Shop With Us?' }}" placeholder="Why Shop With Us?">
+                                        </div>
+                                        
+                                        <!-- Feature 1 -->
+                                        <div class="card mb-3">
+                                            <div class="card-header bg-light">
+                                                <h6 class="mb-0"><i class="fas fa-star me-2 text-warning"></i>Feature 1</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <label for="feature1Title" class="form-label fw-medium">Title</label>
+                                                        <input type="text" class="form-control" id="feature1Title" name="feature1_title" value="{{ site_settings.feature1_title|default:'Fast Delivery' }}" placeholder="Fast Delivery">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label for="feature1Subtitle" class="form-label fw-medium">Subtitle</label>
+                                                        <input type="text" class="form-control" id="feature1Subtitle" name="feature1_subtitle" value="{{ site_settings.feature1_subtitle|default:'Quick & reliable shipping' }}" placeholder="Quick & reliable shipping">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Feature 2 -->
+                                        <div class="card mb-3">
+                                            <div class="card-header bg-light">
+                                                <h6 class="mb-0"><i class="fas fa-star me-2 text-warning"></i>Feature 2</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <label for="feature2Title" class="form-label fw-medium">Title</label>
+                                                        <input type="text" class="form-control" id="feature2Title" name="feature2_title" value="{{ site_settings.feature2_title|default:'Quality Products' }}" placeholder="Quality Products">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label for="feature2Subtitle" class="form-label fw-medium">Subtitle</label>
+                                                        <input type="text" class="form-control" id="feature2Subtitle" name="feature2_subtitle" value="{{ site_settings.feature2_subtitle|default:'Premium quality guaranteed' }}" placeholder="Premium quality guaranteed">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Feature 3 -->
+                                        <div class="card mb-3">
+                                            <div class="card-header bg-light">
+                                                <h6 class="mb-0"><i class="fas fa-star me-2 text-warning"></i>Feature 3</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <label for="feature3Title" class="form-label fw-medium">Title</label>
+                                                        <input type="text" class="form-control" id="feature3Title" name="feature3_title" value="{{ site_settings.feature3_title|default:'24/7 Support' }}" placeholder="24/7 Support">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label for="feature3Subtitle" class="form-label fw-medium">Subtitle</label>
+                                                        <input type="text" class="form-control" id="feature3Subtitle" name="feature3_subtitle" value="{{ site_settings.feature3_subtitle|default:'Round the clock assistance' }}" placeholder="Round the clock assistance">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Feature 4 -->
+                                        <div class="card mb-3">
+                                            <div class="card-header bg-light">
+                                                <h6 class="mb-0"><i class="fas fa-star me-2 text-warning"></i>Feature 4</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <label for="feature4Title" class="form-label fw-medium">Title</label>
+                                                        <input type="text" class="form-control" id="feature4Title" name="feature4_title" value="{{ site_settings.feature4_title|default:'Secure Payment' }}" placeholder="Secure Payment">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label for="feature4Subtitle" class="form-label fw-medium">Subtitle</label>
+                                                        <input type="text" class="form-control" id="feature4Subtitle" name="feature4_subtitle" value="{{ site_settings.feature4_subtitle|default:'Safe & secure transactions' }}" placeholder="Safe & secure transactions">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -1288,6 +1625,10 @@ document.addEventListener('DOMContentLoaded', function() {
             saveSettings('general');
         });
         
+        document.getElementById('saveGeneralSettingsBtn').addEventListener('click', function() {
+            saveGeneralSettings();
+        });
+        
         document.getElementById('saveEmailSettingsBtn').addEventListener('click', function() {
             saveSettings('email');
         });
@@ -1341,6 +1682,47 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // General Settings Save Function
+    function saveGeneralSettings() {
+        const form = document.getElementById('generalSettingsForm');
+        const formData = new FormData(form);
+        const button = document.getElementById('saveGeneralSettingsBtn');
+        
+        // Show loading state
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
+        button.disabled = true;
+        
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCsrfToken(),
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(data.message, 'success');
+                // Optionally reload the page to reflect changes
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showAlert(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('An error occurred while saving settings.', 'error');
+        })
+        .finally(() => {
+            // Restore button state
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+
     // Mock functions for API interactions
     function saveSettings(settingType) {
         const form = document.getElementById(`${settingType}SettingsForm`);

@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{% block meta_description %}Professional eCommerce platform with modern design and features{% endblock %}">
-    <title>{% block title %}Professional eCommerce{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}{{ site_settings.site_tagline|default:'Professional eCommerce platform with modern design and features' }}{% endblock %}">
+    <title>{% block title %}{{ site_settings.site_name|default:'Professional eCommerce' }}{% endblock %}</title>
     
     <!-- Load static files -->
     {% load static %}
@@ -15,7 +15,11 @@
     <link rel="stylesheet" href="{% static 'frontend/css/wishlist.css' %}">
     
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="{% static 'frontend/images/favicon.ico' %}">
+    {% if site_settings.site_favicon %}
+        <link rel="icon" type="image/x-icon" href="{{ site_settings.site_favicon.url }}">
+    {% else %}
+        <link rel="icon" type="image/x-icon" href="{% static 'frontend/images/favicon.ico' %}">
+    {% endif %}>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -78,54 +82,71 @@
             <div class="footer-content">
                 <!-- Company Info -->
                 <div class="footer-section">
-                    <h3>eCommerce</h3>
-                    <p>Your trusted online shopping destination with quality products and excellent service.</p>
+                    {% if site_settings.footer_logo %}
+                        <img src="{{ site_settings.footer_logo.url }}" alt="{{ site_settings.site_name }}" style="max-height: 50px; margin-bottom: 1rem;">
+                    {% else %}
+                        <h3>{{ site_settings.site_name|default:"logo" }}</h3>
+                    {% endif %}
+                    <p>{{ site_settings.footer_short_text|default:"Your trusted online shopping destination with quality products and excellent service." }}</p>
                     <div class="social-links">
-                        <a href="#"><i class="fab fa-facebook"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                        {% if site_settings.facebook_link %}
+                            <a href="{{ site_settings.facebook_link }}" target="_blank"><i class="fab fa-facebook"></i></a>
+                        {% endif %}
+                        {% if site_settings.youtube_link %}
+                            <a href="{{ site_settings.youtube_link }}" target="_blank"><i class="fab fa-youtube"></i></a>
+                        {% endif %}
                     </div>
                 </div>
                 
                 <!-- Quick Links -->
                 <div class="footer-section">
-                    <h3>Quick Links</h3>
+                    <h3>{{ site_settings.quick_links_title|default:"Quick Links" }}</h3>
                     <ul>
-                        <li><a href="{% url 'frontend:home' %}">Home</a></li>
-                        <li><a href="{% url 'frontend:products' %}">Products</a></li>
-                        <li><a href="{% url 'frontend:categories' %}">Categories</a></li>
-                        <li><a href="{% url 'frontend:about' %}">About Us</a></li>
-                        <li><a href="{% url 'frontend:contact' %}">Contact</a></li>
+                        <li><a href="{{ site_settings.home_url|default:'/' }}">{{ site_settings.home_text|default:"Home" }}</a></li>
+                        <li><a href="{{ site_settings.products_url|default:'/products' }}">{{ site_settings.products_text|default:"Products" }}</a></li>
+                        <li><a href="{{ site_settings.categories_url|default:'/categories' }}">{{ site_settings.categories_text|default:"Categories" }}</a></li>
+                        <li><a href="{{ site_settings.about_url|default:'/about' }}">{{ site_settings.about_text|default:"About Us" }}</a></li>
+                        <li><a href="{{ site_settings.contact_url|default:'/contact' }}">{{ site_settings.contact_text|default:"Contact" }}</a></li>
                     </ul>
                 </div>
                 
                 <!-- Customer Service -->
                 <div class="footer-section">
-                    <h3>Customer Service</h3>
+                    <h3>{{ site_settings.customer_service_title|default:"Customer Service" }}</h3>
                     <ul>
-                        <li><a href="{% url 'frontend:order_tracking' %}">Track Order</a></li>
-                        <li><a href="#">Return Policy</a></li>
-                        <li><a href="#">Shipping Info</a></li>
-                        <li><a href="/fraud-checker/">Fraud Checker</a></li>
-                        <li><a href="#">FAQ</a></li>
+                        <li><a href="{{ site_settings.track_order_url|default:'/track-order' }}">{{ site_settings.track_order_text|default:"Track Order" }}</a></li>
+                        <li><a href="{{ site_settings.return_policy_url|default:'/return-policy' }}">{{ site_settings.return_policy_text|default:"Return Policy" }}</a></li>
+                        <li><a href="{{ site_settings.shipping_info_url|default:'/shipping-info' }}">{{ site_settings.shipping_info_text|default:"Shipping Info" }}</a></li>
+                        <li><a href="{{ site_settings.fraud_checker_url|default:'/fraud-checker' }}">{{ site_settings.fraud_checker_text|default:"Fraud Checker" }}</a></li>
+                        <li><a href="{{ site_settings.faq_url|default:'/faq' }}">{{ site_settings.faq_text|default:"FAQ" }}</a></li>
                     </ul>
                 </div>
                 
                 <!-- Contact Info -->
                 <div class="footer-section">
                     <h3>Contact Info</h3>
-                    <div class="contact-info">
-                        <p><i class="fas fa-phone"></i> +1 (555) 123-4567</p>
-                        <p><i class="fas fa-envelope"></i> support@ecommerce.com</p>
-                        <p><i class="fas fa-map-marker-alt"></i> 123 Business St, City, State 12345</p>
+                    <div class="contact-info-footer" >
+                        <p>
+                        <i class="fas fa-phone"></i>
+                        <a style="color: var(--light-color); text-decoration: none;" href="tel:{{ site_settings.contact_phone|default:'01777173040' }}">
+                            {{ site_settings.contact_phone|default:"01777173040" }}
+                        </a>
+                        </p>
+
+                        <p>
+                        <i class="fas fa-envelope"></i>
+                        <a style="color: var(--light-color); text-decoration: none;" href="mailto:{{ site_settings.contact_email|default:'contact@manobbazar.com' }}">
+                            {{ site_settings.contact_email|default:"contact@manobbazar.com" }}
+                        </a>
+                        </p>
+                        <p><i class="fas fa-map-marker-alt"></i> {{ site_settings.contact_address|default:"Hanif Ali mor, Uttara 10, Dhaka 1230" }}</p>
                     </div>
                 </div>
             </div>
             
             <!-- Footer Bottom -->
             <div class="footer-bottom">
-                <p>&copy; 2025 eCommerce Platform. All rights reserved. | 
+                <p>{{ site_settings.get_copyright_text_with_year|default:"© 2025 eCommerce Platform. All rights reserved." }} | 
                    <a href="#">Privacy Policy</a> | 
                    <a href="#">Terms of Service</a>
                 </p>

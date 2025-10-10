@@ -8,10 +8,16 @@
             <div class="top-bar-content">
                 <div class="top-bar-left">
                     <span class="contact-info">
-                        <i class="fas fa-phone"></i> +1 (555) 123-4567
+                        <p><i class="fas fa-phone"></i> <a style="color: var(--light-color); text-decoration: none;" href="tel:{{ site_settings.contact_phone|default:'01777173040' }}">
+                            {{ site_settings.contact_phone|default:"01777173040" }}
+                        </a></p>
+                        
                     </span>
                     <span class="contact-info">
-                        <i class="fas fa-envelope"></i> support@ecommerce.com
+                        <p><i class="fas fa-envelope"></i>  <a style="color: var(--light-color); text-decoration: none;" href="mailto:{{ site_settings.contact_email|default:'contact@manobbazar.com' }}">
+                            {{ site_settings.contact_email|default:"contact@manobbazar.com" }}
+                        </a>
+                    </p>
                     </span>
                 </div>
                 <div class="top-bar-right">

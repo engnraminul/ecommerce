@@ -143,63 +143,43 @@
     <!-- Features Section -->
     <section class="section bg-light">
         <div class="container">
-            <h2 class="section-title">Why Shop With Us?</h2>
+            <h2 class="section-title">{{ site_settings.why_shop_section_title|default:"Why Shop With Us?" }}</h2>
             <div class="features-grid">
                 <div class="feature-card">
                     <div class="feature-icon">
                         <i class="fas fa-shipping-fast"></i>
                     </div>
-                    <h3>Fast Shipping</h3>
-                    <p>Free shipping on orders over $50. Express delivery available.</p>
+                    <h3>{{ site_settings.feature1_title|default:"Fast Shipping" }}</h3>
+                    <p>{{ site_settings.feature1_subtitle|default:"Free shipping on orders over $50. Express delivery available." }}</p>
                 </div>
                 
                 <div class="feature-card">
                     <div class="feature-icon">
                         <i class="fas fa-shield-alt"></i>
                     </div>
-                    <h3>Secure Payment</h3>
-                    <p>Your payment information is safe and secure with us.</p>
+                    <h3>{{ site_settings.feature2_title|default:"Secure Payment" }}</h3>
+                    <p>{{ site_settings.feature2_subtitle|default:"Your payment information is safe and secure with us." }}</p>
                 </div>
                 
                 <div class="feature-card">
                     <div class="feature-icon">
                         <i class="fas fa-undo"></i>
                     </div>
-                    <h3>Easy Returns</h3>
-                    <p>Not satisfied? Return within 30 days for a full refund.</p>
+                    <h3>{{ site_settings.feature3_title|default:"Easy Returns" }}</h3>
+                    <p>{{ site_settings.feature3_subtitle|default:"Not satisfied? Return within 30 days for a full refund." }}</p>
                 </div>
                 
                 <div class="feature-card">
                     <div class="feature-icon">
                         <i class="fas fa-headset"></i>
                     </div>
-                    <h3>24/7 Support</h3>
-                    <p>Our customer service team is here to help you anytime.</p>
+                    <h3>{{ site_settings.feature4_title|default:"24/7 Support" }}</h3>
+                    <p>{{ site_settings.feature4_subtitle|default:"Our customer service team is here to help you anytime." }}</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Newsletter Section -->
-    <section class="section newsletter-section">
-        <div class="container">
-            <div class="newsletter-content">
-                <h2>Stay Updated</h2>
-                <p>Subscribe to our newsletter for the latest deals and new arrivals.</p>
-                <form class="newsletter-form" id="newsletterForm">
-                    <div class="newsletter-input">
-                        <input type="email" 
-                               name="email" 
-                               placeholder="Enter your email address" 
-                               required>
-                        <button type="submit" class="btn btn-primary">
-                            Subscribe
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </section>
 {% endblock %}
 
 {% block extra_css %}

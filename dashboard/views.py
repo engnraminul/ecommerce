@@ -28,7 +28,7 @@ from products.models import Product, ProductVariant, ProductImage, Category
 from orders.models import Order, OrderItem
 from incomplete_orders.models import IncompleteOrder, IncompleteOrderItem, IncompleteShippingAddress
 from users.models import User
-from settings.models import CheckoutCustomization
+from settings.models import CheckoutCustomization, SiteSettings
 
 # Helper functions for stock management
 def restock_order_items(order):
@@ -2129,12 +2129,111 @@ def dashboard_statistics(request):
 @login_required
 @user_passes_test(is_admin)
 def dashboard_settings(request):
+    if request.method == 'POST':
+        return handle_general_settings_update(request)
+    
     settings = DashboardSetting.objects.all()
+    site_settings = SiteSettings.get_active_settings()
+    
     context = {
         'settings': settings,
+        'site_settings': site_settings,
         'active_page': 'settings'
     }
     return render(request, 'dashboard/settings.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def handle_general_settings_update(request):
+    """Handle the general settings form submission"""
+    try:
+        # Get or create site settings instance
+        site_settings = SiteSettings.get_active_settings()
+        if not site_settings.pk:
+            site_settings = SiteSettings()
+        
+        # Update site identity fields
+        site_settings.site_name = request.POST.get('site_name', site_settings.site_name)
+        site_settings.site_tagline = request.POST.get('site_tagline', site_settings.site_tagline)
+        
+        # Handle file uploads
+        if 'site_logo' in request.FILES:
+            site_settings.site_logo = request.FILES['site_logo']
+        if 'site_favicon' in request.FILES:
+            site_settings.site_favicon = request.FILES['site_favicon']
+        if 'footer_logo' in request.FILES:
+            site_settings.footer_logo = request.FILES['footer_logo']
+        
+        # Update contact information
+        site_settings.contact_phone = request.POST.get('contact_phone', site_settings.contact_phone)
+        site_settings.contact_email = request.POST.get('contact_email', site_settings.contact_email)
+        site_settings.contact_address = request.POST.get('contact_address', site_settings.contact_address)
+        
+        # Update footer information
+        site_settings.footer_short_text = request.POST.get('footer_short_text', site_settings.footer_short_text)
+        site_settings.facebook_link = request.POST.get('facebook_link', site_settings.facebook_link)
+        site_settings.youtube_link = request.POST.get('youtube_link', site_settings.youtube_link)
+        
+        # Update quick links configuration
+        site_settings.quick_links_title = request.POST.get('quick_links_title', site_settings.quick_links_title)
+        site_settings.customer_service_title = request.POST.get('customer_service_title', site_settings.customer_service_title)
+        
+        # Update quick links
+        site_settings.home_text = request.POST.get('home_text', site_settings.home_text)
+        site_settings.home_url = request.POST.get('home_url', site_settings.home_url)
+        site_settings.products_text = request.POST.get('products_text', site_settings.products_text)
+        site_settings.products_url = request.POST.get('products_url', site_settings.products_url)
+        site_settings.categories_text = request.POST.get('categories_text', site_settings.categories_text)
+        site_settings.categories_url = request.POST.get('categories_url', site_settings.categories_url)
+        site_settings.about_text = request.POST.get('about_text', site_settings.about_text)
+        site_settings.about_url = request.POST.get('about_url', site_settings.about_url)
+        site_settings.contact_text = request.POST.get('contact_text', site_settings.contact_text)
+        site_settings.contact_url = request.POST.get('contact_url', site_settings.contact_url)
+        
+        # Update customer service links
+        site_settings.track_order_text = request.POST.get('track_order_text', site_settings.track_order_text)
+        site_settings.track_order_url = request.POST.get('track_order_url', site_settings.track_order_url)
+        site_settings.return_policy_text = request.POST.get('return_policy_text', site_settings.return_policy_text)
+        site_settings.return_policy_url = request.POST.get('return_policy_url', site_settings.return_policy_url)
+        site_settings.shipping_info_text = request.POST.get('shipping_info_text', site_settings.shipping_info_text)
+        site_settings.shipping_info_url = request.POST.get('shipping_info_url', site_settings.shipping_info_url)
+        site_settings.fraud_checker_text = request.POST.get('fraud_checker_text', site_settings.fraud_checker_text)
+        site_settings.fraud_checker_url = request.POST.get('fraud_checker_url', site_settings.fraud_checker_url)
+        site_settings.faq_text = request.POST.get('faq_text', site_settings.faq_text)
+        site_settings.faq_url = request.POST.get('faq_url', site_settings.faq_url)
+        
+        # Update footer copyright
+        site_settings.copyright_text = request.POST.get('copyright_text', site_settings.copyright_text)
+        
+        # Update home page features
+        site_settings.why_shop_section_title = request.POST.get('why_shop_section_title', site_settings.why_shop_section_title)
+        site_settings.feature1_title = request.POST.get('feature1_title', site_settings.feature1_title)
+        site_settings.feature1_subtitle = request.POST.get('feature1_subtitle', site_settings.feature1_subtitle)
+        site_settings.feature2_title = request.POST.get('feature2_title', site_settings.feature2_title)
+        site_settings.feature2_subtitle = request.POST.get('feature2_subtitle', site_settings.feature2_subtitle)
+        site_settings.feature3_title = request.POST.get('feature3_title', site_settings.feature3_title)
+        site_settings.feature3_subtitle = request.POST.get('feature3_subtitle', site_settings.feature3_subtitle)
+        site_settings.feature4_title = request.POST.get('feature4_title', site_settings.feature4_title)
+        site_settings.feature4_subtitle = request.POST.get('feature4_subtitle', site_settings.feature4_subtitle)
+        
+        # Set as active and save
+        site_settings.is_active = True
+        site_settings.save()
+        
+        # Deactivate other settings
+        SiteSettings.objects.exclude(pk=site_settings.pk).update(is_active=False)
+        
+        return JsonResponse({
+            'success': True, 
+            'message': 'Settings updated successfully!'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False, 
+            'message': f'Error updating settings: {str(e)}'
+        })
+
 
 @login_required
 @user_passes_test(is_admin)

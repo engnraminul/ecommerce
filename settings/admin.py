@@ -1,5 +1,67 @@
 from django.contrib import admin
-from .models import Curier, CheckoutCustomization
+from .models import SiteSettings, Curier, CheckoutCustomization
+
+@admin.register(SiteSettings)
+class SiteSettingsAdmin(admin.ModelAdmin):
+    list_display = ('site_name', 'is_active', 'updated_at')
+    list_filter = ('is_active', 'created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at')
+    
+    fieldsets = (
+        ('Site Identity', {
+            'fields': ('site_name', 'site_tagline', 'site_logo', 'site_favicon')
+        }),
+        ('Contact Information', {
+            'fields': ('contact_phone', 'contact_email', 'contact_address')
+        }),
+        ('Footer Information', {
+            'fields': ('footer_logo', 'footer_short_text', 'facebook_link', 'youtube_link')
+        }),
+        ('Quick Links Configuration', {
+            'fields': (
+                'quick_links_title', 'customer_service_title',
+                ('home_text', 'home_url'),
+                ('products_text', 'products_url'),
+                ('categories_text', 'categories_url'),
+                ('about_text', 'about_url'),
+                ('contact_text', 'contact_url'),
+            )
+        }),
+        ('Customer Service Links', {
+            'fields': (
+                ('track_order_text', 'track_order_url'),
+                ('return_policy_text', 'return_policy_url'),
+                ('shipping_info_text', 'shipping_info_url'),
+                ('fraud_checker_text', 'fraud_checker_url'),
+                ('faq_text', 'faq_url'),
+            ),
+            'classes': ('collapse',)
+        }),
+        ('Footer Copyright', {
+            'fields': ('copyright_text',),
+            'description': 'Use {year} to automatically display current year'
+        }),
+        ('Home Page Features', {
+            'fields': (
+                'why_shop_section_title',
+                ('feature1_title', 'feature1_subtitle'),
+                ('feature2_title', 'feature2_subtitle'),
+                ('feature3_title', 'feature3_subtitle'),
+                ('feature4_title', 'feature4_subtitle'),
+            ),
+            'classes': ('collapse',)
+        }),
+        ('Settings', {
+            'fields': ('is_active',)
+        }),
+    )
+
+    def save_model(self, request, obj, form, change):
+        # Deactivate all other site settings if this one is being activated
+        if obj.is_active:
+            SiteSettings.objects.exclude(pk=obj.pk).update(is_active=False)
+        super().save_model(request, obj, form, change)
+
 
 @admin.register(Curier)
 class CurierAdmin(admin.ModelAdmin):
