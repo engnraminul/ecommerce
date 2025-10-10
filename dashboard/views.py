@@ -2156,13 +2156,18 @@ def handle_general_settings_update(request):
         site_settings.site_name = request.POST.get('site_name', site_settings.site_name)
         site_settings.site_tagline = request.POST.get('site_tagline', site_settings.site_tagline)
         
-        # Handle file uploads
-        if 'site_logo' in request.FILES:
-            site_settings.site_logo = request.FILES['site_logo']
-        if 'site_favicon' in request.FILES:
-            site_settings.site_favicon = request.FILES['site_favicon']
-        if 'footer_logo' in request.FILES:
-            site_settings.footer_logo = request.FILES['footer_logo']
+        # Handle image paths (text fields instead of file uploads)
+        site_logo_path = request.POST.get('site_logo', '').strip()
+        if site_logo_path:
+            site_settings.site_logo = site_logo_path
+            
+        site_favicon_path = request.POST.get('site_favicon', '').strip()
+        if site_favicon_path:
+            site_settings.site_favicon = site_favicon_path
+            
+        footer_logo_path = request.POST.get('footer_logo', '').strip()
+        if footer_logo_path:
+            site_settings.footer_logo = footer_logo_path
         
         # Update contact information
         site_settings.contact_phone = request.POST.get('contact_phone', site_settings.contact_phone)

@@ -66,43 +66,43 @@
                                         <!-- Logo and Favicon Upload -->
                                         <div class="row mb-3">
                                             <div class="col-md-6">
-                                                <label class="form-label fw-medium">Site Logo</label>
-                                                <div class="card p-3 mb-3">
-                                                    <div class="text-center">
-                                                        <svg width="200" height="100" class="img-fluid mb-3" style="max-height: 100px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;">
-                                                            <rect width="200" height="100" fill="#f8f9fa"/>
-                                                            <text x="100" y="55" text-anchor="middle" fill="#6c757d" font-family="Arial, sans-serif" font-size="14">Site Logo</text>
-                                                        </svg>
-                                                        <div>
-                                                            <input type="file" class="form-control d-none" id="siteLogo" name="site_logo" accept="image/*">
-                                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="document.getElementById('siteLogo').click()">
-                                                                <i class="fas fa-upload me-1"></i> Upload Logo
-                                                            </button>
-                                                            <button type="button" class="btn btn-sm btn-outline-danger ms-2">
-                                                                <i class="fas fa-trash-alt me-1"></i> Remove
-                                                            </button>
-                                                        </div>
-                                                    </div>
+                                                <label for="siteLogo" class="form-label fw-medium">Site Logo Path</label>
+                                                <div class="input-group mb-3">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-image"></i>
+                                                    </span>
+                                                    <input type="text" class="form-control" id="siteLogo" name="site_logo" value="{{ site_settings.site_logo|default:'' }}" placeholder="media/logos/site-logo.png">
+                                                    <button type="button" class="btn btn-outline-secondary" onclick="openMediaLibrary('siteLogo')">
+                                                        <i class="fas fa-folder-open me-1"></i> Browse
+                                                    </button>
+                                                </div>
+                                                <!-- Logo Preview -->
+                                                <div class="logo-preview" id="siteLogoPreview">
+                                                    {% if site_settings.site_logo %}
+                                                        <img src="{{ site_settings.site_logo }}" alt="Site Logo" style="max-height: 60px; border: 1px solid #dee2e6; border-radius: 4px;">
+                                                    {% else %}
+                                                        <div class="text-muted small">No logo selected</div>
+                                                    {% endif %}
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
-                                                <label class="form-label fw-medium">Favicon</label>
-                                                <div class="card p-3 mb-3">
-                                                    <div class="text-center">
-                                                        <svg width="32" height="32" class="img-fluid mb-3" style="max-height: 32px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;">
-                                                            <rect width="32" height="32" fill="#f8f9fa"/>
-                                                            <text x="16" y="20" text-anchor="middle" fill="#6c757d" font-family="Arial, sans-serif" font-size="10">Icon</text>
-                                                        </svg>
-                                                        <div>
-                                                            <input type="file" class="form-control d-none" id="siteFavicon" name="site_favicon" accept="image/*">
-                                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="document.getElementById('siteFavicon').click()">
-                                                                <i class="fas fa-upload me-1"></i> Upload Favicon
-                                                            </button>
-                                                            <button type="button" class="btn btn-sm btn-outline-danger ms-2">
-                                                                <i class="fas fa-trash-alt me-1"></i> Remove
-                                                            </button>
-                                                        </div>
-                                                    </div>
+                                                <label for="siteFavicon" class="form-label fw-medium">Site Favicon Path</label>
+                                                <div class="input-group mb-3">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-star"></i>
+                                                    </span>
+                                                    <input type="text" class="form-control" id="siteFavicon" name="site_favicon" value="{{ site_settings.site_favicon|default:'' }}" placeholder="media/icons/favicon.ico">
+                                                    <button type="button" class="btn btn-outline-secondary" onclick="openMediaLibrary('siteFavicon')">
+                                                        <i class="fas fa-folder-open me-1"></i> Browse
+                                                    </button>
+                                                </div>
+                                                <!-- Favicon Preview -->
+                                                <div class="favicon-preview" id="siteFaviconPreview">
+                                                    {% if site_settings.site_favicon %}
+                                                        <img src="{{ site_settings.site_favicon }}" alt="Site Favicon" style="max-height: 32px; border: 1px solid #dee2e6; border-radius: 4px;">
+                                                    {% else %}
+                                                        <div class="text-muted small">No favicon selected</div>
+                                                    {% endif %}
                                                 </div>
                                             </div>
                                         </div>
@@ -154,23 +154,23 @@
                                     <div class="card-body">
                                         <!-- Footer Logo -->
                                         <div class="mb-3">
-                                            <label class="form-label fw-medium">Footer Logo</label>
-                                            <div class="card p-3 mb-3">
-                                                <div class="text-center">
-                                                    <svg width="150" height="75" class="img-fluid mb-3" style="max-height: 75px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;">
-                                                        <rect width="150" height="75" fill="#f8f9fa"/>
-                                                        <text x="75" y="42" text-anchor="middle" fill="#6c757d" font-family="Arial, sans-serif" font-size="12">Footer Logo</text>
-                                                    </svg>
-                                                    <div>
-                                                        <input type="file" class="form-control d-none" id="footerLogo" name="footer_logo" accept="image/*">
-                                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="document.getElementById('footerLogo').click()">
-                                                            <i class="fas fa-upload me-1"></i> Upload Footer Logo
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-outline-danger ms-2">
-                                                            <i class="fas fa-trash-alt me-1"></i> Remove
-                                                        </button>
-                                                    </div>
-                                                </div>
+                                            <label for="footerLogo" class="form-label fw-medium">Footer Logo Path</label>
+                                            <div class="input-group mb-3">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-image"></i>
+                                                </span>
+                                                <input type="text" class="form-control" id="footerLogo" name="footer_logo" value="{{ site_settings.footer_logo|default:'' }}" placeholder="media/logos/footer-logo.png">
+                                                <button type="button" class="btn btn-outline-secondary" onclick="openMediaLibrary('footerLogo')">
+                                                    <i class="fas fa-folder-open me-1"></i> Browse
+                                                </button>
+                                            </div>
+                                            <!-- Footer Logo Preview -->
+                                            <div class="footer-logo-preview" id="footerLogoPreview">
+                                                {% if site_settings.footer_logo %}
+                                                    <img src="{{ site_settings.footer_logo }}" alt="Footer Logo" style="max-height: 50px; border: 1px solid #dee2e6; border-radius: 4px;">
+                                                {% else %}
+                                                    <div class="text-muted small">No footer logo selected</div>
+                                                {% endif %}
                                             </div>
                                         </div>
                                         
@@ -227,43 +227,43 @@
                                             <div class="row g-3">
                                                 <div class="col-md-6">
                                                     <label for="homeText" class="form-label fw-medium">Home Link Text</label>
-                                                    <input type="text" class="form-control" id="homeText" name="home_text" placeholder="Home">
+                                                    <input type="text" class="form-control" id="homeText" name="home_text" value="{{ site_settings.home_text|default:'Home' }}" placeholder="Home">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label for="homeUrl" class="form-label fw-medium">Home Link URL</label>
-                                                    <input type="url" class="form-control" id="homeUrl" name="home_url" placeholder="/">
+                                                    <input type="text" class="form-control" id="homeUrl" name="home_url" value="{{ site_settings.home_url|default:'/' }}" placeholder="/">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label for="productsText" class="form-label fw-medium">Products Link Text</label>
-                                                    <input type="text" class="form-control" id="productsText" name="products_text" placeholder="Products">
+                                                    <input type="text" class="form-control" id="productsText" name="products_text" value="{{ site_settings.products_text|default:'Products' }}" placeholder="Products">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label for="productsUrl" class="form-label fw-medium">Products Link URL</label>
-                                                    <input type="url" class="form-control" id="productsUrl" name="products_url" placeholder="/products">
+                                                    <input type="text" class="form-control" id="productsUrl" name="products_url" value="{{ site_settings.products_url|default:'/products' }}" placeholder="/products">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label for="categoriesText" class="form-label fw-medium">Categories Link Text</label>
-                                                    <input type="text" class="form-control" id="categoriesText" name="categories_text" placeholder="Categories">
+                                                    <input type="text" class="form-control" id="categoriesText" name="categories_text" value="{{ site_settings.categories_text|default:'Categories' }}" placeholder="Categories">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label for="categoriesUrl" class="form-label fw-medium">Categories Link URL</label>
-                                                    <input type="url" class="form-control" id="categoriesUrl" name="categories_url" placeholder="/categories">
+                                                    <input type="text" class="form-control" id="categoriesUrl" name="categories_url" value="{{ site_settings.categories_url|default:'/categories' }}" placeholder="/categories">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label for="aboutText" class="form-label fw-medium">About Us Link Text</label>
-                                                    <input type="text" class="form-control" id="aboutText" name="about_text" placeholder="About Us">
+                                                    <input type="text" class="form-control" id="aboutText" name="about_text" value="{{ site_settings.about_text|default:'About Us' }}" placeholder="About Us">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label for="aboutUrl" class="form-label fw-medium">About Us Link URL</label>
-                                                    <input type="url" class="form-control" id="aboutUrl" name="about_url" placeholder="/about">
+                                                    <input type="text" class="form-control" id="aboutUrl" name="about_url" value="{{ site_settings.about_url|default:'/about' }}" placeholder="/about">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label for="contactText" class="form-label fw-medium">Contact Link Text</label>
-                                                    <input type="text" class="form-control" id="contactText" name="contact_text" placeholder="Contact">
+                                                    <input type="text" class="form-control" id="contactText" name="contact_text" value="{{ site_settings.contact_text|default:'Contact' }}" placeholder="Contact">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label for="contactUrl" class="form-label fw-medium">Contact Link URL</label>
-                                                    <input type="url" class="form-control" id="contactUrl" name="contact_url" placeholder="/contact">
+                                                    <input type="text" class="form-control" id="contactUrl" name="contact_url" value="{{ site_settings.contact_url|default:'/contact' }}" placeholder="/contact">
                                                 </div>
                                             </div>
                                         </div>
@@ -274,43 +274,43 @@
                                             <div class="row g-3">
                                                 <div class="col-md-6">
                                                     <label for="trackOrderText" class="form-label fw-medium">Track Order Link Text</label>
-                                                    <input type="text" class="form-control" id="trackOrderText" name="track_order_text" placeholder="Track Order">
+                                                    <input type="text" class="form-control" id="trackOrderText" name="track_order_text" value="{{ site_settings.track_order_text|default:'Track Order' }}" placeholder="Track Order">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label for="trackOrderUrl" class="form-label fw-medium">Track Order Link URL</label>
-                                                    <input type="url" class="form-control" id="trackOrderUrl" name="track_order_url" placeholder="/track-order">
+                                                    <input type="text" class="form-control" id="trackOrderUrl" name="track_order_url" value="{{ site_settings.track_order_url|default:'/track-order' }}" placeholder="/track-order">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label for="returnPolicyText" class="form-label fw-medium">Return Policy Link Text</label>
-                                                    <input type="text" class="form-control" id="returnPolicyText" name="return_policy_text" placeholder="Return Policy">
+                                                    <input type="text" class="form-control" id="returnPolicyText" name="return_policy_text" value="{{ site_settings.return_policy_text|default:'Return Policy' }}" placeholder="Return Policy">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label for="returnPolicyUrl" class="form-label fw-medium">Return Policy Link URL</label>
-                                                    <input type="url" class="form-control" id="returnPolicyUrl" name="return_policy_url" placeholder="/return-policy">
+                                                    <input type="text" class="form-control" id="returnPolicyUrl" name="return_policy_url" value="{{ site_settings.return_policy_url|default:'/return-policy' }}" placeholder="/return-policy">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label for="shippingInfoText" class="form-label fw-medium">Shipping Info Link Text</label>
-                                                    <input type="text" class="form-control" id="shippingInfoText" name="shipping_info_text" placeholder="Shipping Info">
+                                                    <input type="text" class="form-control" id="shippingInfoText" name="shipping_info_text" value="{{ site_settings.shipping_info_text|default:'Shipping Info' }}" placeholder="Shipping Info">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label for="shippingInfoUrl" class="form-label fw-medium">Shipping Info Link URL</label>
-                                                    <input type="url" class="form-control" id="shippingInfoUrl" name="shipping_info_url" placeholder="/shipping-info">
+                                                    <input type="text" class="form-control" id="shippingInfoUrl" name="shipping_info_url" value="{{ site_settings.shipping_info_url|default:'/shipping-info' }}" placeholder="/shipping-info">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label for="fraudCheckerText" class="form-label fw-medium">Fraud Checker Link Text</label>
-                                                    <input type="text" class="form-control" id="fraudCheckerText" name="fraud_checker_text" placeholder="Fraud Checker">
+                                                    <input type="text" class="form-control" id="fraudCheckerText" name="fraud_checker_text" value="{{ site_settings.fraud_checker_text|default:'Fraud Checker' }}" placeholder="Fraud Checker">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label for="fraudCheckerUrl" class="form-label fw-medium">Fraud Checker Link URL</label>
-                                                    <input type="url" class="form-control" id="fraudCheckerUrl" name="fraud_checker_url" placeholder="/fraud-checker">
+                                                    <input type="text" class="form-control" id="fraudCheckerUrl" name="fraud_checker_url" value="{{ site_settings.fraud_checker_url|default:'/fraud-checker' }}" placeholder="/fraud-checker">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label for="faqText" class="form-label fw-medium">FAQ Link Text</label>
-                                                    <input type="text" class="form-control" id="faqText" name="faq_text" placeholder="FAQ">
+                                                    <input type="text" class="form-control" id="faqText" name="faq_text" value="{{ site_settings.faq_text|default:'FAQ' }}" placeholder="FAQ">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label for="faqUrl" class="form-label fw-medium">FAQ Link URL</label>
-                                                    <input type="url" class="form-control" id="faqUrl" name="faq_url" placeholder="/faq">
+                                                    <input type="text" class="form-control" id="faqUrl" name="faq_url" value="{{ site_settings.faq_url|default:'/faq' }}" placeholder="/faq">
                                                 </div>
                                             </div>
                                         </div>
@@ -1721,6 +1721,253 @@ document.addEventListener('DOMContentLoaded', function() {
             button.innerHTML = originalText;
             button.disabled = false;
         });
+    }
+
+    // Media Library Functions
+    function openMediaLibrary(inputId) {
+        // Simple media library simulation - you can replace this with your actual media library
+        const mediaFiles = [
+            'media/logos/site-logo.png',
+            'media/logos/footer-logo.png', 
+            'media/icons/favicon.ico',
+            'media/images/banner.jpg',
+            'media/images/product-placeholder.png'
+        ];
+        
+        let modalHtml = `
+            <div class="modal fade" id="mediaLibraryModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="fas fa-images me-2"></i>Media Library
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="media-grid">
+                                        ${mediaFiles.map(file => `
+                                            <div class="media-item" onclick="selectMedia('${file}', '${inputId}')">
+                                                <div class="media-thumbnail">
+                                                    <img src="/${file}" alt="${file}" style="width: 100%; height: 80px; object-fit: cover; border-radius: 4px;">
+                                                </div>
+                                                <div class="media-name">${file.split('/').pop()}</div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="media-details">
+                                        <h6>Manual Path Entry</h6>
+                                        <div class="mb-3">
+                                            <label for="manualPath" class="form-label">Enter Image Path:</label>
+                                            <input type="text" class="form-control" id="manualPath" placeholder="media/images/your-image.jpg">
+                                        </div>
+                                        <button type="button" class="btn btn-primary btn-sm" onclick="selectManualPath('${inputId}')">
+                                            <i class="fas fa-check me-1"></i>Use This Path
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <style>
+                .media-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                    gap: 15px;
+                    max-height: 400px;
+                    overflow-y: auto;
+                }
+                .media-item {
+                    cursor: pointer;
+                    border: 2px solid transparent;
+                    border-radius: 8px;
+                    padding: 8px;
+                    transition: all 0.3s ease;
+                }
+                .media-item:hover {
+                    border-color: var(--primary-color, #930000);
+                    background-color: #f8f9fa;
+                }
+                .media-name {
+                    font-size: 12px;
+                    text-align: center;
+                    margin-top: 5px;
+                    word-break: break-word;
+                }
+                .media-details {
+                    background-color: #f8f9fa;
+                    padding: 15px;
+                    border-radius: 8px;
+                }
+            </style>
+        `;
+        
+        // Remove existing modal if present
+        const existingModal = document.getElementById('mediaLibraryModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Add modal to DOM
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('mediaLibraryModal'));
+        modal.show();
+    }
+    
+    function selectMedia(filePath, inputId) {
+        document.getElementById(inputId).value = filePath;
+        updateImagePreview(inputId, filePath);
+        
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('mediaLibraryModal'));
+        modal.hide();
+        
+        showAlert('Image selected successfully!', 'success');
+    }
+    
+    function selectManualPath(inputId) {
+        const manualPath = document.getElementById('manualPath').value.trim();
+        if (manualPath) {
+            document.getElementById(inputId).value = manualPath;
+            updateImagePreview(inputId, manualPath);
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('mediaLibraryModal'));
+            modal.hide();
+            
+            showAlert('Manual path set successfully!', 'success');
+        } else {
+            showAlert('Please enter a valid path', 'error');
+        }
+    }
+    
+    function updateImagePreview(inputId, filePath) {
+        let previewId = '';
+        switch(inputId) {
+            case 'siteLogo':
+                previewId = 'siteLogoPreview';
+                break;
+            case 'siteFavicon':
+                previewId = 'siteFaviconPreview';
+                break;
+            case 'footerLogo':
+                previewId = 'footerLogoPreview';
+                break;
+        }
+        
+        if (previewId) {
+            const previewElement = document.getElementById(previewId);
+            if (previewElement) {
+                const maxHeight = inputId === 'siteFavicon' ? '32px' : inputId === 'footerLogo' ? '50px' : '60px';
+                previewElement.innerHTML = `<img src="/${filePath}" alt="Preview" style="max-height: ${maxHeight}; border: 1px solid #dee2e6; border-radius: 4px;">`;
+            }
+        }
+    }
+
+    // Enhanced Alert Function with Popup
+    function showAlert(message, type = 'info') {
+        // Remove existing alerts
+        const existingAlerts = document.querySelectorAll('.custom-alert');
+        existingAlerts.forEach(alert => alert.remove());
+        
+        // Create alert element
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `custom-alert alert-${type}`;
+        
+        const alertIcons = {
+            'success': 'fas fa-check-circle',
+            'error': 'fas fa-exclamation-circle',
+            'warning': 'fas fa-exclamation-triangle',
+            'info': 'fas fa-info-circle'
+        };
+        
+        const alertColors = {
+            'success': '#28a745',
+            'error': '#dc3545',
+            'warning': '#ffc107',
+            'info': '#17a2b8'
+        };
+        
+        alertDiv.innerHTML = `
+            <div class="alert-content">
+                <i class="${alertIcons[type] || alertIcons.info}" style="color: ${alertColors[type] || alertColors.info};"></i>
+                <span class="alert-message">${message}</span>
+                <button type="button" class="alert-close" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        
+        // Add styles
+        alertDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border: 1px solid ${alertColors[type] || alertColors.info};
+            border-radius: 8px;
+            padding: 15px 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1060;
+            min-width: 300px;
+            animation: slideInRight 0.3s ease;
+        `;
+        
+        // Add animation styles
+        if (!document.getElementById('alert-animations')) {
+            const styleSheet = document.createElement('style');
+            styleSheet.id = 'alert-animations';
+            styleSheet.textContent = `
+                @keyframes slideInRight {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                .alert-content {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+                .alert-message {
+                    flex: 1;
+                    font-weight: 500;
+                }
+                .alert-close {
+                    background: none;
+                    border: none;
+                    font-size: 14px;
+                    cursor: pointer;
+                    color: #6c757d;
+                    padding: 0;
+                    margin-left: 10px;
+                }
+                .alert-close:hover {
+                    color: #495057;
+                }
+            `;
+            document.head.appendChild(styleSheet);
+        }
+        
+        // Add to DOM
+        document.body.appendChild(alertDiv);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (alertDiv.parentElement) {
+                alertDiv.style.animation = 'slideInRight 0.3s ease reverse';
+                setTimeout(() => alertDiv.remove(), 300);
+            }
+        }, 5000);
     }
 
     // Mock functions for API interactions

@@ -6,8 +6,8 @@ class SiteSettings(models.Model):
     # Site Identity
     site_name = models.CharField(max_length=200, default="My Brand Store")
     site_tagline = models.CharField(max_length=300, default="Your one-stop shop for quality products")
-    site_logo = models.ImageField(upload_to='site_logos/', blank=True, null=True)
-    site_favicon = models.ImageField(upload_to='site_favicons/', blank=True, null=True)
+    site_logo = models.CharField(max_length=500, blank=True, null=True, help_text="Path to site logo image (e.g., media/logos/site-logo.png)")
+    site_favicon = models.CharField(max_length=500, blank=True, null=True, help_text="Path to favicon image (e.g., media/icons/favicon.ico)")
     
     # Contact Information
     contact_phone = models.CharField(max_length=20, default="+1 123-456-7890")
@@ -15,7 +15,7 @@ class SiteSettings(models.Model):
     contact_address = models.TextField(default="123 Main Street, City, State 12345, Country")
     
     # Footer Information
-    footer_logo = models.ImageField(upload_to='footer_logos/', blank=True, null=True)
+    footer_logo = models.CharField(max_length=500, blank=True, null=True, help_text="Path to footer logo image (e.g., media/logos/footer-logo.png)")
     footer_short_text = models.TextField(default="Brief description about your store that appears in the footer")
     facebook_link = models.URLField(blank=True, null=True, help_text="Facebook page URL")
     youtube_link = models.URLField(blank=True, null=True, help_text="YouTube channel URL")

@@ -16,7 +16,7 @@
     
     <!-- Favicon -->
     {% if site_settings.site_favicon %}
-        <link rel="icon" type="image/x-icon" href="{{ site_settings.site_favicon.url }}">
+        <link rel="icon" type="image/x-icon" href="/{{ site_settings.site_favicon }}">
     {% else %}
         <link rel="icon" type="image/x-icon" href="{% static 'frontend/images/favicon.ico' %}">
     {% endif %}>
@@ -83,7 +83,7 @@
                 <!-- Company Info -->
                 <div class="footer-section">
                     {% if site_settings.footer_logo %}
-                        <img src="{{ site_settings.footer_logo.url }}" alt="{{ site_settings.site_name }}" style="max-height: 50px; margin-bottom: 1rem;">
+                        <img src="/{{ site_settings.footer_logo }}" alt="{{ site_settings.site_name }}" style="max-height: 50px; margin-bottom: 1rem;">
                     {% else %}
                         <h3>{{ site_settings.site_name|default:"logo" }}</h3>
                     {% endif %}
