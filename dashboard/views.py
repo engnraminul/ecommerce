@@ -2299,6 +2299,20 @@ def dashboard_api_docs(request):
 
 @login_required
 @user_passes_test(is_admin)
+def dashboard_pages(request):
+    """Pages management dashboard view"""
+    context = {
+        'active_page': 'pages',
+        'page_title': 'Pages Management',
+        'breadcrumbs': [
+            {'name': 'Dashboard', 'url': '/mb-admin/'},
+            {'name': 'Pages', 'url': '/mb-admin/pages/'},
+        ]
+    }
+    return render(request, 'dashboard/pages.html', context)
+
+@login_required
+@user_passes_test(is_admin)
 def dashboard_expenses(request):
     context = {
         'active_page': 'expenses'

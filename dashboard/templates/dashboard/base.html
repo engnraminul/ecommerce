@@ -230,6 +230,11 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{% url 'dashboard:pages' %}" class="{% if active_page == 'pages' %}active{% endif %}">
+                        <i class="fas fa-file-alt"></i> Pages
+                    </a>
+                </li>
+                <li>
                     <a href="{% url 'dashboard:users' %}" class="{% if active_page == 'users' %}active{% endif %}">
                         <i class="fas fa-users"></i> Users
                     </a>

@@ -37,6 +37,7 @@ api_urlpatterns = [
     path('cart/', include('cart.urls')),
     path('orders/', include('orders.urls')),
     path('incomplete-orders/', include('incomplete_orders.urls')),
+    path('pages/', include('pages.urls')),
     
     # Checkout customization public API
     path('checkout-customization/', get_checkout_customization, name='get_checkout_customization'),
@@ -54,6 +55,9 @@ urlpatterns = [
     
     # Frontend (for Django templates if needed)
     path('', include('frontend.urls')),  # Will create this for templates
+    
+    # Pages URLs (add before catch-all patterns)
+    path('pages/', include('pages.urls')),
 
     path('mb-admin/', include('dashboard.urls')),  # Dashboard URLs
 ]

@@ -1,0 +1,214 @@
+{% extends "frontend/base.html" %}
+{% load static %}
+
+{% block title %}{{ page.meta_title|default:page.title }} - {{ block.super }}{% endblock %}
+
+{% block meta_description %}{{ page.meta_description|default:page.excerpt|truncatewords:30 }}{% endblock %}
+
+{% block meta_keywords %}{{ page.meta_keywords }}{% endblock %}
+
+{% block canonical_url %}{{ page.canonical_url|default:page.get_absolute_url }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <nav class="text-sm breadcrumbs mb-6">
+        <ul class="flex items-center space-x-2 text-gray-600">
+            <li><a href="{% url 'frontend:home' %}" class="hover:text-blue-600">Home</a></li>
+            <li><span class="mx-2">/</span></li>
+            {% if page.category %}
+            <li><a href="{% url 'pages:page_category' page.category.slug %}" class="hover:text-blue-600">{{ page.category.name }}</a></li>
+            <li><span class="mx-2">/</span></li>
+            {% endif %}
+            <li class="text-gray-800">{{ page.title }}</li>
+        </ul>
+    </nav>
+
+    <article class="max-w-4xl mx-auto">
+        <!-- Page Header -->
+        <header class="mb-8">
+            {% if page.category %}
+            <div class="mb-4">
+                <a href="{% url 'pages:page_category' page.category.slug %}" 
+                   class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium hover:bg-blue-200">
+                    {{ page.category.name }}
+                </a>
+            </div>
+            {% endif %}
+            
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">{{ page.title }}</h1>
+            
+            {% if page.excerpt %}
+            <p class="text-xl text-gray-600 mb-6">{{ page.excerpt }}</p>
+            {% endif %}
+            
+            <!-- Page Meta -->
+            <div class="flex flex-wrap items-center text-sm text-gray-500 space-x-6 mb-6">
+                <div class="flex items-center">
+                    <span class="font-medium">By {{ page.author.get_full_name|default:page.author.username }}</span>
+                </div>
+                <div class="flex items-center">
+                    <span>{{ page.publish_date|date:"F d, Y" }}</span>
+                </div>
+                {% if page.reading_time %}
+                <div class="flex items-center">
+                    <span>{{ page.reading_time }} min read</span>
+                </div>
+                {% endif %}
+                <div class="flex items-center">
+                    <span>{{ page.view_count }} views</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Featured Image -->
+        {% if page.featured_image %}
+        <div class="mb-8">
+            <img src="{{ page.featured_image.url }}" 
+                 alt="{{ page.featured_image_alt|default:page.title }}"
+                 class="w-full h-64 md:h-96 object-cover rounded-lg shadow-lg">
+        </div>
+        {% endif %}
+
+        <!-- Page Content -->
+        <div class="prose prose-lg max-w-none mb-12">
+            {{ page.content|linebreaks }}
+        </div>
+
+        <!-- Page Media Gallery -->
+        {% if page.media.all %}
+        <div class="mb-12">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6">Media Gallery</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for media in page.media.all %}
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    {% if media.media_type == 'image' %}
+                    <img src="{{ media.file.url }}" 
+                         alt="{{ media.alt_text|default:media.title }}"
+                         class="w-full h-48 object-cover">
+                    {% endif %}
+                    <div class="p-4">
+                        <h4 class="font-medium text-gray-900 mb-2">{{ media.title }}</h4>
+                        {% if media.caption %}
+                        <p class="text-sm text-gray-600">{{ media.caption }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Comments Section -->
+        {% if page.allow_comments %}
+        <div class="border-t pt-12">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6">Comments</h3>
+            
+            {% if user.is_authenticated %}
+            <!-- Comment Form -->
+            <div class="bg-gray-50 rounded-lg p-6 mb-8">
+                <form method="post" action="{% url 'pages:page_detail' page.slug %}" class="space-y-4">
+                    {% csrf_token %}
+                    <div>
+                        <textarea name="comment" rows="4" 
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  placeholder="Write your comment..."></textarea>
+                    </div>
+                    <div>
+                        <button type="submit" 
+                                class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            Post Comment
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {% else %}
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-8">
+                <p class="text-yellow-800">
+                    <a href="{% url 'users:login' %}" class="font-medium hover:underline">Login</a> 
+                    to post a comment.
+                </p>
+            </div>
+            {% endif %}
+
+            <!-- Comments List -->
+            {% if comments %}
+            <div class="space-y-6">
+                {% for comment in comments %}
+                <div class="bg-white border rounded-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                                <span class="text-gray-600 font-medium">
+                                    {{ comment.author.username|first|upper }}
+                                </span>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-gray-900">
+                                    {{ comment.author.get_full_name|default:comment.author.username }}
+                                </h4>
+                                <p class="text-sm text-gray-500">{{ comment.created_at|date:"F d, Y \a\t g:i A" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-gray-700">
+                        {{ comment.content|linebreaks }}
+                    </div>
+                    
+                    <!-- Replies -->
+                    {% if comment.replies.all %}
+                    <div class="mt-6 ml-8 space-y-4">
+                        {% for reply in comment.replies.all %}
+                        <div class="bg-gray-50 border-l-4 border-blue-200 pl-4 py-3">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="font-medium text-gray-900">
+                                    {{ reply.author.get_full_name|default:reply.author.username }}
+                                </span>
+                                <span class="text-sm text-gray-500">{{ reply.created_at|date:"F d, Y" }}</span>
+                            </div>
+                            <div class="text-gray-700">
+                                {{ reply.content|linebreaks }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-8">No comments yet. Be the first to comment!</p>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Related Pages -->
+        {% if related_pages %}
+        <div class="border-t pt-12">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6">Related Pages</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {% for related_page in related_pages %}
+                <div class="bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                    {% if related_page.featured_image %}
+                    <img src="{{ related_page.featured_image.url }}" 
+                         alt="{{ related_page.title }}"
+                         class="w-full h-48 object-cover">
+                    {% endif %}
+                    <div class="p-6">
+                        <h4 class="font-bold text-lg mb-2">
+                            <a href="{{ related_page.get_absolute_url }}" class="hover:text-blue-600">
+                                {{ related_page.title }}
+                            </a>
+                        </h4>
+                        {% if related_page.excerpt %}
+                        <p class="text-gray-600 text-sm">{{ related_page.excerpt|truncatewords:20 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </article>
+</div>
+{% endblock %}

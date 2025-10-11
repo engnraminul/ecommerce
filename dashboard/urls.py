@@ -4,6 +4,7 @@ from . import views
 from . import order_views
 from . import media_api
 from orders import order_edit_views
+from pages import dashboard_views as pages_dashboard_views
 
 router = DefaultRouter()
 router.register(r'settings', views.DashboardSettingViewSet)
@@ -19,6 +20,14 @@ router.register(r'orders', views.OrderDashboardViewSet)
 router.register(r'incomplete-orders', views.IncompleteOrderDashboardViewSet)
 router.register(r'expenses', views.ExpenseDashboardViewSet)
 router.register(r'checkout-customization', views.CheckoutCustomizationViewSet)
+
+# Pages management router
+router.register(r'pages/pages', pages_dashboard_views.PageDashboardViewSet, basename='pages')
+router.register(r'pages/categories', pages_dashboard_views.PageCategoryDashboardViewSet, basename='page-categories')
+router.register(r'pages/templates', pages_dashboard_views.PageTemplateDashboardViewSet, basename='page-templates')
+router.register(r'pages/media', pages_dashboard_views.PageMediaDashboardViewSet, basename='page-media')
+router.register(r'pages/comments', pages_dashboard_views.PageCommentDashboardViewSet, basename='page-comments')
+router.register(r'pages/analytics', pages_dashboard_views.PageAnalyticsDashboardViewSet, basename='page-analytics')
 app_name = 'dashboard'
 
 urlpatterns = [
@@ -78,4 +87,5 @@ urlpatterns = [
     path('profile/', views.dashboard_profile, name='profile'),
     path('accounts/', views.dashboard_accounts, name='accounts'),
     path('api-docs/', views.dashboard_api_docs, name='api_docs'),
+    path('pages/', views.dashboard_pages, name='pages'),
 ]

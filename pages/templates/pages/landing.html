@@ -1,0 +1,68 @@
+{% extends "frontend/base.html" %}
+{% load static %}
+
+{% block title %}{{ page.meta_title|default:page.title }} - {{ block.super }}{% endblock %}
+
+{% block meta_description %}{{ page.meta_description|default:page.excerpt|truncatewords:30 }}{% endblock %}
+
+{% block content %}
+<div class="hero-section bg-gradient-to-r from-blue-600 to-purple-600 text-white py-20">
+    <div class="container mx-auto px-4 text-center">
+        {% if page.featured_image %}
+        <div class="mb-8">
+            <img src="{{ page.featured_image.url }}" 
+                 alt="{{ page.featured_image_alt|default:page.title }}"
+                 class="w-32 h-32 mx-auto rounded-full shadow-lg">
+        </div>
+        {% endif %}
+        
+        <h1 class="text-5xl font-bold mb-6">{{ page.title }}</h1>
+        
+        {% if page.excerpt %}
+        <p class="text-xl mb-8 max-w-3xl mx-auto">{{ page.excerpt }}</p>
+        {% endif %}
+        
+        <div class="flex justify-center space-x-4">
+            <a href="#content" class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                Learn More
+            </a>
+            <a href="#contact" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors">
+                Get Started
+            </a>
+        </div>
+    </div>
+</div>
+
+<div id="content" class="container mx-auto px-4 py-16">
+    <div class="max-w-4xl mx-auto">
+        <div class="prose prose-lg max-w-none">
+            {{ page.content|linebreaks }}
+        </div>
+    </div>
+</div>
+
+{% if page.media.all %}
+<div class="bg-gray-50 py-16">
+    <div class="container mx-auto px-4">
+        <h3 class="text-3xl font-bold text-center mb-12">Gallery</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {% for media in page.media.all %}
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                {% if media.media_type == 'image' %}
+                <img src="{{ media.file.url }}" 
+                     alt="{{ media.alt_text|default:media.title }}"
+                     class="w-full h-64 object-cover">
+                {% endif %}
+                <div class="p-6">
+                    <h4 class="font-bold text-lg mb-2">{{ media.title }}</h4>
+                    {% if media.caption %}
+                    <p class="text-gray-600">{{ media.caption }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
