@@ -2128,6 +2128,8 @@ def dashboard_statistics(request):
 
 @login_required
 @user_passes_test(is_admin)
+@login_required
+@user_passes_test(is_admin)
 def dashboard_settings(request):
     if request.method == 'POST':
         return handle_general_settings_update(request)
@@ -2141,6 +2143,37 @@ def dashboard_settings(request):
         'active_page': 'settings'
     }
     return render(request, 'dashboard/settings.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def debug_settings(request):
+    """Debug page for testing settings functionality"""
+    if request.method == 'POST':
+        return handle_general_settings_update(request)
+    
+    settings = DashboardSetting.objects.all()
+    site_settings = SiteSettings.get_active_settings()
+    
+    context = {
+        'settings': settings,
+        'site_settings': site_settings,
+        'active_page': 'debug_settings'
+    }
+    return render(request, 'dashboard/debug_settings.html', context)
+
+def test_settings_post(request):
+    """Test endpoint for POST requests without authentication"""
+    if request.method == 'POST':
+        return JsonResponse({
+            'success': True,
+            'message': 'Test POST request successful!',
+            'data': dict(request.POST.items())
+        })
+    else:
+        return JsonResponse({
+            'success': False,
+            'message': 'Only POST requests allowed'
+        })
 
 @login_required
 @user_passes_test(is_admin)

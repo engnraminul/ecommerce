@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="{% block meta_description %}{{ site_settings.site_tagline|default:'Professional eCommerce platform with modern design and features' }}{% endblock %}">
     <title>{% block title %}{{ site_settings.site_name|default:'Professional eCommerce' }}{% endblock %}</title>
-    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ site_settings.site_favicon }}">
+
     <!-- Load static files -->
     {% load static %}
     
@@ -83,7 +85,7 @@
                 <!-- Company Info -->
                 <div class="footer-section">
                     {% if site_settings.footer_logo %}
-                        <img src="/{{ site_settings.footer_logo }}" alt="{{ site_settings.site_name }}" style="max-height: 50px; margin-bottom: 1rem;">
+                        <img src="{{ site_settings.footer_logo }}" alt="{{ site_settings.site_name }}" style="max-height: 50px; margin-bottom: 1rem;">
                     {% else %}
                         <h3>{{ site_settings.site_name|default:"logo" }}</h3>
                     {% endif %}
@@ -147,8 +149,7 @@
             <!-- Footer Bottom -->
             <div class="footer-bottom">
                 <p>{{ site_settings.get_copyright_text_with_year|default:"© 2025 eCommerce Platform. All rights reserved." }} | 
-                   <a href="#">Privacy Policy</a> | 
-                   <a href="#">Terms of Service</a>
+                Powered by <a href="https://manobbazar.com" target="_blank" style="color: var(--light-color); text-decoration: underline;">Manob Bazar</a>
                 </p>
             </div>
         </div>

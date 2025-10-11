@@ -49,12 +49,8 @@
                 <!-- Logo -->
                 <div class="navbar-brand">
                     <a href="{% url 'frontend:home' %}" class="brand-logo">
-                        <div class="logo-icon">
-                            <i class="fas fa-store"></i>
-                        </div>
-                        <div class="logo-text">
-                            <span class="brand-name">eCommerce</span>
-                            <span class="brand-tagline">Professional Store</span>
+                        <div class="main-logo">
+                            <img src="{{ site_settings.site_logo }}" alt="{{ site_settings.site_name }}" style="max-height: 50px;">
                         </div>
                     </a>
                 </div>

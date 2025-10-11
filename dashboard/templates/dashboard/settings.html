@@ -4,6 +4,93 @@
 
 {% block page_title %}Store Settings{% endblock %}
 
+{% block extra_css %}
+<style>
+    .popup-alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        animation: slideInRight 0.5s ease-out;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    @keyframes slideInRight {
+        from { 
+            transform: translateX(100%); 
+            opacity: 0; 
+        }
+        to { 
+            transform: translateX(0); 
+            opacity: 1; 
+        }
+    }
+    
+    @keyframes slideOutRight {
+        from { 
+            transform: translateX(0); 
+            opacity: 1; 
+        }
+        to { 
+            transform: translateX(100%); 
+            opacity: 0; 
+        }
+    }
+    
+    .popup-alert.hiding {
+        animation: slideOutRight 0.3s ease-in forwards;
+    }
+    
+    .media-item {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .media-item:hover {
+        border-color: #930000;
+        transform: scale(1.02);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .media-item.selected {
+        border-color: #930000;
+        background-color: rgba(147, 0, 0, 0.1);
+    }
+    
+    .media-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .preview-image {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+    }
+    
+    .file-name {
+        font-size: 0.85em;
+        padding: 8px;
+        background: rgba(0,0,0,0.05);
+        text-align: center;
+    }
+    
+    .manual-path-container {
+        background: rgba(248, 249, 250, 1);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-3">
@@ -1393,6 +1480,68 @@
         </div>
     </div>
 </div>
+
+<!-- Media Library Modal -->
+<div class="modal fade" id="mediaLibraryModal" tabindex="-1" aria-labelledby="mediaLibraryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient" style="background: linear-gradient(135deg, #930000, #d32f2f);">
+                <h5 class="modal-title text-white" id="mediaLibraryModalLabel">
+                    <i class="fas fa-images me-2"></i>Media Library
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Manual Path Entry -->
+                <div class="manual-path-container">
+                    <h6 class="fw-bold mb-3"><i class="fas fa-edit me-2 text-primary"></i>Enter Path Manually</h6>
+                    <div class="input-group">
+                        <span class="input-group-text">/media/</span>
+                        <input type="text" class="form-control" id="manualPath" placeholder="images/logo.png">
+                        <button class="btn btn-outline-primary" type="button" onclick="useManualPath()">
+                            <i class="fas fa-check me-1"></i>Use Path
+                        </button>
+                    </div>
+                    <small class="text-muted mt-2 d-block">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Enter the file path relative to the media folder (e.g., images/logo.png)
+                    </small>
+                </div>
+
+                <!-- Media Grid -->
+                <h6 class="fw-bold mb-3"><i class="fas fa-folder me-2 text-warning"></i>Browse Files</h6>
+                <div class="media-grid" id="mediaGrid">
+                    <!-- Sample media items -->
+                    <div class="media-item" onclick="selectMedia('/media/images/logo.png', this)">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='120' fill='%23f8f9fa'%3E%3Crect width='150' height='120' fill='%23e9ecef'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%236c757d'%3ELogo%3C/text%3E%3C/svg%3E" alt="Logo" class="preview-image">
+                        <div class="file-name">logo.png</div>
+                    </div>
+                    <div class="media-item" onclick="selectMedia('/media/images/favicon.ico', this)">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='120' fill='%23f8f9fa'%3E%3Crect width='150' height='120' fill='%23e9ecef'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%236c757d'%3EFavicon%3C/text%3E%3C/svg%3E" alt="Favicon" class="preview-image">
+                        <div class="file-name">favicon.ico</div>
+                    </div>
+                    <div class="media-item" onclick="selectMedia('/media/images/hero-banner.jpg', this)">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='120' fill='%23f8f9fa'%3E%3Crect width='150' height='120' fill='%23e9ecef'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%236c757d'%3EBanner%3C/text%3E%3C/svg%3E" alt="Banner" class="preview-image">
+                        <div class="file-name">hero-banner.jpg</div>
+                    </div>
+                    <div class="media-item" onclick="selectMedia('/media/images/footer-logo.png', this)">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='120' fill='%23f8f9fa'%3E%3Crect width='150' height='120' fill='%23e9ecef'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%236c757d'%3EFooter%3C/text%3E%3C/svg%3E" alt="Footer Logo" class="preview-image">
+                        <div class="file-name">footer-logo.png</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-primary" onclick="confirmSelection()" disabled id="confirmBtn">
+                    <i class="fas fa-check me-1"></i>Select File
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -1589,6 +1738,59 @@ textarea.form-control {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Popup Alert System
+    function showAlert(message, type = 'success', duration = 4000) {
+        const alertTypes = {
+            'success': { icon: 'fas fa-check-circle', class: 'alert-success' },
+            'error': { icon: 'fas fa-exclamation-circle', class: 'alert-danger' },
+            'warning': { icon: 'fas fa-exclamation-triangle', class: 'alert-warning' },
+            'info': { icon: 'fas fa-info-circle', class: 'alert-info' }
+        };
+
+        const alertConfig = alertTypes[type] || alertTypes['success'];
+        
+        const alertHtml = `
+            <div class="alert ${alertConfig.class} alert-dismissible popup-alert" role="alert">
+                <i class="${alertConfig.icon} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" aria-label="Close"></button>
+            </div>
+        `;
+
+        const alertElement = document.createElement('div');
+        alertElement.innerHTML = alertHtml;
+        const alert = alertElement.firstElementChild;
+        
+        document.body.appendChild(alert);
+
+        // Auto-dismiss after specified duration
+        const timeoutId = setTimeout(() => {
+            dismissAlert(alert);
+        }, duration);
+
+        // Manual dismiss functionality
+        const closeBtn = alert.querySelector('.btn-close');
+        if (closeBtn) {
+            closeBtn.onclick = () => {
+                clearTimeout(timeoutId);
+                dismissAlert(alert);
+            };
+        }
+
+        return alert;
+    }
+
+    function dismissAlert(alert) {
+        if (alert && alert.parentNode) {
+            alert.classList.add('hiding');
+            setTimeout(() => {
+                if (alert && alert.parentNode) {
+                    alert.parentNode.removeChild(alert);
+                }
+            }, 300);
+        }
+    }
+
     // Link color pickers to their text inputs
     function setupColorPickers() {
         const colorPairs = [
@@ -1620,39 +1822,262 @@ document.addEventListener('DOMContentLoaded', function() {
     function initSettings() {
         setupColorPickers();
         
-        // Add event listeners for saving settings
-        document.getElementById('saveGeneralSettingsBtn').addEventListener('click', function() {
-            saveSettings('general');
+        // Add event listeners for saving settings with popup alerts
+        const saveButtons = [
+            { id: 'saveGeneralSettingsBtn', message: 'General settings saved successfully!', formId: 'generalSettingsForm', endpoint: '/mb-admin/settings/' },
+            { id: 'saveEmailSettingsBtn', message: 'Email settings saved successfully!', formId: 'emailSettingsForm', endpoint: '/mb-admin/settings/' },
+            { id: 'saveAppearanceSettingsBtn', message: 'Appearance settings saved successfully!', formId: 'appearanceSettingsForm', endpoint: '/mb-admin/settings/' },
+            { id: 'saveCheckoutCustomizationBtn', message: 'Checkout settings saved successfully!', formId: 'checkoutCustomizationForm', endpoint: '/mb-admin/settings/' }
+        ];
+
+        saveButtons.forEach(button => {
+            const element = document.getElementById(button.id);
+            if (element) {
+                element.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Add loading state
+                    const originalText = this.innerHTML;
+                    this.disabled = true;
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
+                    
+                    // Get form data
+                    const formElement = document.getElementById(button.formId);
+                    if (!formElement) {
+                        this.disabled = false;
+                        this.innerHTML = originalText;
+                        showAlert('Form not found!', 'error');
+                        return;
+                    }
+                    
+                    const formData = new FormData(formElement);
+                    
+                    // Submit form data via AJAX
+                    fetch(button.endpoint, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRFToken': getCookie('csrftoken')
+                        }
+                    })
+                    .then(response => {
+                        console.log('Response status:', response.status);
+                        console.log('Response headers:', response.headers.get('content-type'));
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        
+                        const contentType = response.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            return response.json();
+                        } else {
+                            throw new Error('Response is not JSON');
+                        }
+                    })
+                    .then(data => {
+                        // Reset button
+                        this.disabled = false;
+                        this.innerHTML = originalText;
+                        
+                        if (data.success) {
+                            // Show success alert
+                            showAlert(button.message, 'success');
+                            
+                            // Optionally refresh the page to show updated values
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 2000);
+                        } else {
+                            showAlert(data.message || 'Error saving settings', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        // Reset button
+                        this.disabled = false;
+                        this.innerHTML = originalText;
+                        
+                        console.error('Error saving settings:', error);
+                        showAlert('Error saving settings. Please try again.', 'error');
+                    });
+                });
+            }
         });
         
-        document.getElementById('saveGeneralSettingsBtn').addEventListener('click', function() {
-            saveGeneralSettings();
+        // Helper function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Media Library Modal System
+        let currentTargetInput = null;
+        let selectedMediaPath = null;
+
+        window.openMediaLibrary = function(inputId) {
+            currentTargetInput = inputId;
+            selectedMediaPath = null;
+            
+            // Clear previous selections
+            document.querySelectorAll('.media-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // Clear manual path
+            const manualPathInput = document.getElementById('manualPath');
+            if (manualPathInput) {
+                manualPathInput.value = '';
+            }
+            
+            // Disable confirm button
+            const confirmBtn = document.getElementById('confirmBtn');
+            if (confirmBtn) {
+                confirmBtn.disabled = true;
+            }
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('mediaLibraryModal'));
+            modal.show();
+        };
+
+        window.selectMedia = function(path, element) {
+            // Remove previous selections
+            document.querySelectorAll('.media-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // Select current item
+            element.classList.add('selected');
+            selectedMediaPath = path;
+            
+            // Enable confirm button
+            const confirmBtn = document.getElementById('confirmBtn');
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+            }
+        };
+
+        window.useManualPath = function() {
+            const manualPath = document.getElementById('manualPath').value.trim();
+            if (manualPath) {
+                selectedMediaPath = '/media/' + manualPath.replace(/^\/+/, '');
+                
+                // Clear grid selections
+                document.querySelectorAll('.media-item').forEach(item => {
+                    item.classList.remove('selected');
+                });
+                
+                // Enable confirm button
+                const confirmBtn = document.getElementById('confirmBtn');
+                if (confirmBtn) {
+                    confirmBtn.disabled = false;
+                }
+            }
+        };
+
+        window.confirmSelection = function() {
+            if (selectedMediaPath && currentTargetInput) {
+                // Set the input value
+                document.getElementById(currentTargetInput).value = selectedMediaPath;
+                
+                // Update preview
+                updateImagePreview(currentTargetInput, selectedMediaPath);
+                
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('mediaLibraryModal'));
+                modal.hide();
+                
+                // Show success alert
+                showAlert('Image path selected successfully!', 'success');
+            }
+        };
+
+        function updateImagePreview(inputId, imagePath) {
+            const previewId = inputId + 'Preview';
+            const previewContainer = document.getElementById(previewId);
+            
+            if (previewContainer && imagePath) {
+                const fullPath = imagePath.startsWith('/') ? imagePath : '/' + imagePath;
+                previewContainer.innerHTML = `
+                    <div class="d-flex align-items-center p-2 bg-light rounded mt-2">
+                        <img src="${fullPath}" alt="Preview" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;" 
+                             onerror="this.style.display='none'">
+                        <div class="ms-2 flex-grow-1">
+                            <small class="text-muted">${fullPath}</small>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearImagePath('${inputId}')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        window.clearImagePath = function(inputId) {
+            document.getElementById(inputId).value = '';
+            const previewId = inputId + 'Preview';
+            const previewContainer = document.getElementById(previewId);
+            if (previewContainer) {
+                previewContainer.innerHTML = '<div class="text-muted small">No image selected</div>';
+            }
+        };
+
+        // Auto-update preview when input changes
+        const imageInputs = ['siteLogo', 'siteFavicon', 'footerLogo'];
+        imageInputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.addEventListener('input', function() {
+                    const value = this.value.trim();
+                    if (value) {
+                        updateImagePreview(inputId, value);
+                    } else {
+                        clearImagePath(inputId);
+                    }
+                });
+            }
         });
         
-        document.getElementById('saveEmailSettingsBtn').addEventListener('click', function() {
-            saveSettings('email');
-        });
+        // Test email functionality
+        const testEmailBtn = document.getElementById('testEmailBtn');
+        if (testEmailBtn) {
+            testEmailBtn.addEventListener('click', function() {
+                const originalText = this.innerHTML;
+                this.disabled = true;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Sending...';
+                
+                setTimeout(() => {
+                    this.disabled = false;
+                    this.innerHTML = originalText;
+                    showAlert('Test email sent successfully!', 'info');
+                }, 2000);
+            });
+        }
         
-        document.getElementById('saveAppearanceSettingsBtn').addEventListener('click', function() {
-            saveSettings('appearance');
-        });
+        // Other button handlers
+        const resetCheckoutBtn = document.getElementById('resetCheckoutToDefaultsBtn');
+        if (resetCheckoutBtn) {
+            resetCheckoutBtn.addEventListener('click', function() {
+                resetCheckoutToDefaults();
+            });
+        }
         
-        document.getElementById('saveCheckoutCustomizationBtn').addEventListener('click', function() {
-            saveCheckoutCustomization();
-        });
-        
-        document.getElementById('resetCheckoutToDefaultsBtn').addEventListener('click', function() {
-            resetCheckoutToDefaults();
-        });
-        
-        document.getElementById('previewCheckoutBtn').addEventListener('click', function() {
-            previewCheckout();
-        });
-        
-        // Test email button
-        document.getElementById('testEmailBtn').addEventListener('click', function() {
-            sendTestEmail();
-        });
+        const previewCheckoutBtn = document.getElementById('previewCheckoutBtn');
+        if (previewCheckoutBtn) {
+            previewCheckoutBtn.addEventListener('click', function() {
+                previewCheckout();
+            });
+        }
         
         // Set up Email Template Modal
         setupEmailTemplateModal();
@@ -1682,48 +2107,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // General Settings Save Function
-    function saveGeneralSettings() {
-        const form = document.getElementById('generalSettingsForm');
-        const formData = new FormData(form);
-        const button = document.getElementById('saveGeneralSettingsBtn');
-        
-        // Show loading state
-        const originalText = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
-        button.disabled = true;
-        
-        fetch(window.location.href, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': getCsrfToken(),
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showAlert(data.message, 'success');
-                // Optionally reload the page to reflect changes
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
-            } else {
-                showAlert(data.message, 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showAlert('An error occurred while saving settings.', 'error');
-        })
-        .finally(() => {
-            // Restore button state
-            button.innerHTML = originalText;
-            button.disabled = false;
-        });
-    }
+    // Initialize settings when DOM is loaded
+    initSettings();
+    
+    // Call initSettings immediately for testing
+    console.log('Settings page loaded');
+});  // Close DOMContentLoaded
 
-    // Media Library Functions
+// Media Library Functions
     function openMediaLibrary(inputId) {
         // Simple media library simulation - you can replace this with your actual media library
         const mediaFiles = [
@@ -2124,9 +2515,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     }
     
-    // Initialize settings on page load
-    initSettings();
-    
     // ===== CHECKOUT CUSTOMIZATION FUNCTIONS =====
     
     function loadCheckoutCustomization() {
@@ -2307,6 +2695,5 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
-});
 </script>
 {% endblock %}

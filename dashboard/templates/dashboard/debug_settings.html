@@ -1,0 +1,222 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Debug Settings{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Debug Settings Form</h4>
+                </div>
+                <div class="card-body">
+                    <form id="generalSettingsForm">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="site_name" class="form-label">Site Name</label>
+                            <input type="text" class="form-control" id="site_name" name="site_name" value="Test Store">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="site_tagline" class="form-label">Site Tagline</label>
+                            <input type="text" class="form-control" id="site_tagline" name="site_tagline" value="Test Tagline">
+                        </div>
+                        
+                        <button type="button" class="btn btn-primary" id="saveGeneralSettingsBtn">
+                            <i class="fas fa-save me-1"></i> Save General Settings
+                        </button>
+                    </form>
+                    
+                    <hr>
+                    
+                    <div class="mt-3">
+                        <button onclick="testAlert()" class="btn btn-info">Test Alert</button>
+                        <button onclick="testButtonFunction()" class="btn btn-warning">Test Button Function</button>
+                        <button onclick="checkJavaScript()" class="btn btn-success">Check JavaScript</button>
+                    </div>
+                    
+                    <div id="debug-output" class="mt-3 p-3 bg-light border rounded">
+                        <h5>Debug Output:</h5>
+                        <div id="output"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Debug page DOM loaded');
+    
+    const output = document.getElementById('output');
+    output.innerHTML += '<p>✅ DOM Content Loaded</p>';
+    
+    // Show Alert Function
+    function showAlert(message, type = 'success', duration = 4000) {
+        console.log('showAlert called:', message, type);
+        
+        const alertTypes = {
+            'success': { icon: 'fas fa-check-circle', class: 'alert-success' },
+            'error': { icon: 'fas fa-exclamation-circle', class: 'alert-danger' },
+            'warning': { icon: 'fas fa-exclamation-triangle', class: 'alert-warning' },
+            'info': { icon: 'fas fa-info-circle', class: 'alert-info' }
+        };
+
+        const alertConfig = alertTypes[type] || alertTypes['success'];
+        
+        const alertHtml = `
+            <div class="alert ${alertConfig.class} alert-dismissible" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                <i class="${alertConfig.icon} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+
+        const alertElement = document.createElement('div');
+        alertElement.innerHTML = alertHtml;
+        const alert = alertElement.firstElementChild;
+        
+        document.body.appendChild(alert);
+
+        // Auto-dismiss after specified duration
+        setTimeout(() => {
+            if (alert && alert.parentNode) {
+                alert.parentNode.removeChild(alert);
+            }
+        }, duration);
+
+        return alert;
+    }
+
+    // Helper function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Save Button Logic
+    const saveBtn = document.getElementById('saveGeneralSettingsBtn');
+    console.log('Save button found:', saveBtn);
+    
+    if (saveBtn) {
+        output.innerHTML += '<p>✅ Save button found</p>';
+        
+        saveBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Save button clicked!');
+            output.innerHTML += '<p>🔘 Save button clicked!</p>';
+            
+            // Add loading state
+            const originalText = this.innerHTML;
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
+            
+            // Get form data
+            const formElement = document.getElementById('generalSettingsForm');
+            if (!formElement) {
+                this.disabled = false;
+                this.innerHTML = originalText;
+                showAlert('Form not found!', 'error');
+                return;
+            }
+            
+            const formData = new FormData(formElement);
+            console.log('Form data:', Array.from(formData.entries()));
+            output.innerHTML += '<p>📄 Form data collected</p>';
+            
+            // Submit to actual endpoint
+            fetch('/mb-admin/settings/test/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Reset button
+                this.disabled = false;
+                this.innerHTML = originalText;
+                
+                console.log('Response:', data);
+                output.innerHTML += '<p>📡 Server response received</p>';
+                
+                if (data.success) {
+                    showAlert('Settings saved successfully!', 'success');
+                    output.innerHTML += '<p>✅ Settings saved successfully!</p>';
+                } else {
+                    showAlert(data.message || 'Error saving settings', 'error');
+                    output.innerHTML += '<p>❌ Error: ' + (data.message || 'Unknown error') + '</p>';
+                }
+            })
+            .catch(error => {
+                // Reset button
+                this.disabled = false;
+                this.innerHTML = originalText;
+                
+                console.error('Error saving settings:', error);
+                output.innerHTML += '<p>❌ Network error: ' + error.message + '</p>';
+                showAlert('Error saving settings. Please try again.', 'error');
+            });
+        });
+    } else {
+        output.innerHTML += '<p>❌ Save button NOT found</p>';
+    }
+    
+    const form = document.getElementById('generalSettingsForm');
+    if (form) {
+        output.innerHTML += '<p>✅ Form found</p>';
+    } else {
+        output.innerHTML += '<p>❌ Form NOT found</p>';
+    }
+    
+    // Global test functions
+    window.testAlert = function() {
+        console.log('Testing alert...');
+        showAlert('Test alert message!', 'info');
+        output.innerHTML += '<p>🔔 Test alert triggered</p>';
+    };
+    
+    window.testButtonFunction = function() {
+        console.log('Testing button function...');
+        const button = document.getElementById('saveGeneralSettingsBtn');
+        if (button) {
+            console.log('Button found, triggering click');
+            button.click();
+            output.innerHTML += '<p>🖱️ Button click triggered programmatically</p>';
+        } else {
+            console.error('Button not found!');
+            output.innerHTML += '<p>❌ Button not found for programmatic click</p>';
+        }
+    };
+    
+    window.checkJavaScript = function() {
+        const checks = [
+            'jQuery' in window ? '✅ jQuery loaded' : '❌ jQuery not loaded',
+            'bootstrap' in window ? '✅ Bootstrap loaded' : '❌ Bootstrap not loaded',
+            document.getElementById('saveGeneralSettingsBtn') ? '✅ Save button exists' : '❌ Save button missing',
+            document.getElementById('generalSettingsForm') ? '✅ Form exists' : '❌ Form missing'
+        ];
+        
+        output.innerHTML += '<h6>JavaScript Check Results:</h6>';
+        checks.forEach(check => {
+            output.innerHTML += '<p>' + check + '</p>';
+        });
+    };
+});
+</script>
+{% endblock %}

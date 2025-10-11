@@ -692,6 +692,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         div.innerHTML = `
             <div class="media-item-actions">
+                
+                <button type="button" class="media-item-action-btn" onclick="copyFilePath('${file.id}')" title="Copy Path">
+                    <i class="fas fa-copy"></i>
+                </button>
                 <button type="button" class="media-item-action-btn" onclick="editFile('${file.id}')" title="Edit">
                     <i class="fas fa-edit"></i>
                 </button>
@@ -1218,6 +1222,58 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Global functions for inline event handlers
+    window.copyFilePath = function(fileId) {
+        // Get the file path from the file ID
+        const parts = fileId.split('_', 2);
+        if (parts.length !== 2) {
+            showAlert('Invalid file ID format', 'danger');
+            return;
+        }
+        
+        const [directory, filename] = parts;
+        const filePath = directory ? `/media/${directory}/${filename}` : `/media/${filename}`;
+        
+        // Try to copy to clipboard
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(filePath)
+                .then(() => {
+                    showAlert(`File path copied to clipboard: ${filePath}`, 'success');
+                })
+                .catch(err => {
+                    console.error('Failed to copy to clipboard:', err);
+                    fallbackCopyToClipboard(filePath);
+                });
+        } else {
+            fallbackCopyToClipboard(filePath);
+        }
+    };
+
+    // Fallback copy method for older browsers
+    function fallbackCopyToClipboard(text) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showAlert(`File path copied to clipboard: ${text}`, 'success');
+            } else {
+                showAlert('Failed to copy file path. Please copy manually: ' + text, 'warning');
+            }
+        } catch (err) {
+            console.error('Fallback copy failed:', err);
+            showAlert('Failed to copy file path. Please copy manually: ' + text, 'warning');
+        } finally {
+            document.body.removeChild(textArea);
+        }
+    }
+
     window.editFile = function(fileId) {
         // Load file data and show edit modal
         const parts = fileId.split('_', 2);
