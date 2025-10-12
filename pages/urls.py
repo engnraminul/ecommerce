@@ -12,7 +12,7 @@ router.register(r'comments', views.PageCommentViewSet)
 router.register(r'revisions', views.PageRevisionViewSet)
 router.register(r'analytics', views.PageAnalyticsViewSet)
 
-app_name = 'pages'
+app_name = 'pages_app'
 
 urlpatterns = [
     # API endpoints

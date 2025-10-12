@@ -1,0 +1,308 @@
+{% extends "frontend/base.html" %}
+{% load static %}
+
+{% block title %}{{ page.meta_title|default:page.title }}{% endblock %}
+
+{% block meta_description %}{{ page.meta_description|default:page.excerpt }}{% endblock %}
+
+{% block meta_keywords %}{{ page.meta_keywords }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .page-content {
+        line-height: 1.7;
+        font-size: 1.1rem;
+    }
+    
+    .page-content h1, .page-content h2, .page-content h3,
+    .page-content h4, .page-content h5, .page-content h6 {
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        color: #2c3e50;
+    }
+    
+    .page-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.5rem;
+        margin: 1rem 0;
+    }
+    
+    .page-meta {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 2rem;
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .related-pages {
+        background: #f8f9fa;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        margin-top: 3rem;
+    }
+    
+    .related-page-card {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.2s, box-shadow 0.2s;
+        display: block;
+    }
+    
+    .related-page-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .page-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin-right: 0.5rem;
+    }
+    
+    .badge-featured {
+        background: #007bff;
+        color: white;
+    }
+    
+    .badge-menu {
+        background: #17a2b8;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <h1 class="display-4 mb-3">{{ page.title }}</h1>
+                {% if page.excerpt %}
+                    <p class="lead">{{ page.excerpt }}</p>
+                {% endif %}
+                
+                <div class="d-flex justify-content-center align-items-center flex-wrap">
+                    {% if page.is_featured %}
+                        <span class="page-badge badge-featured">
+                            <i class="fas fa-star"></i> Featured
+                        </span>
+                    {% endif %}
+                    
+                    {% if page.category %}
+                        <span class="page-badge" style="background: #6c757d; color: white;">
+                            <i class="fas fa-folder"></i> {{ page.category.name }}
+                        </span>
+                    {% endif %}
+                    
+                    <span class="page-badge" style="background: #28a745; color: white;">
+                        <i class="fas fa-eye"></i> {{ page.view_count }} views
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Page Meta Info -->
+            <div class="page-meta">
+                <div class="row">
+                    <div class="col-md-6">
+                        <i class="fas fa-user"></i> 
+                        <strong>Author:</strong> {{ page.author.get_full_name|default:page.author.username }}
+                    </div>
+                    <div class="col-md-6">
+                        <i class="fas fa-calendar"></i> 
+                        <strong>Published:</strong> {{ page.publish_date|date:"F j, Y" }}
+                    </div>
+                    {% if page.updated_at != page.created_at %}
+                    <div class="col-md-12 mt-2">
+                        <i class="fas fa-edit"></i> 
+                        <strong>Last Updated:</strong> {{ page.updated_at|date:"F j, Y g:i A" }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Page Content -->
+            <div class="page-content">
+                {{ page.content|safe }}
+            </div>
+            
+            <!-- Comments Section (if enabled) -->
+            {% if page.allow_comments %}
+            <div class="comments-section mt-5">
+                <h4>Comments</h4>
+                <hr>
+                
+                {% if user.is_authenticated %}
+                    <div class="comment-form mb-4">
+                        <h6>Leave a Comment</h6>
+                        <form method="post" action="#" id="comment-form">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <textarea class="form-control" name="content" rows="4" 
+                                         placeholder="Write your comment here..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-comment"></i> Post Comment
+                            </button>
+                        </form>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Please <a href="{% url 'frontend:login' %}">login</a> to leave a comment.
+                    </div>
+                {% endif %}
+                
+                <!-- Comments will be loaded here dynamically -->
+                <div id="comments-container">
+                    <p class="text-muted text-center">
+                        <i class="fas fa-spinner fa-spin"></i> Loading comments...
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Related Pages -->
+    {% if related_pages %}
+    <div class="related-pages">
+        <div class="row">
+            <div class="col-12">
+                <h4 class="mb-4">
+                    <i class="fas fa-book-open"></i> Related Pages
+                </h4>
+                <div class="row">
+                    {% for related_page in related_pages %}
+                    <div class="col-md-4">
+                        <a href="{% url 'frontend:page_detail' related_page.slug %}" class="related-page-card">
+                            <h6>{{ related_page.title }}</h6>
+                            {% if related_page.excerpt %}
+                                <p class="text-muted mb-2">{{ related_page.excerpt|truncatewords:15 }}</p>
+                            {% endif %}
+                            <small class="text-primary">
+                                <i class="fas fa-arrow-right"></i> Read More
+                            </small>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load comments if commenting is enabled
+    {% if page.allow_comments %}
+    loadPageComments();
+    
+    // Handle comment form submission
+    const commentForm = document.getElementById('comment-form');
+    if (commentForm) {
+        commentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitComment();
+        });
+    }
+    {% endif %}
+});
+
+{% if page.allow_comments %}
+function loadPageComments() {
+    // This would load comments via API
+    const container = document.getElementById('comments-container');
+    
+    // Simulated loading for now - you can implement actual API call
+    setTimeout(() => {
+        container.innerHTML = `
+            <div class="text-center text-muted">
+                <i class="fas fa-comments"></i>
+                <p>No comments yet. Be the first to comment!</p>
+            </div>
+        `;
+    }, 1000);
+}
+
+function submitComment() {
+    const form = document.getElementById('comment-form');
+    const formData = new FormData(form);
+    
+    // Add page ID to form data
+    formData.append('page_id', {{ page.id }});
+    
+    fetch('{% url "frontend:page_detail" page.slug %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            form.reset();
+            loadPageComments(); // Reload comments
+            showAlert('Comment submitted successfully!', 'success');
+        } else {
+            showAlert('Error submitting comment.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Error submitting comment.', 'error');
+    });
+}
+
+function showAlert(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const alertHTML = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // Insert alert at the top of the content
+    const container = document.querySelector('.container');
+    container.insertAdjacentHTML('afterbegin', alertHTML);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        const alert = container.querySelector('.alert');
+        if (alert) {
+            alert.remove();
+        }
+    }, 5000);
+}
+{% endif %}
+</script>
+{% endblock %}

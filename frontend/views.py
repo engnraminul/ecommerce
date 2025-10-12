@@ -11,6 +11,7 @@ from products.models import Product, Category, Review
 from users.models import User
 from cart.models import Cart, CartItem
 from orders.models import Order
+from pages.models import Page
 
 
 def home(request):
@@ -993,3 +994,30 @@ def submit_review(request, product_id):
             'success': False, 
             'errors': {'general': 'An error occurred while submitting your review. Please try again.'}
         }, status=500)
+
+
+def page_detail(request, slug):
+    """Page detail view for displaying custom pages."""
+    page = get_object_or_404(Page, slug=slug, status='published')
+    
+    # Check if login is required
+    if page.require_login and not request.user.is_authenticated:
+        messages.warning(request, 'You need to login to view this page.')
+        return redirect('frontend:login')
+    
+    # Increment view count
+    page.view_count += 1
+    page.save(update_fields=['view_count'])
+    
+    # Get related pages from the same category
+    related_pages = Page.objects.filter(
+        category=page.category,
+        status='published'
+    ).exclude(id=page.id)[:3] if page.category else []
+    
+    context = {
+        'page': page,
+        'related_pages': related_pages,
+    }
+    
+    return render(request, 'frontend/page_detail.html', context)

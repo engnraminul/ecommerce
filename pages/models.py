@@ -168,7 +168,7 @@ class Page(models.Model):
             raise ValidationError(f"A page with slug '{self.slug}' already exists.")
 
     def get_absolute_url(self):
-        return reverse('pages:page_detail', kwargs={'slug': self.slug})
+        return reverse('pages_app:page_detail', kwargs={'slug': self.slug})
 
     @property
     def is_published(self):

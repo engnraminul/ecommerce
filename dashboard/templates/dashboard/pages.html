@@ -4,6 +4,7 @@
 {% block title %}Pages Management - Dashboard{% endblock %}
 
 {% block extra_css %}
+<meta name="csrf-token" content="{{ csrf_token }}">
 <style>
     .page-status-badge {
         padding: 0.25rem 0.5rem;
@@ -354,6 +355,7 @@
             </div>
             <div class="modal-body">
                 <form id="pageForm">
+                    {% csrf_token %}
                     <div class="row">
                         <div class="col-md-8">
                             <!-- Basic Information -->
@@ -490,6 +492,7 @@
             </div>
             <div class="modal-body">
                 <form id="categoryForm">
+                    {% csrf_token %}
                     <div class="mb-3">
                         <label for="category-name" class="form-label">Name *</label>
                         <input type="text" class="form-control" id="category-name" required>

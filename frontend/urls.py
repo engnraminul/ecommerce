@@ -31,6 +31,7 @@ urlpatterns = [
     # Static pages
     path('about/', views.about, name='about'),
     path('contact/', views.contact, name='contact'),
+    path('page/<slug:slug>/', views.page_detail, name='page_detail'),
     
     # Order tracking
     path('order-tracking/', views.order_tracking, name='order_tracking'),

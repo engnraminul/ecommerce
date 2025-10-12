@@ -141,6 +141,9 @@ class PagesManager {
             this.renderPagesTable(data.results);
             this.renderPagination('pages-pagination', data, page => this.loadPages(page));
             
+            // Initialize tooltips for the new content
+            this.initializeTooltips();
+            
         } catch (error) {
             console.error('Error loading pages:', error);
             showAlert('Error loading pages', 'error');
@@ -160,7 +163,11 @@ class PagesManager {
                 </td>
                 <td>
                     <div>
-                        <strong>${page.title}</strong>
+                        <a href="/page/${page.slug}/" target="_blank" class="text-decoration-none" 
+                           title="Click to view page in new tab" data-bs-toggle="tooltip">
+                            <strong class="text-primary">${page.title}</strong>
+                            <i class="fas fa-external-link-alt ms-1" style="font-size: 0.8em; color: #6c757d;"></i>
+                        </a>
                         ${page.is_featured ? '<span class="badge bg-primary ms-1">Featured</span>' : ''}
                         ${page.show_in_menu ? '<span class="badge bg-info ms-1">Menu</span>' : ''}
                     </div>
@@ -199,6 +206,22 @@ class PagesManager {
             this.selectedPages.add(pageId);
         } else {
             this.selectedPages.delete(pageId);
+        }
+    }
+
+    initializeTooltips() {
+        // Initialize Bootstrap tooltips for dynamically loaded content
+        if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            tooltipTriggerList.forEach(tooltipTriggerEl => {
+                // Dispose existing tooltip if any
+                const existingTooltip = bootstrap.Tooltip.getInstance(tooltipTriggerEl);
+                if (existingTooltip) {
+                    existingTooltip.dispose();
+                }
+                // Create new tooltip
+                new bootstrap.Tooltip(tooltipTriggerEl);
+            });
         }
     }
 
@@ -400,12 +423,153 @@ class PagesManager {
     showCreatePageModal() {
         this.resetPageForm();
         document.getElementById('pageModalTitle').textContent = 'Create New Page';
+        delete document.getElementById('pageForm').dataset.pageId;
         new bootstrap.Modal(document.getElementById('pageModal')).show();
+    }
+
+    async editPage(pageId) {
+        try {
+            const response = await fetch(`/mb-admin/api/pages/pages/${pageId}/`);
+            const pageData = await response.json();
+            
+            if (response.ok) {
+                this.populatePageForm(pageData);
+                document.getElementById('pageModalTitle').textContent = 'Edit Page';
+                document.getElementById('pageForm').dataset.pageId = pageId;
+                new bootstrap.Modal(document.getElementById('pageModal')).show();
+            } else {
+                showAlert('Error loading page data', 'error');
+            }
+        } catch (error) {
+            console.error('Error loading page:', error);
+            showAlert('Error loading page data', 'error');
+        }
+    }
+
+    populatePageForm(pageData) {
+        document.getElementById('page-title').value = pageData.title || '';
+        document.getElementById('page-slug').value = pageData.slug || '';
+        document.getElementById('page-excerpt').value = pageData.excerpt || '';
+        document.getElementById('page-content').value = pageData.content || '';
+        document.getElementById('page-status').value = pageData.status || 'draft';
+        document.getElementById('page-category').value = pageData.category?.id || '';
+        document.getElementById('page-publish-date').value = pageData.publish_date ? 
+            new Date(pageData.publish_date).toISOString().slice(0, 16) : '';
+        document.getElementById('page-featured').checked = pageData.is_featured || false;
+        document.getElementById('page-show-menu').checked = pageData.show_in_menu || false;
+        document.getElementById('page-allow-comments').checked = pageData.allow_comments || false;
+        document.getElementById('page-require-login').checked = pageData.require_login || false;
+        document.getElementById('page-menu-order').value = pageData.menu_order || 0;
+        document.getElementById('page-meta-title').value = pageData.meta_title || '';
+        document.getElementById('page-meta-description').value = pageData.meta_description || '';
+        document.getElementById('page-meta-keywords').value = pageData.meta_keywords || '';
+    }
+
+    async deletePage(pageId) {
+        if (!confirm('Are you sure you want to delete this page?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/mb-admin/api/pages/pages/${pageId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCsrfToken()
+                }
+            });
+
+            if (response.ok) {
+                showAlert('Page deleted successfully', 'success');
+                this.loadPages();
+                this.loadStatistics();
+            } else {
+                showAlert('Error deleting page', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting page:', error);
+            showAlert('Error deleting page', 'error');
+        }
     }
 
     showCreateCategoryModal() {
         this.resetCategoryForm();
+        delete document.getElementById('categoryForm').dataset.categoryId;
         new bootstrap.Modal(document.getElementById('categoryModal')).show();
+    }
+
+    async editCategory(categoryId) {
+        try {
+            const response = await fetch(`/mb-admin/api/pages/categories/${categoryId}/`);
+            const categoryData = await response.json();
+            
+            if (response.ok) {
+                this.populateCategoryForm(categoryData);
+                document.getElementById('categoryForm').dataset.categoryId = categoryId;
+                new bootstrap.Modal(document.getElementById('categoryModal')).show();
+            } else {
+                showAlert('Error loading category data', 'error');
+            }
+        } catch (error) {
+            console.error('Error loading category:', error);
+            showAlert('Error loading category data', 'error');
+        }
+    }
+
+    populateCategoryForm(categoryData) {
+        document.getElementById('category-name').value = categoryData.name || '';
+        document.getElementById('category-slug').value = categoryData.slug || '';
+        document.getElementById('category-description').value = categoryData.description || '';
+        document.getElementById('category-active').checked = categoryData.is_active !== false;
+    }
+
+    async deleteCategory(categoryId) {
+        if (!confirm('Are you sure you want to delete this category?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/mb-admin/api/pages/categories/${categoryId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCsrfToken()
+                }
+            });
+
+            if (response.ok) {
+                showAlert('Category deleted successfully', 'success');
+                this.loadCategories();
+            } else {
+                showAlert('Error deleting category', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting category:', error);
+            showAlert('Error deleting category', 'error');
+        }
+    }
+
+    async deleteComment(commentId) {
+        if (!confirm('Are you sure you want to delete this comment?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/mb-admin/api/pages/comments/${commentId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCsrfToken()
+                }
+            });
+
+            if (response.ok) {
+                showAlert('Comment deleted successfully', 'success');
+                this.loadComments();
+            } else {
+                showAlert('Error deleting comment', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting comment:', error);
+            showAlert('Error deleting comment', 'error');
+        }
     }
 
     resetPageForm() {
@@ -422,9 +586,14 @@ class PagesManager {
     async savePage() {
         try {
             const formData = this.getPageFormData();
+            const pageId = document.getElementById('pageForm').dataset.pageId;
+            const isEdit = !!pageId;
             
-            const response = await fetch('/mb-admin/api/pages/pages/', {
-                method: 'POST',
+            const url = isEdit ? `/mb-admin/api/pages/pages/${pageId}/` : '/mb-admin/api/pages/pages/';
+            const method = isEdit ? 'PUT' : 'POST';
+            
+            const response = await fetch(url, {
+                method: method,
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCsrfToken()
@@ -433,7 +602,8 @@ class PagesManager {
             });
             
             if (response.ok) {
-                showAlert('Page saved successfully', 'success');
+                const message = isEdit ? 'Page updated successfully' : 'Page created successfully';
+                showAlert(message, 'success');
                 bootstrap.Modal.getInstance(document.getElementById('pageModal')).hide();
                 this.loadPages();
                 this.loadStatistics();
@@ -450,9 +620,14 @@ class PagesManager {
     async saveCategory() {
         try {
             const formData = this.getCategoryFormData();
+            const categoryId = document.getElementById('categoryForm').dataset.categoryId;
+            const isEdit = !!categoryId;
             
-            const response = await fetch('/mb-admin/api/pages/categories/', {
-                method: 'POST',
+            const url = isEdit ? `/mb-admin/api/pages/categories/${categoryId}/` : '/mb-admin/api/pages/categories/';
+            const method = isEdit ? 'PUT' : 'POST';
+            
+            const response = await fetch(url, {
+                method: method,
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCsrfToken()
@@ -461,7 +636,8 @@ class PagesManager {
             });
             
             if (response.ok) {
-                showAlert('Category saved successfully', 'success');
+                const message = isEdit ? 'Category updated successfully' : 'Category created successfully';
+                showAlert(message, 'success');
                 bootstrap.Modal.getInstance(document.getElementById('categoryModal')).hide();
                 this.loadCategories();
             } else {
@@ -671,6 +847,60 @@ class PagesManager {
         }
     }
 
+    async bulkApproveComments() {
+        try {
+            const response = await fetch('/mb-admin/api/pages/comments/bulk_approve/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({
+                    comment_ids: Array.from(this.selectedComments)
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                showAlert(data.detail, 'success');
+                this.selectedComments.clear();
+                this.loadComments();
+            } else {
+                showAlert('Error approving comments', 'error');
+            }
+        } catch (error) {
+            console.error('Error approving comments:', error);
+            showAlert('Error approving comments', 'error');
+        }
+    }
+
+    async bulkUnapproveComments() {
+        try {
+            const response = await fetch('/mb-admin/api/pages/comments/bulk_unapprove/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({
+                    comment_ids: Array.from(this.selectedComments)
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                showAlert(data.detail, 'success');
+                this.selectedComments.clear();
+                this.loadComments();
+            } else {
+                showAlert('Error unapproving comments', 'error');
+            }
+        } catch (error) {
+            console.error('Error unapproving comments:', error);
+            showAlert('Error unapproving comments', 'error');
+        }
+    }
+
     renderPagination(containerId, data, onPageClick) {
         const container = document.getElementById(containerId);
         container.innerHTML = '';
@@ -731,7 +961,23 @@ function formatDate(dateString) {
 }
 
 function getCsrfToken() {
-    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+    // Try to get CSRF token from various sources
+    let token = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+    if (!token) {
+        token = document.querySelector('meta[name="csrf-token"]')?.content;
+    }
+    if (!token) {
+        // Try to get from cookies
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const [name, value] = cookie.trim().split('=');
+            if (name === 'csrftoken') {
+                token = value;
+                break;
+            }
+        }
+    }
+    return token;
 }
 
 function showAlert(message, type) {
@@ -788,25 +1034,46 @@ function bulkDeletePages() {
 }
 
 function bulkApproveComments() {
-    // Implement bulk approve comments
     if (pagesManager.selectedComments.size === 0) {
         showAlert('Please select comments to approve', 'warning');
         return;
     }
-    // Add implementation
+    
+    pagesManager.bulkApproveComments();
 }
 
 function bulkUnapproveComments() {
-    // Implement bulk unapprove comments
     if (pagesManager.selectedComments.size === 0) {
         showAlert('Please select comments to unapprove', 'warning');
         return;
     }
-    // Add implementation
+    
+    pagesManager.bulkUnapproveComments();
 }
 
 function loadAnalytics() {
     pagesManager.loadAnalytics();
+}
+
+// Additional global functions for edit and delete operations
+function editPage(pageId) {
+    pagesManager.editPage(pageId);
+}
+
+function deletePage(pageId) {
+    pagesManager.deletePage(pageId);
+}
+
+function editCategory(categoryId) {
+    pagesManager.editCategory(categoryId);
+}
+
+function deleteCategory(categoryId) {
+    pagesManager.deleteCategory(categoryId);
+}
+
+function deleteComment(commentId) {
+    pagesManager.deleteComment(commentId);
 }
 
 // Initialize when DOM is loaded

@@ -17,7 +17,7 @@
             <li><a href="{% url 'frontend:home' %}" class="hover:text-blue-600">Home</a></li>
             <li><span class="mx-2">/</span></li>
             {% if page.category %}
-            <li><a href="{% url 'pages:page_category' page.category.slug %}" class="hover:text-blue-600">{{ page.category.name }}</a></li>
+            <li><a href="{% url 'pages_app:page_category' page.category.slug %}" class="hover:text-blue-600">{{ page.category.name }}</a></li>
             <li><span class="mx-2">/</span></li>
             {% endif %}
             <li class="text-gray-800">{{ page.title }}</li>
@@ -107,7 +107,7 @@
             {% if user.is_authenticated %}
             <!-- Comment Form -->
             <div class="bg-gray-50 rounded-lg p-6 mb-8">
-                <form method="post" action="{% url 'pages:page_detail' page.slug %}" class="space-y-4">
+                <form method="post" action="{% url 'pages_app:page_detail' page.slug %}" class="space-y-4">
                     {% csrf_token %}
                     <div>
                         <textarea name="comment" rows="4" 
