@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'django_filters',
+    'ckeditor',
+    'ckeditor_uploader',
     
     # Local apps
     'users.apps.UsersConfig',
@@ -280,3 +282,72 @@ LOGGING = {
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+# CKEditor Configuration
+CKEDITOR_UPLOAD_PATH = "uploads/"
+CKEDITOR_IMAGE_BACKEND = "pillow"
+CKEDITOR_RESTRICT_BY_USER = True
+CKEDITOR_BROWSE_SHOW_DIRS = True
+
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'full',
+        'height': 400,
+        'width': '100%',
+        'extraPlugins': 'codesnippet,widget,lineutils,clipboard,dialog,dialogui',
+        'removePlugins': 'elementspath',
+        'forcePasteAsPlainText': True,
+        'format_tags': 'p;h1;h2;h3;h4;h5;h6;pre;address;div',
+        'toolbar_Custom': [
+            ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript'],
+            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+            ['Link', 'Unlink', 'Anchor'],
+            ['Image', 'Table', 'HorizontalRule', 'SpecialChar'],
+            ['Format', 'Font', 'FontSize'],
+            ['TextColor', 'BGColor'],
+            ['Undo', 'Redo'],
+            ['Source', 'Preview', 'Maximize'],
+            ['CodeSnippet'],
+        ],
+        'codeSnippet_theme': 'monokai_sublime',
+        'codeSnippet_languages': {
+            'python': 'Python',
+            'javascript': 'JavaScript',
+            'css': 'CSS',
+            'html': 'HTML',
+            'sql': 'SQL',
+            'json': 'JSON',
+        },
+    },
+    'pages': {
+        'toolbar': 'full',
+        'height': 500,
+        'width': '100%',
+        'extraPlugins': 'codesnippet,widget,lineutils,clipboard,dialog,dialogui,image2,uploadimage',
+        'removePlugins': 'elementspath',
+        'allowedContent': True,
+        'format_tags': 'p;h1;h2;h3;h4;h5;h6;pre;address;div',
+        'toolbar_Full': [
+            ['Source', 'Preview', 'Templates', 'Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', 'Undo', 'Redo'],
+            ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', 'RemoveFormat'],
+            ['NumberedList', 'BulletedList', 'Outdent', 'Indent', 'Blockquote', 'CreateDiv'],
+            ['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+            ['Link', 'Unlink', 'Anchor'],
+            ['Image', 'Table', 'HorizontalRule', 'SpecialChar', 'PageBreak', 'Iframe'],
+            ['Styles', 'Format', 'Font', 'FontSize'],
+            ['TextColor', 'BGColor'],
+            ['Maximize', 'ShowBlocks'],
+            ['CodeSnippet'],
+        ],
+        'stylesSet': [
+            {'name': 'Lead Paragraph', 'element': 'p', 'attributes': {'class': 'lead'}},
+            {'name': 'Info Box', 'element': 'div', 'attributes': {'class': 'alert alert-info'}},
+            {'name': 'Warning Box', 'element': 'div', 'attributes': {'class': 'alert alert-warning'}},
+            {'name': 'Success Box', 'element': 'div', 'attributes': {'class': 'alert alert-success'}},
+            {'name': 'Danger Box', 'element': 'div', 'attributes': {'class': 'alert alert-danger'}},
+            {'name': 'Button Primary', 'element': 'a', 'attributes': {'class': 'btn btn-primary'}},
+            {'name': 'Button Secondary', 'element': 'a', 'attributes': {'class': 'btn btn-secondary'}},
+        ],
+        'codeSnippet_theme': 'monokai_sublime',
+    }
+}

@@ -378,6 +378,12 @@
                             
                             <div class="mb-3">
                                 <label for="page-content" class="form-label">Content</label>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <small class="text-muted">Rich text editor</small>
+                                    <button type="button" class="btn btn-sm btn-outline-info" onclick="testCKEditor()">
+                                        <i class="fas fa-refresh"></i> Test Editor
+                                    </button>
+                                </div>
                                 <textarea class="form-control page-editor" id="page-content" rows="15"></textarea>
                             </div>
                         </div>
@@ -524,5 +530,19 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- CKEditor Script - Free Standard Version -->
+<script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
 <script src="{% static 'dashboard/js/pages.js' %}"></script>
+
+<script>
+// Debug CKEditor loading
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, checking CKEditor...');
+    if (typeof CKEDITOR !== 'undefined') {
+        console.log('CKEditor loaded successfully:', CKEDITOR.version);
+    } else {
+        console.error('CKEditor not loaded');
+    }
+});
+</script>
 {% endblock %}

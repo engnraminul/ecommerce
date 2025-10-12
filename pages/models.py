@@ -5,6 +5,7 @@ from django.utils.text import slugify
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.db.models import F
+from ckeditor_uploader.fields import RichTextUploadingField
 import os
 from uuid import uuid4
 
@@ -93,7 +94,7 @@ class Page(models.Model):
     template = models.ForeignKey(PageTemplate, on_delete=models.SET_NULL, null=True, blank=True)
     
     # Content
-    content = models.TextField(blank=True, help_text="Main page content")
+    content = RichTextUploadingField(config_name='pages', blank=True, help_text="Main page content with rich text editor")
     excerpt = models.TextField(max_length=500, blank=True, help_text="Short description for meta tags and previews")
     
     # Media
