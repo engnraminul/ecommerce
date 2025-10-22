@@ -769,6 +769,9 @@
             <button class="btn btn-outline-primary btn-sm status-filter-btn" data-status="processing">
                 Processing <span class="badge bg-primary-subtle text-primary rounded-pill" id="processingOrdersCount">0</span>
             </button>
+            <button class="btn btn-outline-primary btn-sm status-filter-btn" data-status="ready_for_shipped">
+                Ready for Shipped <span class="badge bg-primary-subtle text-primary rounded-pill" id="readyForShippedOrdersCount">0</span>
+            </button>
             <button class="btn btn-outline-primary btn-sm status-filter-btn" data-status="shipped">
                 Shipped <span class="badge bg-primary-subtle text-primary rounded-pill" id="shippedOrdersCount">0</span>
             </button>
@@ -800,6 +803,7 @@
                         <option value="pending">Change to Pending</option>
                         <option value="confirmed">Change to Confirmed</option>
                         <option value="processing">Change to Processing</option>
+                        <option value="ready_for_shipped">Change to Ready for Shipped</option>
                         <option value="shipped">Change to Shipped</option>
                         <option value="delivered">Change to Delivered</option>
                         <option value="returned">Change to Returned</option>
@@ -943,6 +947,7 @@
                                 <li><a class="dropdown-item" data-status="pending" href="#">Pending</a></li>
                                 <li><a class="dropdown-item" data-status="confirmed" href="#">Confirmed</a></li>
                                 <li><a class="dropdown-item" data-status="processing" href="#">Processing</a></li>
+                                <li><a class="dropdown-item" data-status="ready_for_shipped" href="#">Ready for Shipped</a></li>
                                 <li><a class="dropdown-item" data-status="shipped" href="#">Shipped</a></li>
                                 <li><a class="dropdown-item" data-status="delivered" href="#">Delivered</a></li>
                                 <li><a class="dropdown-item" data-status="returned" href="#">Returned</a></li>
@@ -1858,6 +1863,7 @@ document.addEventListener('DOMContentLoaded', function() {
             'pending': 'bg-warning text-dark',
             'confirmed': 'bg-info text-white',
             'processing': 'bg-primary text-white',
+            'ready_for_shipped': 'bg-teal text-white',
             'shipped': 'bg-indigo text-white',
             'delivered': 'bg-success text-white',
             'returned': 'bg-brown text-white',
@@ -2424,6 +2430,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         'pending': 'pendingOrdersCount',
                         'confirmed': 'confirmedOrdersCount',
                         'processing': 'processingOrdersCount',
+                        'ready_for_shipped': 'readyForShippedOrdersCount',
                         'shipped': 'shippedOrdersCount',
                         'delivered': 'deliveredOrdersCount',
                         'returned': 'returnedOrdersCount',
@@ -2454,6 +2461,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         pending: 0,
                         confirmed: 0,
                         processing: 0,
+                        ready_for_shipped: 0,
                         shipped: 0,
                         delivered: 0,
                         returned: 0,
@@ -2477,6 +2485,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         document.getElementById('pendingOrdersCount').textContent = statusCounts.pending;
                         document.getElementById('confirmedOrdersCount').textContent = statusCounts.confirmed;
                         document.getElementById('processingOrdersCount').textContent = statusCounts.processing;
+                        document.getElementById('readyForShippedOrdersCount').textContent = statusCounts.ready_for_shipped;
                         document.getElementById('shippedOrdersCount').textContent = statusCounts.shipped;
                         document.getElementById('deliveredOrdersCount').textContent = statusCounts.delivered;
                         document.getElementById('returnedOrdersCount').textContent = statusCounts.returned;
@@ -2556,6 +2565,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     break;
                 case 'processing':
                     statusBadgeClass = 'bg-primary text-white';
+                    break;
+                case 'ready_for_shipped':
+                    statusBadgeClass = 'bg-teal text-white';
                     break;
                 case 'shipped':
                     statusBadgeClass = 'bg-success  text-white';
@@ -2950,6 +2962,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 break;
             case 'processing':
                 statusBadgeClass = 'bg-primary text-white';
+                break;
+            case 'ready_for_shipped':
+                statusBadgeClass = 'bg-teal text-white';
                 break;
             case 'shipped':
                 statusBadgeClass = 'bg-success  text-white';
@@ -3855,6 +3870,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     break;
                 case 'processing':
                     statusBadgeClass = 'bg-info';
+                    break;
+                case 'ready_for_shipped':
+                    statusBadgeClass = 'bg-teal';
                     break;
                 case 'shipped':
                     statusBadgeClass = 'bg-primary';
