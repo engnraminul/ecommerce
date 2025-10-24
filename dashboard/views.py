@@ -3154,11 +3154,11 @@ class ProductPerformanceView(APIView):
                 if hasattr(product, 'images') and product.images.exists():
                     first_image = product.images.first()
                     if first_image and first_image.image:
-                        image_url = first_image.image.url
+                        image_url = first_image.image_url
                 elif hasattr(product, 'productimage_set') and product.productimage_set.exists():
                     first_image = product.productimage_set.first()
                     if first_image and first_image.image:
-                        image_url = first_image.image.url
+                        image_url = first_image.image_url
                 
                 product_data = {
                     'id': product.id,
