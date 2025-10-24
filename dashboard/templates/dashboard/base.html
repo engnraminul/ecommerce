@@ -263,6 +263,11 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{% url 'dashboard:email_settings_index' %}" class="{% if active_page == 'email_settings' %}active{% endif %}">
+                        <i class="fas fa-envelope"></i> Email Settings
+                    </a>
+                </li>
+                <li>
                     <a href="{% url 'dashboard:settings' %}" class="{% if active_page == 'settings' %}active{% endif %}">
                         <i class="fas fa-cog"></i> Settings
                     </a>

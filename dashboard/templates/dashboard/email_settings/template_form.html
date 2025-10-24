@@ -1,0 +1,234 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Dashboard{% endblock %}
+
+{% block extra_css %}
+{{ form.media.css }}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">{{ title }}</h1>
+        <a href="{% url 'dashboard:email_template_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.name.id_for_label }}">Template Name *</label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.name.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.template_type.id_for_label }}">Template Type *</label>
+                                    {{ form.template_type }}
+                                    {% if form.template_type.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.template_type.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.subject.id_for_label }}">Email Subject *</label>
+                            {{ form.subject }}
+                            <small class="form-text text-muted">
+                                You can use variables like: {{user_name}}, {{order_number}}, {{site_name}}
+                            </small>
+                            {% if form.subject.errors %}
+                                <div class="invalid-feedback d-block">{{ form.subject.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Email Content -->
+                        <fieldset>
+                            <legend class="h5">Email Content</legend>
+                            
+                            <div class="form-group">
+                                <label for="{{ form.html_content.id_for_label }}">HTML Content *</label>
+                                {{ form.html_content }}
+                                {% if form.html_content.help_text %}
+                                    <small class="form-text text-muted">{{ form.html_content.help_text }}</small>
+                                {% endif %}
+                                {% if form.html_content.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.html_content.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group">
+                                <label for="{{ form.text_content.id_for_label }}">Plain Text Content (Optional)</label>
+                                {{ form.text_content }}
+                                <small class="form-text text-muted">
+                                    If empty, plain text will be auto-generated from HTML content.
+                                </small>
+                                {% if form.text_content.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.text_content.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </fieldset>
+
+                        <!-- Template Settings -->
+                        <fieldset class="mt-4">
+                            <legend class="h5">Template Settings</legend>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        {{ form.is_active }}
+                                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                            <strong>Active Template</strong>
+                                        </label>
+                                        <small class="form-text text-muted">Enable this email template.</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        {{ form.send_to_user_email }}
+                                        <label class="form-check-label" for="{{ form.send_to_user_email.id_for_label }}">
+                                            Send to User Email
+                                        </label>
+                                        <small class="form-text text-muted">Send to logged-in user's email.</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        {{ form.send_to_checkout_email }}
+                                        <label class="form-check-label" for="{{ form.send_to_checkout_email.id_for_label }}">
+                                            Send to Checkout Email
+                                        </label>
+                                        <small class="form-text text-muted">Send to email from checkout form.</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <!-- Description -->
+                        <fieldset class="mt-4">
+                            <legend class="h5">Description</legend>
+                            
+                            <div class="form-group">
+                                <label for="{{ form.description.id_for_label }}">Template Description (Optional)</label>
+                                {{ form.description }}
+                                <small class="form-text text-muted">
+                                    Describe when and how this template is used.
+                                </small>
+                                {% if form.description.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.description.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </fieldset>
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger mt-3">
+                                {% for error in form.non_field_errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Template
+                            </button>
+                            <a href="{% url 'dashboard:email_template_list' %}" class="btn btn-secondary ml-2">
+                                Cancel
+                            </a>
+                            {% if template %}
+                                <a href="{% url 'dashboard:email_template_preview' template.pk %}" class="btn btn-info ml-2">
+                                    <i class="fas fa-eye"></i> Preview
+                                </a>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Available Variables</h6>
+                </div>
+                <div class="card-body">
+                    <div id="template-variables">
+                        <p class="text-muted">Select a template type to see available variables.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Template Tips</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="text-sm">
+                        <li>Use double curly braces for variables: <code>{{variable_name}}</code></li>
+                        <li>HTML content supports full styling and images</li>
+                        <li>Test your templates with the preview feature</li>
+                        <li>Ensure both user and checkout email options are configured based on your needs</li>
+                        <li>Keep subjects under 50 characters for better mobile display</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ form.media.js }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const templateTypeField = document.getElementById('{{ form.template_type.id_for_label }}');
+    const variablesDiv = document.getElementById('template-variables');
+    
+    const templateVariables = {
+        'welcome': ['user_name', 'user_email', 'site_name', 'site_url'],
+        'activation': ['user_name', 'user_email', 'activation_url', 'activation_token', 'site_name'],
+        'password_reset': ['user_name', 'user_email', 'reset_url', 'reset_token', 'site_name'],
+        'order_confirmed': ['user_name', 'order_number', 'order_total', 'order_date', 'site_name'],
+        'order_shipped': ['user_name', 'order_number', 'tracking_number', 'carrier', 'site_name'],
+        'order_delivered': ['user_name', 'order_number', 'delivery_date', 'site_name'],
+        'order_cancelled': ['user_name', 'order_number', 'cancellation_reason', 'site_name'],
+        'newsletter': ['user_name', 'user_email', 'site_name', 'site_url'],
+        'custom': ['user_name', 'user_email', 'site_name', 'site_url', 'current_year']
+    };
+    
+    function updateVariables() {
+        const selectedType = templateTypeField.value;
+        const variables = templateVariables[selectedType] || [];
+        
+        if (variables.length > 0) {
+            let html = '<h6>Available Variables:</h6><ul class="list-unstyled">';
+            variables.forEach(variable => {
+                html += `<li><code class="text-primary">{{${variable}}}</code></li>`;
+            });
+            html += '</ul>';
+            html += '<small class="text-muted">Copy and paste these variables into your content.</small>';
+            variablesDiv.innerHTML = html;
+        } else {
+            variablesDiv.innerHTML = '<p class="text-muted">No specific variables for this template type.</p>';
+        }
+    }
+    
+    templateTypeField.addEventListener('change', updateVariables);
+    updateVariables(); // Initial call
+});
+</script>
+{% endblock %}

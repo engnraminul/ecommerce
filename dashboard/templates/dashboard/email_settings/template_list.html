@@ -1,0 +1,151 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Email Templates - Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Email Templates</h1>
+        <a href="{% url 'dashboard:email_template_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create Template
+        </a>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            {% if templates %}
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Subject</th>
+                                <th>Status</th>
+                                <th>Email Preferences</th>
+                                <th>Updated</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for template in templates %}
+                            <tr>
+                                <td>
+                                    <strong>{{ template.name }}</strong>
+                                    {% if not template.is_active %}
+                                        <span class="badge badge-secondary ml-2">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge badge-info">
+                                        {{ template.get_template_type_display }}
+                                    </span>
+                                </td>
+                                <td>{{ template.subject|truncatechars:50 }}</td>
+                                <td>
+                                    {% if template.is_active %}
+                                        <span class="badge badge-success">
+                                            <i class="fas fa-check"></i> Active
+                                        </span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">
+                                            <i class="fas fa-pause"></i> Inactive
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        {% if template.send_to_user_email %}
+                                            <small class="text-success">
+                                                <i class="fas fa-check"></i> User Email
+                                            </small>
+                                        {% endif %}
+                                        {% if template.send_to_checkout_email %}
+                                            <small class="text-info">
+                                                <i class="fas fa-check"></i> Checkout Email
+                                            </small>
+                                        {% endif %}
+                                        {% if not template.send_to_user_email and not template.send_to_checkout_email %}
+                                            <small class="text-warning">
+                                                <i class="fas fa-exclamation-triangle"></i> No Recipients
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>{{ template.updated_at|date:"M d, Y" }}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'dashboard:email_template_preview' template.pk %}" 
+                                           class="btn btn-sm btn-outline-info">
+                                            <i class="fas fa-eye"></i> Preview
+                                        </a>
+                                        <a href="{% url 'dashboard:email_template_edit' template.pk %}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                        <a href="{% url 'dashboard:email_template_delete' template.pk %}" 
+                                           class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                    <h4>No Email Templates</h4>
+                    <p class="text-muted">Create your first email template to start customizing your emails.</p>
+                    <a href="{% url 'dashboard:email_template_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create First Template
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Template Types Guide -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Template Types Guide</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>User Account Templates</h6>
+                            <ul class="text-sm">
+                                <li><strong>Welcome:</strong> Sent after account activation</li>
+                                <li><strong>Activation:</strong> Email verification for new accounts</li>
+                                <li><strong>Password Reset:</strong> Password recovery emails</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Order Templates</h6>
+                            <ul class="text-sm">
+                                <li><strong>Order Confirmed:</strong> When order is placed/confirmed</li>
+                                <li><strong>Order Shipped:</strong> When order is shipped</li>
+                                <li><strong>Order Delivered:</strong> When order is delivered</li>
+                                <li><strong>Order Cancelled:</strong> When order is cancelled</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <h6>Available Variables</h6>
+                        <p class="text-sm text-muted">
+                            Use these variables in your templates: 
+                            <code>{{user_name}}</code>, <code>{{user_email}}</code>, <code>{{order_number}}</code>, 
+                            <code>{{order_total}}</code>, <code>{{site_name}}</code>, <code>{{site_url}}</code>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

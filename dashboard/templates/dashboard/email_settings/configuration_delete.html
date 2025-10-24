@@ -1,0 +1,67 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Delete Email Configuration - Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Delete Email Configuration</h1>
+        <a href="{% url 'dashboard:email_configuration_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-exclamation-triangle"></i> Confirm Deletion
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <strong>Warning!</strong> This action cannot be undone.
+                    </div>
+                    
+                    <p>Are you sure you want to delete the following email configuration?</p>
+                    
+                    <div class="bg-light p-3 rounded mb-3">
+                        <h6><strong>{{ configuration.name }}</strong></h6>
+                        <p class="mb-1"><strong>Type:</strong> {{ configuration.get_smtp_type_display }}</p>
+                        <p class="mb-1"><strong>SMTP Host:</strong> {{ configuration.smtp_host }}:{{ configuration.smtp_port }}</p>
+                        <p class="mb-1"><strong>From Email:</strong> {{ configuration.from_email }}</p>
+                        <p class="mb-0">
+                            <strong>Status:</strong> 
+                            {% if configuration.is_active %}
+                                <span class="badge badge-success">Active</span>
+                            {% else %}
+                                <span class="badge badge-secondary">Inactive</span>
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    {% if configuration.is_active %}
+                        <div class="alert alert-danger">
+                            <strong>Note:</strong> This is the active email configuration. Deleting it will disable email functionality until you activate another configuration.
+                        </div>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'dashboard:email_configuration_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Yes, Delete Configuration
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Test Email Configuration - Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Test Email Configuration</h1>
+        <a href="{% url 'dashboard:email_configuration_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Send Test Email</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>Configuration Details</h6>
+                        <div class="bg-light p-3 rounded">
+                            <p class="mb-1"><strong>Name:</strong> {{ configuration.name }}</p>
+                            <p class="mb-1"><strong>Type:</strong> {{ configuration.get_smtp_type_display }}</p>
+                            <p class="mb-1"><strong>SMTP Host:</strong> {{ configuration.smtp_host }}:{{ configuration.smtp_port }}</p>
+                            <p class="mb-1"><strong>From Email:</strong> {{ configuration.from_email }}</p>
+                            <p class="mb-0"><strong>From Name:</strong> {{ configuration.from_name }}</p>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="{{ form.test_email.id_for_label }}">{{ form.test_email.label }} *</label>
+                            {{ form.test_email }}
+                            {% if form.test_email.help_text %}
+                                <small class="form-text text-muted">{{ form.test_email.help_text }}</small>
+                            {% endif %}
+                            {% if form.test_email.errors %}
+                                <div class="invalid-feedback d-block">{{ form.test_email.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>What this test will do:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Connect to the SMTP server using the configuration settings</li>
+                                <li>Send a test email with basic content</li>
+                                <li>Update the configuration's verification status</li>
+                                <li>Log the test result for your review</li>
+                            </ul>
+                        </div>
+
+                        {% if configuration.last_test_date %}
+                            <div class="alert alert-secondary">
+                                <strong>Last Test:</strong> {{ configuration.last_test_date|date:"F d, Y H:i" }}<br>
+                                <strong>Result:</strong> 
+                                {% if configuration.is_verified %}
+                                    <span class="text-success">✓ Success</span>
+                                {% else %}
+                                    <span class="text-danger">✗ Failed</span>
+                                {% endif %}
+                                {% if configuration.test_result %}
+                                    <br><small>{{ configuration.test_result }}</small>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'dashboard:email_configuration_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-paper-plane"></i> Send Test Email
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

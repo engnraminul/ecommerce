@@ -1,0 +1,306 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Email Settings - Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .email-stats-card {
+        border-left: 4px solid #007bff;
+    }
+    .email-stats-card.success {
+        border-left-color: #28a745;
+    }
+    .email-stats-card.danger {
+        border-left-color: #dc3545;
+    }
+    .email-stats-card.warning {
+        border-left-color: #ffc107;
+    }
+    .config-status {
+        font-size: 0.875rem;
+    }
+    .config-active {
+        color: #28a745;
+        font-weight: bold;
+    }
+    .config-inactive {
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Email Settings</h1>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2 email-stats-card success">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Emails Sent Today
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.sent_today }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-paper-plane fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2 email-stats-card danger">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Failed Today
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.failed_today }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2 email-stats-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Total Sent
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total_sent }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-envelope fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2 email-stats-card warning">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Active Templates
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ active_templates }}/{{ total_templates }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-file-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Email Configuration -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Email Configuration</h6>
+                    <a href="{% url 'dashboard:email_configuration_list' %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-cog"></i> Manage
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if active_config %}
+                        <div class="row">
+                            <div class="col-12">
+                                <h6 class="font-weight-bold">{{ active_config.name }}</h6>
+                                <p class="text-muted mb-2">{{ active_config.get_smtp_type_display }}</p>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-muted">SMTP Host:</small><br>
+                                        <strong>{{ active_config.smtp_host }}:{{ active_config.smtp_port }}</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">From Email:</small><br>
+                                        <strong>{{ active_config.from_email }}</strong>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    {% if active_config.is_verified %}
+                                        <span class="badge badge-success">
+                                            <i class="fas fa-check"></i> Verified
+                                        </span>
+                                    {% else %}
+                                        <span class="badge badge-warning">
+                                            <i class="fas fa-exclamation-triangle"></i> Not Verified
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-exclamation-circle fa-3x text-warning mb-3"></i>
+                            <h5>No Email Configuration</h5>
+                            <p class="text-muted">Set up an email configuration to start sending emails.</p>
+                            <a href="{% url 'dashboard:email_configuration_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Create Configuration
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Email Templates -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Email Templates</h6>
+                    <a href="{% url 'dashboard:email_template_list' %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-file-alt"></i> Manage
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="text-center">
+                                <div class="h4 font-weight-bold text-success">{{ active_templates }}</div>
+                                <div class="text-xs text-uppercase text-success">Active</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center">
+                                <div class="h4 font-weight-bold text-info">{{ total_templates }}</div>
+                                <div class="text-xs text-uppercase text-info">Total</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'dashboard:email_template_create' %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-plus"></i> Create Template
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'dashboard:email_configuration_list' %}" class="btn btn-outline-primary btn-block">
+                                <i class="fas fa-server"></i><br>
+                                <small>SMTP Settings</small>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'dashboard:email_template_list' %}" class="btn btn-outline-info btn-block">
+                                <i class="fas fa-file-alt"></i><br>
+                                <small>Email Templates</small>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'dashboard:email_log_list' %}" class="btn btn-outline-success btn-block">
+                                <i class="fas fa-list"></i><br>
+                                <small>Email Logs</small>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'dashboard:bulk_email' %}" class="btn btn-outline-warning btn-block">
+                                <i class="fas fa-paper-plane"></i><br>
+                                <small>Bulk Email</small>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Email Logs -->
+    {% if recent_logs %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Email Activity</h6>
+                    <a href="{% url 'dashboard:email_log_list' %}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Recipient</th>
+                                    <th>Subject</th>
+                                    <th>Template</th>
+                                    <th>Status</th>
+                                    <th>Sent At</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in recent_logs %}
+                                <tr>
+                                    <td>{{ log.recipient_email }}</td>
+                                    <td>{{ log.subject|truncatechars:50 }}</td>
+                                    <td>
+                                        {% if log.template %}
+                                            <span class="badge badge-info">{{ log.template.get_template_type_display }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if log.status == 'sent' %}
+                                            <span class="badge badge-success">
+                                                <i class="fas fa-check"></i> Sent
+                                            </span>
+                                        {% elif log.status == 'failed' %}
+                                            <span class="badge badge-danger">
+                                                <i class="fas fa-times"></i> Failed
+                                            </span>
+                                        {% else %}
+                                            <span class="badge badge-warning">
+                                                <i class="fas fa-clock"></i> Pending
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if log.sent_at %}
+                                            {{ log.sent_at|date:"M d, Y H:i" }}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,13 +1,22 @@
 from django.urls import path
 from . import views
+from . import auth_views
 
 app_name = 'users'
 
 urlpatterns = [
     # Authentication
-    path('register/', views.RegisterView.as_view(), name='register'),
+    path('register/', auth_views.register, name='register'),
     path('login/', views.LoginView.as_view(), name='login'),
     path('logout/', views.logout_view, name='logout'),
+    
+    # Password Reset
+    path('forgot-password/', auth_views.forgot_password, name='forgot_password'),
+    path('reset-password/<uuid:token>/', auth_views.reset_password, name='reset_password'),
+    
+    # Email Activation
+    path('activate/<uuid:token>/', auth_views.activate_account, name='activate_account'),
+    path('resend-activation/', auth_views.resend_activation, name='resend_activation'),
     
     # Profile
     path('profile/', views.ProfileView.as_view(), name='profile'),

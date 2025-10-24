@@ -1,0 +1,140 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Email Configurations - Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Email Configurations</h1>
+        <a href="{% url 'dashboard:email_configuration_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add Configuration
+        </a>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            {% if configurations %}
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>SMTP Host</th>
+                                <th>From Email</th>
+                                <th>Status</th>
+                                <th>Last Test</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for config in configurations %}
+                            <tr {% if config.is_active %}class="table-success"{% endif %}>
+                                <td>
+                                    <strong>{{ config.name }}</strong>
+                                    {% if config.is_active %}
+                                        <span class="badge badge-success ml-2">Active</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge badge-{% if config.smtp_type == 'gmail' %}primary{% else %}info{% endif %}">
+                                        {{ config.get_smtp_type_display }}
+                                    </span>
+                                </td>
+                                <td>{{ config.smtp_host }}:{{ config.smtp_port }}</td>
+                                <td>{{ config.from_email }}</td>
+                                <td>
+                                    {% if config.is_verified %}
+                                        <span class="badge badge-success">
+                                            <i class="fas fa-check"></i> Verified
+                                        </span>
+                                    {% else %}
+                                        <span class="badge badge-warning">
+                                            <i class="fas fa-exclamation-triangle"></i> Not Verified
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if config.last_test_date %}
+                                        {{ config.last_test_date|date:"M d, Y H:i" }}
+                                    {% else %}
+                                        <span class="text-muted">Never</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'dashboard:email_configuration_test' config.pk %}" 
+                                           class="btn btn-sm btn-outline-info">
+                                            <i class="fas fa-vial"></i> Test
+                                        </a>
+                                        <a href="{% url 'dashboard:email_configuration_edit' config.pk %}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                        {% if not config.is_active %}
+                                            <form method="post" action="{% url 'dashboard:email_configuration_activate' config.pk %}" style="display: inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-outline-success" 
+                                                        onclick="return confirm('Are you sure you want to activate this configuration?')">
+                                                    <i class="fas fa-check"></i> Activate
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                        <a href="{% url 'dashboard:email_configuration_delete' config.pk %}" 
+                                           class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-server fa-3x text-muted mb-3"></i>
+                    <h4>No Email Configurations</h4>
+                    <p class="text-muted">Create your first email configuration to start sending emails.</p>
+                    <a href="{% url 'dashboard:email_configuration_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create First Configuration
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Configuration Help</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fab fa-google text-danger"></i> Gmail SMTP Setup</h6>
+                            <ul class="text-sm">
+                                <li>Host: smtp.gmail.com</li>
+                                <li>Port: 587 (TLS) or 465 (SSL)</li>
+                                <li>Use App Password instead of regular password</li>
+                                <li>Enable 2-factor authentication first</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-building text-info"></i> Business SMTP Setup</h6>
+                            <ul class="text-sm">
+                                <li>Contact your email provider for SMTP settings</li>
+                                <li>Common ports: 587 (TLS), 465 (SSL), 25 (Insecure)</li>
+                                <li>Use your email credentials</li>
+                                <li>Test configuration after setup</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

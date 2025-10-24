@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+import uuid
 
 
 class User(AbstractUser):
@@ -10,6 +11,15 @@ class User(AbstractUser):
     
     # Profile fields
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    
+    # Email verification
+    is_email_verified = models.BooleanField(default=False)
+    email_verification_token = models.UUIDField(default=uuid.uuid4, unique=True)
+    email_verification_sent_at = models.DateTimeField(null=True, blank=True)
+    
+    # Password reset
+    password_reset_token = models.UUIDField(null=True, blank=True, unique=True)
+    password_reset_sent_at = models.DateTimeField(null=True, blank=True)
     
     # Address fields (default shipping address)
     address_line_1 = models.CharField(max_length=255, blank=True)
@@ -40,6 +50,24 @@ class User(AbstractUser):
             self.country
         ]
         return ', '.join([part for part in address_parts if part])
+    
+    def generate_email_verification_token(self):
+        """Generate a new email verification token."""
+        self.email_verification_token = uuid.uuid4()
+        self.save(update_fields=['email_verification_token'])
+        return self.email_verification_token
+    
+    def generate_password_reset_token(self):
+        """Generate a new password reset token."""
+        self.password_reset_token = uuid.uuid4()
+        self.save(update_fields=['password_reset_token'])
+        return self.password_reset_token
+    
+    def clear_password_reset_token(self):
+        """Clear the password reset token after use."""
+        self.password_reset_token = None
+        self.password_reset_sent_at = None
+        self.save(update_fields=['password_reset_token', 'password_reset_sent_at'])
 
 
 class UserProfile(models.Model):

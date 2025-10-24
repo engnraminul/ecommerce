@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from . import views
 from . import order_views
 from . import media_api
+from . import email_views
 from orders import order_edit_views
 from pages import dashboard_views as pages_dashboard_views
 
@@ -87,4 +88,33 @@ urlpatterns = [
     path('accounts/', views.dashboard_accounts, name='accounts'),
     path('api-docs/', views.dashboard_api_docs, name='api_docs'),
     path('pages/', views.dashboard_pages, name='pages'),
+    
+    # Email Settings URLs
+    path('email-settings/', email_views.email_settings_index, name='email_settings_index'),
+    
+    # Email Configuration URLs
+    path('email-settings/configuration/', email_views.email_configuration_list, name='email_configuration_list'),
+    path('email-settings/configuration/create/', email_views.email_configuration_create, name='email_configuration_create'),
+    path('email-settings/configuration/<int:pk>/edit/', email_views.email_configuration_edit, name='email_configuration_edit'),
+    path('email-settings/configuration/<int:pk>/delete/', email_views.email_configuration_delete, name='email_configuration_delete'),
+    path('email-settings/configuration/<int:pk>/test/', email_views.email_configuration_test, name='email_configuration_test'),
+    path('email-settings/configuration/<int:pk>/activate/', email_views.email_configuration_activate, name='email_configuration_activate'),
+    
+    # Email Template URLs
+    path('email-settings/templates/', email_views.email_template_list, name='email_template_list'),
+    path('email-settings/templates/create/', email_views.email_template_create, name='email_template_create'),
+    path('email-settings/templates/<int:pk>/edit/', email_views.email_template_edit, name='email_template_edit'),
+    path('email-settings/templates/<int:pk>/delete/', email_views.email_template_delete, name='email_template_delete'),
+    path('email-settings/templates/<int:pk>/preview/', email_views.email_template_preview, name='email_template_preview'),
+    
+    # Email Log URLs
+    path('email-settings/logs/', email_views.email_log_list, name='email_log_list'),
+    path('email-settings/logs/<int:pk>/', email_views.email_log_detail, name='email_log_detail'),
+    
+    # Bulk Email URLs
+    path('email-settings/bulk/', email_views.bulk_email, name='bulk_email'),
+    
+    # AJAX URLs
+    path('ajax/smtp-defaults/', email_views.ajax_get_smtp_defaults, name='ajax_smtp_defaults'),
+    path('ajax/template-variables/<int:pk>/', email_views.ajax_template_variables, name='ajax_template_variables'),
 ]

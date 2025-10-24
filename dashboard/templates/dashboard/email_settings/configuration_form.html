@@ -1,0 +1,264 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Dashboard{% endblock %}
+
+{% block extra_css %}
+{{ form.media.css }}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">{{ title }}</h1>
+        <a href="{% url 'dashboard:email_configuration_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="form-group">
+                            <label for="{{ form.name.id_for_label }}">Configuration Name *</label>
+                            {{ form.name }}
+                            {% if form.name.help_text %}
+                                <small class="form-text text-muted">{{ form.name.help_text }}</small>
+                            {% endif %}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">{{ form.name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.smtp_type.id_for_label }}">SMTP Type *</label>
+                            {{ form.smtp_type }}
+                            {% if form.smtp_type.errors %}
+                                <div class="invalid-feedback d-block">{{ form.smtp_type.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- SMTP Settings -->
+                        <fieldset>
+                            <legend class="h5">SMTP Settings</legend>
+                            
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="form-group">
+                                        <label for="{{ form.smtp_host.id_for_label }}">SMTP Host *</label>
+                                        {{ form.smtp_host }}
+                                        {% if form.smtp_host.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.smtp_host.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="{{ form.smtp_port.id_for_label }}">Port *</label>
+                                        {{ form.smtp_port }}
+                                        {% if form.smtp_port.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.smtp_port.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="{{ form.smtp_username.id_for_label }}">SMTP Username *</label>
+                                        {{ form.smtp_username }}
+                                        {% if form.smtp_username.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.smtp_username.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="{{ form.smtp_password.id_for_label }}">SMTP Password *</label>
+                                        {{ form.smtp_password }}
+                                        {% if configuration.pk %}
+                                            <small class="form-text text-info">
+                                                <i class="fas fa-info-circle"></i> Password is currently set. Leave empty to keep existing password, or enter new password to update.
+                                            </small>
+                                        {% endif %}
+                                        {% if form.smtp_password.help_text %}
+                                            <small class="form-text text-muted">{{ form.smtp_password.help_text }}</small>
+                                        {% endif %}
+                                        {% if form.smtp_password.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.smtp_password.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        {{ form.smtp_use_tls }}
+                                        <label class="form-check-label" for="{{ form.smtp_use_tls.id_for_label }}">
+                                            Use TLS Encryption
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        {{ form.smtp_use_ssl }}
+                                        <label class="form-check-label" for="{{ form.smtp_use_ssl.id_for_label }}">
+                                            Use SSL Encryption
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <!-- Sender Information -->
+                        <fieldset class="mt-4">
+                            <legend class="h5">Sender Information</legend>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="{{ form.from_email.id_for_label }}">From Email *</label>
+                                        {{ form.from_email }}
+                                        {% if form.from_email.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.from_email.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="{{ form.from_name.id_for_label }}">From Name *</label>
+                                        {{ form.from_name }}
+                                        {% if form.from_name.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.from_name.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <!-- Configuration Status -->
+                        <fieldset class="mt-4">
+                            <legend class="h5">Configuration Status</legend>
+                            
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    <strong>Set as Active Configuration</strong>
+                                </label>
+                                <small class="form-text text-muted">Only one configuration can be active at a time.</small>
+                                {% if form.is_active.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.is_active.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </fieldset>
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger mt-3">
+                                {% for error in form.non_field_errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Configuration
+                            </button>
+                            {% if configuration.pk %}
+                                <a href="{% url 'dashboard:email_configuration_test' configuration.pk %}" class="btn btn-info ml-2">
+                                    <i class="fas fa-vial"></i> Test Configuration
+                                </a>
+                            {% endif %}
+                            <a href="{% url 'dashboard:email_configuration_list' %}" class="btn btn-secondary ml-2">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Configuration Help</h6>
+                </div>
+                <div class="card-body">
+                    <div id="gmail-help" style="display: none;">
+                        <h6><i class="fab fa-google text-danger"></i> Gmail Setup</h6>
+                        <ul class="text-sm">
+                            <li><strong>Host:</strong> smtp.gmail.com</li>
+                            <li><strong>Port:</strong> 587 (TLS recommended)</li>
+                            <li><strong>Security:</strong> Enable 2FA and use App Password</li>
+                            <li><strong>Username:</strong> Your Gmail address</li>
+                        </ul>
+                        <div class="alert alert-info">
+                            <small>
+                                <i class="fas fa-info-circle"></i>
+                                Create an App Password in your Google Account settings under Security.
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div id="business-help" style="display: none;">
+                        <h6><i class="fas fa-building text-info"></i> Business SMTP</h6>
+                        <ul class="text-sm">
+                            <li><strong>Host:</strong> Contact your email provider</li>
+                            <li><strong>Port:</strong> 587 (TLS), 465 (SSL), or 25</li>
+                            <li><strong>Security:</strong> TLS recommended</li>
+                            <li><strong>Credentials:</strong> Your email login</li>
+                        </ul>
+                        <div class="alert alert-warning">
+                            <small>
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Contact your IT administrator for SMTP settings.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ form.media.js }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const smtpTypeField = document.getElementById('{{ form.smtp_type.id_for_label }}');
+    const smtpHostField = document.getElementById('{{ form.smtp_host.id_for_label }}');
+    const smtpPortField = document.getElementById('{{ form.smtp_port.id_for_label }}');
+    const useTlsField = document.getElementById('{{ form.smtp_use_tls.id_for_label }}');
+    const useSslField = document.getElementById('{{ form.smtp_use_ssl.id_for_label }}');
+    
+    const isNewConfiguration = {% if not configuration.pk %}true{% else %}false{% endif %};
+    
+    function updateFields() {
+        const selectedType = smtpTypeField.value;
+        
+        // Show/hide help sections
+        document.getElementById('gmail-help').style.display = selectedType === 'gmail' ? 'block' : 'none';
+        document.getElementById('business-help').style.display = selectedType === 'business' ? 'block' : 'none';
+        
+        // Update fields based on type (only for new configurations)
+        if (isNewConfiguration && selectedType === 'gmail') {
+            smtpHostField.value = 'smtp.gmail.com';
+            smtpPortField.value = '587';
+            useTlsField.checked = true;
+            useSslField.checked = false;
+        }
+    }
+    
+    smtpTypeField.addEventListener('change', updateFields);
+    updateFields(); // Initial call
+});
+</script>
+{% endblock %}
