@@ -112,7 +112,6 @@ class Page(models.Model):
     is_featured = models.BooleanField(default=False, help_text="Show in featured pages section")
     show_in_menu = models.BooleanField(default=False, help_text="Display in main navigation menu")
     menu_order = models.PositiveIntegerField(default=0, help_text="Order in menu (0 = first)")
-    allow_comments = models.BooleanField(default=False)
     require_login = models.BooleanField(default=False, help_text="Require user login to view")
     
     # Publishing
@@ -251,29 +250,6 @@ class PageMedia(models.Model):
                 size /= 1024
             return f"{size:.1f} TB"
         return "0 B"
-
-
-class PageComment(models.Model):
-    """Model for page comments"""
-    page = models.ForeignKey(Page, on_delete=models.CASCADE, related_name='comments')
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-    content = models.TextField()
-    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
-    is_approved = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = "Page Comment"
-        verbose_name_plural = "Page Comments"
-        ordering = ['created_at']
-
-    def __str__(self):
-        return f"Comment by {self.author.username} on {self.page.title}"
-
-    @property
-    def is_reply(self):
-        return self.parent is not None
 
 
 class PageAnalytics(models.Model):

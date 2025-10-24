@@ -8,12 +8,12 @@ from django.utils import timezone
 
 from pages.models import (
     PageCategory, PageTemplate, Page, PageRevision,
-    PageMedia, PageComment, PageAnalytics
+    PageMedia, PageAnalytics
 )
 from pages.serializers import (
     PageCategorySerializer, PageTemplateSerializer, PageListSerializer,
     PageDetailSerializer, PageCreateUpdateSerializer, PageRevisionSerializer,
-    PageMediaSerializer, PageCommentSerializer, PageAnalyticsSerializer
+    PageMediaSerializer, PageAnalyticsSerializer
 )
 
 
@@ -239,65 +239,6 @@ class PageMediaDashboardViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(uploaded_by=self.request.user)
-
-
-class PageCommentDashboardViewSet(viewsets.ModelViewSet):
-    """Dashboard ViewSet for managing page comments"""
-    queryset = PageComment.objects.select_related('page', 'author', 'parent')
-    serializer_class = PageCommentSerializer
-    permission_classes = [IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['page', 'is_approved', 'parent']
-    search_fields = ['content', 'author__username']
-    ordering_fields = ['created_at']
-    ordering = ['-created_at']
-
-    def get_queryset(self):
-        queryset = self.queryset
-        
-        # Filter by user's pages for non-admin users
-        if not self.request.user.is_staff:
-            queryset = queryset.filter(page__author=self.request.user)
-            
-        return queryset
-
-    @action(detail=True, methods=['post'])
-    def approve(self, request, pk=None):
-        """Approve a comment"""
-        comment = self.get_object()
-        comment.is_approved = True
-        comment.save()
-        return Response({'detail': 'Comment approved successfully'})
-
-    @action(detail=True, methods=['post'])
-    def unapprove(self, request, pk=None):
-        """Unapprove a comment"""
-        comment = self.get_object()
-        comment.is_approved = False
-        comment.save()
-        return Response({'detail': 'Comment unapproved successfully'})
-
-    @action(detail=False, methods=['post'])
-    def bulk_approve(self, request):
-        """Bulk approve comments"""
-        comment_ids = request.data.get('comment_ids', [])
-        
-        if not comment_ids:
-            return Response({'error': 'No comments selected'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        updated = self.get_queryset().filter(id__in=comment_ids).update(is_approved=True)
-        return Response({'detail': f'{updated} comments approved successfully'})
-
-    @action(detail=False, methods=['post'])
-    def bulk_unapprove(self, request):
-        """Bulk unapprove comments"""
-        comment_ids = request.data.get('comment_ids', [])
-        
-        if not comment_ids:
-            return Response({'error': 'No comments selected'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        updated = self.get_queryset().filter(id__in=comment_ids).update(is_approved=False)
-        return Response({'detail': f'{updated} comments unapproved successfully'})
 
 
 class PageAnalyticsDashboardViewSet(viewsets.ReadOnlyModelViewSet):

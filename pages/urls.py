@@ -8,7 +8,6 @@ router.register(r'categories', views.PageCategoryViewSet)
 router.register(r'templates', views.PageTemplateViewSet)
 router.register(r'pages', views.PageViewSet)
 router.register(r'media', views.PageMediaViewSet)
-router.register(r'comments', views.PageCommentViewSet)
 router.register(r'revisions', views.PageRevisionViewSet)
 router.register(r'analytics', views.PageAnalyticsViewSet)
 

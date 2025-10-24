@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import (
     PageCategory, PageTemplate, Page, PageRevision, 
-    PageMedia, PageComment, PageAnalytics
+    PageMedia, PageAnalytics
 )
 
 User = get_user_model()
@@ -52,28 +52,6 @@ class PageMediaSerializer(serializers.ModelSerializer):
         read_only_fields = ['uploaded_by', 'created_at']
 
 
-class PageCommentSerializer(serializers.ModelSerializer):
-    author = AuthorSerializer(read_only=True)
-    replies = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = PageComment
-        fields = [
-            'id', 'content', 'author', 'parent', 'is_approved',
-            'replies', 'created_at', 'updated_at'
-        ]
-        read_only_fields = ['author', 'created_at', 'updated_at']
-
-    def get_replies(self, obj):
-        if obj.replies.exists():
-            return PageCommentSerializer(
-                obj.replies.filter(is_approved=True), 
-                many=True, 
-                context=self.context
-            ).data
-        return []
-
-
 class PageRevisionSerializer(serializers.ModelSerializer):
     created_by = AuthorSerializer(read_only=True)
     
@@ -110,7 +88,6 @@ class PageDetailSerializer(serializers.ModelSerializer):
     author = AuthorSerializer(read_only=True)
     last_modified_by = AuthorSerializer(read_only=True)
     media = PageMediaSerializer(many=True, read_only=True)
-    comments = serializers.SerializerMethodField()
     revisions = PageRevisionSerializer(many=True, read_only=True)
     reading_time = serializers.ReadOnlyField()
     is_published = serializers.ReadOnlyField()
@@ -121,21 +98,15 @@ class PageDetailSerializer(serializers.ModelSerializer):
             'id', 'title', 'slug', 'category', 'template', 'content', 'excerpt',
             'featured_image', 'featured_image_alt', 'meta_title', 'meta_description',
             'meta_keywords', 'canonical_url', 'status', 'is_featured', 'show_in_menu',
-            'menu_order', 'allow_comments', 'require_login', 'publish_date',
+            'menu_order', 'require_login', 'publish_date',
             'expiry_date', 'author', 'last_modified_by', 'view_count', 'share_count',
-            'reading_time', 'is_published', 'media', 'comments', 'revisions',
+            'reading_time', 'is_published', 'media', 'revisions',
             'created_at', 'updated_at'
         ]
         read_only_fields = [
             'author', 'last_modified_by', 'view_count', 'share_count',
             'created_at', 'updated_at'
         ]
-
-    def get_comments(self, obj):
-        if obj.allow_comments:
-            comments = obj.comments.filter(parent=None, is_approved=True)
-            return PageCommentSerializer(comments, many=True, context=self.context).data
-        return []
 
 
 class PageCreateUpdateSerializer(serializers.ModelSerializer):
@@ -149,7 +120,7 @@ class PageCreateUpdateSerializer(serializers.ModelSerializer):
             'id', 'title', 'slug', 'category_id', 'template_id', 'content', 'excerpt',
             'featured_image', 'featured_image_alt', 'meta_title', 'meta_description',
             'meta_keywords', 'canonical_url', 'status', 'is_featured', 'show_in_menu',
-            'menu_order', 'allow_comments', 'require_login', 'publish_date', 'expiry_date'
+            'menu_order', 'require_login', 'publish_date', 'expiry_date'
         ]
         read_only_fields = ['id']
 

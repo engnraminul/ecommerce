@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.utils import timezone
 from .models import (
     PageCategory, PageTemplate, Page, PageRevision, 
-    PageMedia, PageComment, PageAnalytics
+    PageMedia, PageAnalytics
 )
 
 
@@ -61,7 +61,7 @@ class PageAdmin(admin.ModelAdmin):
     ]
     list_filter = [
         'status', 'category', 'is_featured', 'show_in_menu', 
-        'allow_comments', 'require_login', 'created_at', 'publish_date'
+        'require_login', 'created_at', 'publish_date'
     ]
     search_fields = ['title', 'content', 'meta_title', 'meta_description']
     prepopulated_fields = {'slug': ('title',)}
@@ -85,7 +85,7 @@ class PageAdmin(admin.ModelAdmin):
         ('Page Settings', {
             'fields': (
                 'is_featured', 'show_in_menu', 'menu_order', 
-                'allow_comments', 'require_login'
+                'require_login'
             ),
             'classes': ('collapse',)
         }),
@@ -167,29 +167,6 @@ class PageMediaAdmin(admin.ModelAdmin):
         if not change:
             obj.uploaded_by = request.user
         super().save_model(request, obj, form, change)
-
-
-@admin.register(PageComment)
-class PageCommentAdmin(admin.ModelAdmin):
-    list_display = ['page', 'author', 'content_preview', 'is_approved', 'is_reply', 'created_at']
-    list_filter = ['is_approved', 'created_at']
-    search_fields = ['page__title', 'author__username', 'content']
-    readonly_fields = ['created_at', 'updated_at']
-    actions = ['approve_comments', 'unapprove_comments']
-
-    def content_preview(self, obj):
-        return obj.content[:50] + '...' if len(obj.content) > 50 else obj.content
-    content_preview.short_description = 'Content Preview'
-
-    def approve_comments(self, request, queryset):
-        updated = queryset.update(is_approved=True)
-        self.message_user(request, f'{updated} comments were approved.')
-    approve_comments.short_description = "Approve selected comments"
-
-    def unapprove_comments(self, request, queryset):
-        updated = queryset.update(is_approved=False)
-        self.message_user(request, f'{updated} comments were unapproved.')
-    unapprove_comments.short_description = "Unapprove selected comments"
 
 
 @admin.register(PageAnalytics)

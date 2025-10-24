@@ -26,7 +26,6 @@ router.register(r'pages/pages', pages_dashboard_views.PageDashboardViewSet, base
 router.register(r'pages/categories', pages_dashboard_views.PageCategoryDashboardViewSet, basename='page-categories')
 router.register(r'pages/templates', pages_dashboard_views.PageTemplateDashboardViewSet, basename='page-templates')
 router.register(r'pages/media', pages_dashboard_views.PageMediaDashboardViewSet, basename='page-media')
-router.register(r'pages/comments', pages_dashboard_views.PageCommentDashboardViewSet, basename='page-comments')
 router.register(r'pages/analytics', pages_dashboard_views.PageAnalyticsDashboardViewSet, basename='page-analytics')
 app_name = 'dashboard'
 

@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import Http404
 from django.db.models import Q, Count, Avg
 from django.utils import timezone
@@ -14,12 +14,12 @@ from datetime import timedelta
 
 from .models import (
     PageCategory, PageTemplate, Page, PageRevision,
-    PageMedia, PageComment, PageAnalytics
+    PageMedia, PageAnalytics
 )
 from .serializers import (
     PageCategorySerializer, PageTemplateSerializer, PageListSerializer,
     PageDetailSerializer, PageCreateUpdateSerializer, PageRevisionSerializer,
-    PageMediaSerializer, PageCommentSerializer, PageAnalyticsSerializer,
+    PageMediaSerializer, PageAnalyticsSerializer,
     PageMenuSerializer, PageSitemapSerializer
 )
 
@@ -220,48 +220,6 @@ class PageMediaViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(uploaded_by=self.request.user)
-
-
-class PageCommentViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing page comments"""
-    queryset = PageComment.objects.select_related('page', 'author', 'parent')
-    serializer_class = PageCommentSerializer
-    permission_classes = [IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['page', 'is_approved', 'parent']
-    search_fields = ['content']
-    ordering_fields = ['created_at']
-    ordering = ['created_at']
-
-    def get_queryset(self):
-        queryset = self.queryset
-        
-        # Show only approved comments for non-staff users
-        if not self.request.user.is_staff:
-            queryset = queryset.filter(is_approved=True)
-            
-        return queryset
-
-    def perform_create(self, serializer):
-        # Auto-approve comments from staff users
-        is_approved = self.request.user.is_staff
-        serializer.save(author=self.request.user, is_approved=is_approved)
-
-    @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
-    def approve(self, request, pk=None):
-        """Approve a comment"""
-        comment = self.get_object()
-        comment.is_approved = True
-        comment.save()
-        return Response({'detail': 'Comment approved successfully.'})
-
-    @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
-    def unapprove(self, request, pk=None):
-        """Unapprove a comment"""
-        comment = self.get_object()
-        comment.is_approved = False
-        comment.save()
-        return Response({'detail': 'Comment unapproved successfully.'})
 
 
 class PageRevisionViewSet(viewsets.ReadOnlyModelViewSet):
