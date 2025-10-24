@@ -2697,10 +2697,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 ${variant.color ? `<br><small class="text-muted">Color: ${variant.color}</small>` : ''}
                                             </td>
                                             <td>
-                                                <span class="text-success fw-bold">$${parseFloat(variant.price || 0).toFixed(2)}</span>
+                                                <span class="text-success fw-bold">৳${parseFloat(variant.price || 0).toFixed(2)}</span>
                                             </td>
                                             <td>
-                                                <span class="text-warning">$${parseFloat(variant.cost_price || 0).toFixed(2)}</span>
+                                                <span class="text-warning">৳${parseFloat(variant.cost_price || 0).toFixed(2)}</span>
                                             </td>
                                             <td>
                                                 <span class="badge ${variant.stock_quantity > 10 ? 'bg-success' : variant.stock_quantity > 0 ? 'bg-warning' : 'bg-danger'}">

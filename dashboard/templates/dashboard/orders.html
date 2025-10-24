@@ -1179,7 +1179,7 @@
                 <div class="mb-3">
                     <label for="courierChargeInput" class="form-label">Courier Charge (optional)</label>
                     <div class="input-group">
-                        <span class="input-group-text">$</span>
+                        <span class="input-group-text">৳</span>
                         <input type="number" class="form-control" id="courierChargeInput" placeholder="Enter courier charge" min="0" step="0.01">
                     </div>
                     <small class="text-muted">Leave empty to keep current charge</small>
@@ -1189,7 +1189,7 @@
                 <div class="mb-3" id="partiallyRefundedFieldContainer" style="display: none;">
                     <label for="partiallyRefundedInput" class="form-label">Patially Amount <span class="text-danger">*</span></label>
                     <div class="input-group">
-                        <span class="input-group-text">$</span>
+                        <span class="input-group-text">৳</span>
                         <input type="number" class="form-control" id="partiallyRefundedInput" placeholder="Enter partially amount" min="0" step="0.01" required>
                     </div>
                     <small class="text-danger" id="partiallyRefundedError" style="display: none;">Please enter a Partially amount</small>
@@ -1235,7 +1235,7 @@
                 <div class="mb-3">
                     <label for="editQuantityPriceInput" class="form-label">Unit Price</label>
                     <div class="input-group">
-                        <span class="input-group-text">$</span>
+                        <span class="input-group-text">৳</span>
                         <input type="number" class="form-control" id="editQuantityPriceInput" min="0" step="0.01">
                     </div>
                 </div>
@@ -1820,7 +1820,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="suggestion-details">
                         <span>📞 ${phone}</span>
                         <span>📅 ${orderDate}</span>
-                        <span>💰 $${suggestion.total_amount}</span>
+                        <span>💰 ৳${suggestion.total_amount}</span>
                         <span class="badge badge-sm ${getStatusBadgeClass(suggestion.status)}">${suggestion.status}</span>
                     </div>
                 </div>
@@ -2664,7 +2664,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     </div>
                 </td>
-                <td>$${order.total_amount}</td>
+                <td>৳${order.total_amount}</td>
                 <td>${order.total_items}</td>
                 <td>
                     <span class="badge ${statusBadgeClass}">
@@ -2990,7 +2990,7 @@ document.addEventListener('DOMContentLoaded', function() {
          
         
         // Set total amount
-        document.getElementById('orderDetailTotal').textContent = `$${order.total_amount}`;
+        document.getElementById('orderDetailTotal').textContent = `৳${order.total_amount}`;
         
         // Set customer information
         // const orderSku = order.order_number || '';

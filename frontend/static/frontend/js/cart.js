@@ -99,7 +99,7 @@ class CartManager {
         // Update cart total
         const cartTotalElements = document.querySelectorAll('.cart-total');
         cartTotalElements.forEach(element => {
-            element.textContent = `$${summaryData.total_amount}`;
+            element.textContent = `৳${summaryData.total_amount}`;
         });
 
         // Update items count in dropdown
@@ -128,7 +128,7 @@ class CartManager {
                             }
                             <div class="cart-item-price">
                                 <span class="quantity">${item.quantity}×</span>
-                                <span class="price">$${item.unit_price}</span>
+                                <span class="price">৳${item.unit_price}</span>
                             </div>
                         </div>
                         <button class="cart-item-remove" onclick="cartManager.removeFromCart(${item.id})">
@@ -158,7 +158,7 @@ class CartManager {
         // Update total amount
         const totalAmountElements = document.querySelectorAll('.total-amount');
         totalAmountElements.forEach(element => {
-            element.textContent = `$${summaryData.total_amount}`;
+            element.textContent = `৳${summaryData.total_amount}`;
         });
     }
 

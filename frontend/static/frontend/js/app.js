@@ -255,7 +255,7 @@ function updateCartUI() {
         const cartTotal = document.querySelector('.cart-total');
         if (cartTotal) {
             const total = cart.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 0)), 0);
-            cartTotal.textContent = `$${total.toFixed(2)}`;
+            cartTotal.textContent = `৳${total.toFixed(2)}`;
         }
         
         // Update cart items count display
@@ -395,8 +395,8 @@ function renderProducts(products) {
                 <h3 class="product-title">${product.name}</h3>
                 <p class="product-description">${product.description}</p>
                 <div class="product-price">
-                    <span class="price-current">$${product.discounted_price || product.price}</span>
-                    ${product.discounted_price ? `<span class="price-original">$${product.price}</span>` : ''}
+                    <span class="price-current">৳${product.discounted_price || product.price}</span>
+                    ${product.discounted_price ? `<span class="price-original">৳${product.price}</span>` : ''}
                 </div>
                 <div class="product-rating">
                     <div class="stars">

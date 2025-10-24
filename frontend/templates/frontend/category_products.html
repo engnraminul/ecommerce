@@ -169,9 +169,9 @@
                         </h3>
                         <p class="product-description">{{ product.description|truncatechars:80 }}</p>
                         <div class="product-price">
-                            <span class="current-price">${{ product.price }}</span>
+                            <span class="current-price">৳{{ product.price }}</span>
                             {% if product.compare_price and product.compare_price > product.price %}
-                            <span class="original-price">${{ product.compare_price }}</span>
+                            <span class="original-price">৳{{ product.compare_price }}</span>
                             <span class="discount-percent">
                                 {% widthratio product.price product.compare_price 100 as discount %}
                                 {{ discount|floatformat:0 }}% OFF

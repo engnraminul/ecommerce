@@ -80,10 +80,10 @@
                         
                         <div class="product-price">
                             {% if product.discounted_price %}
-                                <span class="price-current">${{ product.discounted_price }}</span>
-                                <span class="price-original">${{ product.price }}</span>
+                                <span class="price-current">৳{{ product.discounted_price }}</span>
+                                <span class="price-original">৳{{ product.price }}</span>
                             {% else %}
-                                <span class="price-current">${{ product.price }}</span>
+                                <span class="price-current">৳{{ product.price }}</span>
                             {% endif %}
                         </div>
                         

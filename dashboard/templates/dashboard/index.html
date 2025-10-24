@@ -131,7 +131,7 @@
                                     <span class="badge bg-secondary">{{ order.status }}</span>
                                     {% endif %}
                                 </td>
-                                <td>${{ order.total_amount }}</td>
+                                <td>৳{{ order.total_amount }}</td>
                                 <td>{{ order.created_at|date:"M d, Y" }}</td>
                                 <td>
                                     <button type="button" class="btn btn-sm btn-outline-primary order-details-btn" data-order-id="{{ order.id }}">

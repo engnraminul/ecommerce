@@ -249,7 +249,7 @@
                                         <p><strong>Payment Information:</strong></p>
                                         {{ checkout_customization.cod_instructions|default:"<ul><li>Pay cash when you receive your order</li><li>Make sure to have exact amount ready</li><li>Our delivery person will collect the payment</li><li>You can inspect the product before payment</li></ul>"|safe }}
                                         <div class="cod-total">
-                                            <strong>Total Amount to Pay: <span id="cod-amount">$0.00</span></strong>
+                                            <strong>Total Amount to Pay: <span id="cod-amount">৳0.00</span></strong>
                                         </div>
                                     </div>
                                 </div>
@@ -274,24 +274,24 @@
                             <div class="order-totals">
                                 <div class="total-line">
                                     <span>{{ checkout_customization.subtotal_label|default:"Subtotal:" }}</span>
-                                    <span id="order-subtotal">$0.00</span>
+                                    <span id="order-subtotal">৳0.00</span>
                                 </div>
                                 
                                 <div class="total-line">
                                     <span>{{ checkout_customization.shipping_label|default:"Shipping:" }}</span>
-                                    <span id="order-shipping">$0.00</span>
+                                    <span id="order-shipping">৳0.00</span>
                                 </div>
                                 
                                 <div class="total-line">
                                     <span>{{ checkout_customization.tax_label|default:"Tax:" }}</span>
-                                    <span id="order-tax">$0.00</span>
+                                    <span id="order-tax">৳0.00</span>
                                 </div>
                                 
                                 <div class="total-divider"></div>
                                 
                                 <div class="total-line grand-total">
                                     <span>{{ checkout_customization.total_label|default:"Total:" }}</span>
-                                    <span id="order-total">$0.00</span>
+                                    <span id="order-total">৳0.00</span>
                                 </div>
                             </div>
                             
@@ -1786,7 +1786,7 @@
                             ${variantDisplay ? `<div class="item-variant">${variantDisplay}</div>` : ''}
                         </div>
                         <div class="item-quantity">×${item.quantity}</div>
-                        <div class="item-price">$${item.total_price}</div>
+                        <div class="item-price">৳${item.total_price}</div>
                     </div>
                 `;
             }).join('');

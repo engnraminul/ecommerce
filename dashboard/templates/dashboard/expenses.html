@@ -244,7 +244,7 @@
                     <div class="mb-3">
                         <label for="amount" class="form-label">Amount <span class="text-danger">*</span></label>
                         <div class="input-group">
-                            <span class="input-group-text">$</span>
+                            <span class="input-group-text">৳</span>
                             <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0" required>
                         </div>
                     </div>
@@ -291,7 +291,7 @@
                     <div class="mb-3">
                         <label for="editAmount" class="form-label">Amount <span class="text-danger">*</span></label>
                         <div class="input-group">
-                            <span class="input-group-text">$</span>
+                            <span class="input-group-text">৳</span>
                             <input type="number" class="form-control" id="editAmount" name="amount" step="0.01" min="0" required>
                         </div>
                     </div>
@@ -414,7 +414,7 @@ document.addEventListener('DOMContentLoaded', function() {
             row.innerHTML = `
                 <td>${(currentPage - 1) * 20 + index + 1}</td>
                 <td><span class="badge bg-${badgeColor}">${expense.expense_type_display}</span></td>
-                <td>$${parseFloat(expense.amount).toFixed(2)}</td>
+                <td>৳${parseFloat(expense.amount).toFixed(2)}</td>
                 <td>${expense.description || '<span class="text-muted">No description</span>'}</td>
                 <td>${expense.created_by_name}</td>
                 <td><small>${formattedDate}</small></td>

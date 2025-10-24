@@ -60,7 +60,7 @@
                             </div>
                             <div class="info-item">
                                 <span class="label">Total Amount:</span>
-                                <span class="value order-total-amount">${{ order.total_amount|floatformat:2 }}</span>
+                                <span class="value order-total-amount">৳{{ order.total_amount|floatformat:2 }}</span>
                             </div>
                         </div>
 
@@ -91,12 +91,12 @@
                                             {% endif %}
                                         {% endif %}
                                         <div class="item-price">
-                                            <span class="unit-price">${{ item.unit_price }} each</span>
+                                            <span class="unit-price">৳{{ item.unit_price }} each</span>
                                             <span class="quantity">Qty: {{ item.quantity }}</span>
                                         </div>
                                     </div>
                                     <div class="item-total">
-                                        ${{ item.total_price }}
+                                        ৳{{ item.total_price }}
                                     </div>
                                 </div>
                                 {% endfor %}
@@ -107,16 +107,16 @@
                         <div class="order-totals">
                             <div class="total-line">
                                 <span>Subtotal:</span>
-                                <span>${{ order.subtotal|floatformat:2 }}</span>
+                                <span>৳{{ order.subtotal|floatformat:2 }}</span>
                             </div>
                             <div class="total-line">
                                 <span>Shipping:</span>
-                                <span>${{ order.shipping_cost|default:"0.00" }}</span>
+                                <span>৳{{ order.shipping_cost|default:"0.00" }}</span>
                             </div>
                             <div class="total-divider"></div>
                             <div class="total-line grand-total">
                                 <span>Total:</span>
-                                <span class="order-total-amount">${{ order.total_amount|floatformat:2 }}</span>
+                                <span class="order-total-amount">৳{{ order.total_amount|floatformat:2 }}</span>
                             </div>
                         </div>
 

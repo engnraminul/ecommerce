@@ -883,7 +883,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <td>
                         <small>${formatRelativeTime(order.created_at)}</small>
                     </td>
-                    <td class="fw-bold">$${parseFloat(order.total_amount).toFixed(2)}</td>
+                    <td class="fw-bold">৳${parseFloat(order.total_amount).toFixed(2)}</td>
                     <td>
                         <span class="badge bg-light text-dark">${order.items_count}</span>
                     </td>
@@ -1229,7 +1229,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Update total amount
                     console.log('Loading items - API total:', data.total_amount); // Debug log
-                    document.getElementById('incompleteOrderTotalAmount').textContent = `$${parseFloat(data.total_amount).toFixed(2)}`;
+                    document.getElementById('incompleteOrderTotalAmount').textContent = `৳${parseFloat(data.total_amount).toFixed(2)}`;
                     
                     // Also update currentOrderData with the latest total
                     if (currentOrderData) {
