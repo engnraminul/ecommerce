@@ -6,6 +6,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Avg
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from datetime import timedelta
 import logging
@@ -328,22 +329,49 @@ def user_login(request):
         password = request.POST.get('password')
         remember_me = request.POST.get('remember_me') == 'on'
         
-        user = authenticate(request, username=email, password=password)
-        if user:
-            login(request, user)
+        # First check if user exists and validate credentials
+        try:
+            existing_user = User.objects.get(email=email)
             
-            # Set session expiry based on remember_me
-            if not remember_me:
-                # Session expires when browser closes
-                request.session.set_expiry(0)
-            else:
-                # Session expires in 30 days (in seconds)
-                request.session.set_expiry(30 * 24 * 60 * 60)
+            # Check if password is correct first
+            if not existing_user.check_password(password):
+                # Wrong password
+                logger.warning(f"Wrong password for user {email}")
+                messages.error(request, 'Invalid email or password. Please try again.')
+                return render(request, 'frontend/auth/login.html')
+            
+            # Password is correct, now check if email is verified
+            if not existing_user.is_email_verified:
+                # User exists and password is correct, but email not verified
+                logger.info(f"Login attempt with unverified email: {email}")
+                messages.error(request, 'Account is not active, please check your email and activate account.')
+                return render(request, 'frontend/auth/login.html')
+            
+            # Both password and email verification are valid, proceed with authentication
+            user = authenticate(request, username=email, password=password)
+            if user:
+                # Authentication successful
+                login(request, user)
                 
-            messages.success(request, f'Welcome back, {user.first_name}!')
-            next_url = request.GET.get('next', 'frontend:dashboard')
-            return redirect(next_url)
-        else:
+                # Set session expiry based on remember_me
+                if not remember_me:
+                    # Session expires when browser closes
+                    request.session.set_expiry(0)
+                else:
+                    # Session expires in 30 days (in seconds)
+                    request.session.set_expiry(30 * 24 * 60 * 60)
+                    
+                messages.success(request, f'Welcome back, {user.first_name}!')
+                next_url = request.GET.get('next', 'frontend:dashboard')
+                return redirect(next_url)
+            else:
+                # This shouldn't happen since we already verified password and email
+                logger.error(f"Authentication failed unexpectedly for verified user {email}")
+                messages.error(request, 'Authentication error. Please try again.')
+                
+        except User.DoesNotExist:
+            # User doesn't exist
+            logger.warning(f"Login attempt with non-existent email: {email}")
             messages.error(request, 'Invalid email or password. Please try again.')
     
     return render(request, 'frontend/auth/login.html')
@@ -418,36 +446,67 @@ def user_register(request):
                     username = f"{base_username}{counter}"
                     counter += 1
                 
-                # Create user
+                # Create user (inactive until email is verified)
                 user = User.objects.create_user(
                     username=username,
                     email=email,
                     password=password,
                     first_name=first_name,
                     last_name=last_name,
-                    phone=phone
+                    phone=phone,
+                    is_active=True,  # Keep active for login, but require email verification
+                    is_email_verified=False  # This prevents login until verified
                 )
+                
+                # Generate email verification token
+                user.generate_email_verification_token()
+                from django.utils import timezone
+                user.email_verification_sent_at = timezone.now()
+                user.save(update_fields=['email_verification_sent_at'])
+                
+                # Send verification email using dashboard email service
+                try:
+                    from dashboard.email_service import email_service
+                    
+                    email_sent = email_service.send_activation_email(user)
+                    
+                    if email_sent:
+                        logger.info(f"Email verification sent to {user.email}")
+                        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                            return JsonResponse({
+                                'success': True, 
+                                'message': 'Registration successful! Please activate your account through the verification email sent to your inbox before logging in.',
+                                'redirect_url': f'/email-verification-sent/?email={user.email}',
+                                'user_email': user.email
+                            })
+                        else:
+                            from django.http import HttpResponseRedirect
+                            from urllib.parse import urlencode
+                            return HttpResponseRedirect(f'/email-verification-sent/?{urlencode({"email": user.email})}')
+                    else:
+                        logger.error(f"Failed to send verification email to {user.email}")
+                        # Delete user if email failed to send
+                        user.delete()
+                        error_msg = 'Registration failed: Unable to send activation email. Please try again.'
+                        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                            return JsonResponse({'success': False, 'message': error_msg})
+                        else:
+                            messages.error(request, error_msg)
+                            
+                except Exception as e:
+                    logger.error(f"Error sending verification email: {str(e)}")
+                    # Delete user if email failed to send
+                    user.delete()
+                    error_msg = 'Registration failed: Activation email service error. Please try again.'
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        return JsonResponse({'success': False, 'message': error_msg})
+                    else:
+                        messages.error(request, error_msg)
                 
                 # Update newsletter preference if profile model exists
                 if hasattr(user, 'profile'):
                     user.profile.newsletter_subscribed = newsletter_subscription
                     user.profile.save()
-                
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse({
-                        'success': True, 
-                        'message': 'Registration successful! You can now log in with your account.'
-                    })
-                else:
-                    # Automatically log in the user after registration
-                    user = authenticate(request, username=email, password=password)
-                    if user:
-                        login(request, user)
-                        messages.success(request, f'Welcome to our store, {first_name}! Your account has been created successfully.')
-                        return redirect('frontend:dashboard')
-                    else:
-                        messages.success(request, 'Registration successful! Please log in.')
-                        return redirect('frontend:login')
             except Exception as e:
                 error_msg = f'Registration failed. Please try again. Error: {str(e)}'
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -1326,3 +1385,115 @@ def reset_password(request, token):
     }
     
     return render(request, 'frontend/auth/reset_password.html', context)
+
+
+# Email Verification Views
+def email_verification_sent(request):
+    """Display email verification sent page"""
+    email = request.GET.get('email', '')
+    return render(request, 'frontend/auth/email_verification_sent.html', {
+        'user_email': email
+    })
+
+
+def verify_email(request, token):
+    """Handle email verification link"""
+    try:
+        user = User.objects.get(email_verification_token=token)
+        
+        # Check if token is still valid (24 hours)
+        if user.is_email_verification_expired():
+            logger.warning(f"Expired verification token used for {user.email}")
+            messages.error(request, 'This activation link has expired. Please request a new activation email.')
+            return redirect('frontend:email_verification_sent')
+        
+        # Verify the email
+        user.verify_email()
+        
+        logger.info(f"Email verified successfully for {user.email}")
+        
+        # Show success page
+        return render(request, 'frontend/auth/email_verified_success.html', {
+            'user': user
+        })
+        
+    except User.DoesNotExist:
+        logger.warning(f"Invalid verification token used: {token}")
+        messages.error(request, 'Invalid activation link. Please register again or request a new activation email.')
+        return redirect('frontend:register')
+
+
+@require_http_methods(["POST"])
+def resend_verification_email(request):
+    """Resend email verification"""
+    try:
+        email = request.POST.get('email')
+        
+        if not email:
+            return JsonResponse({
+                'success': False,
+                'message': 'Email address is required.'
+            })
+        
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': 'User with this email address does not exist.'
+            })
+        
+        # Check if email is already verified
+        if user.is_email_verified:
+            return JsonResponse({
+                'success': False,
+                'message': 'Your account is already activated. You can login now.'
+            })
+        
+        # Check rate limiting (don't allow resend within 1 minute)
+        if user.email_verification_sent_at:
+            time_since_last_send = timezone.now() - user.email_verification_sent_at
+            if time_since_last_send.total_seconds() < 60:
+                remaining_seconds = 60 - int(time_since_last_send.total_seconds())
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Please wait {remaining_seconds} seconds before requesting another verification email.'
+                })
+        
+        # Generate new token and send email
+        user.generate_email_verification_token()
+        user.email_verification_sent_at = timezone.now()
+        user.save(update_fields=['email_verification_sent_at'])
+        
+        # Send verification email
+        try:
+            from dashboard.email_service import email_service
+            
+            email_sent = email_service.send_activation_email(user)
+            
+            if email_sent:
+                logger.info(f"Verification email resent to {user.email}")
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Activation email sent successfully! Please check your inbox and click the activation link.'
+                })
+            else:
+                logger.error(f"Failed to resend verification email to {user.email}")
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Failed to send activation email. Please try again later.'
+                })
+                
+        except Exception as e:
+            logger.error(f"Error resending verification email: {str(e)}")
+            return JsonResponse({
+                'success': False,
+                'message': 'Email service error. Please try again later.'
+            })
+    
+    except Exception as e:
+        logger.error(f"Error in resend_verification_email: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': 'An error occurred. Please try again.'
+        })

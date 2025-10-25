@@ -291,10 +291,9 @@ CKEDITOR_BROWSE_SHOW_DIRS = True
 
 CKEDITOR_CONFIGS = {
     'default': {
-        'toolbar': 'Custom',
+        'toolbar': 'full',
         'height': 400,
         'width': '100%',
-        'versionCheck': False,
         'extraPlugins': 'codesnippet,widget,lineutils,clipboard,dialog,dialogui',
         'removePlugins': 'elementspath',
         'forcePasteAsPlainText': True,
@@ -321,42 +320,25 @@ CKEDITOR_CONFIGS = {
         },
     },
     'pages': {
-        'toolbar': 'Custom',
+        'toolbar': 'full',
         'height': 500,
         'width': '100%',
-        'versionCheck': False,
-        'extraPlugins': 'codesnippet,widget,lineutils,clipboard,dialog,dialogui,uploadimage',
+        'extraPlugins': 'codesnippet,widget,lineutils,clipboard,dialog,dialogui,image2,uploadimage',
         'removePlugins': 'elementspath',
-        'forcePasteAsPlainText': True,
+        'allowedContent': True,
         'format_tags': 'p;h1;h2;h3;h4;h5;h6;pre;address;div',
-        'toolbar_Custom': [
-            ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript'],
-            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+        'toolbar_Full': [
+            ['Source', 'Preview', 'Templates', 'Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', 'Undo', 'Redo'],
+            ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', 'RemoveFormat'],
+            ['NumberedList', 'BulletedList', 'Outdent', 'Indent', 'Blockquote', 'CreateDiv'],
+            ['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
             ['Link', 'Unlink', 'Anchor'],
-            ['Image', 'Table', 'HorizontalRule', 'SpecialChar'],
-            ['Format', 'Font', 'FontSize'],
+            ['Image', 'Table', 'HorizontalRule', 'SpecialChar', 'PageBreak', 'Iframe'],
+            ['Styles', 'Format', 'Font', 'FontSize'],
             ['TextColor', 'BGColor'],
-            ['Undo', 'Redo'],
-            ['Source', 'Preview', 'Maximize'],
+            ['Maximize', 'ShowBlocks'],
             ['CodeSnippet'],
         ],
-        'codeSnippet_theme': 'monokai_sublime',
-        'codeSnippet_languages': {
-            'python': 'Python',
-            'javascript': 'JavaScript',
-            'css': 'CSS',
-            'html': 'HTML',
-            'sql': 'SQL',
-            'json': 'JSON',
-        },
-        'codeSnippet_languages': {
-            'python': 'Python',
-            'javascript': 'JavaScript',
-            'css': 'CSS',
-            'html': 'HTML',
-            'sql': 'SQL',
-            'json': 'JSON',
-        },
         'stylesSet': [
             {'name': 'Lead Paragraph', 'element': 'p', 'attributes': {'class': 'lead'}},
             {'name': 'Info Box', 'element': 'div', 'attributes': {'class': 'alert alert-info'}},
@@ -366,5 +348,15 @@ CKEDITOR_CONFIGS = {
             {'name': 'Button Primary', 'element': 'a', 'attributes': {'class': 'btn btn-primary'}},
             {'name': 'Button Secondary', 'element': 'a', 'attributes': {'class': 'btn btn-secondary'}},
         ],
+        'codeSnippet_theme': 'monokai_sublime',
     }
 }
+
+# Site configuration
+SITE_URL = config('SITE_URL', default='http://127.0.0.1:8000')
+
+# Authentication backends
+AUTHENTICATION_BACKENDS = [
+    'users.authentication.EmailVerificationBackend',
+    # Removed ModelBackend fallback to enforce email verification
+]

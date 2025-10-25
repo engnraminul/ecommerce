@@ -57,6 +57,17 @@ class User(AbstractUser):
         self.save(update_fields=['email_verification_token'])
         return self.email_verification_token
     
+    def verify_email(self):
+        """Mark email as verified and clear verification token."""
+        self.is_email_verified = True
+        self.email_verification_token = uuid.uuid4()  # Generate new token for security
+        self.email_verification_sent_at = None
+        self.save(update_fields=['is_email_verified', 'email_verification_token', 'email_verification_sent_at'])
+    
+    def can_login(self):
+        """Check if user can log in (email must be verified)."""
+        return self.is_email_verified and self.is_active
+    
     def generate_password_reset_token(self):
         """Generate a new password reset token."""
         self.password_reset_token = uuid.uuid4()
@@ -68,6 +79,35 @@ class User(AbstractUser):
         self.password_reset_token = None
         self.password_reset_sent_at = None
         self.save(update_fields=['password_reset_token', 'password_reset_sent_at'])
+    
+    # Email verification methods
+    def generate_email_verification_token(self):
+        """Generate a new email verification token."""
+        self.email_verification_token = uuid.uuid4()
+        self.save(update_fields=['email_verification_token'])
+        return self.email_verification_token
+    
+    def verify_email(self):
+        """Mark email as verified and clear the verification token."""
+        self.is_email_verified = True
+        # Don't set token to None if field doesn't allow null
+        # Instead, we'll keep the token but mark email as verified
+        self.save(update_fields=['is_email_verified'])
+    
+    def is_email_verification_expired(self):
+        """Check if the email verification token has expired (24 hours)."""
+        if not self.email_verification_sent_at:
+            return True
+        
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        expiry_time = self.email_verification_sent_at + timedelta(hours=24)
+        return timezone.now() > expiry_time
+    
+    def can_login(self):
+        """Check if user can login (must have verified email)."""
+        return self.is_active and self.is_email_verified
 
 
 class UserProfile(models.Model):

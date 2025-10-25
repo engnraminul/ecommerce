@@ -136,11 +136,8 @@ async function apiRequest(url, options = {}) {
                     localStorage.removeItem('authToken');
                     authToken = null;
                     
-                    // Show a more specific error for auth failures
-                    responseErrorMessage = 'Invalid email or password';
-                    
-                    // Show notification directly for login failures
-                    showNotification('Invalid email or password. Please login with valid information.', 'error');
+                    // Don't show notifications here - let Django handle error messages
+                    responseErrorMessage = 'Authentication failed';
                 }
             }
             
@@ -181,9 +178,9 @@ async function apiRequest(url, options = {}) {
             
                 // For login failures, make sure we have a user-friendly error message
                 if (url.includes('/auth/token/') || url.includes('/login')) {
-                    // Log the specific error but show a specific message to the user
+                    // Log the specific error but don't override Django's messages
                     console.error(`Login error details: ${errorMessage}`);
-                    errorMessage = 'Invalid email or password. Please login with valid information.';
+                    // Don't change error message - let Django handle it
                 }            throw new Error(errorMessage);
         }
         
@@ -533,7 +530,7 @@ window.login = async function(email, password) {
         return true;
     } catch (error) {
         console.error('Login error:', error);
-        showNotification('Invalid email or password. Please login with valid information.', 'error');
+        // Don't show notifications here - let Django handle error messages for login forms
         throw error; // Re-throw to allow the calling code to handle it
     }
 }
@@ -617,46 +614,10 @@ function setupForms() {
         return emailRegex.test(email);
     }
 
-    // Login form - this is a fallback handler
-    // The login.html file has its own handler which tries to use the global login function
-    const loginForm = document.getElementById('loginForm');
-    if (loginForm && !loginForm.getAttribute('data-handler-initialized')) {
-        loginForm.setAttribute('data-handler-initialized', 'true');
-        console.log('Initializing app.js login form handler');
-        
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            console.log('Login form submitted via app.js handler');
-            
-            // Get form data
-            const formData = new FormData(loginForm);
-            const email = formData.get('email');
-            const password = formData.get('password');
-            
-            // Basic validation
-            if (!email || !password) {
-                window.showNotification('Please enter both email and password', 'error');
-                return;
-            }
-            
-            // Show loading indicator
-            const submitBtn = loginForm.querySelector('button[type="submit"]');
-            const originalBtnText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
-            submitBtn.disabled = true;
-            
-            try {
-                await window.login(email, password);
-            } catch (error) {
-                console.error('Login submission error:', error);
-                window.showNotification('Invalid email or password. Please login with valid information.', 'error');
-            } finally {
-                // Restore button state
-                submitBtn.innerHTML = originalBtnText;
-                submitBtn.disabled = false;
-            }
-        });
-    }
+    // Login form - COMPLETELY DISABLED: Let Django handle all login form submission
+    // The login.html template has its own handler for pure Django form submission
+    // Do not interfere with Django login forms at all
+    console.log('Login form handling disabled - Django handles all login forms');
 
     // Register form
     const registerForm = document.getElementById('registerForm');

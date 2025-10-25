@@ -1,0 +1,360 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+
+{% block title %}Email Verification Sent - Professional eCommerce{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="success-icon">
+                    <i class="fas fa-envelope-circle-check"></i>
+                </div>
+                <h2>Activate Your Account</h2>
+                <p>We've sent an activation link to your email address</p>
+            </div>
+
+            <div class="verification-info">
+                <div class="email-display">
+                    <strong>{{ user_email }}</strong>
+                </div>
+                
+                <div class="instruction-box">
+                    <h4>To Activate Your Account:</h4>
+                    <ol>
+                        <li>Check your email inbox (and spam folder)</li>
+                        <li>Click the activation link in the email</li>
+                        <li>Your account will be activated and you can log in</li>
+                    </ol>
+                </div>
+
+                <div class="help-section">
+                    <p>Didn't receive the activation email?</p>
+                    <button type="button" class="btn btn-outline-primary" id="resendBtn">
+                        <i class="fas fa-paper-plane"></i>
+                        Resend Activation Email
+                    </button>
+                    <p class="resend-info">You can request a new activation email in <span id="countdown">60</span> seconds</p>
+                </div>
+
+                <div class="auth-footer">
+                    <p>Already activated your account? 
+                        <a href="{% url 'frontend:login' %}">Sign in here</a>
+                    </p>
+                    <p>Need help? 
+                        <a href="{% url 'frontend:contact' %}">Contact Support</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+:root {
+    --auth-primary: #2c5f3f;
+    --auth-secondary: #4a7c59;
+    --auth-accent: #6ab04c;
+    --auth-light: #f8f9fa;
+    --white: #ffffff;
+    --success: #28a745;
+    --text-dark: #2c3e50;
+    --text-light: #6c757d;
+    --border-light: #e9ecef;
+    --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+    --border-radius: 0.5rem;
+}
+
+.auth-container {
+    display: flex;
+    justify-content: center;
+    max-width: 600px;
+    margin: 3rem auto;
+    padding: 0 1rem;
+}
+
+.auth-card {
+    background: var(--white);
+    padding: 3rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    border-top: 4px solid var(--success);
+    width: 100%;
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.success-icon {
+    font-size: 4rem;
+    color: var(--success);
+    margin-bottom: 1rem;
+}
+
+.auth-header h2 {
+    font-size: 2rem;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+}
+
+.auth-header p {
+    color: var(--text-light);
+    font-size: 1.1rem;
+}
+
+.verification-info {
+    text-align: center;
+}
+
+.email-display {
+    background: var(--auth-light);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    margin-bottom: 2rem;
+    border: 2px solid var(--border-light);
+}
+
+.email-display strong {
+    color: var(--auth-primary);
+    font-size: 1.1rem;
+}
+
+.instruction-box {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    margin-bottom: 2rem;
+    text-align: left;
+}
+
+.instruction-box h4 {
+    color: var(--auth-primary);
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.instruction-box ol {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.instruction-box li {
+    margin-bottom: 0.5rem;
+    color: var(--text-dark);
+}
+
+.help-section {
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--border-light);
+    margin-top: 1rem;
+}
+
+.help-section p {
+    color: var(--text-light);
+    margin-bottom: 1rem;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.btn-outline-primary {
+    background: transparent;
+    color: var(--auth-primary);
+    border: 2px solid var(--auth-primary);
+}
+
+.btn-outline-primary:hover {
+    background: var(--auth-primary);
+    color: var(--white);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.resend-info {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-top: 1rem;
+}
+
+.auth-footer {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-light);
+}
+
+.auth-footer p {
+    margin-bottom: 0.5rem;
+    color: var(--text-light);
+}
+
+.auth-footer a {
+    color: var(--auth-primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.auth-footer a:hover {
+    color: var(--auth-secondary);
+    text-decoration: underline;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .auth-container {
+        margin: 1rem auto;
+    }
+    
+    .auth-card {
+        padding: 2rem 1.5rem;
+    }
+    
+    .success-icon {
+        font-size: 3rem;
+    }
+    
+    .auth-header h2 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Alert styles */
+.alert {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: var(--border-radius);
+    animation: fadeIn 0.3s ease;
+}
+
+.alert-success {
+    background-color: rgba(40, 167, 69, 0.1);
+    border-color: rgba(40, 167, 69, 0.3);
+    color: #155724;
+}
+
+.alert-error {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-color: rgba(220, 53, 69, 0.3);
+    color: #721c24;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const resendBtn = document.getElementById('resendBtn');
+    const countdownSpan = document.getElementById('countdown');
+    
+    let countdown = 60;
+    resendBtn.disabled = true;
+    
+    // Countdown timer
+    const timer = setInterval(() => {
+        countdown--;
+        countdownSpan.textContent = countdown;
+        
+        if (countdown <= 0) {
+            clearInterval(timer);
+            resendBtn.disabled = false;
+            document.querySelector('.resend-info').style.display = 'none';
+        }
+    }, 1000);
+    
+    // Resend email functionality
+    resendBtn.addEventListener('click', async function() {
+        resendBtn.disabled = true;
+        resendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+        
+        try {
+            const response = await fetch('/resend-verification/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    email: '{{ user_email }}'
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showAlert('Activation email sent successfully!', 'success');
+                // Reset countdown
+                countdown = 60;
+                document.querySelector('.resend-info').style.display = 'block';
+                const newTimer = setInterval(() => {
+                    countdown--;
+                    countdownSpan.textContent = countdown;
+                    
+                    if (countdown <= 0) {
+                        clearInterval(newTimer);
+                        resendBtn.disabled = false;
+                        document.querySelector('.resend-info').style.display = 'none';
+                    }
+                }, 1000);
+            } else {
+                showAlert(data.message || 'Failed to send verification email', 'error');
+                resendBtn.disabled = false;
+            }
+        } catch (error) {
+            console.error('Resend error:', error);
+            showAlert('An error occurred. Please try again.', 'error');
+            resendBtn.disabled = false;
+        }
+        
+        resendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Resend Verification Email';
+    });
+    
+    function showAlert(message, type) {
+        // Remove existing alerts
+        const existingAlerts = document.querySelectorAll('.alert');
+        existingAlerts.forEach(alert => alert.remove());
+        
+        // Create new alert
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type}`;
+        alert.textContent = message;
+        
+        // Insert at top of verification info
+        const verificationInfo = document.querySelector('.verification-info');
+        verificationInfo.insertBefore(alert, verificationInfo.firstChild);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            alert.remove();
+        }, 5000);
+    }
+});
+</script>
+
+{% csrf_token %}
+{% endblock %}

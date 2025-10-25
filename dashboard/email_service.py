@@ -393,7 +393,7 @@ class EmailService:
     
     def send_activation_email(self, user):
         """Send account activation email."""
-        activation_url = f"{getattr(settings, 'SITE_URL', 'http://localhost:8000')}/activate/{user.email_verification_token}/"
+        activation_url = f"{getattr(settings, 'SITE_URL', 'http://localhost:8000')}/verify-email/{user.email_verification_token}/"
         
         return self.send_template_email(
             template_type='activation',

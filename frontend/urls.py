@@ -20,6 +20,11 @@ urlpatterns = [
     path('forgot-password/', views.forgot_password, name='forgot_password'),
     path('reset-password/<uuid:token>/', views.reset_password, name='reset_password'),
     
+    # Email verification
+    path('email-verification-sent/', views.email_verification_sent, name='email_verification_sent'),
+    path('verify-email/<uuid:token>/', views.verify_email, name='verify_email'),
+    path('resend-verification/', views.resend_verification_email, name='resend_verification_email'),
+    
     # User dashboard
     path('dashboard/', views.dashboard, name='dashboard'),
     path('profile/', views.profile, name='profile'),

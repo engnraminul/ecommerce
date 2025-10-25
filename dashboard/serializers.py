@@ -22,7 +22,25 @@ class UserDashboardSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_staff', 
-                  'is_active', 'date_joined', 'last_login']
+                  'is_active', 'is_email_verified', 'date_joined', 'last_login', 
+                  'email_verification_sent_at']
+        extra_kwargs = {
+            'password': {'write_only': True},
+            'email_verification_sent_at': {'read_only': True},
+        }
+        
+    def update(self, instance, validated_data):
+        # Handle password separately if provided
+        password = validated_data.pop('password', None)
+        if password:
+            instance.set_password(password)
+        
+        # Update other fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        instance.save()
+        return instance
 
 class CategoryDashboardSerializer(serializers.ModelSerializer):
     product_count = serializers.SerializerMethodField()

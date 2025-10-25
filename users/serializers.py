@@ -77,12 +77,38 @@ class UserLoginSerializer(serializers.Serializer):
         password = attrs.get('password')
         
         if email and password:
-            user = authenticate(username=email, password=password)
-            if not user:
+            # First check if user exists and validate credentials manually
+            try:
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                existing_user = User.objects.get(email=email)
+                
+                # Check if password is correct first
+                if not existing_user.check_password(password):
+                    # Wrong password
+                    raise serializers.ValidationError('Invalid email or password. Please login with valid information.')
+                
+                # Password is correct, now check if email is verified
+                if not existing_user.is_email_verified:
+                    # User exists and password is correct, but email not verified
+                    raise serializers.ValidationError('Account is not active, please check your email and activate account.')
+                
+                # Check if user is active
+                if not existing_user.is_active:
+                    raise serializers.ValidationError('User account is disabled.')
+                
+                # Now try authentication (should succeed since we validated everything)
+                user = authenticate(username=email, password=password)
+                if not user:
+                    # This shouldn't happen since we already verified everything
+                    raise serializers.ValidationError('Authentication error. Please try again.')
+                
+                attrs['user'] = user
+                
+            except User.DoesNotExist:
+                # User doesn't exist
                 raise serializers.ValidationError('Invalid email or password. Please login with valid information.')
-            if not user.is_active:
-                raise serializers.ValidationError('User account is disabled.')
-            attrs['user'] = user
+                
         else:
             raise serializers.ValidationError('Must include email and password.')
         

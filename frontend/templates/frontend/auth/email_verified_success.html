@@ -1,0 +1,275 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+
+{% block title %}Email Verified Successfully - Professional eCommerce{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h2>Account Activated Successfully!</h2>
+                <p>Your account has been activated and you can now log in</p>
+            </div>
+
+            <div class="success-content">
+                <div class="welcome-message">
+                    <h4>Welcome to Manob Bazar Family!</h4>
+                    <p>Your email address has been verified and your account is now fully activated. You can now log in and enjoy all the features of our platform.</p>
+                </div>
+
+                <div class="benefits-section">
+                    <h5>What you can do now:</h5>
+                    <ul class="benefits-list">
+                        <li><i class="fas fa-shopping-cart"></i> Shop thousands of products</li>
+                        <li><i class="fas fa-heart"></i> Create wishlists and save favorites</li>
+                        <li><i class="fas fa-truck"></i> Track your orders in real-time</li>
+                        <li><i class="fas fa-user"></i> Manage your profile and preferences</li>
+                        <li><i class="fas fa-bell"></i> Receive order updates and promotions</li>
+                    </ul>
+                </div>
+
+                <div class="action-buttons">
+                    <a href="{% url 'frontend:login' %}" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Login to Your Account
+                    </a>
+                    <a href="{% url 'frontend:home' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-home"></i>
+                        Continue Shopping
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+:root {
+    --auth-primary: #2c5f3f;
+    --auth-secondary: #4a7c59;
+    --auth-accent: #6ab04c;
+    --auth-light: #f8f9fa;
+    --white: #ffffff;
+    --success: #28a745;
+    --text-dark: #2c3e50;
+    --text-light: #6c757d;
+    --border-light: #e9ecef;
+    --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+    --border-radius: 0.5rem;
+}
+
+.auth-container {
+    display: flex;
+    justify-content: center;
+    max-width: 700px;
+    margin: 3rem auto;
+    padding: 0 1rem;
+}
+
+.auth-card {
+    background: var(--white);
+    padding: 3rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    border-top: 4px solid var(--success);
+    width: 100%;
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.success-icon {
+    font-size: 5rem;
+    color: var(--success);
+    margin-bottom: 1rem;
+    animation: checkSuccess 0.6s ease-in-out;
+}
+
+@keyframes checkSuccess {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.auth-header h2 {
+    font-size: 2rem;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+}
+
+.auth-header p {
+    color: var(--text-light);
+    font-size: 1.1rem;
+}
+
+.success-content {
+    text-align: center;
+}
+
+.welcome-message {
+    background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 100%);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    margin-bottom: 2rem;
+    border-left: 4px solid var(--success);
+}
+
+.welcome-message h4 {
+    color: var(--auth-primary);
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.welcome-message p {
+    color: var(--text-dark);
+    margin-bottom: 0;
+    line-height: 1.6;
+}
+
+.benefits-section {
+    margin-bottom: 2rem;
+    text-align: left;
+}
+
+.benefits-section h5 {
+    color: var(--auth-primary);
+    margin-bottom: 1rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.benefits-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.benefits-list li {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 0;
+    color: var(--text-dark);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.benefits-list li:last-child {
+    border-bottom: none;
+}
+
+.benefits-list li i {
+    color: var(--success);
+    margin-right: 1rem;
+    width: 20px;
+    text-align: center;
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--auth-primary) 0%, var(--auth-secondary) 100%);
+    color: var(--white);
+    border: 2px solid transparent;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--auth-secondary) 0%, var(--auth-primary) 100%);
+    color: var(--white);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    text-decoration: none;
+}
+
+.btn-outline-primary {
+    background: transparent;
+    color: var(--auth-primary);
+    border: 2px solid var(--auth-primary);
+}
+
+.btn-outline-primary:hover {
+    background: var(--auth-primary);
+    color: var(--white);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+    text-decoration: none;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .auth-container {
+        margin: 1rem auto;
+    }
+    
+    .auth-card {
+        padding: 2rem 1.5rem;
+    }
+    
+    .success-icon {
+        font-size: 4rem;
+    }
+    
+    .auth-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+}
+
+@media (min-width: 768px) {
+    .action-buttons {
+        flex-direction: row;
+        justify-content: center;
+    }
+    
+    .btn {
+        flex: 1;
+        max-width: 200px;
+    }
+}
+
+/* Animation for the entire card */
+.auth-card {
+    animation: slideInUp 0.6s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+{% endblock %}
