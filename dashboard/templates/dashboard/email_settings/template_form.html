@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (variables.length > 0) {
             let html = '<h6>Available Variables:</h6><ul class="list-unstyled">';
             variables.forEach(variable => {
-                html += `<li><code class="text-primary">{{${variable}}}</code></li>`;
+                html += '<li><code class="text-primary">{{' + variable + '}}</code></li>';
             });
             html += '</ul>';
             html += '<small class="text-muted">Copy and paste these variables into your content.</small>';

@@ -2,14 +2,32 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
 from django.utils import timezone
+from django import forms
+from ckeditor.widgets import CKEditorWidget
 from .models import (
     PageCategory, PageTemplate, Page, PageRevision, 
     PageMedia, PageAnalytics
 )
+from .forms import PageForm, PageCategoryForm, PageTemplateForm
+
+
+class PageAdminForm(forms.ModelForm):
+    """Custom form for Page admin with exact same CKEditor setup as email templates."""
+    
+    content = forms.CharField(
+        widget=CKEditorWidget(config_name='default'),  # Use same config as email templates
+        required=False,
+        help_text="Main page content with rich text editor"
+    )
+    
+    class Meta:
+        model = Page
+        fields = '__all__'
 
 
 @admin.register(PageCategory)
 class PageCategoryAdmin(admin.ModelAdmin):
+    form = PageCategoryForm
     list_display = ['name', 'slug', 'is_active', 'pages_count', 'created_at']
     list_filter = ['is_active', 'created_at']
     search_fields = ['name', 'description']
@@ -23,6 +41,7 @@ class PageCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(PageTemplate)
 class PageTemplateAdmin(admin.ModelAdmin):
+    form = PageTemplateForm
     list_display = ['name', 'template_type', 'template_file', 'is_active', 'created_at']
     list_filter = ['template_type', 'is_active', 'created_at']
     search_fields = ['name', 'description']
@@ -55,6 +74,7 @@ class PageRevisionInline(admin.TabularInline):
 
 @admin.register(Page)
 class PageAdmin(admin.ModelAdmin):
+    form = PageAdminForm  # Use the exact same approach as email templates
     list_display = [
         'title', 'status', 'category', 'author', 'is_featured', 
         'show_in_menu', 'view_count', 'publish_date', 'created_at'

@@ -6,12 +6,17 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Avg
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.utils import timezone
+from datetime import timedelta
+import logging
 
 from products.models import Product, Category, Review
 from users.models import User
 from cart.models import Cart, CartItem
 from orders.models import Order
 from pages.models import Page
+
+logger = logging.getLogger(__name__)
 
 
 def home(request):
@@ -1021,3 +1026,249 @@ def page_detail(request, slug):
     }
     
     return render(request, 'frontend/page_detail.html', context)
+
+
+def forgot_password(request):
+    """Forgot password page - send password reset email."""
+    if request.user.is_authenticated:
+        return redirect('frontend:home')
+    
+    if request.method == 'POST':
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            # Handle AJAX request
+            email = request.POST.get('email', '').strip()
+            
+            if not email:
+                return JsonResponse({'success': False, 'message': 'Email address is required'})
+            
+            try:
+                user = User.objects.get(email=email)
+                
+                # Generate password reset token
+                user.generate_password_reset_token()
+                user.password_reset_sent_at = timezone.now()
+                user.save(update_fields=['password_reset_sent_at'])
+                
+                # Send password reset email using dashboard email service
+                try:
+                    from dashboard.email_service import email_service
+                    
+                    # Create reset URL
+                    reset_url = request.build_absolute_uri(
+                        f'/reset-password/{user.password_reset_token}/'
+                    )
+                    
+                    # Send email using template
+                    email_sent = email_service.send_template_email(
+                        template_type='password_reset',
+                        recipient_email=user.email,
+                        user=user,
+                        context={
+                            'user': user,
+                            'reset_url': reset_url,
+                            'reset_token': user.password_reset_token,
+                            'site_name': 'Professional eCommerce',
+                            'expiry_hours': 24
+                        }
+                    )
+                    
+                    if email_sent:
+                        logger.info(f"Password reset email sent to {user.email}")
+                        return JsonResponse({
+                            'success': True, 
+                            'message': 'Password reset link has been sent to your email address.'
+                        })
+                    else:
+                        logger.error(f"Failed to send password reset email to {user.email}")
+                        return JsonResponse({
+                            'success': False, 
+                            'message': 'Failed to send reset email. Please try again later.'
+                        })
+                        
+                except Exception as e:
+                    logger.error(f"Error sending password reset email: {str(e)}")
+                    return JsonResponse({
+                        'success': False, 
+                        'message': 'Failed to send reset email. Please try again later.'
+                    })
+                    
+            except User.DoesNotExist:
+                # Don't reveal that user doesn't exist for security
+                return JsonResponse({
+                    'success': True, 
+                    'message': 'If an account with this email exists, a password reset link has been sent.'
+                })
+            except Exception as e:
+                logger.error(f"Error in forgot password: {str(e)}")
+                return JsonResponse({
+                    'success': False, 
+                    'message': 'An error occurred. Please try again later.'
+                })
+        
+        else:
+            # Handle regular form submission
+            email = request.POST.get('email', '').strip()
+            
+            if not email:
+                messages.error(request, 'Email address is required.')
+                return render(request, 'frontend/auth/forgot_password.html')
+            
+            try:
+                user = User.objects.get(email=email)
+                
+                # Generate password reset token
+                user.generate_password_reset_token()
+                user.password_reset_sent_at = timezone.now()
+                user.save(update_fields=['password_reset_sent_at'])
+                
+                # Send password reset email
+                try:
+                    from dashboard.email_service import email_service
+                    
+                    reset_url = request.build_absolute_uri(
+                        f'/reset-password/{user.password_reset_token}/'
+                    )
+                    
+                    email_sent = email_service.send_template_email(
+                        template_type='password_reset',
+                        recipient_email=user.email,
+                        user=user,
+                        context={
+                            'user': user,
+                            'reset_url': reset_url,
+                            'reset_token': user.password_reset_token,
+                            'site_name': 'Professional eCommerce',
+                            'expiry_hours': 24
+                        }
+                    )
+                    
+                    if email_sent:
+                        messages.success(request, 'Password reset link has been sent to your email address.')
+                    else:
+                        messages.error(request, 'Failed to send reset email. Please try again later.')
+                        
+                except Exception as e:
+                    logger.error(f"Error sending password reset email: {str(e)}")
+                    messages.error(request, 'Failed to send reset email. Please try again later.')
+                    
+            except User.DoesNotExist:
+                # Don't reveal that user doesn't exist for security
+                messages.success(request, 'If an account with this email exists, a password reset link has been sent.')
+            except Exception as e:
+                logger.error(f"Error in forgot password: {str(e)}")
+                messages.error(request, 'An error occurred. Please try again later.')
+            
+            return render(request, 'frontend/auth/forgot_password.html')
+    
+    return render(request, 'frontend/auth/forgot_password.html')
+
+
+def reset_password(request, token):
+    """Reset password page with token validation."""
+    # Validate token
+    valid_token = False
+    user = None
+    
+    try:
+        # Find user with this token
+        user = User.objects.get(password_reset_token=token)
+        
+        # Check if token is not expired (24 hours)
+        if user.password_reset_sent_at:
+            expiry_time = user.password_reset_sent_at + timedelta(hours=24)
+            if timezone.now() <= expiry_time:
+                valid_token = True
+            else:
+                logger.info(f"Password reset token expired for user {user.email}")
+        else:
+            logger.warning(f"Password reset token sent time is None for user {user.email}")
+            
+    except User.DoesNotExist:
+        logger.warning(f"Invalid password reset token: {token}")
+    except Exception as e:
+        logger.error(f"Error validating reset token: {str(e)}")
+    
+    if request.method == 'POST' and valid_token:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            # Handle AJAX request
+            new_password = request.POST.get('new_password', '')
+            confirm_password = request.POST.get('confirm_password', '')
+            
+            # Validate passwords
+            if not new_password or not confirm_password:
+                return JsonResponse({
+                    'success': False, 
+                    'message': 'Both password fields are required'
+                })
+            
+            if new_password != confirm_password:
+                return JsonResponse({
+                    'success': False, 
+                    'message': 'Passwords do not match'
+                })
+            
+            # Validate password complexity
+            if (len(new_password) < 8 or
+                not any(c.isupper() for c in new_password) or
+                not any(c.islower() for c in new_password) or
+                not any(c.isdigit() for c in new_password)):
+                return JsonResponse({
+                    'success': False, 
+                    'message': 'Password must be at least 8 characters with uppercase, lowercase, and number'
+                })
+            
+            # Update password
+            try:
+                user.set_password(new_password)
+                user.save()  # Save the password change first
+                user.clear_password_reset_token()  # Then clear the token (this saves again)
+                
+                logger.info(f"Password reset successful for user {user.email}")
+                
+                return JsonResponse({
+                    'success': True, 
+                    'message': 'Password reset successfully!'
+                })
+                
+            except Exception as e:
+                logger.error(f"Error resetting password: {str(e)}")
+                return JsonResponse({
+                    'success': False, 
+                    'message': 'Failed to reset password. Please try again.'
+                })
+        
+        else:
+            # Handle regular form submission
+            new_password = request.POST.get('new_password', '')
+            confirm_password = request.POST.get('confirm_password', '')
+            
+            # Validate passwords
+            if not new_password or not confirm_password:
+                messages.error(request, 'Both password fields are required.')
+            elif new_password != confirm_password:
+                messages.error(request, 'Passwords do not match.')
+            elif (len(new_password) < 8 or
+                  not any(c.isupper() for c in new_password) or
+                  not any(c.islower() for c in new_password) or
+                  not any(c.isdigit() for c in new_password)):
+                messages.error(request, 'Password must be at least 8 characters with uppercase, lowercase, and number.')
+            else:
+                # Update password
+                try:
+                    user.set_password(new_password)
+                    user.save()  # Save the password change first
+                    user.clear_password_reset_token()  # Then clear the token (this saves again)
+                    
+                    messages.success(request, 'Password reset successfully! You can now login with your new password.')
+                    return redirect('frontend:login')
+                    
+                except Exception as e:
+                    logger.error(f"Error resetting password: {str(e)}")
+                    messages.error(request, 'Failed to reset password. Please try again.')
+    
+    context = {
+        'valid_token': valid_token,
+        'token': token
+    }
+    
+    return render(request, 'frontend/auth/reset_password.html', context)

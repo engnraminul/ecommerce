@@ -17,6 +17,8 @@ urlpatterns = [
     path('login/', views.user_login, name='login'),
     path('register/', views.user_register, name='register'),
     path('logout/', auth_views.LogoutView.as_view(next_page='frontend:home'), name='logout'),
+    path('forgot-password/', views.forgot_password, name='forgot_password'),
+    path('reset-password/<uuid:token>/', views.reset_password, name='reset_password'),
     
     # User dashboard
     path('dashboard/', views.dashboard, name='dashboard'),
