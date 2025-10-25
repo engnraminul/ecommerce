@@ -259,13 +259,26 @@
                             
                             <h6 class="mb-3 text-primary">Category Image</h6>
                             <div class="mb-3">
-                                <label for="categoryImage" class="form-label">Upload Image</label>
-                                <input type="file" class="form-control" id="categoryImage" name="image" accept="image/*">
-                                <small class="form-text text-muted">Max file size: 5MB</small>
+                                <label for="categoryImage" class="form-label">Image URL</label>
+                                <input type="text" class="form-control" id="categoryImage" name="image" placeholder="Enter image URL or select from media library">
+                                <small class="form-text text-muted">Enter a full URL or select from media library below</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-outline-primary w-100" id="openCategoryMediaLibraryBtn">
+                                    <i class="fas fa-images me-2"></i>Choose from Media Library
+                                </button>
+                                <small class="text-muted">Select image from media library</small>
                             </div>
 
                             <div class="text-center mb-3">
                                 <img id="categoryImagePreview" src="#" alt="Category Preview" class="img-thumbnail" style="max-width: 150px; display: none;">
+                                <div id="categorySelectedImageInfo" class="text-center mt-2" style="display: none;">
+                                    <small class="text-muted">Selected from media library</small>
+                                    <button type="button" class="btn btn-sm btn-outline-danger ms-2" id="removeCategoryImageBtn">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -348,13 +361,26 @@
                             
                             <h6 class="mb-3 text-primary">Category Image</h6>
                             <div class="mb-3">
-                                <label for="editCategoryImage" class="form-label">Upload New Image</label>
-                                <input type="file" class="form-control" id="editCategoryImage" name="image" accept="image/*">
-                                <small class="form-text text-muted">Leave blank to keep current image</small>
+                                <label for="editCategoryImage" class="form-label">Image URL</label>
+                                <input type="text" class="form-control" id="editCategoryImage" name="image" placeholder="Enter image URL or select from media library">
+                                <small class="form-text text-muted">Enter a full URL or use media library below</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-outline-primary w-100" id="editOpenCategoryMediaLibraryBtn">
+                                    <i class="fas fa-images me-2"></i>Choose from Media Library
+                                </button>
+                                <small class="text-muted">Select image from media library</small>
                             </div>
 
                             <div class="text-center mb-3">
                                 <img id="editCategoryImagePreview" src="#" alt="Current Image" class="img-thumbnail" style="max-width: 150px; display: none;">
+                                <div id="editCategorySelectedImageInfo" class="text-center mt-2" style="display: none;">
+                                    <small class="text-muted">Selected from media library</small>
+                                    <button type="button" class="btn btn-sm btn-outline-danger ms-2" id="editRemoveCategoryImageBtn">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
                             </div>
 
                             <hr>
@@ -476,6 +502,37 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Image preview functionality for text inputs
+    document.getElementById('categoryImage').addEventListener('input', function() {
+        const imageUrl = this.value.trim();
+        const preview = document.getElementById('categoryImagePreview');
+        
+        if (imageUrl) {
+            preview.src = imageUrl;
+            preview.style.display = 'block';
+            preview.onerror = function() {
+                this.style.display = 'none';
+            };
+        } else {
+            preview.style.display = 'none';
+        }
+    });
+    
+    document.getElementById('editCategoryImage').addEventListener('input', function() {
+        const imageUrl = this.value.trim();
+        const preview = document.getElementById('editCategoryImagePreview');
+        
+        if (imageUrl) {
+            preview.src = imageUrl;
+            preview.style.display = 'block';
+            preview.onerror = function() {
+                this.style.display = 'none';
+            };
+        } else {
+            preview.style.display = 'none';
+        }
+    });
+
     // Auto-generate slug from name
     document.getElementById('categoryName').addEventListener('input', function() {
         const slug = this.value.toLowerCase()
@@ -811,15 +868,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Current image
                 const imagePreview = document.getElementById('editCategoryImagePreview');
+                const imageInput = document.getElementById('editCategoryImage');
+                
                 if (category.image) {
                     imagePreview.src = category.image;
                     imagePreview.style.display = 'block';
+                    imageInput.value = category.image; // Set the text input value
                 } else {
                     imagePreview.style.display = 'none';
+                    imageInput.value = ''; // Clear the text input
                 }
-                
-                // Clear file input
-                document.getElementById('editCategoryImage').value = '';
                 
                 // Show edit modal
                 const modal = new bootstrap.Modal(document.getElementById('editCategoryModal'));
@@ -834,6 +892,16 @@ document.addEventListener('DOMContentLoaded', function() {
     function saveCategory() {
         const form = document.getElementById('addCategoryForm');
         const formData = new FormData(form);
+        
+        // Check if media library image was selected
+        const imageInput = form.querySelector('#categoryImage');
+        const mediaUrl = imageInput.getAttribute('data-media-url');
+        
+        if (mediaUrl) {
+            // Use media library selected URL
+            formData.set('image', mediaUrl);
+        }
+        // Note: imageInput.value will contain the text input value which will be sent as 'image'
         
         fetch('/mb-admin/api/categories/', {
             method: 'POST',
@@ -856,8 +924,14 @@ document.addEventListener('DOMContentLoaded', function() {
             modal.hide();
             form.reset();
             
-            // Clear image preview
-            document.getElementById('categoryImagePreview').style.display = 'none';
+            // Clear image preview and media selection
+            const preview = document.getElementById('categoryImagePreview');
+            const info = document.getElementById('categorySelectedImageInfo');
+            const textInput = document.getElementById('categoryImage');
+            preview.style.display = 'none';
+            info.style.display = 'none';
+            textInput.removeAttribute('data-media-url');
+            textInput.removeAttribute('data-media-id');
             
             loadCategories();
             loadParentCategories(); // Refresh parent categories list
@@ -873,6 +947,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('editCategoryForm');
         const categoryId = document.getElementById('editCategoryId').value;
         const formData = new FormData(form);
+        
+        // Check if media library image was selected
+        const imageInput = form.querySelector('#editCategoryImage');
+        const mediaUrl = imageInput.getAttribute('data-media-url');
+        
+        if (mediaUrl) {
+            // Use media library selected URL
+            formData.set('image', mediaUrl);
+        }
+        // Note: imageInput.value will contain the text input value which will be sent as 'image'
         
         fetch(`/mb-admin/api/categories/${categoryId}/`, {
             method: 'PUT',
@@ -979,6 +1063,542 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return cookieValue;
     }
+
+    // Category Media Library Functions
+    let currentCategoryMediaPage = 1;
+    let selectedCategoryMedia = [];
+    let categoryMediaContext = null; // 'add' or 'edit'
+
+    // Open category media library
+    function openCategoryMediaLibrary(context) {
+        categoryMediaContext = context;
+        selectedCategoryMedia = [];
+        updateSelectedCategoryMediaCount();
+        loadCategoryMediaLibrary(1);
+        
+        const modal = new bootstrap.Modal(document.getElementById('categoryMediaLibraryModal'));
+        modal.show();
+    }
+
+    // Event listeners for media library buttons
+    document.getElementById('openCategoryMediaLibraryBtn').addEventListener('click', function() {
+        openCategoryMediaLibrary('add');
+    });
+
+    document.getElementById('editOpenCategoryMediaLibraryBtn').addEventListener('click', function() {
+        openCategoryMediaLibrary('edit');
+    });
+
+    // Remove image buttons
+    document.getElementById('removeCategoryImageBtn').addEventListener('click', function() {
+        const textInput = document.getElementById('categoryImage');
+        const preview = document.getElementById('categoryImagePreview');
+        const info = document.getElementById('categorySelectedImageInfo');
+        
+        textInput.value = '';
+        preview.style.display = 'none';
+        info.style.display = 'none';
+        textInput.removeAttribute('data-media-url');
+        textInput.removeAttribute('data-media-id');
+    });
+
+    document.getElementById('editRemoveCategoryImageBtn').addEventListener('click', function() {
+        const textInput = document.getElementById('editCategoryImage');
+        const preview = document.getElementById('editCategoryImagePreview');
+        const info = document.getElementById('editCategorySelectedImageInfo');
+        
+        textInput.value = '';
+        preview.style.display = 'none';
+        info.style.display = 'none';
+        textInput.removeAttribute('data-media-url');
+        textInput.removeAttribute('data-media-id');
+    });
+
+    // Load category media library
+    function loadCategoryMediaLibrary(page = 1) {
+        currentCategoryMediaPage = page;
+        
+        const searchTerm = document.getElementById('categoryMediaSearchInput').value;
+        const directoryFilter = document.getElementById('categoryMediaDirectoryFilter').value;
+        
+        let url = `/mb-admin/api/media/?page=${page}&type=image`;
+        
+        if (searchTerm) {
+            url += `&search=${encodeURIComponent(searchTerm)}`;
+        }
+        
+        if (directoryFilter) {
+            url += `&directory=${encodeURIComponent(directoryFilter)}`;
+        }
+        
+        console.log('Fetching URL:', url); // Debug line
+        
+        console.log('Fetching URL:', url); // Debug line
+        
+        document.getElementById('categoryMediaGridContainer').style.display = 'block';
+        document.getElementById('categoryMediaGrid').style.display = 'none';
+        
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                renderCategoryMediaGrid(data.files || []);
+                renderCategoryMediaPagination(data);
+                document.getElementById('categoryMediaTotalCount').textContent = data.total || 0;
+                
+                document.getElementById('categoryMediaGridContainer').style.display = 'none';
+                document.getElementById('categoryMediaGrid').style.display = 'flex';
+            })
+            .catch(error => {
+                console.error('Error loading media:', error);
+                document.getElementById('categoryMediaGridContainer').innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+                        <p>Failed to load media files</p>
+                        <small class="text-muted">Error: ${error.message}</small>
+                    </div>
+                `;
+            });
+    }
+
+    // Render category media grid
+    function renderCategoryMediaGrid(mediaFiles) {
+        const grid = document.getElementById('categoryMediaGrid');
+        grid.innerHTML = '';
+        
+        if (mediaFiles.length === 0) {
+            grid.innerHTML = `
+                <div class="col-12">
+                    <div class="text-center py-5">
+                        <i class="fas fa-images text-muted fa-3x mb-3"></i>
+                        <p class="text-muted">No media files found</p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        
+        mediaFiles.forEach(media => {
+            const isSelected = selectedCategoryMedia.includes(media.id);
+            const col = document.createElement('div');
+            col.className = 'col-md-3 col-sm-4 col-6';
+            
+            col.innerHTML = `
+                <div class="card media-item ${isSelected ? 'selected' : ''}" data-media-id="${media.id}" style="cursor: pointer;">
+                    <div class="position-relative">
+                        <img src="${media.url}" alt="${media.filename}" class="card-img-top media-item-image" style="height: 150px; object-fit: cover;">
+                        ${isSelected ? '<div class="position-absolute top-0 end-0 m-2"><i class="fas fa-check-circle text-success"></i></div>' : ''}
+                    </div>
+                    <div class="card-body p-2">
+                        <h6 class="card-title text-truncate mb-1" style="font-size: 0.8rem;">${media.filename}</h6>
+                        <small class="text-muted">${media.directory || 'Unknown'}</small>
+                    </div>
+                </div>
+            `;
+            
+            // Add click event listener
+            col.querySelector('.media-item').addEventListener('click', function() {
+                toggleCategoryMediaSelection(media.id, this);
+            });
+            
+            grid.appendChild(col);
+        });
+    }
+
+    // Toggle category media selection
+    function toggleCategoryMediaSelection(mediaId, element) {
+        const index = selectedCategoryMedia.indexOf(mediaId);
+        
+        if (index > -1) {
+            selectedCategoryMedia.splice(index, 1);
+            element.classList.remove('selected');
+            element.querySelector('.position-absolute')?.remove();
+        } else {
+            // For categories, only allow single selection
+            selectedCategoryMedia = [mediaId];
+            
+            // Remove selection from all other items
+            document.querySelectorAll('#categoryMediaGrid .media-item').forEach(item => {
+                item.classList.remove('selected');
+                item.querySelector('.position-absolute')?.remove();
+            });
+            
+            element.classList.add('selected');
+            element.querySelector('.position-relative').insertAdjacentHTML('beforeend', 
+                '<div class="position-absolute top-0 end-0 m-2"><i class="fas fa-check-circle text-success"></i></div>'
+            );
+        }
+        
+        updateSelectedCategoryMediaCount();
+    }
+
+    // Update selected category media count
+    function updateSelectedCategoryMediaCount() {
+        const count = selectedCategoryMedia.length;
+        document.getElementById('selectedCategoryMediaCount').textContent = count;
+        document.getElementById('useSelectedCategoryMediaBtn').disabled = count === 0;
+    }
+
+    // Render category media pagination
+    function renderCategoryMediaPagination(data) {
+        const pagination = document.getElementById('categoryMediaPagination');
+        pagination.innerHTML = '';
+        
+        const total = data.total || 0;
+        const totalPages = data.total_pages || 1;
+        const perPage = data.per_page || 20;
+        
+        if (total <= perPage) return; // No pagination needed
+        
+        const currentPage = currentCategoryMediaPage;
+        
+        // Previous button
+        if (currentPage > 1) {
+            const prevLi = document.createElement('li');
+            prevLi.className = 'page-item';
+            prevLi.innerHTML = '<a class="page-link" href="#" data-page="' + (currentPage - 1) + '">Previous</a>';
+            pagination.appendChild(prevLi);
+        }
+        
+        // Page numbers
+        for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+            const li = document.createElement('li');
+            li.className = 'page-item' + (i === currentPage ? ' active' : '');
+            li.innerHTML = '<a class="page-link" href="#" data-page="' + i + '">' + i + '</a>';
+            pagination.appendChild(li);
+        }
+        
+        // Next button
+        if (currentPage < totalPages) {
+            const nextLi = document.createElement('li');
+            nextLi.className = 'page-item';
+            nextLi.innerHTML = '<a class="page-link" href="#" data-page="' + (currentPage + 1) + '">Next</a>';
+            pagination.appendChild(nextLi);
+        }
+        
+        // Add event listeners to pagination links
+        pagination.querySelectorAll('a[data-page]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const page = parseInt(this.dataset.page);
+                loadCategoryMediaLibrary(page);
+            });
+        });
+    }
+
+    // Event listeners for category media library
+    document.getElementById('applyCategoryMediaFiltersBtn').addEventListener('click', function() {
+        loadCategoryMediaLibrary(1);
+    });
+
+    document.getElementById('categoryMediaSearchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            loadCategoryMediaLibrary(1);
+        }
+    });
+
+    document.getElementById('useSelectedCategoryMediaBtn').addEventListener('click', function() {
+        if (selectedCategoryMedia.length === 0) return;
+        
+        const mediaId = selectedCategoryMedia[0]; // Only one selection for categories
+        
+        // Find the selected media info
+        const selectedMediaElement = document.querySelector(`#categoryMediaGrid .media-item[data-media-id="${mediaId}"]`);
+        const mediaUrl = selectedMediaElement.querySelector('img').src;
+        const mediaName = selectedMediaElement.querySelector('.card-title').textContent;
+        
+        if (categoryMediaContext === 'add') {
+            // Set for add modal
+            const preview = document.getElementById('categoryImagePreview');
+            const info = document.getElementById('categorySelectedImageInfo');
+            const textInput = document.getElementById('categoryImage');
+            
+            preview.src = mediaUrl;
+            preview.style.display = 'block';
+            info.style.display = 'block';
+            
+            // Set the text input value and store media URL as data attribute
+            textInput.value = mediaUrl;
+            textInput.setAttribute('data-media-url', mediaUrl);
+            textInput.setAttribute('data-media-id', mediaId);
+            
+        } else if (categoryMediaContext === 'edit') {
+            // Set for edit modal
+            const preview = document.getElementById('editCategoryImagePreview');
+            const info = document.getElementById('editCategorySelectedImageInfo');
+            const textInput = document.getElementById('editCategoryImage');
+            
+            preview.src = mediaUrl;
+            preview.style.display = 'block';
+            info.style.display = 'block';
+            
+            // Set the text input value and store media URL as data attribute
+            textInput.value = mediaUrl;
+            textInput.setAttribute('data-media-url', mediaUrl);
+            textInput.setAttribute('data-media-id', mediaId);
+        }
+        
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('categoryMediaLibraryModal'));
+        modal.hide();
+    });
+
+    // File upload functionality for category media
+    document.getElementById('categoryMediaUploadInput').addEventListener('change', function() {
+        const uploadBtn = document.getElementById('uploadCategoryMediaBtn');
+        uploadBtn.disabled = this.files.length === 0;
+    });
+
+    document.getElementById('uploadCategoryMediaBtn').addEventListener('click', function() {
+        const fileInput = document.getElementById('categoryMediaUploadInput');
+        const directory = document.getElementById('categoryMediaUploadDirectory').value;
+        const progressContainer = document.getElementById('categoryUploadProgress');
+        const progressBar = progressContainer.querySelector('.progress-bar');
+        
+        if (fileInput.files.length === 0) return;
+        
+        const formData = new FormData();
+        // Upload files one by one since API expects 'file' not 'files'
+        for (let file of fileInput.files) {
+            formData.append('file', file);
+        }
+        formData.append('directory', directory);
+        
+        progressContainer.style.display = 'block';
+        this.disabled = true;
+        
+        fetch('/mb-admin/api/media/upload/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Refresh media grid
+                loadCategoryMediaLibrary(currentCategoryMediaPage);
+                
+                // Reset form
+                fileInput.value = '';
+                this.disabled = true;
+                
+                showAlert('Files uploaded successfully!', 'success');
+            } else {
+                throw new Error(data.message || 'Upload failed');
+            }
+        })
+        .catch(error => {
+            console.error('Upload error:', error);
+            showAlert('Upload failed: ' + error.message, 'danger');
+        })
+        .finally(() => {
+            progressContainer.style.display = 'none';
+            progressBar.style.width = '0%';
+            this.disabled = false;
+        });
+    });
+
 });
 </script>
+
+<!-- Media Library Modal -->
+<div class="modal fade" id="categoryMediaLibraryModal" tabindex="-1" aria-labelledby="categoryMediaLibraryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="categoryMediaLibraryModalLabel">
+                    <i class="fas fa-photo-video me-2"></i>Media Library - Select Category Image
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- Sidebar -->
+                    <div class="col-md-3">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h6 class="mb-0">Upload New Files</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <input type="file" class="form-control" id="categoryMediaUploadInput" multiple accept="image/*">
+                                    <small class="text-muted">Select images to upload</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="categoryMediaUploadDirectory" class="form-label">Upload to:</label>
+                                    <select class="form-select" id="categoryMediaUploadDirectory">
+                                        <option value="categories">Categories</option>
+                                        <option value="products">Products</option>
+                                        <option value="variants">Variants</option>
+                                        <option value="reviews">Reviews</option>
+                                    </select>
+                                </div>
+                                
+                                <button type="button" class="btn btn-primary w-100" id="uploadCategoryMediaBtn" disabled>
+                                    <i class="fas fa-upload me-1"></i> Upload Files
+                                </button>
+                                
+                                <div id="categoryUploadProgress" class="mt-3" style="display: none;">
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Main Content -->
+                    <div class="col-md-9">
+                        <!-- Filters -->
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row g-2">
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control" id="categoryMediaSearchInput" placeholder="Search files...">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <select class="form-select" id="categoryMediaDirectoryFilter">
+                                            <option value="">All Directories</option>
+                                            <option value="categories">Categories</option>
+                                            <option value="products">Products</option>
+                                            <option value="variants">Variants</option>
+                                            <option value="reviews">Reviews</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button class="btn btn-primary w-100" id="applyCategoryMediaFiltersBtn">
+                                            <i class="fas fa-filter me-1"></i> Apply
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Media Grid -->
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="categoryMediaGridContainer">
+                                    <div class="text-center py-5">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-2">Loading media files...</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Media Grid -->
+                                <div id="categoryMediaGrid" class="row g-3" style="display: none;">
+                                    <!-- Media items will be loaded here -->
+                                </div>
+                                
+                                <!-- Pagination -->
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <div>
+                                        <span id="categoryMediaTotalCount">0</span> files
+                                    </div>
+                                    <div>
+                                        <nav aria-label="Category media pagination">
+                                            <ul class="pagination pagination-sm" id="categoryMediaPagination">
+                                                <!-- Pagination will be generated dynamically -->
+                                            </ul>
+                                        </nav>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="d-flex justify-content-between w-100">
+                    <div>
+                        <span id="selectedCategoryMediaCount">0</span> files selected
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i> Cancel
+                        </button>
+                        <button type="button" class="btn btn-primary" id="useSelectedCategoryMediaBtn" disabled>
+                            <i class="fas fa-check me-1"></i> Use Selected
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Modal styling improvements */
+.modal-xl {
+    max-width: 75%;
+}
+
+@media (max-width: 768px) {
+    .modal-xl {
+        max-width: 98%;
+        margin: 0.5rem;
+    }
+}
+
+/* Media Library Styles */
+.media-item {
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.media-item:hover {
+    border-color: #007bff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.media-item.selected {
+    border-color: #28a745;
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
+.media-item.selected::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #28a745;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.media-item-image {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 6px 6px 0 0;
+}
+
+.pagination-sm .page-link {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+</style>
+
 {% endblock %}

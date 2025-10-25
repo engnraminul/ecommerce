@@ -25,7 +25,7 @@ def list_media_files(request):
         sort_by = request.GET.get('sort', 'date_desc')  # date_desc, date_asc, name_asc, name_desc, size_desc, size_asc
         
         # Define media directories to scan
-        media_dirs = ['products', 'variants', 'reviews', 'banners', 'avatars', 'documents']
+        media_dirs = ['products', 'variants', 'reviews', 'banners', 'avatars', 'documents', 'categories']
         all_files = []
         total_size = 0
         directories_found = set()
@@ -230,7 +230,7 @@ def upload_media_file(request):
             directory = 'products'
         
         # Validate directory name against allowed directories
-        allowed_dirs = ['products', 'variants', 'reviews', 'banners', 'avatars', 'documents']
+        allowed_dirs = ['products', 'variants', 'reviews', 'banners', 'avatars', 'documents', 'categories']
         if directory not in allowed_dirs:
             # Allow custom directories but validate they're safe
             if not re.match(r'^[a-zA-Z0-9_-]+$', directory):

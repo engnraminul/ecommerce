@@ -12,7 +12,7 @@ class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(max_length=100, unique=True, blank=True)
     description = models.TextField(blank=True)
-    image = models.ImageField(upload_to='categories/', blank=True, null=True)
+    image = models.TextField(max_length=500, blank=True, null=True, help_text="URL or path to the category image")
     
     # Hierarchy support
     parent = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True, related_name='subcategories')
@@ -41,6 +41,21 @@ class Category(models.Model):
     @property
     def get_absolute_url(self):
         return f"/category/{self.slug}/"
+    
+    @property
+    def image_url(self):
+        """Get the full URL for the category image"""
+        if self.image:
+            # If it's already a full URL, return as is
+            if self.image.startswith(('http://', 'https://')):
+                return self.image
+            # If it's a path, prepend MEDIA_URL
+            elif self.image.startswith('/'):
+                return self.image
+            else:
+                from django.conf import settings
+                return f"{settings.MEDIA_URL}{self.image}"
+        return None
 
 
 class Product(models.Model):
