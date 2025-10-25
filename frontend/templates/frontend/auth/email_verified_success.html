@@ -1,0 +1,503 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+
+{% block title %}Email Verified - Professional eCommerce{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="verification-container">
+        <div class="verification-card">
+            <div class="verification-header">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h2>Email Verified Successfully!</h2>
+                <p>Your account has been activated and you can now start shopping.</p>
+            </div>
+
+            <div class="verification-content">
+                <div class="success-message">
+                    <h4>Welcome to Manob Bazar Family, {{ user.first_name }}!</h4>
+                    <p>Your email address <strong>{{ user.email }}</strong> has been successfully verified.</p>
+                </div>
+
+                <div class="next-steps">
+                    <h5>What's next?</h5>
+                    <ul class="benefits-list">
+                        <li>
+                            <i class="fas fa-sign-in-alt text-primary"></i>
+                            <span>Sign in to your account and start browsing</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-shopping-cart text-primary"></i>
+                            <span>Add products to your cart and place orders</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-heart text-primary"></i>
+                            <span>Save your favorite items to wishlist</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-tags text-primary"></i>
+                            <span>Get exclusive deals and member discounts</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="verification-actions">
+                <a href="{% url 'frontend:login' %}" class="btn btn-primary btn-large">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Sign In Now
+                </a>
+                <a href="{% url 'frontend:home' %}" class="btn btn-outline btn-large">
+                    <i class="fas fa-home"></i>
+                    Browse Products
+                </a>
+            </div>
+
+            <div class="verification-footer">
+                <p class="text-muted">
+                    <i class="fas fa-shield-alt"></i>
+                    Your account is now secure and fully activated
+                </p>
+            </div>
+        </div>
+
+        <div class="verification-benefits">
+            <h3>Member Benefits</h3>
+            <div class="benefits-grid">
+                <div class="benefit-item">
+                    <i class="fas fa-shipping-fast"></i>
+                    <h4>Fast Shipping</h4>
+                    <p>Quick delivery to your doorstep</p>
+                </div>
+                <div class="benefit-item">
+                    <i class="fas fa-undo-alt"></i>
+                    <h4>Easy Returns</h4>
+                    <p>Hassle-free return policy</p>
+                </div>
+                <div class="benefit-item">
+                    <i class="fas fa-headset"></i>
+                    <h4>24/7 Support</h4>
+                    <p>Customer support anytime</p>
+                </div>
+                <div class="benefit-item">
+                    <i class="fas fa-star"></i>
+                    <h4>Exclusive Deals</h4>
+                    <p>Member-only discounts</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Theme Colors */
+    :root {
+        --success-primary: #28a745;
+        --success-light: #d4edda;
+        --success-dark: #155724;
+        --primary-color: #930000;
+        --secondary-color: #5e0000;
+        --accent-color: #f5a623;
+        --text-color: #333333;
+        --text-light: #666666;
+        --border-color: #e2e2e2;
+        --bg-color: #f9f9f9;
+    }
+
+    body {
+        background-color: var(--bg-color);
+    }
+
+    .verification-container {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 3rem;
+        max-width: 1200px;
+        margin: 3rem auto;
+        padding: 0 1rem;
+    }
+
+    .verification-card {
+        background: white;
+        padding: 3rem;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        border-top: 5px solid var(--success-primary);
+        animation: slideUp 0.6s ease-out;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .verification-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .success-icon {
+        font-size: 4rem;
+        color: var(--success-primary);
+        margin-bottom: 1rem;
+        animation: bounceIn 0.8s ease-out 0.3s both;
+    }
+
+    @keyframes bounceIn {
+        0% {
+            opacity: 0;
+            transform: scale(0.3);
+        }
+        50% {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+        70% {
+            transform: scale(0.9);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .verification-header h2 {
+        color: var(--success-primary);
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        animation: fadeInUp 0.6s ease-out 0.5s both;
+    }
+
+    .verification-header p {
+        color: var(--text-light);
+        font-size: 1.1rem;
+        animation: fadeInUp 0.6s ease-out 0.7s both;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .verification-content {
+        margin: 2rem 0;
+    }
+
+    .success-message {
+        background: var(--success-light);
+        border: 1px solid var(--success-primary);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        animation: fadeIn 0.6s ease-out 0.9s both;
+    }
+
+    .success-message h4 {
+        color: var(--success-dark);
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+
+    .success-message p {
+        color: var(--success-dark);
+        margin: 0;
+    }
+
+    .next-steps {
+        animation: fadeIn 0.6s ease-out 1.1s both;
+    }
+
+    .next-steps h5 {
+        color: var(--text-color);
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .benefits-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .benefits-list li {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+
+    .benefits-list li:last-child {
+        border-bottom: none;
+    }
+
+    .benefits-list li:hover {
+        background: rgba(147, 0, 0, 0.05);
+        padding-left: 0.5rem;
+        border-radius: 8px;
+    }
+
+    .benefits-list li i {
+        width: 24px;
+        margin-right: 1rem;
+        color: var(--primary-color);
+    }
+
+    .verification-actions {
+        display: flex;
+        gap: 1rem;
+        margin: 2rem 0;
+        animation: fadeInUp 0.6s ease-out 1.3s both;
+    }
+
+    .btn-large {
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 30px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+    }
+
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+        border: 2px solid var(--primary-color);
+    }
+
+    .btn-primary:hover {
+        background: var(--secondary-color);
+        border-color: var(--secondary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(147, 0, 0, 0.3);
+    }
+
+    .btn-outline {
+        background: transparent;
+        color: var(--primary-color);
+        border: 2px solid var(--primary-color);
+    }
+
+    .btn-outline:hover {
+        background: var(--primary-color);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(147, 0, 0, 0.2);
+    }
+
+    .btn-large i {
+        margin-right: 0.5rem;
+    }
+
+    .verification-footer {
+        text-align: center;
+        padding-top: 2rem;
+        border-top: 1px solid var(--border-color);
+        animation: fadeIn 0.6s ease-out 1.5s both;
+    }
+
+    .verification-footer .text-muted {
+        color: var(--text-light);
+        font-size: 0.9rem;
+    }
+
+    .verification-footer i {
+        color: var(--success-primary);
+        margin-right: 0.5rem;
+    }
+
+    .verification-benefits {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        padding: 2.5rem;
+        border-radius: 16px;
+        height: fit-content;
+        color: white;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        animation: slideUp 0.6s ease-out 0.2s both;
+    }
+
+    .verification-benefits h3 {
+        color: white;
+        margin-bottom: 2rem;
+        text-align: center;
+        font-weight: 700;
+        font-size: 1.5rem;
+    }
+
+    .benefits-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .benefit-item {
+        text-align: center;
+        padding: 1.5rem;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .benefit-item:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .benefit-item i {
+        font-size: 2rem;
+        color: var(--accent-color);
+        margin-bottom: 1rem;
+    }
+
+    .benefit-item h4 {
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+        color: white;
+        font-weight: 600;
+    }
+
+    .benefit-item p {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .text-primary {
+        color: var(--primary-color) !important;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .verification-container {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin: 2rem auto;
+        }
+
+        .verification-card {
+            padding: 2rem;
+        }
+
+        .verification-actions {
+            flex-direction: column;
+        }
+
+        .verification-header h2 {
+            font-size: 2rem;
+        }
+
+        .success-icon {
+            font-size: 3rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .verification-card {
+            padding: 1.5rem;
+        }
+
+        .verification-header h2 {
+            font-size: 1.8rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add confetti effect for successful verification
+        function createConfetti() {
+            const colors = ['#930000', '#f5a623', '#28a745', '#dc3545', '#007bff'];
+            const confettiContainer = document.createElement('div');
+            confettiContainer.style.position = 'fixed';
+            confettiContainer.style.top = '0';
+            confettiContainer.style.left = '0';
+            confettiContainer.style.width = '100%';
+            confettiContainer.style.height = '100%';
+            confettiContainer.style.pointerEvents = 'none';
+            confettiContainer.style.zIndex = '9999';
+            document.body.appendChild(confettiContainer);
+
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.style.position = 'absolute';
+                    confetti.style.width = '10px';
+                    confetti.style.height = '10px';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.top = '-10px';
+                    confetti.style.borderRadius = '50%';
+                    confetti.style.animation = `fall ${Math.random() * 3 + 2}s linear forwards`;
+                    confettiContainer.appendChild(confetti);
+
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 5000);
+                }, i * 100);
+            }
+
+            // Remove container after animation
+            setTimeout(() => {
+                confettiContainer.remove();
+            }, 6000);
+        }
+
+        // Add fall animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fall {
+                to {
+                    transform: translateY(100vh) rotate(360deg);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Trigger confetti after page load
+        setTimeout(createConfetti, 1000);
+
+        // Add click tracking for analytics
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                console.log('Email verification success action:', this.textContent.trim());
+            });
+        });
+    });
+</script>
+{% endblock %}

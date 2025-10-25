@@ -140,9 +140,15 @@
                     </label>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-full">
-                    <i class="fas fa-user-plus"></i>
-                    Create Account
+                <button type="submit" class="btn btn-primary btn-full btn-animated" id="registerSubmitBtn">
+                    <span class="btn-content">
+                        <i class="fas fa-user-plus"></i>
+                        <span class="btn-text">Create Account</span>
+                    </span>
+                    <span class="btn-loading" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span class="btn-text">Creating Account...</span>
+                    </span>
                 </button>
             </form>
 
@@ -479,6 +485,8 @@
         border-radius: 30px;
         transition: all 0.3s ease;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
     }
     
     .btn-primary {
@@ -490,6 +498,133 @@
         background-color: var(--auth-secondary);
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Enhanced Button Animations */
+    .btn-animated {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .btn-animated:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: all 0.6s ease;
+        z-index: 1;
+    }
+    
+    .btn-animated:hover:before {
+        left: 100%;
+    }
+    
+    .btn-animated:hover {
+        background: linear-gradient(45deg, var(--auth-primary), var(--auth-secondary));
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 8px 25px rgba(147, 0, 0, 0.3);
+    }
+    
+    .btn-animated:active {
+        transform: translateY(-1px) scale(0.98);
+        transition: all 0.1s ease;
+    }
+    
+    .btn-content, .btn-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .btn-content i, .btn-loading i {
+        margin-right: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-animated:hover .btn-content i {
+        transform: translateX(2px);
+    }
+    
+    .btn-loading i {
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .btn-animated.loading {
+        pointer-events: none;
+        background: var(--auth-text-light);
+    }
+    
+    .btn-animated.loading .btn-content {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    
+    .btn-animated.loading .btn-loading {
+        display: flex !important;
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    /* Ripple effect */
+    .btn-animated {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-animated .ripple {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.6);
+        transform: scale(0);
+        animation: ripple-animation 0.6s linear;
+        pointer-events: none;
+    }
+    
+    @keyframes ripple-animation {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+    
+    /* Success state animation */
+    .btn-animated.success {
+        background: var(--auth-success);
+        transform: scale(1.05);
+    }
+    
+    .btn-animated.success .btn-content {
+        opacity: 0;
+    }
+    
+    .btn-animated.success:after {
+        content: '✓';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 1.5rem;
+        color: white;
+        z-index: 3;
+        animation: checkmark-bounce 0.6s ease;
+    }
+    
+    @keyframes checkmark-bounce {
+        0% { transform: translate(-50%, -50%) scale(0); }
+        50% { transform: translate(-50%, -50%) scale(1.2); }
+        100% { transform: translate(-50%, -50%) scale(1); }
     }
     
     .auth-divider {
@@ -667,6 +802,64 @@
         const form = document.getElementById('registerForm');
         const passwordInput = document.getElementById('password');
         const confirmPasswordInput = document.getElementById('password_confirm');
+        const submitBtn = document.getElementById('registerSubmitBtn');
+
+        // Add ripple effect to button
+        function createRipple(event) {
+            const button = event.currentTarget;
+            const circle = document.createElement('span');
+            const diameter = Math.max(button.clientWidth, button.clientHeight);
+            const radius = diameter / 2;
+
+            circle.style.width = circle.style.height = `${diameter}px`;
+            circle.style.left = `${event.clientX - button.offsetLeft - radius}px`;
+            circle.style.top = `${event.clientY - button.offsetTop - radius}px`;
+            circle.classList.add('ripple');
+
+            const ripple = button.getElementsByClassName('ripple')[0];
+            if (ripple) {
+                ripple.remove();
+            }
+
+            button.appendChild(circle);
+        }
+
+        submitBtn.addEventListener('click', createRipple);
+
+        // Enhanced form submission with animations
+        form.addEventListener('submit', function(e) {
+            // Add loading animation
+            submitBtn.classList.add('loading');
+            
+            // The form will be handled by app.js, but we show the loading state immediately
+            setTimeout(() => {
+                if (submitBtn.classList.contains('loading')) {
+                    // If still loading after 3 seconds, reset (in case of error)
+                    submitBtn.classList.remove('loading');
+                }
+            }, 10000);
+        });
+
+        // Success animation (can be triggered from app.js after successful registration)
+        window.showRegisterSuccess = function() {
+            submitBtn.classList.remove('loading');
+            submitBtn.classList.add('success');
+            
+            setTimeout(() => {
+                submitBtn.classList.remove('success');
+            }, 2000);
+        };
+
+        // Error animation (can be triggered from app.js after failed registration)
+        window.showRegisterError = function() {
+            submitBtn.classList.remove('loading');
+            
+            // Add shake animation
+            submitBtn.style.animation = 'shake 0.5s ease-in-out';
+            setTimeout(() => {
+                submitBtn.style.animation = '';
+            }, 500);
+        };
 
         // Password strength checker
         passwordInput.addEventListener('input', function() {
@@ -685,7 +878,9 @@
         document.getElementById('email').addEventListener('blur', function() {
             if (this.value && !isValidEmail(this.value)) {
                 this.classList.add('error');
-                ecommerceApp.showNotification('Please enter a valid email address', 'error');
+                if (window.ecommerceApp && window.ecommerceApp.showNotification) {
+                    ecommerceApp.showNotification('Please enter a valid email address', 'error');
+                }
             } else {
                 this.classList.remove('error');
             }
@@ -721,5 +916,18 @@
             this.value = value;
         });
     });
+
+    // Add shake animation for errors
+    const shakeKeyframes = `
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+    `;
+    
+    const style = document.createElement('style');
+    style.textContent = shakeKeyframes;
+    document.head.appendChild(style);
 </script>
 {% endblock %}

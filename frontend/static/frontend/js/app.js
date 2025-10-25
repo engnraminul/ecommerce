@@ -565,13 +565,31 @@ async function register(userData) {
         const data = await response.json();
         
         if (!data.success) {
+            // Show error animation
+            if (window.showRegisterError) {
+                window.showRegisterError();
+            }
             throw new Error(data.message || 'Registration failed');
         }
         
+        // Show success animation
+        if (window.showRegisterSuccess) {
+            window.showRegisterSuccess();
+        }
+        
         showNotification('Registration successful! Please log in.', 'success');
-        window.location.href = '/login/';
+        
+        // Delay redirect to show success animation
+        setTimeout(() => {
+            window.location.href = '/login/';
+        }, 2000);
     } catch (error) {
         console.error('Registration error:', error);
+        
+        // Show error animation
+        if (window.showRegisterError) {
+            window.showRegisterError();
+        }
         
         // Get detailed error messages if available
         let errorMessage = 'Registration failed: ' + (error.message || '');
