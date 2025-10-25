@@ -19,10 +19,10 @@ from pages.serializers import (
 
 class PageDashboardViewSet(viewsets.ModelViewSet):
     """Dashboard ViewSet for managing pages"""
-    queryset = Page.objects.select_related('category', 'template', 'author', 'last_modified_by').prefetch_related('media', 'comments')
+    queryset = Page.objects.select_related('category', 'template', 'author', 'last_modified_by').prefetch_related('media')
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['status', 'category', 'is_featured', 'show_in_menu', 'allow_comments', 'require_login', 'author']
+    filterset_fields = ['status', 'category', 'is_featured', 'show_in_menu', 'require_login', 'author']
     search_fields = ['title', 'content', 'meta_title', 'meta_description']
     ordering_fields = ['title', 'created_at', 'updated_at', 'publish_date', 'view_count']
     ordering = ['-created_at']
@@ -97,7 +97,6 @@ class PageDashboardViewSet(viewsets.ModelViewSet):
             'status': 'draft',
             'is_featured': False,
             'show_in_menu': False,
-            'allow_comments': original.allow_comments,
             'require_login': original.require_login,
         }
         
