@@ -355,28 +355,72 @@ def user_register(request):
         return redirect('frontend:home')
     
     if request.method == 'POST':
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        confirm_password = request.POST.get('confirm_password')
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        phone = request.POST.get('phone')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            # Handle AJAX request
+            import json
+            try:
+                # Parse JSON data
+                data = json.loads(request.body)
+                email = data.get('email', '').strip()
+                password = data.get('password', '')
+                confirm_password = data.get('password_confirm', '')
+                first_name = data.get('first_name', '').strip()
+                last_name = data.get('last_name', '').strip()
+                phone = data.get('phone', '').strip()
+            except json.JSONDecodeError:
+                return JsonResponse({'success': False, 'message': 'Invalid JSON data'})
+        else:
+            # Handle regular form submission
+            email = request.POST.get('email')
+            password = request.POST.get('password')
+            confirm_password = request.POST.get('confirm_password')
+            first_name = request.POST.get('first_name')
+            last_name = request.POST.get('last_name')
+            phone = request.POST.get('phone')
+        
         newsletter_subscription = request.POST.get('newsletter_subscription') == 'on'
         terms_accepted = request.POST.get('terms_accepted') == 'on'
         
         # Validation
-        if not terms_accepted:
-            messages.error(request, 'You must accept the Terms of Service and Privacy Policy.')
-        elif password != confirm_password:
-            messages.error(request, 'Passwords do not match.')
-        elif len(password) < 8:
-            messages.error(request, 'Password must be at least 8 characters long.')
-        elif User.objects.filter(email=email).exists():
-            messages.error(request, 'This email is already registered. Please log in instead.')
+        errors = []
+        if not first_name:
+            errors.append('First name is required.')
+        if not last_name:
+            errors.append('Last name is required.')
+        if not email:
+            errors.append('Email is required.')
+        if not password:
+            errors.append('Password is required.')
+        if not terms_accepted and not request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            errors.append('You must accept the Terms of Service and Privacy Policy.')
+        if password != confirm_password:
+            errors.append('Passwords do not match.')
+        if len(password) < 8:
+            errors.append('Password must be at least 8 characters long.')
+        if User.objects.filter(email=email).exists():
+            errors.append('This email is already registered. Please log in instead.')
+        
+        if errors:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': ' '.join(errors)})
+            else:
+                for error in errors:
+                    messages.error(request, error)
         else:
             try:
+                # Generate a username from email (before @ symbol)
+                username = email.split('@')[0]
+                
+                # Ensure username is unique
+                base_username = username
+                counter = 1
+                while User.objects.filter(username=username).exists():
+                    username = f"{base_username}{counter}"
+                    counter += 1
+                
                 # Create user
                 user = User.objects.create_user(
+                    username=username,
                     email=email,
                     password=password,
                     first_name=first_name,
@@ -389,17 +433,27 @@ def user_register(request):
                     user.profile.newsletter_subscribed = newsletter_subscription
                     user.profile.save()
                 
-                # Automatically log in the user after registration
-                user = authenticate(request, username=email, password=password)
-                if user:
-                    login(request, user)
-                    messages.success(request, f'Welcome to our store, {first_name}! Your account has been created successfully.')
-                    return redirect('frontend:dashboard')
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': True, 
+                        'message': 'Registration successful! You can now log in with your account.'
+                    })
                 else:
-                    messages.success(request, 'Registration successful! Please log in.')
-                    return redirect('frontend:login')
+                    # Automatically log in the user after registration
+                    user = authenticate(request, username=email, password=password)
+                    if user:
+                        login(request, user)
+                        messages.success(request, f'Welcome to our store, {first_name}! Your account has been created successfully.')
+                        return redirect('frontend:dashboard')
+                    else:
+                        messages.success(request, 'Registration successful! Please log in.')
+                        return redirect('frontend:login')
             except Exception as e:
-                messages.error(request, f'Registration failed. Please try again. Error: {str(e)}')
+                error_msg = f'Registration failed. Please try again. Error: {str(e)}'
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({'success': False, 'message': error_msg})
+                else:
+                    messages.error(request, error_msg)
     
     return render(request, 'frontend/auth/register.html')
 

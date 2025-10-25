@@ -550,13 +550,26 @@ async function register(userData) {
         // Log the data before sending (for debugging)
         console.log('Sending registration data:', JSON.stringify(processedData));
         
-        const data = await apiRequest('/users/register/', {
+        // Make direct fetch request to frontend endpoint (not API endpoint)
+        const response = await fetch('/register/', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrftoken
             },
             body: JSON.stringify(processedData)
         });
+        
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.message || 'Registration failed');
+        }
         
         showNotification('Registration successful! Please log in.', 'success');
         window.location.href = '/login/';
@@ -598,6 +611,12 @@ function logout() {
 
 // Form Handlers
 function setupForms() {
+    // Helper function for email validation
+    function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
     // Login form - this is a fallback handler
     // The login.html file has its own handler which tries to use the global login function
     const loginForm = document.getElementById('loginForm');
@@ -644,31 +663,80 @@ function setupForms() {
     if (registerForm) {
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            // Get form data
             const formData = new FormData(registerForm);
-            const email = formData.get('email');
-            
-            // Get phone number (formatting handled by backend)
-            let phoneNumber = formData.get('phone').trim();
-            
-            // Get password fields and explicitly convert to strings
+            const email = formData.get('email').trim();
+            const firstName = formData.get('first_name').trim();
+            const lastName = formData.get('last_name').trim();
+            const phone = formData.get('phone').trim();
             const password = String(formData.get('password') || '');
             const passwordConfirm = String(formData.get('password_confirm') || '');
+            const termsAccepted = formData.get('terms_accepted');
             
-            // Validate passwords match
+            // Clear previous error styling
+            document.querySelectorAll('.form-control').forEach(input => {
+                input.classList.remove('error');
+            });
+            
+            // Validation
+            let isValid = true;
+            
+            if (!firstName) {
+                document.getElementById('first_name').classList.add('error');
+                showNotification('First name is required', 'error');
+                isValid = false;
+            }
+            
+            if (!lastName) {
+                document.getElementById('last_name').classList.add('error');
+                showNotification('Last name is required', 'error');
+                isValid = false;
+            }
+            
+            if (!email || !isValidEmail(email)) {
+                document.getElementById('email').classList.add('error');
+                showNotification('Please enter a valid email address', 'error');
+                isValid = false;
+            }
+            
+            // Bangladesh phone validation
+            const bdPhoneRegex = /(^(\+8801|8801|01)[3-9]{1}[0-9]{8}$)/;
+            if (!phone || !bdPhoneRegex.test(phone)) {
+                document.getElementById('phone').classList.add('error');
+                showNotification('Please enter a valid Bangladesh phone number', 'error');
+                isValid = false;
+            }
+            
+            if (!password || password.length < 8) {
+                document.getElementById('password').classList.add('error');
+                showNotification('Password must be at least 8 characters long', 'error');
+                isValid = false;
+            }
+            
             if (password !== passwordConfirm) {
+                document.getElementById('password_confirm').classList.add('error');
                 showNotification('Passwords do not match', 'error');
+                isValid = false;
+            }
+            
+            if (!termsAccepted) {
+                showNotification('Please accept the Terms of Service', 'error');
+                isValid = false;
+            }
+            
+            if (!isValid) {
                 return false;
             }
             
-            // Create user data object with explicit password_confirm field
+            // Create user data object
             const userData = {
-                // Let the backend generate the username
                 email: email,
                 password: password,
-                password_confirm: passwordConfirm, // Explicitly included as a string
-                first_name: formData.get('first_name'),
-                last_name: formData.get('last_name'),
-                phone: phoneNumber
+                password_confirm: passwordConfirm,
+                first_name: firstName,
+                last_name: lastName,
+                phone: phone
             };
             
             console.log('Registration data being sent:', userData);

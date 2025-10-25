@@ -673,82 +673,9 @@
             checkPasswordStrength(this.value);
         });
 
-        // Form validation - Let app.js handle the actual submission
-        form.addEventListener('submit', function(e) {
-            // Note: We don't call e.preventDefault() here because app.js already does that
-            
-            let isValid = true;
-            
-            // Remove previous error styling
-            document.querySelectorAll('.form-control').forEach(input => {
-                input.classList.remove('error');
-            });
-
-            // Get form data
-            const formData = new FormData(form);
-            const firstName = formData.get('first_name').trim();
-            const lastName = formData.get('last_name').trim();
-            const email = formData.get('email').trim();
-            const phone = formData.get('phone').trim();
-            const password = formData.get('password');
-            const confirmPassword = formData.get('password_confirm');
-            const termsAccepted = formData.get('terms_accepted');
-            
-            // Validation for Bangladesh phone number
-            const bdPhoneRegex = /(^(\+8801|8801|01)[3-9]{1}[0-9]{8}$)/;
-            if (!phone || !bdPhoneRegex.test(phone)) {
-                document.getElementById('phone').classList.add('error');
-                ecommerceApp.showNotification('Please enter a valid Bangladesh phone number', 'error');
-                isValid = false;
-            }            
-            
-            if (!firstName) {
-                document.getElementById('first_name').classList.add('error');
-                isValid = false;
-            }
-
-            if (!lastName) {
-                document.getElementById('last_name').classList.add('error');
-                isValid = false;
-            }
-
-            if (!email || !isValidEmail(email)) {
-                document.getElementById('email').classList.add('error');
-                isValid = false;
-            }
-
-            if (!password || password.length < 8) {
-                document.getElementById('password').classList.add('error');
-                isValid = false;
-            }
-
-            if (password !== confirmPassword) {
-                document.getElementById('password_confirm').classList.add('error');
-                ecommerceApp.showNotification('Passwords do not match', 'error');
-                isValid = false;
-            }
-
-            if (!termsAccepted) {
-                ecommerceApp.showNotification('Please accept the Terms of Service', 'error');
-                isValid = false;
-            }
-
-            const passwordStrength = checkPasswordStrength(password);
-            if (passwordStrength < 2) {
-                document.getElementById('password').classList.add('error');
-                ecommerceApp.showNotification('Please use a stronger password', 'error');
-                isValid = false;
-            }
-
-            if (!isValid) {
-                e.preventDefault(); // Only prevent default if validation fails
-                return false;
-            }
-            
-            // Let app.js handle the actual form submission
-            // We don't prevent default here to let the event propagate
-        });
-
+        // Form validation will be handled by app.js
+        // We just keep the real-time validation helpers here
+        
         function isValidEmail(email) {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             return emailRegex.test(email);
