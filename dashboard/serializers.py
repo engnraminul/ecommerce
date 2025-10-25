@@ -44,10 +44,13 @@ class UserDashboardSerializer(serializers.ModelSerializer):
 
 class CategoryDashboardSerializer(serializers.ModelSerializer):
     product_count = serializers.SerializerMethodField()
+    parent_name = serializers.ReadOnlyField(source='parent.name')
     
     class Meta:
         model = Category
-        fields = ['id', 'name', 'slug', 'description', 'is_active', 'product_count']
+        fields = ['id', 'name', 'slug', 'description', 'image', 'parent', 'parent_name', 
+                 'meta_title', 'meta_description', 'is_active', 'product_count', 
+                 'created_at', 'updated_at']
     
     def get_product_count(self, obj):
         return obj.products.count()

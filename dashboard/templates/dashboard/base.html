@@ -218,6 +218,11 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{% url 'dashboard:categories' %}" class="{% if active_page == 'categories' %}active{% endif %}">
+                        <i class="fas fa-folder"></i> Categories
+                    </a>
+                </li>
+                <li>
                     <a href="{% url 'dashboard:media' %}" class="{% if active_page == 'media' %}active{% endif %}">
                         <i class="fas fa-images"></i> Media
                     </a>

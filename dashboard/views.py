@@ -191,12 +191,24 @@ class UserDashboardViewSet(viewsets.ModelViewSet):
         return self.request.META.get('REMOTE_ADDR')
 
 class CategoryDashboardViewSet(viewsets.ModelViewSet):
-    queryset = Category.objects.all()
+    queryset = Category.objects.all().select_related('parent').order_by('name')
     serializer_class = CategoryDashboardSerializer
     permission_classes = [IsAdminUser]
-    filterset_fields = ['is_active']
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['is_active', 'parent']
     search_fields = ['name', 'description']
-    ordering_fields = ['name']
+    ordering_fields = ['name', 'created_at', 'updated_at']
+    ordering = ['name']
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Handle parent__isnull filter for root categories
+        parent_isnull = self.request.query_params.get('parent__isnull')
+        if parent_isnull and parent_isnull.lower() == 'true':
+            queryset = queryset.filter(parent__isnull=True)
+        
+        return queryset
     
     def perform_create(self, serializer):
         instance = serializer.save()
@@ -2085,6 +2097,14 @@ def dashboard_products(request):
         'active_page': 'products'
     }
     return render(request, 'dashboard/products.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def dashboard_categories(request):
+    context = {
+        'active_page': 'categories'
+    }
+    return render(request, 'dashboard/categories.html', context)
 
 @login_required
 @user_passes_test(is_admin)

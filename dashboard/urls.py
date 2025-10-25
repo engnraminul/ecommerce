@@ -74,6 +74,7 @@ urlpatterns = [
     path('login/', views.dashboard_login, name='login'),
     path('logout/', views.dashboard_logout, name='logout'),
     path('products/', views.dashboard_products, name='products'),
+    path('categories/', views.dashboard_categories, name='categories'),
     path('media/', views.dashboard_media, name='media'),
     path('stock/', views.dashboard_stock, name='stock'),
     path('orders/', views.dashboard_orders, name='orders'),
