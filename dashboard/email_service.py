@@ -212,10 +212,16 @@ class EmailService:
             email = EmailMultiAlternatives(
                 subject=subject,
                 body=text_content or strip_tags(html_content),
-                from_email=f"{self.active_config.from_name} <{self.active_config.from_email}>",
+                from_email=self.active_config.from_email,
                 to=[recipient_email],
                 connection=self.get_connection()
             )
+            
+            # Set the From header with both name and email
+            from_header = f"{self.active_config.from_name} <{self.active_config.from_email}>"
+            email.extra_headers['From'] = from_header
+            
+            logger.info(f"Sending email with From header: {from_header}")
             
             # Add HTML content
             email.attach_alternative(html_content, "text/html")

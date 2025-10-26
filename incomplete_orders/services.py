@@ -2,7 +2,6 @@
 Service functions for incomplete orders
 """
 from django.utils import timezone
-from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
 from datetime import timedelta
@@ -176,14 +175,14 @@ class IncompleteOrderService:
             # Render email content
             html_content = render_to_string(email_config['template'], context)
             
-            # Send email
-            send_mail(
+            # Send email using dashboard email service
+            from dashboard.email_service import email_service
+            
+            success = email_service.send_email(
                 subject=subject,
-                message='',  # Plain text version can be added
-                html_message=html_content,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[recipient_email],
-                fail_silently=False,
+                html_content=html_content,
+                recipient_email=recipient_email,
+                text_content='Please enable HTML to view this email.'
             )
             
             # Log the email
