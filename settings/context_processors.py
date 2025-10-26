@@ -1,4 +1,5 @@
 from .models import SiteSettings, CheckoutCustomization
+from products.models import Category
 
 def site_settings(request):
     """
@@ -30,4 +31,23 @@ def checkout_customization(request):
         print(f"Error loading checkout customization: {e}")
         return {
             'checkout_customization': CheckoutCustomization()  # Default instance
+        }
+
+def navbar_categories(request):
+    """
+    Context processor to make parent categories available in the navbar
+    """
+    try:
+        parent_categories = Category.objects.filter(
+            is_active=True,
+            parent=None
+        ).order_by('name')[:8]  # Limit to 8 categories for navbar
+        return {
+            'navbar_categories': parent_categories
+        }
+    except Exception as e:
+        # Return empty list if there's an error
+        print(f"Error loading navbar categories: {e}")
+        return {
+            'navbar_categories': []
         }

@@ -62,10 +62,9 @@
                             <div class="search-category">
                                 <select name="category" class="category-select">
                                     <option value="">All Categories</option>
-                                    <option value="electronics">Electronics</option>
-                                    <option value="clothing">Clothing</option>
-                                    <option value="books">Books</option>
-                                    <option value="home">Home & Garden</option>
+                                    {% for category in navbar_categories %}
+                                    <option value="{{ category.slug }}">{{ category.name }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                             <div class="search-divider"></div>
@@ -215,31 +214,22 @@
                     </button>
                     <div class="category-dropdown">
                         <div class="category-list">
-                            <a href="{% url 'frontend:category_products' 'electronics' %}" class="category-item">
-                                <i class="fas fa-laptop"></i>
-                                <span>Electronics</span>
+                            {% for category in navbar_categories %}
+                            <a href="{% url 'frontend:category_products' category.slug %}" class="category-item">
+                                {% if category.image_url %}
+                                    <img src="{{ category.image_url }}" alt="{{ category.name }}" class="category-icon-image" style="width: 25px;">
+                                {% else %}
+                                    <i class="fas fa-tag"></i>
+                                {% endif %}
+                                <span>{{ category.name }}</span>
                                 <i class="fas fa-chevron-right"></i>
                             </a>
-                            <a href="{% url 'frontend:category_products' 'clothing' %}" class="category-item">
-                                <i class="fas fa-tshirt"></i>
-                                <span>Clothing</span>
-                                <i class="fas fa-chevron-right"></i>
-                            </a>
-                            <a href="{% url 'frontend:category_products' 'books' %}" class="category-item">
-                                <i class="fas fa-book"></i>
-                                <span>Books</span>
-                                <i class="fas fa-chevron-right"></i>
-                            </a>
-                            <a href="{% url 'frontend:category_products' 'home' %}" class="category-item">
-                                <i class="fas fa-home"></i>
-                                <span>Home & Garden</span>
-                                <i class="fas fa-chevron-right"></i>
-                            </a>
-                            <a href="{% url 'frontend:category_products' 'sports' %}" class="category-item">
-                                <i class="fas fa-dumbbell"></i>
-                                <span>Sports</span>
-                                <i class="fas fa-chevron-right"></i>
-                            </a>
+                            {% empty %}
+                            <div class="category-item">
+                                <i class="fas fa-info-circle"></i>
+                                <span>No categories available</span>
+                            </div>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
@@ -267,9 +257,12 @@
                                     </div>
                                     <div class="dropdown-section">
                                         <h5>Categories</h5>
-                                        <a href="{% url 'frontend:category_products' 'electronics' %}">Electronics</a>
-                                        <a href="{% url 'frontend:category_products' 'clothing' %}">Clothing</a>
-                                        <a href="{% url 'frontend:category_products' 'books' %}">Books</a>
+                                        {% for category in navbar_categories|slice:":5" %}
+                                        <a href="{% url 'frontend:category_products' category.slug %}">{{ category.name }}</a>
+                                        {% endfor %}
+                                        {% if navbar_categories|length > 5 %}
+                                        <a href="{% url 'frontend:categories' %}">View All Categories</a>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>

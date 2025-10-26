@@ -616,6 +616,19 @@
     color: var(--primary-color);
 }
 
+.category-item .category-icon-image {
+    width: 20px;
+    height: 20px;
+    object-fit: cover;
+    border-radius: 3px;
+}
+
+.category-icon-image {
+    width: 20px;
+    height: 20px;
+    object-fit: cover;
+    border-radius: 3px;
+}
 .category-item i:last-child {
     margin-left: auto;
     color: var(--secondary-color);

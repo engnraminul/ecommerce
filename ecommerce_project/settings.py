@@ -90,6 +90,7 @@ TEMPLATES = [
                 'django.template.context_processors.media',
                 'settings.context_processors.site_settings',
                 'settings.context_processors.checkout_customization',
+                'settings.context_processors.navbar_categories',
             ],
         },
     },
