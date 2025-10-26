@@ -109,11 +109,23 @@ class EmailService:
             if context is None:
                 context = {}
             
+            # Get site settings from database
+            try:
+                from settings.models import SiteSettings
+                site_settings = SiteSettings.get_active_settings()
+                site_name = site_settings.site_name if site_settings else 'Our Store'
+                site_url = getattr(settings, 'SITE_URL', 'http://localhost:8000')
+            except:
+                site_name = getattr(settings, 'SITE_NAME', 'Our Store')
+                site_url = getattr(settings, 'SITE_URL', 'http://localhost:8000')
+            
             # Add default context variables
             context.update({
-                'site_name': getattr(settings, 'SITE_NAME', 'Our Store'),
-                'site_url': getattr(settings, 'SITE_URL', 'http://localhost:8000'),
+                'site_name': site_name,
+                'site_url': site_url,
                 'current_year': datetime.now().year,
+                'current_date': datetime.now().strftime('%Y-%m-%d'),
+                'current_time': datetime.now().strftime('%H:%M:%S'),
             })
             
             if user:
@@ -129,6 +141,12 @@ class EmailService:
                     'order_total': order.total_amount,
                     'order_status': order.get_status_display(),
                     'order_date': order.created_at,
+                    'tracking_number': getattr(order, 'tracking_number', 'TRK' + str(order.id).zfill(8)),
+                    'carrier': getattr(order, 'carrier', 'Express Logistics'),
+                    'shipping_method': getattr(order, 'shipping_method', 'Standard Delivery'),
+                    'estimated_delivery': getattr(order, 'estimated_delivery', '3-5 business days'),
+                    'tracking_url': f"{site_url}/track/{getattr(order, 'tracking_number', order.order_number)}",
+                    'shipping_address': getattr(order, 'shipping_address', 'Your delivery address'),
                 })
             
             # Render template content
