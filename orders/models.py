@@ -75,6 +75,7 @@ class Order(models.Model):
     # Customer information (stored for record keeping)
     customer_email = models.EmailField()
     customer_phone = models.CharField(max_length=15, blank=True)
+    customer_ip = models.GenericIPAddressField(blank=True, null=True, help_text="Customer's IP address when placing order")
     
     # Notes
     customer_notes = models.TextField(blank=True)

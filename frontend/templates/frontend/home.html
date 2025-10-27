@@ -76,7 +76,7 @@
                     
                     <div class="product-info">
                         <h3 class="product-title">{{ product.name }}</h3>
-                        <p class="product-description">{{ product.description|truncatechars:100 }}</p>
+                        <!-- <p class="product-description">{{ product.description|truncatechars:100 }}</p> -->
                         
                         <div class="product-price">
                             {% if product.discounted_price %}
@@ -84,6 +84,9 @@
                                 <span class="price-original">৳{{ product.price }}</span>
                             {% else %}
                                 <span class="price-current">৳{{ product.price }}</span>
+                            {% endif %}
+                            {% if product.compare_price %}
+                                <span style="text-decoration: line-through; color: var(--primary-color);" class="price-compare">৳{{ product.compare_price }}</span>
                             {% endif %}
                         </div>
                         

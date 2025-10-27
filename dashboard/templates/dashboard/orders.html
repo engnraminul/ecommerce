@@ -978,6 +978,14 @@
                                     <dt class="col-sm-4 text-muted">Total Amount</dt>
                                     <dd class="col-sm-8 fw-bold" id="orderDetailTotal"></dd>
                                     
+                                    <dt class="col-sm-4 text-muted">Customer IP</dt>
+                                    <dd class="col-sm-8" id="orderDetailCustomerIP">
+                                        <span class="copy-text" data-value="">
+                                            <span id="customerIPDisplay">N/A</span>
+                                            <i class="fas fa-copy copy-icon" title="Copy IP address"></i>
+                                        </span>
+                                    </dd>
+                                    
                                     <dt class="col-sm-4 text-muted">Courier ID</dt>
                                     <dd class="col-sm-8" id="orderDetailCourierId">
                                         <span id="courierIdDisplay"></span>
@@ -2921,6 +2929,17 @@ document.addEventListener('DOMContentLoaded', function() {
             </span>
         `;
         document.getElementById('orderDetailDate').textContent = new Date(order.created_at).toLocaleString();
+        
+        // Set customer IP address
+        const customerIPElement = document.getElementById('customerIPDisplay');
+        const customerIPContainer = document.getElementById('orderDetailCustomerIP');
+        if (order.customer_ip) {
+            customerIPElement.textContent = order.customer_ip;
+            customerIPContainer.querySelector('.copy-text').setAttribute('data-value', order.customer_ip);
+        } else {
+            customerIPElement.textContent = 'N/A';
+            customerIPContainer.querySelector('.copy-text').setAttribute('data-value', '');
+        }
         
         // Handle Courier ID display and edit functionality
         const courierIdDisplay = document.getElementById('courierIdDisplay');

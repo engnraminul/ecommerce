@@ -97,7 +97,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             'id', 'order_number', 'status', 'payment_status',
             'subtotal', 'shipping_cost', 'tax_amount', 'discount_amount',
             'coupon_code', 'coupon_discount', 'total_amount', 'total_items',
-            'customer_email', 'customer_phone', 'customer_notes',
+            'customer_email', 'customer_phone', 'customer_ip', 'customer_notes',
             'can_cancel', 'is_cod_order', 'items', 'shipping_address',
             'status_history', 'created_at', 'updated_at', 'confirmed_at',
             'shipped_at', 'delivered_at'
@@ -202,6 +202,7 @@ class CreateOrderSerializer(serializers.Serializer):
         from cart.shipping import ShippingCalculator
         from django.utils import timezone
         from decimal import Decimal
+        from .utils import get_client_ip
         import logging
         
         logger = logging.getLogger(__name__)
@@ -213,7 +214,11 @@ class CreateOrderSerializer(serializers.Serializer):
         guest_email = validated_data.get('guest_email', '')
         guest_phone = validated_data.get('guest_phone', '')
         
+        # Get customer IP address
+        customer_ip = get_client_ip(request)
+        
         logger.info(f"Creating order for user: {user} (guest: {not bool(user)})")
+        logger.info(f"Customer IP: {customer_ip}")
         logger.info(f"Shipping data: {shipping_data}")
         logger.info(f"Shipping option: {shipping_option}")
         logger.info(f"Shipping location: {shipping_location}")
@@ -334,6 +339,7 @@ class CreateOrderSerializer(serializers.Serializer):
             total_amount=total_amount,
             customer_email=customer_email,
             customer_phone=customer_phone,
+            customer_ip=customer_ip,
             customer_notes=validated_data.get('customer_notes', ''),
             # Payment method data
             payment_method=payment_method,

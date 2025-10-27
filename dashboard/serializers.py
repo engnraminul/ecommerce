@@ -374,7 +374,7 @@ class OrderDashboardSerializer(serializers.ModelSerializer):
         model = Order
         fields = ['id', 'user', 'user_name', 'user_email', 'order_number', 'status', 'total_amount',
                   'payment_status', 'shipping_address', 'created_at', 'updated_at', 'total_items',
-                  'instructions', 'customer_email', 'customer_phone', 'customer_notes', 'shipping_cost', 
+                  'instructions', 'customer_email', 'customer_phone', 'customer_ip', 'customer_notes', 'shipping_cost', 
                   'tax_amount', 'curier_id', 'curier_status', 'curier_charge', 'curier_date',
                   'payment_method', 'payment_method_display_name', 'bkash_transaction_id', 'bkash_sender_number',
                   'nagad_transaction_id', 'nagad_sender_number']
