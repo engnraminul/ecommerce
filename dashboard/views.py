@@ -3859,3 +3859,157 @@ def dashboard_blocklist(request):
 def blocklist_dashboard(request):
     """Render the block list dashboard page"""
     return render(request, 'dashboard/blocklist.html')
+
+
+# Reviews Management Views
+@staff_member_required
+def reviews_dashboard(request):
+    """Professional Reviews Management Dashboard"""
+    from products.models import Review, ReviewImage
+    
+    # Get filter parameters
+    status_filter = request.GET.get('status', 'all')
+    rating_filter = request.GET.get('rating', 'all')
+    product_filter = request.GET.get('product', '')
+    verified_filter = request.GET.get('verified', 'all')
+    search_query = request.GET.get('search', '')
+    
+    # Base queryset
+    reviews = Review.objects.select_related('user', 'product').prefetch_related('images').order_by('-created_at')
+    
+    # Apply filters
+    if status_filter == 'approved':
+        reviews = reviews.filter(is_approved=True)
+    elif status_filter == 'pending':
+        reviews = reviews.filter(is_approved=False)
+    
+    if rating_filter != 'all':
+        reviews = reviews.filter(rating=int(rating_filter))
+    
+    if verified_filter == 'verified':
+        reviews = reviews.filter(is_verified_purchase=True)
+    elif verified_filter == 'unverified':
+        reviews = reviews.filter(is_verified_purchase=False)
+    
+    if product_filter:
+        reviews = reviews.filter(product__name__icontains=product_filter)
+    
+    if search_query:
+        reviews = reviews.filter(
+            Q(comment__icontains=search_query) |
+            Q(title__icontains=search_query) |
+            Q(user__username__icontains=search_query) |
+            Q(guest_name__icontains=search_query) |
+            Q(product__name__icontains=search_query)
+        )
+    
+    # Statistics
+    total_reviews = Review.objects.count()
+    approved_reviews = Review.objects.filter(is_approved=True).count()
+    pending_reviews = Review.objects.filter(is_approved=False).count()
+    verified_reviews = Review.objects.filter(is_verified_purchase=True).count()
+    reviews_with_images = Review.objects.filter(images__isnull=False).distinct().count()
+    
+    # Average rating
+    from django.db.models import Avg
+    avg_rating = Review.objects.filter(is_approved=True).aggregate(avg_rating=Avg('rating'))['avg_rating'] or 0
+    
+    # Rating distribution
+    rating_distribution = {}
+    for i in range(1, 6):
+        rating_distribution[i] = Review.objects.filter(rating=i, is_approved=True).count()
+    
+    # Recent activity (last 30 days)
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    recent_reviews = Review.objects.filter(created_at__gte=thirty_days_ago).count()
+    
+    context = {
+        'reviews': reviews,
+        'total_reviews': total_reviews,
+        'approved_reviews': approved_reviews,
+        'pending_reviews': pending_reviews,
+        'verified_reviews': verified_reviews,
+        'reviews_with_images': reviews_with_images,
+        'avg_rating': round(avg_rating, 1),
+        'rating_distribution': rating_distribution,
+        'recent_reviews': recent_reviews,
+        'status_filter': status_filter,
+        'rating_filter': rating_filter,
+        'product_filter': product_filter,
+        'verified_filter': verified_filter,
+        'search_query': search_query,
+        'active_page': 'reviews',
+        'breadcrumb': [
+            {'name': 'Dashboard', 'url': '/mb-admin/'},
+            {'name': 'Reviews', 'url': '/mb-admin/reviews/'},
+        ]
+    }
+    return render(request, 'dashboard/reviews.html', context)
+
+
+@api_view(['POST'])
+@permission_classes([IsStaffUser])
+def review_bulk_action(request):
+    """Handle bulk actions for reviews"""
+    from products.models import Review
+    
+    try:
+        action = request.data.get('action')
+        review_ids = request.data.get('review_ids', [])
+        
+        if not action or not review_ids:
+            return Response({'error': 'Action and review IDs are required'}, status=400)
+        
+        reviews = Review.objects.filter(id__in=review_ids)
+        
+        if action == 'approve':
+            reviews.update(is_approved=True)
+            message = f'{reviews.count()} reviews approved successfully'
+        elif action == 'disapprove':
+            reviews.update(is_approved=False)
+            message = f'{reviews.count()} reviews disapproved successfully'
+        elif action == 'delete':
+            count = reviews.count()
+            reviews.delete()
+            message = f'{count} reviews deleted successfully'
+        else:
+            return Response({'error': 'Invalid action'}, status=400)
+        
+        return Response({'message': message})
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+
+@api_view(['POST'])
+@permission_classes([IsStaffUser])
+def review_single_action(request, review_id):
+    """Handle single review actions"""
+    from products.models import Review
+    
+    try:
+        review = get_object_or_404(Review, id=review_id)
+        action = request.data.get('action')
+        
+        if action == 'approve':
+            review.is_approved = True
+            review.save()
+            message = 'Review approved successfully'
+        elif action == 'disapprove':
+            review.is_approved = False
+            review.save()
+            message = 'Review disapproved successfully'
+        elif action == 'delete':
+            review.delete()
+            message = 'Review deleted successfully'
+        elif action == 'toggle_verified':
+            review.is_verified_purchase = not review.is_verified_purchase
+            review.save()
+            message = f'Review marked as {"verified" if review.is_verified_purchase else "unverified"}'
+        else:
+            return Response({'error': 'Invalid action'}, status=400)
+        
+        return Response({'message': message})
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)

@@ -1,0 +1,574 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Reviews Management - MB Admin Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    .stat-card.pending {
+        border-left-color: var(--warning-color);
+    }
+    
+    .stat-card.approved {
+        border-left-color: var(--success-color);
+    }
+    
+    .stat-card.verified {
+        border-left-color: var(--info-color);
+    }
+    
+    .stat-card.images {
+        border-left-color: var(--primary-color);
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--dark-color);
+    }
+    
+    .stat-label {
+        color: #64748b;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
+    
+    .rating-display {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .rating-stars {
+        color: #fbbf24;
+    }
+    
+    .review-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
+    
+    .review-status.approved {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+    
+    .review-status.pending {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    
+    .verified-badge {
+        background-color: #dbeafe;
+        color: #1e40af;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .review-images {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .review-image-thumb {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .review-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .filters-container {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow);
+    }
+    
+    .table-container {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+    
+    .review-comment {
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .bulk-actions {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: var(--shadow);
+        display: none;
+    }
+    
+    .bulk-actions.show {
+        display: block;
+    }
+    
+    @media (max-width: 768px) {
+        .stats-cards {
+            grid-template-columns: 1fr;
+        }
+        
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+        
+        .review-actions {
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Reviews Management</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    {% for item in breadcrumb %}
+                        {% if forloop.last %}
+                            <li class="breadcrumb-item active">{{ item.name }}</li>
+                        {% else %}
+                            <li class="breadcrumb-item"><a href="{{ item.url }}">{{ item.name }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <button class="btn btn-primary" onclick="exportReviews()">
+                <i class="fas fa-download"></i> Export Reviews
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-cards">
+        <div class="stat-card">
+            <div class="stat-value">{{ total_reviews }}</div>
+            <div class="stat-label">Total Reviews</div>
+        </div>
+        <div class="stat-card approved">
+            <div class="stat-value">{{ approved_reviews }}</div>
+            <div class="stat-label">Approved Reviews</div>
+        </div>
+        <div class="stat-card pending">
+            <div class="stat-value">{{ pending_reviews }}</div>
+            <div class="stat-label">Pending Approval</div>
+        </div>
+        <div class="stat-card verified">
+            <div class="stat-value">{{ verified_reviews }}</div>
+            <div class="stat-label">Verified Purchases</div>
+        </div>
+        <div class="stat-card images">
+            <div class="stat-value">{{ reviews_with_images }}</div>
+            <div class="stat-label">Reviews with Images</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">
+                <div class="rating-display">
+                    {{ avg_rating }}
+                    <div class="rating-stars">
+                        {% for i in "12345" %}
+                            <i class="fas fa-star {% if i|add:0 <= avg_rating %}text-warning{% else %}text-muted{% endif %}"></i>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="stat-label">Average Rating</div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-container">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label for="status" class="form-label">Status</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Reviews</option>
+                    <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="rating" class="form-label">Rating</label>
+                <select class="form-select" id="rating" name="rating">
+                    <option value="all" {% if rating_filter == 'all' %}selected{% endif %}>All Ratings</option>
+                    <option value="5" {% if rating_filter == '5' %}selected{% endif %}>5 Stars</option>
+                    <option value="4" {% if rating_filter == '4' %}selected{% endif %}>4 Stars</option>
+                    <option value="3" {% if rating_filter == '3' %}selected{% endif %}>3 Stars</option>
+                    <option value="2" {% if rating_filter == '2' %}selected{% endif %}>2 Stars</option>
+                    <option value="1" {% if rating_filter == '1' %}selected{% endif %}>1 Star</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="verified" class="form-label">Verification</label>
+                <select class="form-select" id="verified" name="verified">
+                    <option value="all" {% if verified_filter == 'all' %}selected{% endif %}>All</option>
+                    <option value="verified" {% if verified_filter == 'verified' %}selected{% endif %}>Verified</option>
+                    <option value="unverified" {% if verified_filter == 'unverified' %}selected{% endif %}>Unverified</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="search" class="form-label">Search</label>
+                <input type="text" class="form-control" id="search" name="search" 
+                       placeholder="Search reviews, products, users..." value="{{ search_query }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Filter
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="bulk-actions" id="bulkActions">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <span id="selectedCount">0</span> review(s) selected
+            </div>
+            <div class="btn-group">
+                <button type="button" class="btn btn-success btn-sm" onclick="bulkAction('approve')">
+                    <i class="fas fa-check"></i> Approve
+                </button>
+                <button type="button" class="btn btn-warning btn-sm" onclick="bulkAction('disapprove')">
+                    <i class="fas fa-times"></i> Disapprove
+                </button>
+                <button type="button" class="btn btn-danger btn-sm" onclick="bulkAction('delete')">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reviews Table -->
+    <div class="table-container">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>
+                            <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                        </th>
+                        <th>Review</th>
+                        <th>Product</th>
+                        <th>Reviewer</th>
+                        <th>Rating</th>
+                        <th>Status</th>
+                        <th>Images</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for review in reviews %}
+                    <tr>
+                        <td>
+                            <input type="checkbox" class="review-checkbox" value="{{ review.id }}" onchange="updateBulkActions()">
+                        </td>
+                        <td>
+                            <div>
+                                {% if review.title %}
+                                    <strong>{{ review.title }}</strong><br>
+                                {% endif %}
+                                <div class="review-comment">{{ review.comment }}</div>
+                                {% if review.is_verified_purchase %}
+                                    <span class="verified-badge">
+                                        <i class="fas fa-check-circle"></i> Verified Purchase
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <a href="{% url 'dashboard:products' %}?search={{ review.product.name }}" class="text-decoration-none">
+                                {{ review.product.name }}
+                            </a>
+                        </td>
+                        <td>
+                            {% if review.user %}
+                                <div>
+                                    <strong>{{ review.user.get_full_name|default:review.user.username }}</strong>
+                                    <br><small class="text-muted">{{ review.user.email }}</small>
+                                </div>
+                            {% else %}
+                                <div>
+                                    <strong>{{ review.guest_name|default:"Anonymous" }}</strong>
+                                    <br><small class="text-muted">Guest</small>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="rating-display">
+                                <span class="fw-bold">{{ review.rating }}</span>
+                                <div class="rating-stars">
+                                    {% for i in "12345" %}
+                                        <i class="fas fa-star {% if i|add:0 <= review.rating %}text-warning{% else %}text-muted{% endif %}"></i>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="review-status {% if review.is_approved %}approved{% else %}pending{% endif %}">
+                                {% if review.is_approved %}Approved{% else %}Pending{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            {% if review.images.exists %}
+                                <div class="review-images">
+                                    {% for image in review.images.all|slice:":3" %}
+                                        <img src="{{ image.image_url }}" alt="Review image" 
+                                             class="review-image-thumb" 
+                                             onclick="showImageModal('{{ image.image_url }}', '{{ image.caption|default:"Review image"|escapejs }}')">
+                                    {% endfor %}
+                                    {% if review.images.count > 3 %}
+                                        <span class="badge bg-secondary">+{{ review.images.count|add:"-3" }}</span>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <span class="text-muted">No images</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div>{{ review.created_at|date:"M d, Y" }}</div>
+                            <small class="text-muted">{{ review.created_at|time:"H:i" }}</small>
+                        </td>
+                        <td>
+                            <div class="review-actions">
+                                {% if review.is_approved %}
+                                    <button type="button" class="btn btn-warning btn-sm" 
+                                            onclick="singleAction({{ review.id }}, 'disapprove')" 
+                                            title="Disapprove">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                {% else %}
+                                    <button type="button" class="btn btn-success btn-sm" 
+                                            onclick="singleAction({{ review.id }}, 'approve')" 
+                                            title="Approve">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                {% endif %}
+                                <button type="button" class="btn btn-info btn-sm" 
+                                        onclick="singleAction({{ review.id }}, 'toggle_verified')" 
+                                        title="Toggle Verification">
+                                    <i class="fas fa-shield-alt"></i>
+                                </button>
+                                <button type="button" class="btn btn-danger btn-sm" 
+                                        onclick="singleAction({{ review.id }}, 'delete')" 
+                                        title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="fas fa-star fa-3x mb-3"></i>
+                                <h5>No reviews found</h5>
+                                <p>No reviews match your current filters.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Review Image</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="" class="img-fluid">
+                <p id="modalCaption" class="mt-2"></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedReviews = [];
+
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.review-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+    
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const checkboxes = document.querySelectorAll('.review-checkbox:checked');
+    selectedReviews = Array.from(checkboxes).map(cb => cb.value);
+    
+    const bulkActions = document.getElementById('bulkActions');
+    const selectedCount = document.getElementById('selectedCount');
+    
+    selectedCount.textContent = selectedReviews.length;
+    
+    if (selectedReviews.length > 0) {
+        bulkActions.classList.add('show');
+    } else {
+        bulkActions.classList.remove('show');
+    }
+}
+
+function bulkAction(action) {
+    if (selectedReviews.length === 0) {
+        alert('Please select reviews first');
+        return;
+    }
+    
+    const actionText = action === 'approve' ? 'approve' : action === 'disapprove' ? 'disapprove' : 'delete';
+    if (!confirm(`Are you sure you want to ${actionText} ${selectedReviews.length} review(s)?`)) {
+        return;
+    }
+    
+    fetch('/mb-admin/reviews/bulk-action/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            action: action,
+            review_ids: selectedReviews
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('Error: ' + data.error);
+        } else {
+            alert(data.message);
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred');
+    });
+}
+
+function singleAction(reviewId, action) {
+    const actionText = action === 'approve' ? 'approve' : 
+                      action === 'disapprove' ? 'disapprove' : 
+                      action === 'delete' ? 'delete' : 
+                      action === 'toggle_verified' ? 'toggle verification for' : action;
+    
+    if (action === 'delete' && !confirm(`Are you sure you want to delete this review?`)) {
+        return;
+    }
+    
+    fetch(`/mb-admin/reviews/${reviewId}/action/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            action: action
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('Error: ' + data.error);
+        } else {
+            alert(data.message);
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred');
+    });
+}
+
+function showImageModal(imageUrl, caption) {
+    document.getElementById('modalImage').src = imageUrl;
+    document.getElementById('modalCaption').textContent = caption || 'Review image';
+    new bootstrap.Modal(document.getElementById('imageModal')).show();
+}
+
+function exportReviews() {
+    // Add export functionality here
+    alert('Export functionality coming soon!');
+}
+
+// Add CSRF token to all AJAX requests
+document.addEventListener('DOMContentLoaded', function() {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Add hidden CSRF token input if it doesn't exist
+    if (!document.querySelector('[name=csrfmiddlewaretoken]')) {
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = '{{ csrf_token }}';
+        document.body.appendChild(csrfInput);
+    }
+});
+</script>
+{% endblock %}

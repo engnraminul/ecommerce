@@ -243,6 +243,11 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{% url 'dashboard:reviews' %}" class="{% if active_page == 'reviews' %}active{% endif %}">
+                        <i class="fas fa-star"></i> Reviews
+                    </a>
+                </li>
+                <li>
                     <a href="{% url 'dashboard:pages' %}" class="{% if active_page == 'pages' %}active{% endif %}">
                         <i class="fas fa-file-alt"></i> Pages
                     </a>
