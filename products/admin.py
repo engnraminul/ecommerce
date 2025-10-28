@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from .models import Category, Product, ProductImage, ProductVariant, Review, Wishlist
+from .models import Category, Product, ProductImage, ProductVariant, Review, ReviewImage, Wishlist
 
 
 class ProductImageInline(admin.TabularInline):
@@ -239,15 +239,54 @@ class ProductVariantAdmin(admin.ModelAdmin):
     mark_as_out_of_stock.short_description = "Mark selected variants as out of stock"
 
 
+class ReviewImageInline(admin.TabularInline):
+    """Inline for review images"""
+    model = ReviewImage
+    extra = 0
+    fields = ('image', 'caption', 'image_preview')
+    readonly_fields = ('image_preview',)
+    
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" style="max-height: 50px; max-width: 100px;" />', obj.image.url)
+        return "No image"
+    image_preview.short_description = "Preview"
+
+
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
     """Product Review admin"""
-    list_display = ('product', 'user', 'rating', 'is_approved', 'is_verified_purchase', 'created_at')
+    list_display = ('product', 'reviewer_name', 'rating', 'is_approved', 'is_verified_purchase', 'has_images', 'created_at')
     list_filter = ('rating', 'is_approved', 'is_verified_purchase', 'created_at')
-    search_fields = ('product__name', 'user__username', 'title', 'comment')
-    readonly_fields = ('created_at', 'updated_at')
+    search_fields = ('product__name', 'user__username', 'guest_name', 'title', 'comment')
+    readonly_fields = ('created_at', 'updated_at', 'reviewer_name')
+    
+    inlines = [ReviewImageInline]
+    
+    fieldsets = (
+        ('Review Info', {
+            'fields': ('product', 'reviewer_name', 'rating', 'title', 'comment')
+        }),
+        ('User Info', {
+            'fields': ('user', 'guest_name', 'guest_email'),
+        }),
+        ('Status', {
+            'fields': ('is_approved', 'is_verified_purchase'),
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
     
     actions = ['approve_reviews', 'disapprove_reviews']
+    
+    def has_images(self, obj):
+        count = obj.images.count()
+        if count > 0:
+            return format_html('<span style="color: green;">✓ {} image{}</span>', count, 's' if count > 1 else '')
+        return format_html('<span style="color: #999;">No images</span>')
+    has_images.short_description = "Images"
     
     def approve_reviews(self, request, queryset):
         queryset.update(is_approved=True)
@@ -258,6 +297,21 @@ class ReviewAdmin(admin.ModelAdmin):
         queryset.update(is_approved=False)
         self.message_user(request, f"{queryset.count()} reviews disapproved.")
     disapprove_reviews.short_description = "Disapprove selected reviews"
+
+
+@admin.register(ReviewImage)
+class ReviewImageAdmin(admin.ModelAdmin):
+    """Review Image admin"""
+    list_display = ('review', 'caption', 'image_preview', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('review__product__name', 'review__user__username', 'review__guest_name', 'caption')
+    readonly_fields = ('image_preview', 'created_at')
+    
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" style="max-height: 100px; max-width: 150px;" />', obj.image.url)
+        return "No image"
+    image_preview.short_description = "Preview"
 
 
 @admin.register(Wishlist)

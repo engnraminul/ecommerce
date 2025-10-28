@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import DashboardSetting, AdminActivity, Expense
+from .models import DashboardSetting, AdminActivity, Expense, BlockList
 from products.models import Product, ProductVariant, ProductImage, Category
 from orders.models import Order, OrderItem, ShippingAddress
 from users.models import User
@@ -658,3 +658,69 @@ class StockVariantManagementSerializer(serializers.ModelSerializer):
         if cost_price:
             return float(obj.stock_quantity * cost_price)
         return 0
+
+
+class BlockListSerializer(serializers.ModelSerializer):
+    """Serializer for BlockList model with validation and enhanced fields"""
+    blocked_by_name = serializers.CharField(source='blocked_by.username', read_only=True)
+    block_type_display = serializers.CharField(source='get_block_type_display', read_only=True)
+    reason_display = serializers.CharField(source='get_reason_display', read_only=True)
+    
+    class Meta:
+        model = BlockList
+        fields = [
+            'id', 'block_type', 'block_type_display', 'value', 'reason', 
+            'reason_display', 'description', 'is_active', 'blocked_by', 
+            'blocked_by_name', 'created_at', 'updated_at', 'block_count', 
+            'last_triggered'
+        ]
+        read_only_fields = ['blocked_by', 'created_at', 'updated_at', 'block_count', 'last_triggered']
+    
+    def validate_value(self, value):
+        """Validate the value based on block type"""
+        block_type = self.initial_data.get('block_type')
+        
+        if block_type == 'ip':
+            # Validate IP address format
+            from django.core.validators import validate_ipv4_address, validate_ipv6_address
+            from django.core.exceptions import ValidationError as DjangoValidationError
+            try:
+                # Try IPv4 first, then IPv6
+                try:
+                    validate_ipv4_address(value)
+                except DjangoValidationError:
+                    validate_ipv6_address(value)
+            except DjangoValidationError:
+                raise serializers.ValidationError("Please enter a valid IP address (IPv4 or IPv6).")
+        
+        elif block_type == 'phone':
+            # Validate and clean phone number
+            import re
+            clean_phone = re.sub(r'[^\d+]', '', value)
+            if len(clean_phone) < 10 or len(clean_phone) > 15:
+                raise serializers.ValidationError("Please enter a valid phone number (10-15 digits).")
+            # Return the cleaned phone number
+            return clean_phone
+        
+        return value
+    
+    def validate(self, data):
+        """Check for duplicate entries"""
+        block_type = data.get('block_type')
+        value = data.get('value')
+        
+        # Check if this combination already exists (for creation)
+        if not self.instance:  # Only check on creation, not update
+            if BlockList.objects.filter(block_type=block_type, value=value).exists():
+                raise serializers.ValidationError({
+                    'value': f"This {block_type} is already in the block list."
+                })
+        
+        return data
+    
+    def create(self, validated_data):
+        """Set the blocked_by field to the current user"""
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            validated_data['blocked_by'] = request.user
+        return super().create(validated_data)

@@ -10,6 +10,35 @@ from .serializers import (
     OrderListSerializer, OrderDetailSerializer, CreateOrderSerializer,
     InvoiceSerializer, RefundRequestSerializer, OrderTrackingSerializer
 )
+from dashboard.models import BlockList
+from .utils import get_client_ip
+
+
+def is_blocked(phone=None, ip=None):
+    """Check if phone number or IP address is blocked"""
+    blocked_items = []
+    
+    if phone:
+        phone_blocked = BlockList.objects.filter(
+            block_type='phone',
+            value=phone,
+            is_active=True
+        ).first()
+        if phone_blocked:
+            phone_blocked.trigger_block()
+            blocked_items.append(f"Phone number {phone}")
+    
+    if ip:
+        ip_blocked = BlockList.objects.filter(
+            block_type='ip', 
+            value=ip,
+            is_active=True
+        ).first()
+        if ip_blocked:
+            ip_blocked.trigger_block()
+            blocked_items.append(f"IP address {ip}")
+    
+    return blocked_items
 
 
 class OrderListView(generics.ListAPIView):
@@ -39,6 +68,24 @@ class CreateOrderView(generics.CreateAPIView):
     
     def create(self, request, *args, **kwargs):
         try:
+            # Get customer IP and phone for blocking check
+            customer_ip = get_client_ip(request)
+            customer_phone = request.data.get('guest_phone', '') or request.data.get('phone_number', '')
+            
+            # Extract phone from shipping address if not in main data
+            if not customer_phone and 'shipping_address' in request.data:
+                customer_phone = request.data['shipping_address'].get('phone', '')
+            
+            # Check if phone or IP is blocked
+            blocked_items = is_blocked(phone=customer_phone, ip=customer_ip)
+            if blocked_items:
+                blocked_list = ', '.join(blocked_items)
+                return Response({
+                    'error': f'Order blocked: {blocked_list} is not allowed to place orders.',
+                    'blocked': True,
+                    'blocked_items': blocked_items
+                }, status=status.HTTP_403_FORBIDDEN)
+            
             with transaction.atomic():
                 serializer = self.get_serializer(data=request.data)
                 

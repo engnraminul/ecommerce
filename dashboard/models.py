@@ -247,3 +247,150 @@ class EmailLog(models.Model):
         return f"Email to {self.recipient_email} - {self.subject} ({self.status})"
 
 
+class BlockList(models.Model):
+    """Model for blocking phone numbers and IP addresses to prevent fraud and unwanted orders."""
+    
+    BLOCK_TYPE_CHOICES = [
+        ('phone', 'Phone Number'),
+        ('ip', 'IP Address'),
+    ]
+    
+    REASON_CHOICES = [
+        ('fraud', 'Fraud Detection'),
+        ('spam', 'Spam/Abuse'),
+        ('fake_order', 'Fake Orders'),
+        ('payment_issue', 'Payment Issues'),
+        ('harassment', 'Harassment'),
+        ('policy_violation', 'Policy Violation'),
+        ('manual', 'Manual Block'),
+        ('other', 'Other'),
+    ]
+    
+    block_type = models.CharField(
+        max_length=10, 
+        choices=BLOCK_TYPE_CHOICES,
+        help_text="Type of block: phone number or IP address"
+    )
+    value = models.CharField(
+        max_length=255,
+        help_text="Phone number or IP address to block"
+    )
+    reason = models.CharField(
+        max_length=20,
+        choices=REASON_CHOICES,
+        default='manual',
+        help_text="Reason for blocking this item"
+    )
+    description = models.TextField(
+        blank=True,
+        help_text="Additional details about why this was blocked"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether this block is currently active"
+    )
+    
+    # Tracking fields
+    blocked_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='blocked_items',
+        help_text="Admin user who created this block"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    # Statistics
+    block_count = models.PositiveIntegerField(
+        default=0,
+        help_text="Number of times this block has been triggered"
+    )
+    last_triggered = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Last time this block was triggered"
+    )
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['block_type', 'value']),
+            models.Index(fields=['is_active', '-created_at']),
+            models.Index(fields=['reason', '-created_at']),
+        ]
+        # Ensure unique combination of block_type and value
+        unique_together = ['block_type', 'value']
+        verbose_name = 'Block List Entry'
+        verbose_name_plural = 'Block List Entries'
+    
+    def __str__(self):
+        return f"{self.get_block_type_display()}: {self.value} ({'Active' if self.is_active else 'Inactive'})"
+    
+    def clean(self):
+        """Validate the blocked value based on type"""
+        from django.core.exceptions import ValidationError
+        from django.core.validators import validate_ipv4_address, validate_ipv6_address
+        import re
+        
+        if self.block_type == 'ip':
+            # Validate IP address format
+            try:
+                # Try IPv4 first, then IPv6
+                try:
+                    validate_ipv4_address(self.value)
+                except ValidationError:
+                    validate_ipv6_address(self.value)
+            except ValidationError:
+                raise ValidationError({
+                    'value': 'Please enter a valid IP address (IPv4 or IPv6).'
+                })
+        
+        elif self.block_type == 'phone':
+            # Validate phone number format (basic validation)
+            # Remove any formatting characters
+            clean_phone = re.sub(r'[^\d+]', '', self.value)
+            if len(clean_phone) < 10 or len(clean_phone) > 15:
+                raise ValidationError({
+                    'value': 'Please enter a valid phone number (10-15 digits).'
+                })
+            # Store the cleaned version
+            self.value = clean_phone
+    
+    def save(self, *args, **kwargs):
+        """Override save to run validation"""
+        self.full_clean()
+        super().save(*args, **kwargs)
+    
+    def trigger_block(self):
+        """Record that this block was triggered"""
+        from django.utils import timezone
+        self.block_count += 1
+        self.last_triggered = timezone.now()
+        self.save(update_fields=['block_count', 'last_triggered'])
+    
+    @classmethod
+    def is_blocked(cls, block_type, value):
+        """Check if a phone number or IP address is blocked"""
+        return cls.objects.filter(
+            block_type=block_type,
+            value=value,
+            is_active=True
+        ).exists()
+    
+    @classmethod
+    def check_and_block(cls, block_type, value):
+        """Check if blocked and trigger the block if found"""
+        try:
+            block_entry = cls.objects.get(
+                block_type=block_type,
+                value=value,
+                is_active=True
+            )
+            block_entry.trigger_block()
+            return block_entry
+        except cls.DoesNotExist:
+            return None
+
+

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import DashboardSetting, AdminActivity, EmailConfiguration, EmailTemplate, EmailLog
+from .models import DashboardSetting, AdminActivity, EmailConfiguration, EmailTemplate, EmailLog, BlockList
 
 @admin.register(DashboardSetting)
 class DashboardSettingAdmin(admin.ModelAdmin):
@@ -99,3 +99,31 @@ class EmailLogAdmin(admin.ModelAdmin):
     
     def has_delete_permission(self, request, obj=None):
         return request.user.is_superuser
+
+
+@admin.register(BlockList)
+class BlockListAdmin(admin.ModelAdmin):
+    list_display = ('value', 'block_type', 'is_active', 'reason', 'blocked_by', 'block_count', 'created_at')
+    list_filter = ('block_type', 'is_active', 'reason', 'blocked_by', 'created_at')
+    search_fields = ('value', 'description')
+    readonly_fields = ('blocked_by', 'block_count', 'last_triggered', 'created_at', 'updated_at')
+    
+    fieldsets = (
+        ('Block Information', {
+            'fields': ('block_type', 'value', 'reason', 'description', 'is_active')
+        }),
+        ('Statistics', {
+            'fields': ('block_count', 'last_triggered'),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('blocked_by', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        if not change:  # Only set blocked_by on creation
+            obj.blocked_by = request.user
+        super().save_model(request, obj, form, change)
+

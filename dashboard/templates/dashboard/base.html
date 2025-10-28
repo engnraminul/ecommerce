@@ -248,6 +248,11 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{% url 'dashboard:blocklist' %}" class="{% if active_page == 'blocklist' %}active{% endif %}">
+                        <i class="fas fa-shield-alt"></i> Block List
+                    </a>
+                </li>
+                <li>
                     <a href="{% url 'dashboard:users' %}" class="{% if active_page == 'users' %}active{% endif %}">
                         <i class="fas fa-users"></i> Users
                     </a>

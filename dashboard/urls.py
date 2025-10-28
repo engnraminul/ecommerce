@@ -21,6 +21,7 @@ router.register(r'orders', views.OrderDashboardViewSet)
 router.register(r'incomplete-orders', views.IncompleteOrderDashboardViewSet)
 router.register(r'expenses', views.ExpenseDashboardViewSet)
 router.register(r'checkout-customization', views.CheckoutCustomizationViewSet)
+router.register(r'blocklist', views.BlockListViewSet)
 
 # Pages management router
 router.register(r'pages/pages', pages_dashboard_views.PageDashboardViewSet, basename='pages')
@@ -69,6 +70,11 @@ urlpatterns = [
     path('api/media/<str:file_id>/delete/', media_api.delete_media_file, name='delete_media_file'),
     path('api/media/directories/create/', media_api.create_directory, name='create_media_directory'),
     
+    # BlockList management API
+    path('api/blocklist/bulk-block/', views.BlockListViewSet.as_view({'post': 'bulk_block'}), name='blocklist-bulk-block'),
+    path('api/blocklist/bulk-unblock/', views.BlockListViewSet.as_view({'post': 'bulk_unblock'}), name='blocklist-bulk-unblock'),
+    path('api/blocklist/statistics/', views.BlockListViewSet.as_view({'get': 'statistics'}), name='blocklist-statistics'),
+    
     # Frontend views for the dashboard SPA
     path('', views.dashboard_home, name='home'),
     path('login/', views.dashboard_login, name='login'),
@@ -89,6 +95,7 @@ urlpatterns = [
     path('accounts/', views.dashboard_accounts, name='accounts'),
     path('api-docs/', views.dashboard_api_docs, name='api_docs'),
     path('pages/', views.dashboard_pages, name='pages'),
+    path('blocklist/', views.dashboard_blocklist, name='blocklist'),
     
     # Email Settings URLs
     path('email-settings/', email_views.email_settings_index, name='email_settings_index'),

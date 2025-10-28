@@ -11,6 +11,7 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import authenticate, login, logout
 from django.urls import reverse
 from django.http import JsonResponse
@@ -3559,3 +3560,302 @@ def get_checkout_customization(request):
             'error': f'Failed to retrieve checkout customization: {str(e)}',
             'settings': {}  # Return empty settings as fallback
         }, status=500)
+
+
+# BlockList Management Views
+from .models import BlockList
+from .serializers import BlockListSerializer
+
+class BlockListViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing block list entries"""
+    queryset = BlockList.objects.all()
+    serializer_class = BlockListSerializer
+    permission_classes = [IsStaffUser]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['block_type', 'reason', 'is_active']
+    search_fields = ['value', 'description']
+    ordering_fields = ['created_at', 'updated_at', 'block_count', 'last_triggered']
+    ordering = ['-created_at']
+    
+    def get_client_ip(self, request):
+        """Get client IP address"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            return x_forwarded_for.split(',')[0]
+        return request.META.get('REMOTE_ADDR')
+    
+    def perform_create(self, serializer):
+        """Log creation activity"""
+        instance = serializer.save(blocked_by=self.request.user)
+        try:
+            AdminActivity.objects.create(
+                user=self.request.user,
+                action='created',
+                model_name='BlockList',
+                object_id=instance.id,
+                object_repr=str(instance),
+                ip_address=self.get_client_ip(self.request),
+                user_agent=self.request.META.get('HTTP_USER_AGENT', '')
+            )
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
+    
+    def perform_update(self, serializer):
+        """Log update activity"""
+        instance = serializer.save()
+        try:
+            AdminActivity.objects.create(
+                user=self.request.user,
+                action='updated',
+                model_name='BlockList',
+                object_id=instance.id,
+                object_repr=str(instance),
+                ip_address=self.get_client_ip(self.request),
+                user_agent=self.request.META.get('HTTP_USER_AGENT', '')
+            )
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
+    
+    def perform_destroy(self, instance):
+        """Log deletion activity"""
+        try:
+            AdminActivity.objects.create(
+                user=self.request.user,
+                action='deleted',
+                model_name='BlockList',
+                object_id=instance.id,
+                object_repr=str(instance),
+                ip_address=self.get_client_ip(self.request),
+                user_agent=self.request.META.get('HTTP_USER_AGENT', '')
+            )
+        except Exception as e:
+            print(f"Error logging activity: {str(e)}")
+        
+        instance.delete()
+    
+    @action(detail=False, methods=['post'])
+    def bulk_delete(self, request):
+        """Bulk delete block list entries"""
+        ids = request.data.get('ids', [])
+        if not ids:
+            return Response({'error': 'No IDs provided'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            entries = BlockList.objects.filter(id__in=ids)
+            deleted_count = 0
+            
+            for entry in entries:
+                try:
+                    AdminActivity.objects.create(
+                        user=request.user,
+                        action='bulk_deleted',
+                        model_name='BlockList',
+                        object_id=entry.id,
+                        object_repr=str(entry),
+                        ip_address=self.get_client_ip(request),
+                        user_agent=request.META.get('HTTP_USER_AGENT', '')
+                    )
+                except Exception as e:
+                    print(f"Error logging bulk delete activity: {str(e)}")
+                
+                entry.delete()
+                deleted_count += 1
+            
+            return Response({
+                'message': f'Successfully deleted {deleted_count} entries',
+                'deleted_count': deleted_count
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['post'])
+    def bulk_toggle_active(self, request):
+        """Bulk toggle active status"""
+        ids = request.data.get('ids', [])
+        is_active = request.data.get('is_active', True)
+        
+        if not ids:
+            return Response({'error': 'No IDs provided'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            updated_count = BlockList.objects.filter(id__in=ids).update(is_active=is_active)
+            
+            try:
+                AdminActivity.objects.create(
+                    user=request.user,
+                    action='bulk_updated',
+                    model_name='BlockList',
+                    object_repr=f'Bulk toggle active status to {is_active} for {updated_count} entries',
+                    ip_address=self.get_client_ip(request),
+                    user_agent=request.META.get('HTTP_USER_AGENT', '')
+                )
+            except Exception as e:
+                print(f"Error logging bulk update activity: {str(e)}")
+            
+            return Response({
+                'message': f'Successfully updated {updated_count} entries',
+                'updated_count': updated_count
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['get'])
+    def statistics(self, request):
+        """Get block list statistics"""
+        try:
+            from django.utils import timezone
+            from datetime import timedelta
+            
+            total_blocks = BlockList.objects.count()
+            active_blocks = BlockList.objects.filter(is_active=True).count()
+            phone_blocks = BlockList.objects.filter(block_type='phone', is_active=True).count()
+            ip_blocks = BlockList.objects.filter(block_type='ip', is_active=True).count()
+            
+            # Today's blocks
+            today = timezone.now().date()
+            today_start = timezone.make_aware(timezone.datetime.combine(today, timezone.datetime.min.time()))
+            today_blocks = BlockList.objects.filter(created_at__gte=today_start).count()
+            
+            reason_stats = {}
+            for choice in BlockList.REASON_CHOICES:
+                reason_code = choice[0]
+                reason_name = choice[1]
+                count = BlockList.objects.filter(reason=reason_code, is_active=True).count()
+                if count > 0:
+                    reason_stats[reason_name] = count
+            
+            recent_blocks = BlockList.objects.filter(
+                last_triggered__isnull=False
+            ).order_by('-last_triggered')[:5]
+            
+            recent_activity = []
+            for block in recent_blocks:
+                recent_activity.append({
+                    'type': block.get_block_type_display(),
+                    'value': block.value,
+                    'reason': block.get_reason_display(),
+                    'count': block.block_count,
+                    'last_triggered': block.last_triggered
+                })
+            
+            return Response({
+                'total_blocked': active_blocks,
+                'phone_blocked': phone_blocks,
+                'ip_blocked': ip_blocks,
+                'today_blocked': today_blocks,
+                'total_blocks': total_blocks,
+                'active_blocks': active_blocks,
+                'reason_stats': reason_stats,
+                'recent_activity': recent_activity
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['post'])
+    def bulk_block(self, request):
+        """Bulk activate blocking for selected entries"""
+        ids = request.data.get('ids', [])
+        
+        if not ids:
+            return Response({'error': 'No IDs provided'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            updated_count = BlockList.objects.filter(id__in=ids).update(is_active=True)
+            
+            try:
+                AdminActivity.objects.create(
+                    user=request.user,
+                    action='bulk_blocked',
+                    model_name='BlockList',
+                    object_repr=f'Bulk activated blocking for {updated_count} entries',
+                    ip_address=self.get_client_ip(request),
+                    user_agent=request.META.get('HTTP_USER_AGENT', '')
+                )
+            except Exception as e:
+                print(f"Error logging bulk block activity: {str(e)}")
+            
+            return Response({
+                'message': f'Successfully activated blocking for {updated_count} entries',
+                'updated_count': updated_count
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['post'])
+    def bulk_unblock(self, request):
+        """Bulk deactivate blocking for selected entries"""
+        ids = request.data.get('ids', [])
+        
+        if not ids:
+            return Response({'error': 'No IDs provided'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            updated_count = BlockList.objects.filter(id__in=ids).update(is_active=False)
+            
+            try:
+                AdminActivity.objects.create(
+                    user=request.user,
+                    action='bulk_unblocked',
+                    model_name='BlockList',
+                    object_repr=f'Bulk deactivated blocking for {updated_count} entries',
+                    ip_address=self.get_client_ip(request),
+                    user_agent=request.META.get('HTTP_USER_AGENT', '')
+                )
+            except Exception as e:
+                print(f"Error logging bulk unblock activity: {str(e)}")
+            
+            return Response({
+                'message': f'Successfully deactivated blocking for {updated_count} entries',
+                'updated_count': updated_count
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def check_blocked(request):
+    """Check if a phone number or IP address is blocked"""
+    block_type = request.data.get('block_type')
+    value = request.data.get('value')
+    
+    if not block_type or not value:
+        return Response({'error': 'block_type and value are required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        is_blocked = BlockList.is_blocked(block_type, value)
+        block_entry = None
+        
+        if is_blocked:
+            block_entry = BlockList.objects.get(block_type=block_type, value=value, is_active=True)
+            serializer = BlockListSerializer(block_entry)
+            return Response({
+                'is_blocked': True,
+                'block_entry': serializer.data
+            })
+        else:
+            return Response({'is_blocked': False})
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@staff_member_required
+def dashboard_blocklist(request):
+    """BlockList management dashboard view"""
+    context = {
+        'active_page': 'blocklist',
+        'page_title': 'Block List Management',
+        'breadcrumbs': [
+            {'name': 'Dashboard', 'url': '/mb-admin/'},
+            {'name': 'Block List', 'url': '/mb-admin/blocklist/'},
+        ]
+    }
+    return render(request, 'dashboard/blocklist.html', context)
+
+
+@api_view(['GET'])
+@permission_classes([IsStaffUser])
+def blocklist_dashboard(request):
+    """Render the block list dashboard page"""
+    return render(request, 'dashboard/blocklist.html')

@@ -548,6 +548,13 @@ class ReviewImage(models.Model):
     
     def __str__(self):
         return f"Image for review by {self.review.reviewer_name}"
+    
+    @property
+    def image_url(self):
+        """Get the full URL for the image"""
+        if self.image:
+            return self.image.url
+        return None
 
 
 class Wishlist(models.Model):
