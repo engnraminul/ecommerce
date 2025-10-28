@@ -4076,3 +4076,108 @@ def review_edit(request, review_id):
     
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([IsStaffUser])
+def review_images(request, review_id):
+    """Get images for a review"""
+    from products.models import Review, ReviewImage
+    
+    try:
+        review = get_object_or_404(Review, id=review_id)
+        images = review.images.all()
+        
+        images_data = []
+        for image in images:
+            images_data.append({
+                'id': image.id,
+                'image_url': image.image_url,
+                'caption': image.caption,
+                'created_at': image.created_at.isoformat() if hasattr(image, 'created_at') else None
+            })
+        
+        return Response({'images': images_data})
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+
+@api_view(['POST'])
+@permission_classes([IsStaffUser])
+def upload_review_image(request):
+    """Upload a new image for a review"""
+    from products.models import Review, ReviewImage
+    
+    try:
+        review_id = request.data.get('review_id')
+        image_file = request.FILES.get('image')
+        caption = request.data.get('caption', '')
+        
+        if not review_id or not image_file:
+            return Response({'error': 'Review ID and image file are required'}, status=400)
+        
+        review = get_object_or_404(Review, id=review_id)
+        
+        # Validate file size (5MB limit)
+        if image_file.size > 5 * 1024 * 1024:
+            return Response({'error': 'Image file too large. Maximum size is 5MB.'}, status=400)
+        
+        # Validate file type
+        allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+        if image_file.content_type not in allowed_types:
+            return Response({'error': 'Invalid file type. Only JPG, PNG, GIF, and WebP are allowed.'}, status=400)
+        
+        # Create review image
+        review_image = ReviewImage.objects.create(
+            review=review,
+            image=image_file,
+            caption=caption
+        )
+        
+        return Response({
+            'message': 'Image uploaded successfully',
+            'image': {
+                'id': review_image.id,
+                'image_url': review_image.image_url,
+                'caption': review_image.caption
+            }
+        })
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+
+@api_view(['POST'])
+@permission_classes([IsStaffUser])
+def update_image_caption(request, image_id):
+    """Update caption for a review image"""
+    from products.models import ReviewImage
+    
+    try:
+        image = get_object_or_404(ReviewImage, id=image_id)
+        caption = request.data.get('caption', '')
+        
+        image.caption = caption
+        image.save()
+        
+        return Response({'message': 'Caption updated successfully'})
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsStaffUser])
+def delete_review_image(request, image_id):
+    """Delete a review image"""
+    from products.models import ReviewImage
+    
+    try:
+        image = get_object_or_404(ReviewImage, id=image_id)
+        image.delete()
+        
+        return Response({'message': 'Image deleted successfully'})
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)

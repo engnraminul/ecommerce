@@ -102,6 +102,10 @@ urlpatterns = [
     path('reviews/bulk-action/', views.review_bulk_action, name='review_bulk_action'),
     path('reviews/<int:review_id>/action/', views.review_single_action, name='review_single_action'),
     path('reviews/<int:review_id>/edit/', views.review_edit, name='review_edit'),
+    path('reviews/<int:review_id>/images/', views.review_images, name='review_images'),
+    path('reviews/upload-image/', views.upload_review_image, name='upload_review_image'),
+    path('reviews/image/<int:image_id>/caption/', views.update_image_caption, name='update_image_caption'),
+    path('reviews/image/<int:image_id>/delete/', views.delete_review_image, name='delete_review_image'),
     
     # Email Settings URLs
     path('email-settings/', email_views.email_settings_index, name='email_settings_index'),
