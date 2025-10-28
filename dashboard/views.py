@@ -3866,6 +3866,7 @@ def blocklist_dashboard(request):
 def reviews_dashboard(request):
     """Professional Reviews Management Dashboard"""
     from products.models import Review, ReviewImage
+    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
     
     # Get filter parameters
     status_filter = request.GET.get('status', 'all')
@@ -3873,6 +3874,7 @@ def reviews_dashboard(request):
     product_filter = request.GET.get('product', '')
     verified_filter = request.GET.get('verified', 'all')
     search_query = request.GET.get('search', '')
+    page = request.GET.get('page', 1)
     
     # Base queryset
     reviews = Review.objects.select_related('user', 'product').prefetch_related('images').order_by('-created_at')
@@ -3903,6 +3905,15 @@ def reviews_dashboard(request):
             Q(product__name__icontains=search_query)
         )
     
+    # Pagination - 20 reviews per page
+    paginator = Paginator(reviews, 20)
+    try:
+        reviews_page = paginator.page(page)
+    except PageNotAnInteger:
+        reviews_page = paginator.page(1)
+    except EmptyPage:
+        reviews_page = paginator.page(paginator.num_pages)
+    
     # Statistics
     total_reviews = Review.objects.count()
     approved_reviews = Review.objects.filter(is_approved=True).count()
@@ -3924,7 +3935,7 @@ def reviews_dashboard(request):
     recent_reviews = Review.objects.filter(created_at__gte=thirty_days_ago).count()
     
     context = {
-        'reviews': reviews,
+        'reviews': reviews_page,
         'total_reviews': total_reviews,
         'approved_reviews': approved_reviews,
         'pending_reviews': pending_reviews,
@@ -4010,6 +4021,58 @@ def review_single_action(request, review_id):
             return Response({'error': 'Invalid action'}, status=400)
         
         return Response({'message': message})
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsStaffUser])
+def review_edit(request, review_id):
+    """Handle review editing"""
+    from products.models import Review
+    
+    try:
+        review = get_object_or_404(Review, id=review_id)
+        
+        if request.method == 'GET':
+            # Return review data for editing
+            return Response({
+                'id': review.id,
+                'product_name': review.product.name,
+                'reviewer_name': review.user.username if review.user else review.guest_name,
+                'rating': review.rating,
+                'title': review.title,
+                'comment': review.comment,
+                'is_approved': review.is_approved,
+                'is_verified_purchase': review.is_verified_purchase,
+                'created_at': review.created_at.isoformat(),
+            })
+        
+        elif request.method == 'POST':
+            # Update review
+            data = request.data
+            
+            # Validate rating
+            rating = data.get('rating')
+            if rating and (not isinstance(rating, int) or rating < 1 or rating > 5):
+                return Response({'error': 'Rating must be between 1 and 5'}, status=400)
+            
+            # Update fields
+            if 'rating' in data:
+                review.rating = data['rating']
+            if 'title' in data:
+                review.title = data['title']
+            if 'comment' in data:
+                review.comment = data['comment']
+            if 'is_approved' in data:
+                review.is_approved = data['is_approved']
+            if 'is_verified_purchase' in data:
+                review.is_verified_purchase = data['is_verified_purchase']
+            
+            review.save()
+            
+            return Response({'message': 'Review updated successfully'})
     
     except Exception as e:
         return Response({'error': str(e)}, status=500)

@@ -145,6 +145,29 @@
         display: block;
     }
     
+    .pagination .page-link {
+        color: var(--primary-color);
+        border-color: #dee2e6;
+    }
+    
+    .pagination .page-link:hover {
+        color: var(--primary-color);
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+    }
+    
+    .pagination .page-item.active .page-link {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+    }
+    
+    .pagination .page-item.disabled .page-link {
+        color: #6c757d;
+        background-color: #fff;
+        border-color: #dee2e6;
+    }
+    
     @media (max-width: 768px) {
         .stats-cards {
             grid-template-columns: 1fr;
@@ -158,11 +181,20 @@
             flex-direction: column;
             gap: 0.25rem;
         }
+        
+        .pagination {
+            font-size: 0.875rem;
+        }
+        
+        .pagination .page-link {
+            padding: 0.375rem 0.5rem;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
+{% csrf_token %}
 <div class="container-fluid">
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -401,6 +433,11 @@
                                         title="Toggle Verification">
                                     <i class="fas fa-shield-alt"></i>
                                 </button>
+                                <button type="button" class="btn btn-secondary btn-sm" 
+                                        onclick="editReview({{ review.id }})" 
+                                        title="Edit Review">
+                                    <i class="fas fa-edit"></i>
+                                </button>
                                 <button type="button" class="btn btn-danger btn-sm" 
                                         onclick="singleAction({{ review.id }}, 'delete')" 
                                         title="Delete">
@@ -423,6 +460,82 @@
                 </tbody>
             </table>
         </div>
+        
+        <!-- Pagination -->
+        {% if reviews.has_other_pages %}
+        <div class="d-flex justify-content-between align-items-center p-3 border-top">
+            <div class="text-muted">
+                Showing {{ reviews.start_index }} to {{ reviews.end_index }} of {{ reviews.paginator.count }} reviews
+                {% if reviews.paginator.count != total_reviews %}
+                    (filtered from {{ total_reviews }} total)
+                {% endif %}
+            </div>
+            <nav aria-label="Reviews pagination">
+                <ul class="pagination mb-0">
+                    {% if reviews.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if status_filter != 'all' %}status={{ status_filter }}&{% endif %}{% if rating_filter != 'all' %}rating={{ rating_filter }}&{% endif %}{% if verified_filter != 'all' %}verified={{ verified_filter }}&{% endif %}{% if product_filter %}product={{ product_filter }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page=1" aria-label="First">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if status_filter != 'all' %}status={{ status_filter }}&{% endif %}{% if rating_filter != 'all' %}rating={{ rating_filter }}&{% endif %}{% if verified_filter != 'all' %}verified={{ verified_filter }}&{% endif %}{% if product_filter %}product={{ product_filter }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ reviews.previous_page_number }}" aria-label="Previous">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="fas fa-angle-double-left"></i></span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="fas fa-angle-left"></i></span>
+                        </li>
+                    {% endif %}
+
+                    {% for num in reviews.paginator.page_range %}
+                        {% if num == reviews.number %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > reviews.number|add:'-3' and num < reviews.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if status_filter != 'all' %}status={{ status_filter }}&{% endif %}{% if rating_filter != 'all' %}rating={{ rating_filter }}&{% endif %}{% if verified_filter != 'all' %}verified={{ verified_filter }}&{% endif %}{% if product_filter %}product={{ product_filter }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if reviews.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if status_filter != 'all' %}status={{ status_filter }}&{% endif %}{% if rating_filter != 'all' %}rating={{ rating_filter }}&{% endif %}{% if verified_filter != 'all' %}verified={{ verified_filter }}&{% endif %}{% if product_filter %}product={{ product_filter }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ reviews.next_page_number }}" aria-label="Next">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if status_filter != 'all' %}status={{ status_filter }}&{% endif %}{% if rating_filter != 'all' %}rating={{ rating_filter }}&{% endif %}{% if verified_filter != 'all' %}verified={{ verified_filter }}&{% endif %}{% if product_filter %}product={{ product_filter }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ reviews.paginator.num_pages }}" aria-label="Last">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="fas fa-angle-right"></i></span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="fas fa-angle-double-right"></i></span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% else %}
+            {% if reviews %}
+            <div class="p-3 border-top text-muted">
+                Showing all {{ reviews|length }} reviews
+                {% if reviews|length != total_reviews %}
+                    (filtered from {{ total_reviews }} total)
+                {% endif %}
+            </div>
+            {% endif %}
+        {% endif %}
     </div>
 </div>
 
@@ -441,11 +554,117 @@
         </div>
     </div>
 </div>
+
+<!-- Edit Review Modal -->
+<div class="modal fade" id="editReviewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Review</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editReviewForm">
+                    <input type="hidden" id="editReviewId" value="">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="editProduct" class="form-label">Product</label>
+                            <input type="text" class="form-control" id="editProduct" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editReviewer" class="form-label">Reviewer</label>
+                            <input type="text" class="form-control" id="editReviewer" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="editRating" class="form-label">Rating</label>
+                            <select class="form-select" id="editRating">
+                                <option value="1">1 Star</option>
+                                <option value="2">2 Stars</option>
+                                <option value="3">3 Stars</option>
+                                <option value="4">4 Stars</option>
+                                <option value="5">5 Stars</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editStatus" class="form-label">Status</label>
+                            <select class="form-select" id="editStatus">
+                                <option value="false">Pending</option>
+                                <option value="true">Approved</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editTitle" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="editTitle">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editComment" class="form-label">Comment</label>
+                        <textarea class="form-control" id="editComment" rows="4"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="editVerified">
+                            <label class="form-check-label" for="editVerified">
+                                Verified Purchase
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveReviewEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 let selectedReviews = [];
+
+// Get CSRF token from cookie or meta tag
+function getCSRFToken() {
+    // First try to get from cookie
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    
+    // If not found in cookie, try meta tag
+    if (!cookieValue) {
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        if (csrfMeta) {
+            cookieValue = csrfMeta.getAttribute('content');
+        }
+    }
+    
+    // Last resort: try hidden input
+    if (!cookieValue) {
+        const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrfInput) {
+            cookieValue = csrfInput.value;
+        }
+    }
+    
+    return cookieValue;
+}
 
 function toggleSelectAll() {
     const selectAll = document.getElementById('selectAll');
@@ -485,18 +704,29 @@ function bulkAction(action) {
         return;
     }
     
+    const csrfToken = getCSRFToken();
+    if (!csrfToken) {
+        alert('CSRF token not found. Please refresh the page.');
+        return;
+    }
+    
     fetch('/mb-admin/reviews/bulk-action/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            'X-CSRFToken': csrfToken
         },
         body: JSON.stringify({
             action: action,
             review_ids: selectedReviews
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.error) {
             alert('Error: ' + data.error);
@@ -507,7 +737,7 @@ function bulkAction(action) {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('An error occurred');
+        alert('An error occurred: ' + error.message);
     });
 }
 
@@ -521,17 +751,28 @@ function singleAction(reviewId, action) {
         return;
     }
     
+    const csrfToken = getCSRFToken();
+    if (!csrfToken) {
+        alert('CSRF token not found. Please refresh the page.');
+        return;
+    }
+    
     fetch(`/mb-admin/reviews/${reviewId}/action/`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            'X-CSRFToken': csrfToken
         },
         body: JSON.stringify({
             action: action
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.error) {
             alert('Error: ' + data.error);
@@ -542,7 +783,98 @@ function singleAction(reviewId, action) {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('An error occurred');
+        alert('An error occurred: ' + error.message);
+    });
+}
+
+function editReview(reviewId) {
+    // Get review data and populate modal
+    const csrfToken = getCSRFToken();
+    if (!csrfToken) {
+        alert('CSRF token not found. Please refresh the page.');
+        return;
+    }
+    
+    fetch(`/mb-admin/reviews/${reviewId}/edit/`, {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.error) {
+            alert('Error: ' + data.error);
+            return;
+        }
+        
+        // Populate modal with review data
+        document.getElementById('editReviewId').value = reviewId;
+        document.getElementById('editProduct').value = data.product_name;
+        document.getElementById('editReviewer').value = data.reviewer_name;
+        document.getElementById('editRating').value = data.rating;
+        document.getElementById('editStatus').value = data.is_approved.toString();
+        document.getElementById('editTitle').value = data.title || '';
+        document.getElementById('editComment').value = data.comment || '';
+        document.getElementById('editVerified').checked = data.is_verified_purchase;
+        
+        // Show modal
+        new bootstrap.Modal(document.getElementById('editReviewModal')).show();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while loading review data: ' + error.message);
+    });
+}
+
+function saveReviewEdit() {
+    const reviewId = document.getElementById('editReviewId').value;
+    const csrfToken = getCSRFToken();
+    
+    if (!csrfToken) {
+        alert('CSRF token not found. Please refresh the page.');
+        return;
+    }
+    
+    const formData = {
+        rating: parseInt(document.getElementById('editRating').value),
+        title: document.getElementById('editTitle').value,
+        comment: document.getElementById('editComment').value,
+        is_approved: document.getElementById('editStatus').value === 'true',
+        is_verified_purchase: document.getElementById('editVerified').checked
+    };
+    
+    fetch(`/mb-admin/reviews/${reviewId}/edit/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.error) {
+            alert('Error: ' + data.error);
+        } else {
+            alert(data.message);
+            bootstrap.Modal.getInstance(document.getElementById('editReviewModal')).hide();
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while saving: ' + error.message);
     });
 }
 
@@ -557,18 +889,9 @@ function exportReviews() {
     alert('Export functionality coming soon!');
 }
 
-// Add CSRF token to all AJAX requests
+// Initialize page
 document.addEventListener('DOMContentLoaded', function() {
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    
-    // Add hidden CSRF token input if it doesn't exist
-    if (!document.querySelector('[name=csrfmiddlewaretoken]')) {
-        const csrfInput = document.createElement('input');
-        csrfInput.type = 'hidden';
-        csrfInput.name = 'csrfmiddlewaretoken';
-        csrfInput.value = '{{ csrf_token }}';
-        document.body.appendChild(csrfInput);
-    }
+    console.log('Reviews dashboard loaded');
 });
 </script>
 {% endblock %}

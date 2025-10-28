@@ -101,6 +101,7 @@ urlpatterns = [
     path('reviews/', views.reviews_dashboard, name='reviews'),
     path('reviews/bulk-action/', views.review_bulk_action, name='review_bulk_action'),
     path('reviews/<int:review_id>/action/', views.review_single_action, name='review_single_action'),
+    path('reviews/<int:review_id>/edit/', views.review_edit, name='review_edit'),
     
     # Email Settings URLs
     path('email-settings/', email_views.email_settings_index, name='email_settings_index'),
