@@ -124,6 +124,14 @@
 .rating-count {
     font-size: 0.875rem;
     opacity: 0.8;
+    color: white!important;
+}
+
+a.product-card.fade-in {
+    display: flex
+;
+    flex-direction: column;
+    align-items: center;
 }
 
 .verified-badge {
@@ -665,6 +673,13 @@
     border-color: transparent;
 }
 
+.filters-grid {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    justify-content: space-evenly;
+}
+
 /* Mobile Responsive Design */
 @media (max-width: 575px) {
     .hero-section {
@@ -845,7 +860,7 @@
     }
     
     .products-grid {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 

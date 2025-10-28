@@ -558,6 +558,7 @@ body {
     background: var(--dark-color);
     color: var(--white);
     padding: 3rem 0 1rem;
+    margin-top: 50px;
 }
 
 .footer-content {
