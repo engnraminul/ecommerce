@@ -804,6 +804,125 @@ def contact(request):
     return render(request, 'frontend/contact.html')
 
 
+def reviews(request):
+    """Professional reviews page with statistics and filtering."""
+    from products.models import ReviewImage
+    from django.db.models import Count, Avg
+    
+    # Get filter parameters
+    product_filter = request.GET.get('product', '')
+    rating_filter = request.GET.get('rating', '')
+    verified_filter = request.GET.get('verified', '')
+    sort_by = request.GET.get('sort', 'newest')
+    page = request.GET.get('page', 1)
+    
+    # Base queryset - only approved reviews
+    reviews_qs = Review.objects.filter(is_approved=True).select_related(
+        'user', 'product', 'product__category'
+    ).prefetch_related('images')
+    
+    # Apply filters
+    if product_filter:
+        reviews_qs = reviews_qs.filter(
+            Q(product__name__icontains=product_filter) |
+            Q(product__category__name__icontains=product_filter)
+        )
+    
+    if rating_filter:
+        try:
+            rating_value = int(rating_filter)
+            if 1 <= rating_value <= 5:
+                reviews_qs = reviews_qs.filter(rating=rating_value)
+        except ValueError:
+            pass
+    
+    if verified_filter == 'verified':
+        reviews_qs = reviews_qs.filter(is_verified_purchase=True)
+    elif verified_filter == 'unverified':
+        reviews_qs = reviews_qs.filter(is_verified_purchase=False)
+    
+    # Apply sorting
+    if sort_by == 'newest':
+        reviews_qs = reviews_qs.order_by('-created_at')
+    elif sort_by == 'oldest':
+        reviews_qs = reviews_qs.order_by('created_at')
+    elif sort_by == 'highest_rated':
+        reviews_qs = reviews_qs.order_by('-rating', '-created_at')
+    elif sort_by == 'lowest_rated':
+        reviews_qs = reviews_qs.order_by('rating', '-created_at')
+    elif sort_by == 'most_helpful':
+        # Assuming helpful_count field exists or using a proxy
+        reviews_qs = reviews_qs.order_by('-created_at')  # Default for now
+    else:
+        reviews_qs = reviews_qs.order_by('-created_at')
+    
+    # Statistics
+    total_reviews = Review.objects.filter(is_approved=True).count()
+    avg_rating = Review.objects.filter(is_approved=True).aggregate(
+        avg=Avg('rating')
+    )['avg'] or 0
+    
+    # Rating distribution
+    rating_distribution = {}
+    for i in range(1, 6):
+        count = Review.objects.filter(is_approved=True, rating=i).count()
+        percentage = (count / total_reviews * 100) if total_reviews > 0 else 0
+        rating_distribution[i] = {
+            'count': count,
+            'percentage': round(percentage, 1)
+        }
+    
+    # Additional statistics
+    verified_reviews = Review.objects.filter(
+        is_approved=True, is_verified_purchase=True
+    ).count()
+    reviews_with_images = Review.objects.filter(
+        is_approved=True, images__isnull=False
+    ).distinct().count()
+    
+    # Recent reviews (last 30 days)
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    recent_reviews_count = Review.objects.filter(
+        is_approved=True, created_at__gte=thirty_days_ago
+    ).count()
+    
+    # Top rated products
+    top_products = Product.objects.filter(
+        reviews__is_approved=True
+    ).annotate(
+        avg_rating=Avg('reviews__rating'),
+        review_total=Count('reviews', filter=Q(reviews__is_approved=True))
+    ).filter(review_total__gte=3).order_by('-avg_rating')[:5]
+    
+    # Pagination
+    paginator = Paginator(reviews_qs, 12)  # 12 reviews per page
+    try:
+        reviews_page = paginator.page(page)
+    except:
+        reviews_page = paginator.page(1)
+    
+    context = {
+        'reviews': reviews_page,
+        'total_reviews': total_reviews,
+        'avg_rating': round(avg_rating, 1),
+        'rating_distribution': rating_distribution,
+        'verified_reviews': verified_reviews,
+        'reviews_with_images': reviews_with_images,
+        'recent_reviews_count': recent_reviews_count,
+        'top_products': top_products,
+        'product_filter': product_filter,
+        'rating_filter': rating_filter,
+        'verified_filter': verified_filter,
+        'sort_by': sort_by,
+        'breadcrumb': [
+            {'name': 'Home', 'url': '/'},
+            {'name': 'Reviews', 'url': '/reviews/'}
+        ]
+    }
+    
+    return render(request, 'frontend/reviews.html', context)
+
+
 def track_order(request):
     """Order tracking page with API endpoint."""
     if request.method == 'GET' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':

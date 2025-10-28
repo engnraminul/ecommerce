@@ -5,6 +5,9 @@
 
 {% block extra_css %}
 <style>
+    .review-image-modal {
+       z-index: 9999;
+    }
     .stats-cards {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -606,7 +609,7 @@
 </div>
 
 <!-- Image Modal -->
-<div class="modal fade" id="imageModal" tabindex="-1">
+<div class="modal fade review-image-modal" id="imageModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">

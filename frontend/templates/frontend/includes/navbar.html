@@ -273,9 +273,8 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="#" class="nav-link">
-                                Deals
-                                <span class="nav-badge">HOT</span>
+                            <a href="{% url 'frontend:reviews' %}" class="nav-link {% if request.resolver_match.url_name == 'reviews' %}active{% endif %}">
+                                Reviews
                             </a>
                         </li>
                         <li class="nav-item">
