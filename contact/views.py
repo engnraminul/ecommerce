@@ -355,6 +355,20 @@ class ContactPublicViewSet(viewsets.ModelViewSet):
                 'error': 'Your request could not be processed at this time.'
             }, status=403)
         
+        # Validate reCAPTCHA
+        recaptcha_response = request.data.get('g-recaptcha-response')
+        if not recaptcha_response:
+            return Response({
+                'error': 'Please complete the reCAPTCHA verification.'
+            }, status=400)
+        
+        # Simple reCAPTCHA validation (you should replace with actual Google verification)
+        # For production, verify with Google reCAPTCHA API
+        if not self.verify_recaptcha(recaptcha_response):
+            return Response({
+                'error': 'reCAPTCHA verification failed. Please try again.'
+            }, status=400)
+        
         # Rate limiting - max 5 submissions per hour from same IP
         one_hour_ago = timezone.now() - timedelta(hours=1)
         recent_submissions = Contact.objects.filter(
@@ -387,6 +401,27 @@ class ContactPublicViewSet(viewsets.ModelViewSet):
             return Response({
                 'error': 'An error occurred while submitting your message. Please try again.'
             }, status=500)
+    
+    def verify_recaptcha(self, recaptcha_response):
+        """Verify reCAPTCHA response with Google"""
+        import requests
+        
+        # Replace with your actual reCAPTCHA secret key
+        secret_key = "6LcxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxA"  # Your secret key here
+        
+        data = {
+            'secret': secret_key,
+            'response': recaptcha_response
+        }
+        
+        try:
+            response = requests.post('https://www.google.com/recaptcha/api/siteverify', data=data)
+            result = response.json()
+            return result.get('success', False)
+        except:
+            # If verification fails, allow submission (fallback)
+            # In production, you might want to reject on failure
+            return True
     
     def get_client_ip(self):
         """Get client IP address"""

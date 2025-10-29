@@ -171,6 +171,23 @@
         display: none;
     }
     
+    .recaptcha-container {
+        display: flex;
+        justify-content: center;
+        margin: 1rem 0;
+    }
+    
+    .g-recaptcha {
+        transform: scale(0.9);
+        transform-origin: 0 0;
+    }
+    
+    @media (max-width: 576px) {
+        .g-recaptcha {
+            transform: scale(0.8);
+        }
+    }
+    
     .character-counter {
         font-size: 0.875rem;
         color: var(--secondary-color);
@@ -391,7 +408,7 @@
             </div>
             <div class="stat-card">
                 <i class="fas fa-users"></i>
-                <h3>1000+</h3>
+                <h3>5500+</h3>
                 <p>Happy Customers</p>
             </div>
             <div class="stat-card">
@@ -442,25 +459,27 @@
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label for="email" class="form-label">
-                                                Email Address <span class="text-danger">*</span>
+                                                Email Address
                                             </label>
-                                            <input type="email" class="form-control" id="email" name="email" required>
+                                            <input type="email" class="form-control" id="email" name="email">
                                             <div class="invalid-feedback"></div>
                                         </div>
                                     </div>
                                     
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
-                                            <label for="phone" class="form-label">Phone Number</label>
+                                            <label for="phone" class="form-label">
+                                                Phone Number <span class="text-danger">*</span>
+                                            </label>
                                             <input type="tel" class="form-control" id="phone" name="phone" 
-                                                   placeholder="+1 (555) 123-4567">
+                                                   placeholder="+1 (555) 123-4567" required>
                                             <div class="invalid-feedback"></div>
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label for="subject" class="form-label">
-                                                Subject <span class="text-danger">*</span>
+                                                Subject
                                             </label>
-                                            <select class="form-select" id="subject" name="subject" required>
+                                            <select class="form-select" id="subject" name="subject">
                                                 <option value="">Choose a subject...</option>
                                                 <option value="General Inquiry">General Inquiry</option>
                                                 <option value="Product Support">Product Support</option>
@@ -475,11 +494,11 @@
                                     
                                     <div class="mb-3">
                                         <label for="message" class="form-label">
-                                            Message <span class="text-danger">*</span>
+                                            Message
                                         </label>
                                         <textarea class="form-control" id="message" name="message" rows="5" 
                                                   placeholder="Please describe your inquiry in detail..." 
-                                                  maxlength="2000" required></textarea>
+                                                  maxlength="2000"></textarea>
                                         <div class="character-counter">
                                             <span id="messageCount">0</span>/2000 characters
                                         </div>
@@ -501,6 +520,15 @@
                                             <button type="button" class="btn-close float-end" onclick="removeFile()"></button>
                                         </div>
                                         <div class="invalid-feedback" id="fileError"></div>
+                                    </div>
+                                    
+                                    <!-- reCAPTCHA -->
+                                    <div class="mb-4">
+                                        <div class="recaptcha-container">
+                                            <div class="g-recaptcha" data-sitekey="6LfaffsrAAAAAFD2-bNrYWkEp2D2esUfmDf1l4TA" id="recaptcha"></div>
+                                        </div>
+                                        <div class="invalid-feedback" id="recaptchaError"></div>
+                                        <small class="text-muted">Note: For demonstration purposes, you can use any reCAPTCHA site key or complete the challenge.</small>
                                     </div>
                                     
                                     <div class="mb-4">
@@ -627,13 +655,21 @@
                     {% if contact_settings.map_embed_url %}
                         <iframe 
                             src="{{ contact_settings.map_embed_url }}"
+                            width="100%" 
+                            height="400" 
+                            style="border:0;" 
+                            allowfullscreen="" 
                             loading="lazy" 
                             referrerpolicy="no-referrer-when-downgrade">
                         </iframe>
                     {% else %}
-                        <!-- Default map - Replace with your location -->
+                        <!-- Default map - Dhaka, Bangladesh -->
                         <iframe 
-                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3651.9085156457817!2d90.41344501498316!3d23.750781994590357!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755b8a5a7e25631%3A0x9c8cb443b8a1b9ec!2sDhaka%2C%20Bangladesh!5e0!3m2!1sen!2sus!4v1698765432109!5m2!1sen!2sus"
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d233668.38703692633!2d90.25487287832018!3d23.78097861802584!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755b8b087026b81%3A0x8fa563bbdd5904c2!2sDhaka%2C%20Bangladesh!5e0!3m2!1sen!2sus!4v1698765123456!5m2!1sen!2sus"
+                            width="100%" 
+                            height="400" 
+                            style="border:0;" 
+                            allowfullscreen="" 
                             loading="lazy" 
                             referrerpolicy="no-referrer-when-downgrade">
                         </iframe>
@@ -712,6 +748,9 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- reCAPTCHA Script -->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Character counter for message
@@ -876,7 +915,10 @@ function validateField(field) {
             break;
             
         case 'phone':
-            if (value && !isValidPhone(value)) {
+            if (field.hasAttribute('required') && !value) {
+                isValid = false;
+                errorMessage = 'Phone number is required';
+            } else if (value && !isValidPhone(value)) {
                 isValid = false;
                 errorMessage = 'Please enter a valid phone number';
             }
@@ -910,11 +952,30 @@ function validateForm() {
     let isValid = true;
     const requiredFields = document.querySelectorAll('#contactForm [required]');
     
+    // Validate required fields
     requiredFields.forEach(field => {
         if (!validateField(field)) {
             isValid = false;
         }
     });
+    
+    // Validate reCAPTCHA
+    const recaptchaResponse = grecaptcha.getResponse();
+    const recaptchaError = document.getElementById('recaptchaError');
+    const recaptchaContainer = document.getElementById('recaptcha');
+    
+    if (!recaptchaResponse || recaptchaResponse.length === 0) {
+        isValid = false;
+        recaptchaError.textContent = 'Please complete the reCAPTCHA verification';
+        recaptchaError.style.display = 'block';
+        recaptchaContainer.style.border = '2px solid var(--danger-color)';
+        recaptchaContainer.style.borderRadius = 'var(--border-radius)';
+        recaptchaContainer.style.padding = '5px';
+    } else {
+        recaptchaError.style.display = 'none';
+        recaptchaContainer.style.border = 'none';
+        recaptchaContainer.style.padding = '0';
+    }
     
     return isValid;
 }
@@ -924,6 +985,10 @@ function submitForm() {
     const form = document.getElementById('contactForm');
     const formData = new FormData(form);
     const loadingOverlay = document.getElementById('loadingOverlay');
+    
+    // Add reCAPTCHA response to form data
+    const recaptchaResponse = grecaptcha.getResponse();
+    formData.append('g-recaptcha-response', recaptchaResponse);
     
     // Show loading state
     submitBtn.disabled = true;
@@ -960,6 +1025,9 @@ function submitForm() {
     })
     .catch(error => {
         loadingOverlay.style.display = 'none';
+        
+        // Reset reCAPTCHA on error
+        grecaptcha.reset();
         
         if (error && typeof error === 'object') {
             // Handle validation errors
@@ -998,6 +1066,8 @@ function resetForm() {
     const successMessage = document.getElementById('successMessage');
     const contactFormContainer = document.getElementById('contactFormContainer');
     const submitBtn = document.getElementById('submitBtn');
+    const recaptchaError = document.getElementById('recaptchaError');
+    const recaptchaContainer = document.getElementById('recaptcha');
     
     form.reset();
     fileInfo.style.display = 'none';
@@ -1009,7 +1079,16 @@ function resetForm() {
     
     invalidFeedbacks.forEach(element => {
         element.textContent = '';
+        element.style.display = 'none';
     });
+    
+    // Reset reCAPTCHA
+    if (typeof grecaptcha !== 'undefined') {
+        grecaptcha.reset();
+    }
+    recaptchaError.style.display = 'none';
+    recaptchaContainer.style.border = 'none';
+    recaptchaContainer.style.padding = '0';
     
     successMessage.style.display = 'none';
     contactFormContainer.style.display = 'block';
