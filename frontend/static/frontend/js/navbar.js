@@ -70,7 +70,7 @@ class NavbarManager {
 
     // Dropdown Management
     setupDropdowns() {
-        const dropdowns = document.querySelectorAll('.dropdown, .category-menu, .user-dropdown, .cart');
+        const dropdowns = document.querySelectorAll('.dropdown, .nav-item.dropdown, .category-menu, .user-dropdown, .cart');
         
         dropdowns.forEach(dropdown => {
             let hoverTimeout;
@@ -89,7 +89,7 @@ class NavbarManager {
 
         // Close dropdowns when clicking outside
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.dropdown, .category-menu, .user-dropdown, .cart')) {
+            if (!e.target.closest('.dropdown, .nav-item.dropdown, .category-menu, .user-dropdown, .cart')) {
                 this.hideAllDropdowns();
             }
         });

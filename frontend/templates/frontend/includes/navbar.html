@@ -242,20 +242,21 @@
                                 Home
                             </a>
                         </li>
-                        <li class="nav-item dropdown">
-                            <a href="{% url 'frontend:products' %}" class="nav-link {% if request.resolver_match.url_name == 'products' %}active{% endif %}">
-                                Products
+                    
+                        <li class="nav-item product-dropdown">
+                            <a href="{% url 'frontend:products' %}" class="nav-link product-nav {% if request.resolver_match.url_name == 'product' %}active{% endif %}">
+                                Product
                                 <i class="fas fa-chevron-down"></i>
                             </a>
-                            <div class="dropdown-menu">
-                                <div class="dropdown-content">
-                                    <div class="dropdown-section">
+                            <div class="product-dropdown-menu">
+                                <div class="product-dropdown-content">
+                                    <div class="product-dropdown-section">
                                         <h5>Featured</h5>
                                         <a href="{% url 'frontend:products' %}?featured=true">Featured Products</a>
                                         <a href="{% url 'frontend:products' %}?new=true">New Arrivals</a>
                                         <a href="{% url 'frontend:products' %}?sale=true">Sale Items</a>
                                     </div>
-                                    <div class="dropdown-section">
+                                    <div class="product-dropdown-section">
                                         <h5>Categories</h5>
                                         {% for category in navbar_categories|slice:":5" %}
                                         <a href="{% url 'frontend:category_products' category.slug %}">{{ category.name }}</a>

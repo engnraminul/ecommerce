@@ -651,6 +651,10 @@
     position: relative;
 }
 
+.nav-item.dropdown {
+    position: relative;
+}
+
 .nav-link {
     display: flex;
     align-items: center;
@@ -703,12 +707,84 @@
     visibility: hidden;
     transform: translateY(-10px);
     transition: var(--transition);
+    pointer-events: none;
+    margin-top: 0;
 }
 
+.nav-item.dropdown:hover .dropdown-menu,
 .dropdown:hover .dropdown-menu {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateY(0) !important;
+    pointer-events: auto !important;
+}
+
+/* Ensure dropdown stays visible when hovering over the dropdown itself */
+.dropdown-menu:hover {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateY(0) !important;
+    pointer-events: auto !important;
+}
+
+/* Add a small invisible bridge to prevent hover from breaking */
+.nav-item.dropdown::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: transparent;
+    z-index: 1000;
+}
+
+/* Product Dropdown Menu - New Styles */
+.product-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    padding: 1.5rem;
+    min-width: 400px;
+    z-index: 1001;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: var(--transition);
+    pointer-events: none;
+    margin-top: 0;
+}
+
+.nav-item.product-dropdown:hover .product-dropdown-menu,
+.product-dropdown:hover .product-dropdown-menu {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateY(0) !important;
+    pointer-events: auto !important;
+}
+
+/* Ensure product dropdown stays visible when hovering over the dropdown itself */
+.product-dropdown-menu:hover {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateY(0) !important;
+    pointer-events: auto !important;
+}
+
+/* Add a small invisible bridge to prevent hover from breaking */
+.nav-item.product-dropdown::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: transparent;
+    z-index: 1000;
 }
 
 .dropdown-content {
@@ -735,6 +811,37 @@
 }
 
 .dropdown-section a:hover {
+    color: var(--primary-color);
+    padding-left: 0.5rem;
+}
+
+/* Product Dropdown Content - New Styles */
+.product-dropdown-content {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+}
+
+.product-dropdown-section h5 {
+    margin: 0 0 1rem 0;
+    color: var(--dark-color);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.product-dropdown-section a {
+    display: flex;
+    flex-direction: column;
+    color: var(--secondary-color);
+    text-decoration: none;
+    padding: 0.375rem 0;
+    font-size: 0.875rem;
+    transition: var(--transition);
+
+}
+
+.product-dropdown-section a:hover {
     color: var(--primary-color);
     padding-left: 0.5rem;
 }
