@@ -456,7 +456,7 @@ def get_contact_settings(request):
                 'instagram': '',
                 'linkedin': ''
             },
-            'map_embed_url': '',
+            'map_embed_url': 'https://www.openstreetmap.org/export/embed.html?bbox=90.3369%2C23.7461%2C90.4204%2C23.8161&layer=mapnik&marker=23.7808875%2C90.3492859',
             'additional_info': ''
         }
         
@@ -526,12 +526,57 @@ def contact_page(request):
             'instagram': '',
             'linkedin': ''
         },
-        'map_embed_url': '',
+        'map_embed_url': 'https://www.openstreetmap.org/export/embed.html?bbox=90.3369%2C23.7461%2C90.4204%2C23.8161&layer=mapnik&marker=23.7808875%2C90.3492859',
         'additional_info': ''
     }
     
     # Merge with defaults
     final_settings = {**default_settings, **contact_settings}
+    # Normalize map data: allow either a direct embed URL or explicit coordinates
+    # contact_settings may include:
+    # - map_coordinates: string like "lat,lon" or dict with {'lat':..,'lon':..}
+    # - map_embed_url: a full embed URL (OpenStreetMap or Google embed)
+    map_coordinates = None
+    map_source_type = 'default'
+
+    # Prefer explicit coordinates if provided
+    raw_coords = contact_settings.get('map_coordinates') if isinstance(contact_settings, dict) else None
+    if raw_coords:
+        # Accept either dict or comma-separated string
+        if isinstance(raw_coords, dict):
+            lat = raw_coords.get('lat')
+            lon = raw_coords.get('lon')
+            if lat and lon:
+                map_coordinates = f"{lat},{lon}"
+        elif isinstance(raw_coords, str):
+            # normalize whitespace
+            parts = [p.strip() for p in raw_coords.split(',') if p.strip()]
+            if len(parts) >= 2:
+                map_coordinates = f"{parts[0]},{parts[1]}"
+
+    # If no explicit coordinates, try to extract marker from an OpenStreetMap embed URL
+    if not map_coordinates and final_settings.get('map_embed_url'):
+        embed_url = final_settings.get('map_embed_url')
+        try:
+            # look for marker=lat%2Clon or marker=lat,lon
+            if 'marker=' in embed_url:
+                marker_part = embed_url.split('marker=')[1].split('&')[0]
+                marker_part = marker_part.replace('%2C', ',')
+                parts = [p.strip() for p in marker_part.split(',') if p.strip()]
+                if len(parts) >= 2:
+                    map_coordinates = f"{parts[0]},{parts[1]}"
+        except Exception:
+            map_coordinates = None
+
+    # Determine source type
+    if map_coordinates:
+        map_source_type = 'coordinates'
+    elif final_settings.get('map_embed_url'):
+        map_source_type = 'url'
+
+    # Expose these in the final settings used by the template
+    final_settings['map_coordinates'] = map_coordinates
+    final_settings['map_source_type'] = map_source_type
     
     context = {
         'contact_settings': final_settings,

@@ -91,7 +91,7 @@
                                     <i class="fas fa-star {% if i|add:0 <= product.average_rating %}filled{% endif %}"></i>
                                 {% endfor %}
                             </div>
-                            <span class="rating-text">({{ total_approved_reviews }} reviews)</span>
+                            <a href="#reviews"><span class="rating-text">({{ total_approved_reviews }} reviews)</span></a>
                         </div>
                         
                         <!-- Product Price -->
@@ -471,6 +471,15 @@
                                         </div>
                                         <div class="image-preview-container"></div>
                                     </div>
+                                </div>
+                                
+                                <!-- reCAPTCHA -->
+                                <div class="form-group">
+                                    <div class="recaptcha-container">
+                                        <div class="g-recaptcha" data-sitekey="6LfaffsrAAAAAFD2-bNrYWkEp2D2esUfmDf1l4TA" id="reviewRecaptcha"></div>
+                                    </div>
+                                    <div class="invalid-feedback" id="reviewRecaptchaError" style="display: none; color: #dc3545; margin-top: 0.5rem;"></div>
+                                    <small class="text-muted">Note: For demonstration purposes, you can use any reCAPTCHA site key or complete the challenge.</small>
                                 </div>
                                 
                                 <!-- Submit button -->
@@ -1917,6 +1926,18 @@
         align-items: center;
         gap: 1rem;
         margin-top: 1.5rem;
+    }
+    
+    /* reCAPTCHA styling for review form */
+    .recaptcha-container {
+        display: flex;
+        justify-content: center;
+        margin: 1rem 0;
+    }
+    
+    .g-recaptcha {
+        transform: scale(0.9);
+        transform-origin: 0 0;
     }
 
     .submit-review-btn {
@@ -3609,6 +3630,9 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- reCAPTCHA Script -->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Image gallery functionality
@@ -5117,6 +5141,25 @@
                 return;
             }
             
+            // Validate reCAPTCHA
+            const recaptchaResponse = grecaptcha.getResponse();
+            const recaptchaError = document.getElementById('reviewRecaptchaError');
+            const recaptchaContainer = document.getElementById('reviewRecaptcha');
+            
+            if (!recaptchaResponse || recaptchaResponse.length === 0) {
+                recaptchaError.textContent = 'Please complete the reCAPTCHA verification';
+                recaptchaError.style.display = 'block';
+                recaptchaContainer.style.border = '2px solid #dc3545';
+                recaptchaContainer.style.borderRadius = '4px';
+                recaptchaContainer.style.padding = '5px';
+                showNotification('Please complete the reCAPTCHA verification', 'error');
+                return;
+            } else {
+                recaptchaError.style.display = 'none';
+                recaptchaContainer.style.border = 'none';
+                recaptchaContainer.style.padding = '0';
+            }
+            
             // Show loading state
             submitBtn.style.display = 'none';
             loadingSpinner.style.display = 'flex';
@@ -5136,6 +5179,9 @@
                 selectedFiles.forEach((file, index) => {
                     formData.append('uploaded_images', file);
                 });
+                
+                // Add reCAPTCHA response
+                formData.append('g-recaptcha-response', recaptchaResponse);
                 
                 const productId = document.getElementById('productId').value;
                 console.log('Submitting form data for product:', productId);
@@ -5174,6 +5220,11 @@
                     
                     ratingText.textContent = 'Click to rate this product';
                     
+                    // Reset reCAPTCHA
+                    if (typeof grecaptcha !== 'undefined') {
+                        grecaptcha.reset();
+                    }
+                    
                     // Reload reviews after a short delay
                     setTimeout(() => {
                         location.reload();
@@ -5194,6 +5245,10 @@
                 console.error('Error submitting review:', error);
                 showNotification('Failed to submit review. Please try again.', 'error');
             } finally {
+                // Reset reCAPTCHA on error
+                if (typeof grecaptcha !== 'undefined') {
+                    grecaptcha.reset();
+                }
                 submitBtn.style.display = 'flex';
                 loadingSpinner.style.display = 'none';
             }

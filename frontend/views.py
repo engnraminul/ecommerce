@@ -1200,6 +1200,33 @@ def submit_review(request, product_id):
         if not request.user.is_authenticated and not guest_name:
             return JsonResponse({'success': False, 'errors': {'guest_name': 'Name is required for guest reviews'}}, status=400)
         
+        # Verify reCAPTCHA
+        recaptcha_response = request.POST.get('g-recaptcha-response')
+        if not recaptcha_response:
+            return JsonResponse({'success': False, 'errors': {'recaptcha': 'Please complete the reCAPTCHA verification'}}, status=400)
+        
+        # Verify reCAPTCHA with Google
+        import requests
+        recaptcha_secret = '6LfafvsrAAAAABFPZ6_your_secret_key_here'  # Replace with your actual secret key
+        recaptcha_verify_url = 'https://www.google.com/recaptcha/api/siteverify'
+        
+        recaptcha_data = {
+            'secret': recaptcha_secret,
+            'response': recaptcha_response
+        }
+        
+        try:
+            recaptcha_result = requests.post(recaptcha_verify_url, data=recaptcha_data, timeout=5)
+            recaptcha_json = recaptcha_result.json()
+            
+            if not recaptcha_json.get('success'):
+                return JsonResponse({'success': False, 'errors': {'recaptcha': 'reCAPTCHA verification failed. Please try again.'}}, status=400)
+        except Exception as recaptcha_error:
+            print(f"reCAPTCHA verification error: {recaptcha_error}")
+            # In development, you might want to allow this to pass
+            # For production, uncomment the line below:
+            # return JsonResponse({'success': False, 'errors': {'recaptcha': 'reCAPTCHA verification failed'}}, status=400)
+        
         # Check if authenticated user has already reviewed this product
         if request.user.is_authenticated:
             if Review.objects.filter(user=request.user, product=product).exists():

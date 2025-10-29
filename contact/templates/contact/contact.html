@@ -4,6 +4,10 @@
 {% block page_title %}Contact Us{% endblock %}
 
 {% block extra_css %}
+<!-- Leaflet CSS for satellite map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
 <style>
     /* Contact Page Styles with Professional Color Scheme */
     .contact-hero {
@@ -374,8 +378,11 @@
         }
         
         .contact-info-item {
-            flex-direction: column;
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
         }
         
         .contact-info-item i {
@@ -472,7 +479,7 @@
                                                 Phone Number <span class="text-danger">*</span>
                                             </label>
                                             <input type="tel" class="form-control" id="phone" name="phone" 
-                                                   placeholder="+1 (555) 123-4567" required>
+                                                   placeholder="01777173040" minlength="11" required>
                                             <div class="invalid-feedback"></div>
                                         </div>
                                         <div class="col-md-6 mb-3">
@@ -571,9 +578,9 @@
                                         <div class="contact-info-content">
                                             <strong style="color: var(--dark-color);">Phone</strong><br>
                                             <small class="text-muted">
-                                                <a href="tel:{{ contact_settings.phone|default:'+1 (555) 123-4567' }}" 
+                                                <a href="tel:{{ contact_settings.phone|default:'01777173040' }}" 
                                                    style="color: var(--primary-color); text-decoration: none;">
-                                                    {{ contact_settings.phone|default:"+1 (555) 123-4567" }}
+                                                    {{ contact_settings.phone|default:"01777173040" }}
                                                 </a>
                                             </small>
                                         </div>
@@ -652,32 +659,18 @@
             <div class="col-lg-10">
                 <h2 class="text-center mb-4" style="color: var(--primary-color); font-weight: 700;">Find Us</h2>
                 <div class="map-container">
-                    {% if contact_settings.map_embed_url %}
-                        <iframe 
-                            src="{{ contact_settings.map_embed_url }}"
-                            width="100%" 
-                            height="400" 
-                            style="border:0;" 
-                            allowfullscreen="" 
-                            loading="lazy" 
-                            referrerpolicy="no-referrer-when-downgrade">
-                        </iframe>
-                    {% else %}
-                        <!-- Default map - Dhaka, Bangladesh -->
-                        <iframe 
-                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d233668.38703692633!2d90.25487287832018!3d23.78097861802584!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755b8b087026b81%3A0x8fa563bbdd5904c2!2sDhaka%2C%20Bangladesh!5e0!3m2!1sen!2sus!4v1698765123456!5m2!1sen!2sus"
-                            width="100%" 
-                            height="400" 
-                            style="border:0;" 
-                            allowfullscreen="" 
-                            loading="lazy" 
-                            referrerpolicy="no-referrer-when-downgrade">
-                        </iframe>
+                    {# Use Leaflet with OpenStreetMap for reliable street map display #}
+                    <div id="street-map" style="width: 100%; height: 400px;"></div>
+                </div>
+                <div class="text-center mt-2 small text-muted">
+                    📍 OpenStreetMap — Location: {{ contact_settings.address|default:"Dhaka, Bangladesh" }}
+                    {% if contact_settings.map_coordinates %}
+                        ({{ contact_settings.map_coordinates }})
                     {% endif %}
                 </div>
                 <div class="text-center mt-4">
                     <p class="text-muted mb-2">{{ contact_settings.additional_info|default:"Visit our location for in-person assistance and support." }}</p>
-                    <a href="https://maps.google.com/?q={{ contact_settings.address|default:'123 Business Street, City, State' }}" 
+                    <a href="https://www.openstreetmap.org/search?query={{ contact_settings.address|urlencode }}" 
                        target="_blank" 
                        class="btn btn-contact"
                        style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); padding: 0.75rem 1.5rem;">
@@ -748,10 +741,54 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Leaflet JS for satellite map -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+
 <!-- reCAPTCHA Script -->
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
 <script>
+// Initialize OpenStreetMap
+document.addEventListener('DOMContentLoaded', function() {
+    // Street Map Initialization
+    {% if contact_settings.map_coordinates %}
+        var coordsStr = '{{ contact_settings.map_coordinates }}';
+        var coords = coordsStr.split(',');
+        var lat = parseFloat(coords[0].trim());
+        var lon = parseFloat(coords[1].trim());
+        
+        // Create map
+        var streetMap = L.map('street-map').setView([lat, lon], 16);
+        
+        // Add OpenStreetMap tiles (Street Map)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
+        }).addTo(streetMap);
+        
+        // Add custom marker with popup
+        var marker = L.marker([lat, lon]).addTo(streetMap);
+        marker.bindPopup('<div style="text-align: center;"><b><img src="{{ site_settings.site_logo }}" alt="{{ site_settings.site_name }}" style="max-height: 20px;"></b><br>{{ contact_settings.address|default:"Visit us here!" }}</div>').openPopup();
+        
+        console.log('Street map initialized at:', lat, lon);
+    {% else %}
+        // Fallback to default Dhaka location
+        var streetMap = L.map('street-map').setView([23.8759, 90.3795], 15);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
+        }).addTo(streetMap);
+        
+        L.marker([23.8759, 90.3795]).addTo(streetMap)
+            .bindPopup('<b>Our Location</b>').openPopup();
+        
+        console.log('Street map initialized with default location');
+    {% endif %}
+});
+
 document.addEventListener('DOMContentLoaded', function() {
     // Character counter for message
     const messageField = document.getElementById('message');
@@ -918,9 +955,9 @@ function validateField(field) {
             if (field.hasAttribute('required') && !value) {
                 isValid = false;
                 errorMessage = 'Phone number is required';
-            } else if (value && !isValidPhone(value)) {
+            } else if (value && value.length < 11) {
                 isValid = false;
-                errorMessage = 'Please enter a valid phone number';
+                errorMessage = 'Phone number must be at least 11 characters';
             }
             break;
             
@@ -1101,13 +1138,6 @@ function resetForm() {
 function isValidEmail(email) {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return regex.test(email);
-}
-
-function isValidPhone(phone) {
-    // Allow various phone number formats
-    const regex = /^[\+]?[1-9][\d]{0,15}$/;
-    const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
-    return regex.test(cleanPhone);
 }
 
 function showAlert(message, type) {
