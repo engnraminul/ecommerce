@@ -1,0 +1,714 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+
+{% block page_title %}Contact Us{% endblock %}
+
+{% block extra_css %}
+<style>
+    .contact-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 4rem 0;
+        text-align: center;
+    }
+    
+    .contact-form-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        padding: 2rem;
+        margin-top: -3rem;
+        position: relative;
+        z-index: 10;
+    }
+    
+    .contact-info-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        height: 100%;
+    }
+    
+    .contact-info-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .contact-info-item i {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.1rem;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .btn-contact {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-contact:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+    
+    .btn-contact:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .file-upload-area {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+    }
+    
+    .file-upload-area:hover {
+        border-color: #667eea;
+        background: #f0f4ff;
+    }
+    
+    .file-upload-area.dragover {
+        border-color: #667eea;
+        background: #e6f0ff;
+        transform: scale(1.02);
+    }
+    
+    .file-info {
+        background: #e8f5e8;
+        border: 1px solid #4caf50;
+        border-radius: 5px;
+        padding: 0.5rem 1rem;
+        margin-top: 1rem;
+        display: none;
+    }
+    
+    .character-counter {
+        font-size: 0.875rem;
+        color: #6c757d;
+        text-align: right;
+        margin-top: 0.25rem;
+    }
+    
+    .character-counter.warning {
+        color: #f57c00;
+    }
+    
+    .character-counter.danger {
+        color: #f44336;
+    }
+    
+    .form-validation-error {
+        border-color: #f44336 !important;
+        box-shadow: 0 0 0 0.2rem rgba(244, 67, 54, 0.25) !important;
+    }
+    
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 15px;
+        z-index: 1000;
+    }
+    
+    .success-animation {
+        text-align: center;
+        padding: 2rem;
+    }
+    
+    .success-animation i {
+        font-size: 4rem;
+        color: #4caf50;
+        animation: bounceIn 1s ease-out;
+    }
+    
+    @keyframes bounceIn {
+        0% { transform: scale(0); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+    }
+    
+    @media (max-width: 768px) {
+        .contact-hero {
+            padding: 2rem 0;
+        }
+        
+        .contact-form-container {
+            margin-top: -1.5rem;
+            padding: 1.5rem;
+        }
+        
+        .contact-info-card {
+            margin-top: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="contact-hero">
+    <div class="container">
+        <h1 class="display-4 fw-bold mb-3">Get in Touch</h1>
+        <p class="lead mb-0">We'd love to hear from you. Send us a message and we'll respond as soon as possible.</p>
+    </div>
+</section>
+
+<!-- Contact Form Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="contact-form-container">
+                    <!-- Success Message -->
+                    <div id="successMessage" class="success-animation" style="display: none;">
+                        <i class="fas fa-check-circle"></i>
+                        <h3 class="mt-3 mb-2">Message Sent Successfully!</h3>
+                        <p class="text-muted">Thank you for contacting us. We'll get back to you within 24 hours.</p>
+                        <button class="btn btn-contact mt-3" onclick="resetForm()">
+                            Send Another Message
+                        </button>
+                    </div>
+                    
+                    <!-- Contact Form -->
+                    <div id="contactFormContainer">
+                        <div class="row">
+                            <div class="col-lg-8">
+                                <h2 class="h4 mb-4">Send us a Message</h2>
+                                
+                                <form id="contactForm" novalidate>
+                                    {% csrf_token %}
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="name" class="form-label">
+                                                Full Name <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="text" class="form-control" id="name" name="name" required>
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="email" class="form-label">
+                                                Email Address <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="email" class="form-control" id="email" name="email" required>
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="phone" class="form-label">Phone Number</label>
+                                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                                   placeholder="+1 (555) 123-4567">
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="subject" class="form-label">
+                                                Subject <span class="text-danger">*</span>
+                                            </label>
+                                            <select class="form-select" id="subject" name="subject" required>
+                                                <option value="">Choose a subject...</option>
+                                                <option value="General Inquiry">General Inquiry</option>
+                                                <option value="Product Support">Product Support</option>
+                                                <option value="Order Issue">Order Issue</option>
+                                                <option value="Billing Question">Billing Question</option>
+                                                <option value="Partnership">Partnership</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="message" class="form-label">
+                                            Message <span class="text-danger">*</span>
+                                        </label>
+                                        <textarea class="form-control" id="message" name="message" rows="5" 
+                                                  placeholder="Please describe your inquiry in detail..." 
+                                                  maxlength="2000" required></textarea>
+                                        <div class="character-counter">
+                                            <span id="messageCount">0</span>/2000 characters
+                                        </div>
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <label class="form-label">Attachment (Optional)</label>
+                                        <div class="file-upload-area" onclick="document.getElementById('attachment').click()">
+                                            <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                                            <p class="mb-1">Click to upload or drag and drop</p>
+                                            <small class="text-muted">PNG, JPG, PDF up to 10MB</small>
+                                            <input type="file" id="attachment" name="attachment" 
+                                                   accept=".png,.jpg,.jpeg,.pdf,.doc,.docx" style="display: none;">
+                                        </div>
+                                        <div class="file-info" id="fileInfo">
+                                            <i class="fas fa-file"></i>
+                                            <span id="fileName"></span>
+                                            <button type="button" class="btn-close float-end" onclick="removeFile()"></button>
+                                        </div>
+                                        <div class="invalid-feedback" id="fileError"></div>
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="privacy" required>
+                                            <label class="form-check-label" for="privacy">
+                                                I agree to the <a href="#" target="_blank">Privacy Policy</a> and 
+                                                <a href="#" target="_blank">Terms of Service</a> 
+                                                <span class="text-danger">*</span>
+                                            </label>
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-contact" id="submitBtn">
+                                            <i class="fas fa-paper-plane me-2"></i>
+                                            Send Message
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                            
+                            <div class="col-lg-4">
+                                <div class="contact-info-card">
+                                    <h3 class="h5 mb-4">Contact Information</h3>
+                                    
+                                    <div class="contact-info-item">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <div>
+                                            <strong>Address</strong><br>
+                                            <small class="text-muted">
+                                                123 Business Street<br>
+                                                Suite 100<br>
+                                                City, State 12345
+                                            </small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="contact-info-item">
+                                        <i class="fas fa-phone"></i>
+                                        <div>
+                                            <strong>Phone</strong><br>
+                                            <small class="text-muted">+1 (555) 123-4567</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="contact-info-item">
+                                        <i class="fas fa-envelope"></i>
+                                        <div>
+                                            <strong>Email</strong><br>
+                                            <small class="text-muted">contact@example.com</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="contact-info-item">
+                                        <i class="fas fa-clock"></i>
+                                        <div>
+                                            <strong>Business Hours</strong><br>
+                                            <small class="text-muted">
+                                                Mon - Fri: 9:00 AM - 6:00 PM<br>
+                                                Sat: 10:00 AM - 4:00 PM<br>
+                                                Sun: Closed
+                                            </small>
+                                        </div>
+                                    </div>
+                                    
+                                    <hr class="my-4">
+                                    
+                                    <h4 class="h6 mb-3">Follow Us</h4>
+                                    <div class="d-flex gap-3">
+                                        <a href="#" class="text-decoration-none">
+                                            <i class="fab fa-facebook fa-lg"></i>
+                                        </a>
+                                        <a href="#" class="text-decoration-none">
+                                            <i class="fab fa-twitter fa-lg"></i>
+                                        </a>
+                                        <a href="#" class="text-decoration-none">
+                                            <i class="fab fa-linkedin fa-lg"></i>
+                                        </a>
+                                        <a href="#" class="text-decoration-none">
+                                            <i class="fab fa-instagram fa-lg"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Loading Overlay -->
+                    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+                            <p class="mt-3 mb-0">Sending your message...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h2 class="text-center mb-5">Frequently Asked Questions</h2>
+                
+                <div class="accordion" id="contactFAQ">
+                    <div class="accordion-item">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#faq1">
+                                How quickly will I receive a response?
+                            </button>
+                        </h3>
+                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#contactFAQ">
+                            <div class="accordion-body">
+                                We typically respond to all inquiries within 24 hours during business days. 
+                                For urgent matters, please call us directly.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#faq2">
+                                What information should I include in my message?
+                            </button>
+                        </h3>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#contactFAQ">
+                            <div class="accordion-body">
+                                Please include as much detail as possible about your inquiry, including any relevant 
+                                order numbers, product names, or specific issues you're experiencing.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#faq3">
+                                Can I attach files to my message?
+                            </button>
+                        </h3>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#contactFAQ">
+                            <div class="accordion-body">
+                                Yes, you can attach files up to 10MB in size. We accept PNG, JPG, PDF, DOC, and DOCX formats.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Character counter for message
+    $('#message').on('input', function() {
+        const length = $(this).val().length;
+        const counter = $('#messageCount');
+        counter.text(length);
+        
+        if (length > 1800) {
+            counter.parent().addClass('danger');
+        } else if (length > 1500) {
+            counter.parent().addClass('warning').removeClass('danger');
+        } else {
+            counter.parent().removeClass('warning danger');
+        }
+    });
+    
+    // File upload handling
+    $('#attachment').change(function() {
+        handleFileSelect(this.files[0]);
+    });
+    
+    // Drag and drop handling
+    $('.file-upload-area').on('dragover', function(e) {
+        e.preventDefault();
+        $(this).addClass('dragover');
+    });
+    
+    $('.file-upload-area').on('dragleave', function(e) {
+        e.preventDefault();
+        $(this).removeClass('dragover');
+    });
+    
+    $('.file-upload-area').on('drop', function(e) {
+        e.preventDefault();
+        $(this).removeClass('dragover');
+        
+        const files = e.originalEvent.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileSelect(files[0]);
+        }
+    });
+    
+    // Form submission
+    $('#contactForm').submit(function(e) {
+        e.preventDefault();
+        
+        if (validateForm()) {
+            submitForm();
+        }
+    });
+    
+    // Real-time validation
+    $('#contactForm input, #contactForm select, #contactForm textarea').on('blur', function() {
+        validateField($(this));
+    });
+});
+
+function handleFileSelect(file) {
+    if (!file) return;
+    
+    // Validate file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
+        showFileError('File size must be less than 10MB');
+        return;
+    }
+    
+    // Validate file type
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf', 
+                         'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    
+    if (!allowedTypes.includes(file.type)) {
+        showFileError('Please select a valid file type (PNG, JPG, PDF, DOC, DOCX)');
+        return;
+    }
+    
+    // Show file info
+    $('#fileName').text(file.name);
+    $('#fileInfo').show();
+    $('#fileError').hide();
+    
+    // Update the file input
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    document.getElementById('attachment').files = dataTransfer.files;
+}
+
+function removeFile() {
+    $('#attachment').val('');
+    $('#fileInfo').hide();
+    $('#fileError').hide();
+}
+
+function showFileError(message) {
+    $('#fileError').text(message).show();
+    $('#fileInfo').hide();
+    $('#attachment').val('');
+}
+
+function validateField(field) {
+    const value = field.val().trim();
+    const fieldName = field.attr('name');
+    let isValid = true;
+    let errorMessage = '';
+    
+    // Reset previous validation
+    field.removeClass('form-validation-error');
+    field.siblings('.invalid-feedback').text('');
+    
+    // Required field validation
+    if (field.prop('required') && !value) {
+        isValid = false;
+        errorMessage = 'This field is required';
+    }
+    
+    // Specific field validations
+    switch (fieldName) {
+        case 'name':
+            if (value && value.length < 2) {
+                isValid = false;
+                errorMessage = 'Name must be at least 2 characters';
+            }
+            break;
+            
+        case 'email':
+            if (value && !isValidEmail(value)) {
+                isValid = false;
+                errorMessage = 'Please enter a valid email address';
+            }
+            break;
+            
+        case 'phone':
+            if (value && !isValidPhone(value)) {
+                isValid = false;
+                errorMessage = 'Please enter a valid phone number';
+            }
+            break;
+            
+        case 'message':
+            if (value && value.length < 10) {
+                isValid = false;
+                errorMessage = 'Message must be at least 10 characters';
+            }
+            break;
+    }
+    
+    // Special validation for privacy checkbox
+    if (fieldName === 'privacy' && !field.is(':checked')) {
+        isValid = false;
+        errorMessage = 'You must agree to the privacy policy';
+    }
+    
+    if (!isValid) {
+        field.addClass('form-validation-error');
+        field.siblings('.invalid-feedback').text(errorMessage);
+    }
+    
+    return isValid;
+}
+
+function validateForm() {
+    let isValid = true;
+    
+    // Validate all required fields
+    $('#contactForm [required]').each(function() {
+        if (!validateField($(this))) {
+            isValid = false;
+        }
+    });
+    
+    return isValid;
+}
+
+function submitForm() {
+    const submitBtn = $('#submitBtn');
+    const form = $('#contactForm')[0];
+    const formData = new FormData(form);
+    
+    // Show loading state
+    submitBtn.prop('disabled', true);
+    submitBtn.html('<i class="fas fa-spinner fa-spin me-2"></i>Sending...');
+    $('#loadingOverlay').show();
+    
+    // Submit form
+    $.ajax({
+        url: '/contact/api/submit/',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            // Show success message
+            $('#contactFormContainer').hide();
+            $('#successMessage').show();
+            $('#loadingOverlay').hide();
+            
+            // Track success event (if analytics is available)
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'contact_form_submit', {
+                    'event_category': 'engagement',
+                    'event_label': 'contact_page'
+                });
+            }
+        },
+        error: function(xhr) {
+            $('#loadingOverlay').hide();
+            
+            if (xhr.status === 400) {
+                // Handle validation errors
+                const errors = xhr.responseJSON;
+                Object.keys(errors).forEach(function(field) {
+                    const fieldElement = $(`[name="${field}"]`);
+                    fieldElement.addClass('form-validation-error');
+                    fieldElement.siblings('.invalid-feedback').text(errors[field][0]);
+                });
+            } else if (xhr.status === 429) {
+                showAlert('You are sending messages too frequently. Please wait a moment and try again.', 'warning');
+            } else {
+                showAlert('There was an error sending your message. Please try again.', 'danger');
+            }
+            
+            // Reset button
+            submitBtn.prop('disabled', false);
+            submitBtn.html('<i class="fas fa-paper-plane me-2"></i>Send Message');
+        }
+    });
+}
+
+function resetForm() {
+    $('#contactForm')[0].reset();
+    $('#fileInfo').hide();
+    $('#messageCount').text('0');
+    $('.form-validation-error').removeClass('form-validation-error');
+    $('.invalid-feedback').text('');
+    $('#successMessage').hide();
+    $('#contactFormContainer').show();
+    
+    // Reset submit button
+    const submitBtn = $('#submitBtn');
+    submitBtn.prop('disabled', false);
+    submitBtn.html('<i class="fas fa-paper-plane me-2"></i>Send Message');
+}
+
+function isValidEmail(email) {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+}
+
+function isValidPhone(phone) {
+    // Allow various phone number formats
+    const regex = /^[\+]?[1-9][\d]{0,15}$/;
+    const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+    return regex.test(cleanPhone);
+}
+
+function showAlert(message, type) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // Remove existing alerts
+    $('.alert').remove();
+    
+    // Add new alert
+    $('.contact-form-container').prepend(alertHtml);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        $('.alert').alert('close');
+    }, 5000);
+}
+</script>
+{% endblock %}

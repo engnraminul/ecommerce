@@ -3854,6 +3854,20 @@ def dashboard_blocklist(request):
     return render(request, 'dashboard/blocklist.html', context)
 
 
+@staff_member_required
+def dashboard_contacts(request):
+    """Contact management dashboard view"""
+    context = {
+        'active_page': 'contacts',
+        'page_title': 'Contact Management',
+        'breadcrumbs': [
+            {'name': 'Dashboard', 'url': '/mb-admin/'},
+            {'name': 'Contacts', 'url': '/mb-admin/contacts/'},
+        ]
+    }
+    return render(request, 'dashboard/contacts.html', context)
+
+
 @api_view(['GET'])
 @permission_classes([IsStaffUser])
 def blocklist_dashboard(request):
@@ -4181,3 +4195,17 @@ def delete_review_image(request, image_id):
     
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+
+
+@staff_member_required
+def dashboard_contacts(request):
+    """Professional contact management dashboard view"""
+    context = {
+        'active_page': 'contacts',
+        'page_title': 'Contact Management',
+        'breadcrumbs': [
+            {'name': 'Dashboard', 'url': reverse('dashboard:home')},
+            {'name': 'Contacts', 'url': reverse('dashboard:contacts')},
+        ]
+    }
+    return render(request, 'dashboard/contacts.html', context)

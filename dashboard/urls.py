@@ -96,6 +96,7 @@ urlpatterns = [
     path('api-docs/', views.dashboard_api_docs, name='api_docs'),
     path('pages/', views.dashboard_pages, name='pages'),
     path('blocklist/', views.dashboard_blocklist, name='blocklist'),
+    path('contacts/', views.dashboard_contacts, name='contacts'),
     
     # Reviews Management URLs
     path('reviews/', views.reviews_dashboard, name='reviews'),

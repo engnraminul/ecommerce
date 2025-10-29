@@ -789,19 +789,41 @@ def about(request):
 
 
 def contact(request):
-    """Contact page."""
-    if request.method == 'POST':
-        # Handle contact form submission
-        name = request.POST.get('name')
-        email = request.POST.get('email')
-        subject = request.POST.get('subject')
-        message = request.POST.get('message')
-        
-        # Here you would typically send an email or save to database
-        messages.success(request, 'Thank you for your message! We will get back to you soon.')
-        return redirect('frontend:contact')
+    """Professional contact page with database integration."""
+    from dashboard.models import Contact, DashboardSetting
     
-    return render(request, 'frontend/contact.html')
+    # Get contact settings for display
+    contact_settings = {}
+    contact_setting = DashboardSetting.objects.filter(key='contact_details').first()
+    if contact_setting:
+        contact_settings = contact_setting.value
+    
+    # Default contact settings if not found
+    default_settings = {
+        'business_name': 'Your Business Name',
+        'address': '123 Main Street, City, Country',
+        'phone': '+1234567890',
+        'email': 'contact@yourbusiness.com',
+        'business_hours': 'Mon-Fri: 9AM-6PM',
+        'social_media': {
+            'facebook': '',
+            'twitter': '',
+            'instagram': '',
+            'linkedin': ''
+        },
+        'map_embed_url': '',
+        'additional_info': ''
+    }
+    
+    # Merge with defaults
+    final_settings = {**default_settings, **contact_settings}
+    
+    context = {
+        'contact_settings': final_settings,
+        'site_settings': request.site_settings if hasattr(request, 'site_settings') else {},
+    }
+    
+    return render(request, 'frontend/contact.html', context)
 
 
 def reviews(request):

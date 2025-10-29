@@ -284,7 +284,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{% url 'frontend:contact' %}" class="nav-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}">
+                            <a href="{% url 'contact_app:contact_page' %}" class="nav-link {% if 'contact' in request.path %}active{% endif %}">
                                 Contact
                             </a>
                         </li>
@@ -348,7 +348,7 @@
                     <a href="{% url 'frontend:about' %}" class="mobile-nav-link">
                         <i class="fas fa-info-circle"></i> About
                     </a>
-                    <a href="{% url 'frontend:contact' %}" class="mobile-nav-link">
+                    <a href="{% url 'contact_app:contact_page' %}" class="mobile-nav-link">
                         <i class="fas fa-envelope"></i> Contact
                     </a>
                     

@@ -248,6 +248,11 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{% url 'dashboard:contacts' %}" class="{% if active_page == 'contacts' %}active{% endif %}">
+                        <i class="fas fa-envelope"></i> Contacts
+                    </a>
+                </li>
+                <li>
                     <a href="{% url 'dashboard:pages' %}" class="{% if active_page == 'pages' %}active{% endif %}">
                         <i class="fas fa-file-alt"></i> Pages
                     </a>
@@ -279,7 +284,7 @@
                 </li>
                 <li>
                     <a href="{% url 'dashboard:email_settings_index' %}" class="{% if active_page == 'email_settings' %}active{% endif %}">
-                        <i class="fas fa-envelope"></i> Email Settings
+                        <i class="fas fa-mail-bulk"></i> Email Settings
                     </a>
                 </li>
                 <li>

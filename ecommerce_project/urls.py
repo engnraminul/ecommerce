@@ -37,6 +37,7 @@ api_urlpatterns = [
     path('cart/', include('cart.urls')),
     path('orders/', include('orders.urls')),
     path('incomplete-orders/', include('incomplete_orders.urls')),
+    path('contact/', include('contact.urls')),
     
     # Checkout customization public API
     path('checkout-customization/', get_checkout_customization, name='get_checkout_customization'),
@@ -60,6 +61,9 @@ urlpatterns = [
     
     # Pages URLs (frontend views)
     path('pages/', include(('pages.urls', 'pages'), namespace='pages_frontend')),
+    
+    # Contact URLs
+    path('contact/', include(('contact.urls', 'contact'), namespace='contact_app')),
 
     path('mb-admin/', include('dashboard.urls')),  # Dashboard URLs
 ]
