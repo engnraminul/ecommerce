@@ -5,68 +5,133 @@
 
 {% block extra_css %}
 <style>
+    /* Contact Page Styles with Professional Color Scheme */
     .contact-hero {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 4rem 0;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--dark-color) 100%);
+        color: var(--white);
+        padding: 5rem 0;
         text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .contact-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.05)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .contact-hero-content {
+        position: relative;
+        z-index: 2;
     }
     
     .contact-form-container {
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        padding: 2rem;
-        margin-top: -3rem;
+        background: var(--white);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-lg);
+        padding: 3rem;
+        margin-top: -4rem;
         position: relative;
         z-index: 10;
+        border: 1px solid var(--border-color);
     }
     
     .contact-info-card {
-        background: #f8f9fa;
-        border-radius: 10px;
-        padding: 1.5rem;
+        background: var(--light-color);
+        border-radius: var(--border-radius);
+        padding: 2rem;
         height: 100%;
+        border: 1px solid var(--border-color);
+        transition: var(--transition);
+    }
+    
+    .contact-info-card:hover {
+        box-shadow: var(--shadow);
+        transform: translateY(-2px);
     }
     
     .contact-info-item {
         display: flex;
-        align-items: center;
-        margin-bottom: 1rem;
+        align-items: flex-start;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background: var(--white);
+        border-radius: var(--border-radius);
+        transition: var(--transition);
+    }
+    
+    .contact-info-item:hover {
+        transform: translateX(5px);
+        box-shadow: var(--shadow);
     }
     
     .contact-info-item i {
-        width: 40px;
-        height: 40px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: var(--white);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         margin-right: 1rem;
-        font-size: 1.1rem;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+        box-shadow: var(--shadow);
+    }
+    
+    .contact-info-content {
+        flex: 1;
+    }
+    
+    .form-control {
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 0.75rem 1rem;
+        transition: var(--transition);
+        font-size: 1rem;
     }
     
     .form-control:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(147, 0, 0, 0.15);
+        outline: none;
+    }
+    
+    .form-select {
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 0.75rem 1rem;
+        transition: var(--transition);
+    }
+    
+    .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(147, 0, 0, 0.15);
     }
     
     .btn-contact {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--dark-color) 100%);
         border: none;
-        color: white;
-        padding: 0.75rem 2rem;
-        border-radius: 25px;
+        color: var(--white);
+        padding: 1rem 2.5rem;
+        border-radius: var(--border-radius);
         font-weight: 600;
-        transition: all 0.3s ease;
+        transition: var(--transition);
+        font-size: 1.1rem;
+        box-shadow: var(--shadow);
     }
     
     .btn-contact:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        color: white;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(147, 0, 0, 0.3);
+        color: var(--white);
     }
     
     .btn-contact:disabled {
@@ -76,53 +141,55 @@
     }
     
     .file-upload-area {
-        border: 2px dashed #dee2e6;
-        border-radius: 8px;
-        padding: 2rem;
+        border: 2px dashed var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 2.5rem;
         text-align: center;
         cursor: pointer;
-        transition: all 0.3s ease;
-        background: #f8f9fa;
+        transition: var(--transition);
+        background: var(--light-color);
     }
     
     .file-upload-area:hover {
-        border-color: #667eea;
-        background: #f0f4ff;
+        border-color: var(--primary-color);
+        background: rgba(147, 0, 0, 0.05);
+        transform: scale(1.01);
     }
     
     .file-upload-area.dragover {
-        border-color: #667eea;
-        background: #e6f0ff;
+        border-color: var(--primary-color);
+        background: rgba(147, 0, 0, 0.1);
         transform: scale(1.02);
     }
     
     .file-info {
-        background: #e8f5e8;
-        border: 1px solid #4caf50;
-        border-radius: 5px;
-        padding: 0.5rem 1rem;
+        background: rgba(5, 150, 105, 0.1);
+        border: 1px solid var(--success-color);
+        border-radius: var(--border-radius);
+        padding: 0.75rem 1rem;
         margin-top: 1rem;
         display: none;
     }
     
     .character-counter {
         font-size: 0.875rem;
-        color: #6c757d;
+        color: var(--secondary-color);
         text-align: right;
         margin-top: 0.25rem;
+        font-weight: 500;
     }
     
     .character-counter.warning {
-        color: #f57c00;
+        color: var(--warning-color);
     }
     
     .character-counter.danger {
-        color: #f44336;
+        color: var(--danger-color);
     }
     
     .form-validation-error {
-        border-color: #f44336 !important;
-        box-shadow: 0 0 0 0.2rem rgba(244, 67, 54, 0.25) !important;
+        border-color: var(--danger-color) !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 38, 38, 0.15) !important;
     }
     
     .loading-overlay {
@@ -131,43 +198,172 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(255, 255, 255, 0.9);
+        background: rgba(255, 255, 255, 0.95);
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 15px;
+        border-radius: var(--border-radius);
         z-index: 1000;
+        backdrop-filter: blur(2px);
     }
     
     .success-animation {
         text-align: center;
-        padding: 2rem;
+        padding: 3rem;
     }
     
     .success-animation i {
-        font-size: 4rem;
-        color: #4caf50;
+        font-size: 5rem;
+        color: var(--success-color);
         animation: bounceIn 1s ease-out;
     }
     
+    .map-container {
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        height: 400px;
+        border: 1px solid var(--border-color);
+    }
+    
+    .map-container iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+    
+    .social-links {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+    
+    .social-links a {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: var(--white);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        transition: var(--transition);
+        box-shadow: var(--shadow);
+    }
+    
+    .social-links a:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(147, 0, 0, 0.3);
+        color: var(--white);
+    }
+    
+    .faq-section {
+        background: var(--light-color);
+    }
+    
+    .accordion-button {
+        background: var(--white);
+        border: 1px solid var(--border-color);
+        color: var(--dark-color);
+        font-weight: 600;
+    }
+    
+    .accordion-button:not(.collapsed) {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: var(--white);
+        box-shadow: none;
+    }
+    
+    .accordion-button:focus {
+        box-shadow: 0 0 0 0.2rem rgba(147, 0, 0, 0.15);
+    }
+    
+    .accordion-item {
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin: 3rem 0;
+    }
+    
+    .stat-card {
+        background: var(--white);
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        text-align: center;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+        transition: var(--transition);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .stat-card i {
+        font-size: 3rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+    
+    .stat-card h3 {
+        color: var(--primary-color);
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-card p {
+        color: var(--secondary-color);
+        margin: 0;
+        font-weight: 500;
+    }
+    
     @keyframes bounceIn {
-        0% { transform: scale(0); }
-        50% { transform: scale(1.2); }
-        100% { transform: scale(1); }
+        0% { transform: scale(0) rotate(0deg); }
+        50% { transform: scale(1.2) rotate(180deg); }
+        100% { transform: scale(1) rotate(360deg); }
     }
     
     @media (max-width: 768px) {
         .contact-hero {
-            padding: 2rem 0;
+            padding: 3rem 0;
         }
         
         .contact-form-container {
-            margin-top: -1.5rem;
-            padding: 1.5rem;
+            margin-top: -2rem;
+            padding: 2rem;
         }
         
         .contact-info-card {
             margin-top: 2rem;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        
+        .stat-card {
+            padding: 1.5rem;
+        }
+        
+        .contact-info-item {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .contact-info-item i {
+            margin-right: 0;
+            margin-bottom: 1rem;
         }
     }
 </style>
@@ -177,8 +373,38 @@
 <!-- Hero Section -->
 <section class="contact-hero">
     <div class="container">
-        <h1 class="display-4 fw-bold mb-3">Get in Touch</h1>
-        <p class="lead mb-0">We'd love to hear from you. Send us a message and we'll respond as soon as possible.</p>
+        <div class="contact-hero-content">
+            <h1 class="display-4 fw-bold mb-3">Get in Touch</h1>
+            <p class="lead mb-0">We'd love to hear from you. Send us a message and we'll respond as soon as possible.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Statistics Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fas fa-clock"></i>
+                <h3>24hr</h3>
+                <p>Response Time</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-users"></i>
+                <h3>1000+</h3>
+                <p>Happy Customers</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-headset"></i>
+                <h3>24/7</h3>
+                <p>Support Available</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-star"></i>
+                <h3>4.9</h3>
+                <p>Customer Rating</p>
+            </div>
+        </div>
     </div>
 </section>
 
@@ -300,64 +526,78 @@
                             
                             <div class="col-lg-4">
                                 <div class="contact-info-card">
-                                    <h3 class="h5 mb-4">Contact Information</h3>
+                                    <h3 class="h5 mb-4 text-center" style="color: var(--primary-color); font-weight: 700;">Contact Information</h3>
                                     
                                     <div class="contact-info-item">
                                         <i class="fas fa-map-marker-alt"></i>
-                                        <div>
-                                            <strong>Address</strong><br>
+                                        <div class="contact-info-content">
+                                            <strong style="color: var(--dark-color);">Address</strong><br>
                                             <small class="text-muted">
-                                                123 Business Street<br>
-                                                Suite 100<br>
-                                                City, State 12345
+                                                {{ contact_settings.address|default:"123 Business Street, Suite 100, City, State 12345" }}
                                             </small>
                                         </div>
                                     </div>
                                     
                                     <div class="contact-info-item">
                                         <i class="fas fa-phone"></i>
-                                        <div>
-                                            <strong>Phone</strong><br>
-                                            <small class="text-muted">+1 (555) 123-4567</small>
+                                        <div class="contact-info-content">
+                                            <strong style="color: var(--dark-color);">Phone</strong><br>
+                                            <small class="text-muted">
+                                                <a href="tel:{{ contact_settings.phone|default:'+1 (555) 123-4567' }}" 
+                                                   style="color: var(--primary-color); text-decoration: none;">
+                                                    {{ contact_settings.phone|default:"+1 (555) 123-4567" }}
+                                                </a>
+                                            </small>
                                         </div>
                                     </div>
                                     
                                     <div class="contact-info-item">
                                         <i class="fas fa-envelope"></i>
-                                        <div>
-                                            <strong>Email</strong><br>
-                                            <small class="text-muted">contact@example.com</small>
+                                        <div class="contact-info-content">
+                                            <strong style="color: var(--dark-color);">Email</strong><br>
+                                            <small class="text-muted">
+                                                <a href="mailto:{{ contact_settings.email|default:'contact@example.com' }}" 
+                                                   style="color: var(--primary-color); text-decoration: none;">
+                                                    {{ contact_settings.email|default:"contact@example.com" }}
+                                                </a>
+                                            </small>
                                         </div>
                                     </div>
                                     
                                     <div class="contact-info-item">
                                         <i class="fas fa-clock"></i>
-                                        <div>
-                                            <strong>Business Hours</strong><br>
+                                        <div class="contact-info-content">
+                                            <strong style="color: var(--dark-color);">Business Hours</strong><br>
                                             <small class="text-muted">
-                                                Mon - Fri: 9:00 AM - 6:00 PM<br>
-                                                Sat: 10:00 AM - 4:00 PM<br>
-                                                Sun: Closed
+                                                {{ contact_settings.business_hours|default:"Mon - Fri: 9:00 AM - 6:00 PM<br>Sat: 10:00 AM - 4:00 PM<br>Sun: Closed"|safe }}
                                             </small>
                                         </div>
                                     </div>
                                     
                                     <hr class="my-4">
                                     
-                                    <h4 class="h6 mb-3">Follow Us</h4>
-                                    <div class="d-flex gap-3">
-                                        <a href="#" class="text-decoration-none">
-                                            <i class="fab fa-facebook fa-lg"></i>
-                                        </a>
-                                        <a href="#" class="text-decoration-none">
-                                            <i class="fab fa-twitter fa-lg"></i>
-                                        </a>
-                                        <a href="#" class="text-decoration-none">
-                                            <i class="fab fa-linkedin fa-lg"></i>
-                                        </a>
-                                        <a href="#" class="text-decoration-none">
-                                            <i class="fab fa-instagram fa-lg"></i>
-                                        </a>
+                                    <h4 class="h6 mb-3 text-center" style="color: var(--primary-color); font-weight: 600;">Follow Us</h4>
+                                    <div class="social-links justify-content-center">
+                                        {% if contact_settings.social_media.facebook %}
+                                            <a href="{{ contact_settings.social_media.facebook }}" target="_blank" title="Facebook">
+                                                <i class="fab fa-facebook"></i>
+                                            </a>
+                                        {% endif %}
+                                        {% if contact_settings.social_media.twitter %}
+                                            <a href="{{ contact_settings.social_media.twitter }}" target="_blank" title="Twitter">
+                                                <i class="fab fa-twitter"></i>
+                                            </a>
+                                        {% endif %}
+                                        {% if contact_settings.social_media.linkedin %}
+                                            <a href="{{ contact_settings.social_media.linkedin }}" target="_blank" title="LinkedIn">
+                                                <i class="fab fa-linkedin"></i>
+                                            </a>
+                                        {% endif %}
+                                        {% if contact_settings.social_media.instagram %}
+                                            <a href="{{ contact_settings.social_media.instagram }}" target="_blank" title="Instagram">
+                                                <i class="fab fa-instagram"></i>
+                                            </a>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -367,8 +607,8 @@
                     <!-- Loading Overlay -->
                     <div id="loadingOverlay" class="loading-overlay" style="display: none;">
                         <div class="text-center">
-                            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
-                            <p class="mt-3 mb-0">Sending your message...</p>
+                            <div class="spinner-border" style="width: 3rem; height: 3rem; color: var(--primary-color);"></div>
+                            <p class="mt-3 mb-0" style="color: var(--dark-color); font-weight: 600;">Sending your message...</p>
                         </div>
                     </div>
                 </div>
@@ -377,12 +617,48 @@
     </div>
 </section>
 
-<!-- FAQ Section -->
+<!-- Map Section -->
 <section class="py-5 bg-light">
     <div class="container">
         <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <h2 class="text-center mb-4" style="color: var(--primary-color); font-weight: 700;">Find Us</h2>
+                <div class="map-container">
+                    {% if contact_settings.map_embed_url %}
+                        <iframe 
+                            src="{{ contact_settings.map_embed_url }}"
+                            loading="lazy" 
+                            referrerpolicy="no-referrer-when-downgrade">
+                        </iframe>
+                    {% else %}
+                        <!-- Default map - Replace with your location -->
+                        <iframe 
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3651.9085156457817!2d90.41344501498316!3d23.750781994590357!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755b8a5a7e25631%3A0x9c8cb443b8a1b9ec!2sDhaka%2C%20Bangladesh!5e0!3m2!1sen!2sus!4v1698765432109!5m2!1sen!2sus"
+                            loading="lazy" 
+                            referrerpolicy="no-referrer-when-downgrade">
+                        </iframe>
+                    {% endif %}
+                </div>
+                <div class="text-center mt-4">
+                    <p class="text-muted mb-2">{{ contact_settings.additional_info|default:"Visit our location for in-person assistance and support." }}</p>
+                    <a href="https://maps.google.com/?q={{ contact_settings.address|default:'123 Business Street, City, State' }}" 
+                       target="_blank" 
+                       class="btn btn-contact"
+                       style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); padding: 0.75rem 1.5rem;">
+                        <i class="fas fa-directions me-2"></i>Get Directions
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="py-5 faq-section">
+    <div class="container">
+        <div class="row justify-content-center">
             <div class="col-lg-8">
-                <h2 class="text-center mb-5">Frequently Asked Questions</h2>
+                <h2 class="text-center mb-5" style="color: var(--primary-color); font-weight: 700;">Frequently Asked Questions</h2>
                 
                 <div class="accordion" id="contactFAQ">
                     <div class="accordion-item">
@@ -437,50 +713,62 @@
 
 {% block extra_js %}
 <script>
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', function() {
     // Character counter for message
-    $('#message').on('input', function() {
-        const length = $(this).val().length;
-        const counter = $('#messageCount');
-        counter.text(length);
+    const messageField = document.getElementById('message');
+    const messageCount = document.getElementById('messageCount');
+    
+    messageField.addEventListener('input', function() {
+        const length = this.value.length;
+        messageCount.textContent = length;
+        
+        const counter = messageCount.parentElement;
+        counter.classList.remove('warning', 'danger');
         
         if (length > 1800) {
-            counter.parent().addClass('danger');
+            counter.classList.add('danger');
         } else if (length > 1500) {
-            counter.parent().addClass('warning').removeClass('danger');
-        } else {
-            counter.parent().removeClass('warning danger');
+            counter.classList.add('warning');
         }
     });
     
     // File upload handling
-    $('#attachment').change(function() {
-        handleFileSelect(this.files[0]);
+    const attachmentInput = document.getElementById('attachment');
+    const fileUploadArea = document.querySelector('.file-upload-area');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileError = document.getElementById('fileError');
+    
+    attachmentInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            handleFileSelect(this.files[0]);
+        }
     });
     
     // Drag and drop handling
-    $('.file-upload-area').on('dragover', function(e) {
+    fileUploadArea.addEventListener('dragover', function(e) {
         e.preventDefault();
-        $(this).addClass('dragover');
+        this.classList.add('dragover');
     });
     
-    $('.file-upload-area').on('dragleave', function(e) {
+    fileUploadArea.addEventListener('dragleave', function(e) {
         e.preventDefault();
-        $(this).removeClass('dragover');
+        this.classList.remove('dragover');
     });
     
-    $('.file-upload-area').on('drop', function(e) {
+    fileUploadArea.addEventListener('drop', function(e) {
         e.preventDefault();
-        $(this).removeClass('dragover');
+        this.classList.remove('dragover');
         
-        const files = e.originalEvent.dataTransfer.files;
+        const files = e.dataTransfer.files;
         if (files.length > 0) {
             handleFileSelect(files[0]);
         }
     });
     
     // Form submission
-    $('#contactForm').submit(function(e) {
+    const contactForm = document.getElementById('contactForm');
+    contactForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
         if (validateForm()) {
@@ -489,13 +777,21 @@ $(document).ready(function() {
     });
     
     // Real-time validation
-    $('#contactForm input, #contactForm select, #contactForm textarea').on('blur', function() {
-        validateField($(this));
+    const formInputs = contactForm.querySelectorAll('input, select, textarea');
+    formInputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            validateField(this);
+        });
     });
 });
 
 function handleFileSelect(file) {
     if (!file) return;
+    
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileError = document.getElementById('fileError');
+    const attachmentInput = document.getElementById('attachment');
     
     // Validate file size (10MB limit)
     if (file.size > 10 * 1024 * 1024) {
@@ -513,40 +809,52 @@ function handleFileSelect(file) {
     }
     
     // Show file info
-    $('#fileName').text(file.name);
-    $('#fileInfo').show();
-    $('#fileError').hide();
+    fileName.textContent = file.name;
+    fileInfo.style.display = 'block';
+    fileError.style.display = 'none';
     
     // Update the file input
     const dataTransfer = new DataTransfer();
     dataTransfer.items.add(file);
-    document.getElementById('attachment').files = dataTransfer.files;
+    attachmentInput.files = dataTransfer.files;
 }
 
 function removeFile() {
-    $('#attachment').val('');
-    $('#fileInfo').hide();
-    $('#fileError').hide();
+    const attachmentInput = document.getElementById('attachment');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileError = document.getElementById('fileError');
+    
+    attachmentInput.value = '';
+    fileInfo.style.display = 'none';
+    fileError.style.display = 'none';
 }
 
 function showFileError(message) {
-    $('#fileError').text(message).show();
-    $('#fileInfo').hide();
-    $('#attachment').val('');
+    const fileError = document.getElementById('fileError');
+    const fileInfo = document.getElementById('fileInfo');
+    const attachmentInput = document.getElementById('attachment');
+    
+    fileError.textContent = message;
+    fileError.style.display = 'block';
+    fileInfo.style.display = 'none';
+    attachmentInput.value = '';
 }
 
 function validateField(field) {
-    const value = field.val().trim();
-    const fieldName = field.attr('name');
+    const value = field.value.trim();
+    const fieldName = field.getAttribute('name');
     let isValid = true;
     let errorMessage = '';
     
     // Reset previous validation
-    field.removeClass('form-validation-error');
-    field.siblings('.invalid-feedback').text('');
+    field.classList.remove('form-validation-error');
+    const invalidFeedback = field.parentElement.querySelector('.invalid-feedback');
+    if (invalidFeedback) {
+        invalidFeedback.textContent = '';
+    }
     
     // Required field validation
-    if (field.prop('required') && !value) {
+    if (field.hasAttribute('required') && !value) {
         isValid = false;
         errorMessage = 'This field is required';
     }
@@ -583,14 +891,16 @@ function validateField(field) {
     }
     
     // Special validation for privacy checkbox
-    if (fieldName === 'privacy' && !field.is(':checked')) {
+    if (fieldName === 'privacy' && !field.checked) {
         isValid = false;
         errorMessage = 'You must agree to the privacy policy';
     }
     
     if (!isValid) {
-        field.addClass('form-validation-error');
-        field.siblings('.invalid-feedback').text(errorMessage);
+        field.classList.add('form-validation-error');
+        if (invalidFeedback) {
+            invalidFeedback.textContent = errorMessage;
+        }
     }
     
     return isValid;
@@ -598,10 +908,10 @@ function validateField(field) {
 
 function validateForm() {
     let isValid = true;
+    const requiredFields = document.querySelectorAll('#contactForm [required]');
     
-    // Validate all required fields
-    $('#contactForm [required]').each(function() {
-        if (!validateField($(this))) {
+    requiredFields.forEach(field => {
+        if (!validateField(field)) {
             isValid = false;
         }
     });
@@ -610,73 +920,103 @@ function validateForm() {
 }
 
 function submitForm() {
-    const submitBtn = $('#submitBtn');
-    const form = $('#contactForm')[0];
+    const submitBtn = document.getElementById('submitBtn');
+    const form = document.getElementById('contactForm');
     const formData = new FormData(form);
+    const loadingOverlay = document.getElementById('loadingOverlay');
     
     // Show loading state
-    submitBtn.prop('disabled', true);
-    submitBtn.html('<i class="fas fa-spinner fa-spin me-2"></i>Sending...');
-    $('#loadingOverlay').show();
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sending...';
+    loadingOverlay.style.display = 'flex';
     
     // Submit form
-    $.ajax({
-        url: '/contact/api/submit/',
+    fetch('/contact/api/contacts-public/', {
         method: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        success: function(response) {
-            // Show success message
-            $('#contactFormContainer').hide();
-            $('#successMessage').show();
-            $('#loadingOverlay').hide();
-            
-            // Track success event (if analytics is available)
-            if (typeof gtag !== 'undefined') {
-                gtag('event', 'contact_form_submit', {
-                    'event_category': 'engagement',
-                    'event_label': 'contact_page'
-                });
-            }
-        },
-        error: function(xhr) {
-            $('#loadingOverlay').hide();
-            
-            if (xhr.status === 400) {
-                // Handle validation errors
-                const errors = xhr.responseJSON;
-                Object.keys(errors).forEach(function(field) {
-                    const fieldElement = $(`[name="${field}"]`);
-                    fieldElement.addClass('form-validation-error');
-                    fieldElement.siblings('.invalid-feedback').text(errors[field][0]);
-                });
-            } else if (xhr.status === 429) {
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCsrfToken()
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => Promise.reject(data));
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Show success message
+        document.getElementById('contactFormContainer').style.display = 'none';
+        document.getElementById('successMessage').style.display = 'block';
+        loadingOverlay.style.display = 'none';
+        
+        // Track success event (if analytics is available)
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'contact_form_submit', {
+                'event_category': 'engagement',
+                'event_label': 'contact_page'
+            });
+        }
+    })
+    .catch(error => {
+        loadingOverlay.style.display = 'none';
+        
+        if (error && typeof error === 'object') {
+            // Handle validation errors
+            Object.keys(error).forEach(field => {
+                const fieldElement = document.querySelector(`[name="${field}"]`);
+                if (fieldElement) {
+                    fieldElement.classList.add('form-validation-error');
+                    const invalidFeedback = fieldElement.parentElement.querySelector('.invalid-feedback');
+                    if (invalidFeedback && error[field] && error[field][0]) {
+                        invalidFeedback.textContent = error[field][0];
+                    }
+                }
+            });
+        } else if (error && error.error) {
+            if (error.error.includes('Too many submissions')) {
                 showAlert('You are sending messages too frequently. Please wait a moment and try again.', 'warning');
             } else {
-                showAlert('There was an error sending your message. Please try again.', 'danger');
+                showAlert(error.error, 'danger');
             }
-            
-            // Reset button
-            submitBtn.prop('disabled', false);
-            submitBtn.html('<i class="fas fa-paper-plane me-2"></i>Send Message');
+        } else {
+            showAlert('There was an error sending your message. Please try again.', 'danger');
         }
+        
+        // Reset button
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Send Message';
     });
 }
 
 function resetForm() {
-    $('#contactForm')[0].reset();
-    $('#fileInfo').hide();
-    $('#messageCount').text('0');
-    $('.form-validation-error').removeClass('form-validation-error');
-    $('.invalid-feedback').text('');
-    $('#successMessage').hide();
-    $('#contactFormContainer').show();
+    const form = document.getElementById('contactForm');
+    const fileInfo = document.getElementById('fileInfo');
+    const messageCount = document.getElementById('messageCount');
+    const validationErrors = document.querySelectorAll('.form-validation-error');
+    const invalidFeedbacks = document.querySelectorAll('.invalid-feedback');
+    const successMessage = document.getElementById('successMessage');
+    const contactFormContainer = document.getElementById('contactFormContainer');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    form.reset();
+    fileInfo.style.display = 'none';
+    messageCount.textContent = '0';
+    
+    validationErrors.forEach(element => {
+        element.classList.remove('form-validation-error');
+    });
+    
+    invalidFeedbacks.forEach(element => {
+        element.textContent = '';
+    });
+    
+    successMessage.style.display = 'none';
+    contactFormContainer.style.display = 'block';
     
     // Reset submit button
-    const submitBtn = $('#submitBtn');
-    submitBtn.prop('disabled', false);
-    submitBtn.html('<i class="fas fa-paper-plane me-2"></i>Send Message');
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Send Message';
 }
 
 function isValidEmail(email) {
@@ -700,15 +1040,39 @@ function showAlert(message, type) {
     `;
     
     // Remove existing alerts
-    $('.alert').remove();
+    const existingAlerts = document.querySelectorAll('.alert');
+    existingAlerts.forEach(alert => alert.remove());
     
     // Add new alert
-    $('.contact-form-container').prepend(alertHtml);
+    const container = document.querySelector('.contact-form-container');
+    container.insertAdjacentHTML('afterbegin', alertHtml);
     
     // Auto-dismiss after 5 seconds
     setTimeout(() => {
-        $('.alert').alert('close');
+        const alert = document.querySelector('.alert');
+        if (alert) {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }
     }, 5000);
+}
+
+function getCsrfToken() {
+    const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    if (csrfMeta) {
+        return csrfMeta.getAttribute('content');
+    }
+    
+    // Fallback: get from cookie
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'csrftoken') {
+            return value;
+        }
+    }
+    
+    return '';
 }
 </script>
 {% endblock %}
