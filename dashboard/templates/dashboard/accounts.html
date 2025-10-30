@@ -1,675 +1,1131 @@
 {% extends 'dashboard/base.html' %}
 
-{% block title %}Accounts - MB Admin{% endblock %}
+{% block title %}Staff Account Management - MB Admin{% endblock %}
 
-{% block page_title %}Accounts Management{% endblock %}
+{% block page_title %}Staff Account Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .permission-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        transition: all 0.3s ease;
+    }
+    
+    .permission-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    
+    .permission-item {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin: 3px;
+        transition: all 0.2s ease;
+    }
+    
+    .permission-item:hover {
+        background: rgba(255,255,255,0.2);
+    }
+    
+    .permission-item.selected {
+        background: var(--success-color);
+        border-color: var(--success-color);
+    }
+    
+    .staff-card {
+        border-left: 4px solid var(--primary-color);
+        transition: all 0.3s ease;
+    }
+    
+    .staff-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+    
+    .status-active {
+        background-color: var(--success-color);
+        box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.3);
+    }
+    
+    .status-inactive {
+        background-color: var(--danger-color);
+        box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.3);
+    }
+    
+    .activity-timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .activity-timeline::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(180deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 20px;
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -25px;
+        top: 20px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        border: 3px solid white;
+        box-shadow: 0 0 0 2px var(--primary-color);
+    }
+    
+    .search-box {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        border-radius: 15px;
+        padding: 20px;
+        color: white;
+        margin-bottom: 25px;
+    }
+    
+    .search-box .form-control {
+        background: rgba(255,255,255,0.9);
+        border: none;
+        border-radius: 25px;
+        padding: 12px 20px;
+    }
+    
+    .search-box .btn {
+        border-radius: 25px;
+        padding: 12px 25px;
+        background: rgba(255,255,255,0.2);
+        border: 1px solid rgba(255,255,255,0.3);
+        color: white;
+    }
+    
+    .search-box .btn:hover {
+        background: rgba(255,255,255,0.3);
+        transform: translateY(-2px);
+    }
+    
+    .statistics-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+    
+    .stat-icon {
+        font-size: 3rem;
+        opacity: 0.7;
+    }
+    
+    .filter-tabs {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin-bottom: 25px;
+        overflow: hidden;
+    }
+    
+    .filter-tab {
+        padding: 15px 25px;
+        background: transparent;
+        border: none;
+        color: var(--secondary-color);
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .filter-tab.active {
+        background: var(--primary-color);
+        color: white;
+    }
+    
+    .filter-tab:hover:not(.active) {
+        background: rgba(147, 0, 0, 0.1);
+        color: var(--primary-color);
+    }
+</style>
+{% endblock %}
 
 {% block content %}
+<!-- Statistics Overview -->
 <div class="row mb-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Admin Accounts</h5>
-                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addAdminModal">
-                    <i class="fas fa-plus-circle me-1"></i> Add Admin
-                </button>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover table-bordered" id="adminsTable">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Username</th>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Last Login</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>1</td>
-                                <td>admin</td>
-                                <td>Administrator</td>
-                                <td>admin@example.com</td>
-                                <td><span class="badge bg-primary">Super Admin</span></td>
-                                <td>2023-10-12 14:25:36</td>
-                                <td><span class="badge bg-success">Active</span></td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editAdminModal" data-admin-id="1">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteConfirmModal" data-admin-id="1" data-admin-name="Administrator">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>2</td>
-                                <td>manager</td>
-                                <td>Store Manager</td>
-                                <td>manager@example.com</td>
-                                <td><span class="badge bg-info">Manager</span></td>
-                                <td>2023-10-11 09:12:45</td>
-                                <td><span class="badge bg-success">Active</span></td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editAdminModal" data-admin-id="2">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteConfirmModal" data-admin-id="2" data-admin-name="Store Manager">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>3</td>
-                                <td>editor</td>
-                                <td>Content Editor</td>
-                                <td>editor@example.com</td>
-                                <td><span class="badge bg-secondary">Editor</span></td>
-                                <td>2023-10-10 16:38:22</td>
-                                <td><span class="badge bg-success">Active</span></td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editAdminModal" data-admin-id="3">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteConfirmModal" data-admin-id="3" data-admin-name="Content Editor">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="statistics-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-1">12</h3>
+                    <p class="mb-0">Total Staff</p>
                 </div>
+                <i class="fas fa-users stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="statistics-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-1">8</h3>
+                    <p class="mb-0">Active Users</p>
+                </div>
+                <i class="fas fa-user-check stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="statistics-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-1">5</h3>
+                    <p class="mb-0">Roles</p>
+                </div>
+                <i class="fas fa-user-tag stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="statistics-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-1">3</h3>
+                    <p class="mb-0">Online Now</p>
+                </div>
+                <i class="fas fa-circle stat-icon text-success"></i>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Role Permissions</h5>
-                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addRoleModal">
-                    <i class="fas fa-plus-circle me-1"></i> Add Role
+<!-- Search and Filter Section -->
+<div class="search-box">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="Search staff by name, email, or role..." id="staffSearch">
+                <button class="btn btn-outline-light" type="button" id="searchBtn">
+                    <i class="fas fa-search"></i> Search
                 </button>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover table-bordered" id="rolesTable">
-                        <thead>
-                            <tr>
-                                <th>Role Name</th>
-                                <th>Description</th>
-                                <th>Admin Count</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Super Admin</td>
-                                <td>Full access to all features and settings</td>
-                                <td>1</td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editRoleModal" data-role-id="1">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </button>
-                                        <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#viewPermissionsModal" data-role-id="1">
-                                            <i class="fas fa-lock"></i> Permissions
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Manager</td>
-                                <td>Access to all features except admin management</td>
-                                <td>1</td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editRoleModal" data-role-id="2">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </button>
-                                        <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#viewPermissionsModal" data-role-id="2">
-                                            <i class="fas fa-lock"></i> Permissions
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Editor</td>
-                                <td>Access to content management features</td>
-                                <td>1</td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editRoleModal" data-role-id="3">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </button>
-                                        <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#viewPermissionsModal" data-role-id="3">
-                                            <i class="fas fa-lock"></i> Permissions
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        </div>
+        <div class="col-md-4 text-end">
+            <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#createStaffModal">
+                <i class="fas fa-plus-circle me-2"></i>Create New Staff
+            </button>
         </div>
     </div>
 </div>
 
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Login History</h5>
+<!-- Filter Tabs -->
+<div class="filter-tabs">
+    <div class="btn-group w-100" role="group">
+        <button type="button" class="filter-tab active" data-filter="all">
+            <i class="fas fa-users me-2"></i>All Staff (12)
+        </button>
+        <button type="button" class="filter-tab" data-filter="active">
+            <i class="fas fa-user-check me-2"></i>Active (8)
+        </button>
+        <button type="button" class="filter-tab" data-filter="inactive">
+            <i class="fas fa-user-times me-2"></i>Inactive (4)
+        </button>
+        <button type="button" class="filter-tab" data-filter="online">
+            <i class="fas fa-circle text-success me-2"></i>Online (3)
+        </button>
+    </div>
+</div>
+
+<!-- Staff List -->
+<div class="row" id="staffContainer">
+    <!-- Staff Member 1 -->
+    <div class="col-lg-6 col-xl-4 mb-4 staff-item" data-status="active">
+        <div class="card staff-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <span class="status-indicator status-active"></span>
+                    <h6 class="mb-0">John Smith</h6>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#" data-action="edit" data-id="1"><i class="fas fa-edit me-2"></i>Edit</a></li>
+                        <li><a class="dropdown-item" href="#" data-action="permissions" data-id="1"><i class="fas fa-shield-alt me-2"></i>Permissions</a></li>
+                        <li><a class="dropdown-item" href="#" data-action="activity" data-id="1"><i class="fas fa-history me-2"></i>Activity Log</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" data-action="delete" data-id="1"><i class="fas fa-trash me-2"></i>Delete</a></li>
+                    </ul>
+                </div>
             </div>
             <div class="card-body">
                 <div class="mb-3">
-                    <div class="input-group">
-                        <input type="text" class="form-control" placeholder="Search by username or IP...">
-                        <button class="btn btn-outline-secondary" type="button">
-                            <i class="fas fa-search"></i> Search
-                        </button>
+                    <small class="text-muted">Email:</small>
+                    <p class="mb-1">john.smith@company.com</p>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted">Role:</small>
+                    <span class="badge bg-primary">Store Manager</span>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted">Last Login:</small>
+                    <p class="mb-1">2 hours ago</p>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted">Access Level:</small>
+                    <div class="d-flex flex-wrap gap-1 mt-1">
+                        <span class="badge bg-success">Dashboard</span>
+                        <span class="badge bg-success">Products</span>
+                        <span class="badge bg-success">Orders</span>
+                        <span class="badge bg-secondary">+5 more</span>
                     </div>
                 </div>
-                <div class="table-responsive">
-                    <table class="table table-hover table-bordered table-striped" id="loginHistoryTable">
-                        <thead>
-                            <tr>
-                                <th>Username</th>
-                                <th>IP Address</th>
-                                <th>Login Time</th>
-                                <th>Status</th>
-                                <th>Browser</th>
-                                <th>Device</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>admin</td>
-                                <td>192.168.1.105</td>
-                                <td>2023-10-12 14:25:36</td>
-                                <td><span class="badge bg-success">Success</span></td>
-                                <td>Chrome 117.0.5938.132</td>
-                                <td>Windows 10</td>
-                            </tr>
-                            <tr>
-                                <td>manager</td>
-                                <td>192.168.1.54</td>
-                                <td>2023-10-11 09:12:45</td>
-                                <td><span class="badge bg-success">Success</span></td>
-                                <td>Safari 16.5</td>
-                                <td>macOS 13.1</td>
-                            </tr>
-                            <tr>
-                                <td>editor</td>
-                                <td>192.168.1.78</td>
-                                <td>2023-10-10 16:38:22</td>
-                                <td><span class="badge bg-success">Success</span></td>
-                                <td>Firefox 118.0</td>
-                                <td>Ubuntu 22.04</td>
-                            </tr>
-                            <tr>
-                                <td>admin</td>
-                                <td>192.168.1.105</td>
-                                <td>2023-10-10 08:45:12</td>
-                                <td><span class="badge bg-success">Success</span></td>
-                                <td>Chrome 117.0.5938.132</td>
-                                <td>Windows 10</td>
-                            </tr>
-                            <tr>
-                                <td>unknown</td>
-                                <td>198.51.100.217</td>
-                                <td>2023-10-09 22:15:48</td>
-                                <td><span class="badge bg-danger">Failed</span></td>
-                                <td>Chrome 117.0.5938.92</td>
-                                <td>Android 13</td>
-                            </tr>
-                        </tbody>
-                    </table>
+            </div>
+            <div class="card-footer">
+                <button class="btn btn-primary btn-sm me-2" data-action="edit" data-id="1">
+                    <i class="fas fa-edit me-1"></i>Edit
+                </button>
+                <button class="btn btn-outline-info btn-sm" data-action="permissions" data-id="1">
+                    <i class="fas fa-shield-alt me-1"></i>Permissions
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Staff Member 2 -->
+    <div class="col-lg-6 col-xl-4 mb-4 staff-item" data-status="active">
+        <div class="card staff-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <span class="status-indicator status-active"></span>
+                    <h6 class="mb-0">Sarah Johnson</h6>
                 </div>
-                <nav aria-label="Login history pagination">
-                    <ul class="pagination justify-content-center mt-4">
-                        <li class="page-item disabled">
-                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
-                        </li>
-                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                        <li class="page-item"><a class="page-link" href="#">2</a></li>
-                        <li class="page-item"><a class="page-link" href="#">3</a></li>
-                        <li class="page-item">
-                            <a class="page-link" href="#">Next</a>
-                        </li>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#" data-action="edit" data-id="2"><i class="fas fa-edit me-2"></i>Edit</a></li>
+                        <li><a class="dropdown-item" href="#" data-action="permissions" data-id="2"><i class="fas fa-shield-alt me-2"></i>Permissions</a></li>
+                        <li><a class="dropdown-item" href="#" data-action="activity" data-id="2"><i class="fas fa-history me-2"></i>Activity Log</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" data-action="delete" data-id="2"><i class="fas fa-trash me-2"></i>Delete</a></li>
                     </ul>
-                </nav>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <small class="text-muted">Email:</small>
+                    <p class="mb-1">sarah.johnson@company.com</p>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted">Role:</small>
+                    <span class="badge bg-info">Content Manager</span>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted">Last Login:</small>
+                    <p class="mb-1">Yesterday</p>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted">Access Level:</small>
+                    <div class="d-flex flex-wrap gap-1 mt-1">
+                        <span class="badge bg-success">Products</span>
+                        <span class="badge bg-success">Categories</span>
+                        <span class="badge bg-success">Media</span>
+                        <span class="badge bg-secondary">+2 more</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button class="btn btn-primary btn-sm me-2" data-action="edit" data-id="2">
+                    <i class="fas fa-edit me-1"></i>Edit
+                </button>
+                <button class="btn btn-outline-info btn-sm" data-action="permissions" data-id="2">
+                    <i class="fas fa-shield-alt me-1"></i>Permissions
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Staff Member 3 -->
+    <div class="col-lg-6 col-xl-4 mb-4 staff-item" data-status="inactive">
+        <div class="card staff-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <span class="status-indicator status-inactive"></span>
+                    <h6 class="mb-0">Mike Wilson</h6>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#" data-action="edit" data-id="3"><i class="fas fa-edit me-2"></i>Edit</a></li>
+                        <li><a class="dropdown-item" href="#" data-action="permissions" data-id="3"><i class="fas fa-shield-alt me-2"></i>Permissions</a></li>
+                        <li><a class="dropdown-item" href="#" data-action="activity" data-id="3"><i class="fas fa-history me-2"></i>Activity Log</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" data-action="delete" data-id="3"><i class="fas fa-trash me-2"></i>Delete</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <small class="text-muted">Email:</small>
+                    <p class="mb-1">mike.wilson@company.com</p>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted">Role:</small>
+                    <span class="badge bg-warning">Customer Support</span>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted">Last Login:</small>
+                    <p class="mb-1">5 days ago</p>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted">Access Level:</small>
+                    <div class="d-flex flex-wrap gap-1 mt-1">
+                        <span class="badge bg-success">Orders</span>
+                        <span class="badge bg-success">Users</span>
+                        <span class="badge bg-success">Contacts</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button class="btn btn-primary btn-sm me-2" data-action="edit" data-id="3">
+                    <i class="fas fa-edit me-1"></i>Edit
+                </button>
+                <button class="btn btn-outline-info btn-sm" data-action="permissions" data-id="3">
+                    <i class="fas fa-shield-alt me-1"></i>Permissions
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Add Admin Modal -->
-<div class="modal fade" id="addAdminModal" tabindex="-1" aria-labelledby="addAdminModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addAdminModalLabel">Add New Admin</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addAdminForm">
-                    <div class="mb-3">
-                        <label for="adminUsername" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="adminUsername" name="username" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="adminName" class="form-label">Full Name</label>
-                        <input type="text" class="form-control" id="adminName" name="name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="adminEmail" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="adminEmail" name="email" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="adminRole" class="form-label">Role</label>
-                        <select class="form-select" id="adminRole" name="role" required>
-                            <option value="">Select Role</option>
-                            <option value="1">Super Admin</option>
-                            <option value="2">Manager</option>
-                            <option value="3">Editor</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="adminPassword" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="adminPassword" name="password" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="adminConfirmPassword" class="form-label">Confirm Password</label>
-                        <input type="password" class="form-control" id="adminConfirmPassword" name="confirm_password" required>
-                    </div>
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="adminActive" name="is_active" checked>
-                        <label class="form-check-label" for="adminActive">Active</label>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="saveNewAdminBtn">Save</button>
-            </div>
-        </div>
-    </div>
+<!-- Load More Button -->
+<div class="text-center mt-4">
+    <button class="btn btn-outline-primary" id="loadMoreBtn">
+        <i class="fas fa-plus-circle me-2"></i>Load More Staff
+    </button>
 </div>
 
-<!-- Edit Admin Modal -->
-<div class="modal fade" id="editAdminModal" tabindex="-1" aria-labelledby="editAdminModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<!-- Create Staff Modal -->
+<div class="modal fade" id="createStaffModal" tabindex="-1" aria-labelledby="createStaffModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editAdminModalLabel">Edit Admin</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h5 class="modal-title" id="createStaffModalLabel">
+                    <i class="fas fa-user-plus me-2"></i>Create New Staff Account
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="editAdminForm">
-                    <input type="hidden" id="editAdminId" name="admin_id">
-                    <div class="mb-3">
-                        <label for="editAdminUsername" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="editAdminUsername" name="username" required>
+                <form id="createStaffForm">
+                    <div class="row">
+                        <!-- Basic Information -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3"><i class="fas fa-user me-2"></i>Basic Information</h6>
+                            <div class="mb-3">
+                                <label for="staffFirstName" class="form-label">First Name *</label>
+                                <input type="text" class="form-control" id="staffFirstName" name="first_name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="staffLastName" class="form-label">Last Name *</label>
+                                <input type="text" class="form-control" id="staffLastName" name="last_name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="staffEmail" class="form-label">Email Address *</label>
+                                <input type="email" class="form-control" id="staffEmail" name="email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="staffPhone" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="staffPhone" name="phone">
+                            </div>
+                            <div class="mb-3">
+                                <label for="staffDepartment" class="form-label">Department</label>
+                                <select class="form-select" id="staffDepartment" name="department">
+                                    <option value="">Select Department</option>
+                                    <option value="management">Management</option>
+                                    <option value="sales">Sales</option>
+                                    <option value="support">Customer Support</option>
+                                    <option value="content">Content Management</option>
+                                    <option value="inventory">Inventory</option>
+                                    <option value="marketing">Marketing</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Account Settings -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3"><i class="fas fa-cog me-2"></i>Account Settings</h6>
+                            <div class="mb-3">
+                                <label for="staffUsername" class="form-label">Username *</label>
+                                <input type="text" class="form-control" id="staffUsername" name="username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="staffPassword" class="form-label">Password *</label>
+                                <input type="password" class="form-control" id="staffPassword" name="password" required>
+                                <div class="form-text">Must be at least 8 characters long</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="staffPasswordConfirm" class="form-label">Confirm Password *</label>
+                                <input type="password" class="form-control" id="staffPasswordConfirm" name="password_confirm" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="staffRole" class="form-label">Role *</label>
+                                <select class="form-select" id="staffRole" name="role" required>
+                                    <option value="">Select Role</option>
+                                    <option value="super_admin">Super Admin</option>
+                                    <option value="manager">Manager</option>
+                                    <option value="content_manager">Content Manager</option>
+                                    <option value="customer_support">Customer Support</option>
+                                    <option value="inventory_manager">Inventory Manager</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="staffActive" name="is_active" checked>
+                                    <label class="form-check-label" for="staffActive">Active Account</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="staffEmailNotifications" name="email_notifications" checked>
+                                    <label class="form-check-label" for="staffEmailNotifications">Email Notifications</label>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editAdminName" class="form-label">Full Name</label>
-                        <input type="text" class="form-control" id="editAdminName" name="name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editAdminEmail" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="editAdminEmail" name="email" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editAdminRole" class="form-label">Role</label>
-                        <select class="form-select" id="editAdminRole" name="role" required>
-                            <option value="">Select Role</option>
-                            <option value="1">Super Admin</option>
-                            <option value="2">Manager</option>
-                            <option value="3">Editor</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editAdminPassword" class="form-label">New Password (leave blank to keep current)</label>
-                        <input type="password" class="form-control" id="editAdminPassword" name="password">
-                    </div>
-                    <div class="mb-3">
-                        <label for="editAdminConfirmPassword" class="form-label">Confirm New Password</label>
-                        <input type="password" class="form-control" id="editAdminConfirmPassword" name="confirm_password">
-                    </div>
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="editAdminActive" name="is_active">
-                        <label class="form-check-label" for="editAdminActive">Active</label>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="updateAdminBtn">Update</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Add Role Modal -->
-<div class="modal fade" id="addRoleModal" tabindex="-1" aria-labelledby="addRoleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addRoleModalLabel">Add New Role</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addRoleForm">
-                    <div class="mb-3">
-                        <label for="roleName" class="form-label">Role Name</label>
-                        <input type="text" class="form-control" id="roleName" name="role_name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="roleDescription" class="form-label">Description</label>
-                        <textarea class="form-control" id="roleDescription" name="role_description" rows="2"></textarea>
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label">Permissions</label>
+                    
+                    <!-- Dashboard Permissions -->
+                    <div class="mt-4">
+                        <h6 class="text-primary mb-3"><i class="fas fa-shield-alt me-2"></i>Dashboard Access Permissions</h6>
                         <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <div class="card h-100">
+                            <div class="col-md-3 mb-3">
+                                <div class="permission-card card h-100">
                                     <div class="card-header">
                                         <div class="form-check">
-                                            <input class="form-check-input permission-group" type="checkbox" id="dashboardPermissionGroup" data-group="dashboard">
-                                            <label class="form-check-label" for="dashboardPermissionGroup">
-                                                <strong>Dashboard</strong>
+                                            <input class="form-check-input permission-group" type="checkbox" id="dashboardGroup" data-group="dashboard">
+                                            <label class="form-check-label fw-bold" for="dashboardGroup">
+                                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                                             </label>
                                         </div>
                                     </div>
                                     <div class="card-body">
-                                        <div class="form-check">
-                                            <input class="form-check-input permission-item" type="checkbox" id="viewDashboardPerm" name="permissions[]" value="view_dashboard" data-group="dashboard">
-                                            <label class="form-check-label" for="viewDashboardPerm">
-                                                View Dashboard
-                                            </label>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_dashboard_view" name="permissions[]" value="dashboard_view" data-group="dashboard">
+                                            <label class="form-check-label" for="perm_dashboard_view">View Dashboard</label>
                                         </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input permission-item" type="checkbox" id="editWidgetsPerm" name="permissions[]" value="edit_widgets" data-group="dashboard">
-                                            <label class="form-check-label" for="editWidgetsPerm">
-                                                Edit Widgets
-                                            </label>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_dashboard_analytics" name="permissions[]" value="dashboard_analytics" data-group="dashboard">
+                                            <label class="form-check-label" for="perm_dashboard_analytics">Analytics</label>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             
-                            <div class="col-md-4 mb-3">
-                                <div class="card h-100">
+                            <div class="col-md-3 mb-3">
+                                <div class="permission-card card h-100">
                                     <div class="card-header">
                                         <div class="form-check">
-                                            <input class="form-check-input permission-group" type="checkbox" id="productsPermissionGroup" data-group="products">
-                                            <label class="form-check-label" for="productsPermissionGroup">
-                                                <strong>Products</strong>
+                                            <input class="form-check-input permission-group" type="checkbox" id="productsGroup" data-group="products">
+                                            <label class="form-check-label fw-bold" for="productsGroup">
+                                                <i class="fas fa-box me-2"></i>Products
                                             </label>
                                         </div>
                                     </div>
                                     <div class="card-body">
-                                        <div class="form-check">
-                                            <input class="form-check-input permission-item" type="checkbox" id="viewProductsPerm" name="permissions[]" value="view_products" data-group="products">
-                                            <label class="form-check-label" for="viewProductsPerm">
-                                                View Products
-                                            </label>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_products_view" name="permissions[]" value="products_view" data-group="products">
+                                            <label class="form-check-label" for="perm_products_view">View Products</label>
                                         </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input permission-item" type="checkbox" id="addProductPerm" name="permissions[]" value="add_product" data-group="products">
-                                            <label class="form-check-label" for="addProductPerm">
-                                                Add Product
-                                            </label>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_products_add" name="permissions[]" value="products_add" data-group="products">
+                                            <label class="form-check-label" for="perm_products_add">Add Products</label>
                                         </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input permission-item" type="checkbox" id="editProductPerm" name="permissions[]" value="edit_product" data-group="products">
-                                            <label class="form-check-label" for="editProductPerm">
-                                                Edit Product
-                                            </label>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_products_edit" name="permissions[]" value="products_edit" data-group="products">
+                                            <label class="form-check-label" for="perm_products_edit">Edit Products</label>
                                         </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input permission-item" type="checkbox" id="deleteProductPerm" name="permissions[]" value="delete_product" data-group="products">
-                                            <label class="form-check-label" for="deleteProductPerm">
-                                                Delete Product
-                                            </label>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_products_delete" name="permissions[]" value="products_delete" data-group="products">
+                                            <label class="form-check-label" for="perm_products_delete">Delete Products</label>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             
-                            <div class="col-md-4 mb-3">
-                                <div class="card h-100">
+                            <div class="col-md-3 mb-3">
+                                <div class="permission-card card h-100">
                                     <div class="card-header">
                                         <div class="form-check">
-                                            <input class="form-check-input permission-group" type="checkbox" id="ordersPermissionGroup" data-group="orders">
-                                            <label class="form-check-label" for="ordersPermissionGroup">
-                                                <strong>Orders</strong>
+                                            <input class="form-check-input permission-group" type="checkbox" id="categoriesGroup" data-group="categories">
+                                            <label class="form-check-label fw-bold" for="categoriesGroup">
+                                                <i class="fas fa-folder me-2"></i>Categories
                                             </label>
                                         </div>
                                     </div>
                                     <div class="card-body">
-                                        <div class="form-check">
-                                            <input class="form-check-input permission-item" type="checkbox" id="viewOrdersPerm" name="permissions[]" value="view_orders" data-group="orders">
-                                            <label class="form-check-label" for="viewOrdersPerm">
-                                                View Orders
-                                            </label>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_categories_view" name="permissions[]" value="categories_view" data-group="categories">
+                                            <label class="form-check-label" for="perm_categories_view">View Categories</label>
                                         </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input permission-item" type="checkbox" id="editOrderPerm" name="permissions[]" value="edit_order" data-group="orders">
-                                            <label class="form-check-label" for="editOrderPerm">
-                                                Edit Order
-                                            </label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input permission-item" type="checkbox" id="deleteOrderPerm" name="permissions[]" value="delete_order" data-group="orders">
-                                            <label class="form-check-label" for="deleteOrderPerm">
-                                                Delete Order
-                                            </label>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_categories_manage" name="permissions[]" value="categories_manage" data-group="categories">
+                                            <label class="form-check-label" for="perm_categories_manage">Manage Categories</label>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             
-                            <div class="col-md-4 mb-3">
-                                <div class="card h-100">
+                            <div class="col-md-3 mb-3">
+                                <div class="permission-card card h-100">
                                     <div class="card-header">
                                         <div class="form-check">
-                                            <input class="form-check-input permission-group" type="checkbox" id="usersPermissionGroup" data-group="users">
-                                            <label class="form-check-label" for="usersPermissionGroup">
-                                                <strong>Users</strong>
+                                            <input class="form-check-input permission-group" type="checkbox" id="mediaGroup" data-group="media">
+                                            <label class="form-check-label fw-bold" for="mediaGroup">
+                                                <i class="fas fa-images me-2"></i>Media
                                             </label>
                                         </div>
                                     </div>
                                     <div class="card-body">
-                                        <div class="form-check">
-                                            <input class="form-check-input permission-item" type="checkbox" id="viewUsersPerm" name="permissions[]" value="view_users" data-group="users">
-                                            <label class="form-check-label" for="viewUsersPerm">
-                                                View Users
-                                            </label>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_media_view" name="permissions[]" value="media_view" data-group="media">
+                                            <label class="form-check-label" for="perm_media_view">View Media</label>
                                         </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input permission-item" type="checkbox" id="editUserPerm" name="permissions[]" value="edit_user" data-group="users">
-                                            <label class="form-check-label" for="editUserPerm">
-                                                Edit User
-                                            </label>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_media_upload" name="permissions[]" value="media_upload" data-group="media">
+                                            <label class="form-check-label" for="perm_media_upload">Upload Media</label>
                                         </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input permission-item" type="checkbox" id="deleteUserPerm" name="permissions[]" value="delete_user" data-group="users">
-                                            <label class="form-check-label" for="deleteUserPerm">
-                                                Delete User
-                                            </label>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_media_delete" name="permissions[]" value="media_delete" data-group="media">
+                                            <label class="form-check-label" for="perm_media_delete">Delete Media</label>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             
-                            <div class="col-md-4 mb-3">
-                                <div class="card h-100">
+                            <div class="col-md-3 mb-3">
+                                <div class="permission-card card h-100">
                                     <div class="card-header">
                                         <div class="form-check">
-                                            <input class="form-check-input permission-group" type="checkbox" id="settingsPermissionGroup" data-group="settings">
-                                            <label class="form-check-label" for="settingsPermissionGroup">
-                                                <strong>Settings</strong>
+                                            <input class="form-check-input permission-group" type="checkbox" id="stockGroup" data-group="stock">
+                                            <label class="form-check-label fw-bold" for="stockGroup">
+                                                <i class="fas fa-warehouse me-2"></i>Stock
                                             </label>
                                         </div>
                                     </div>
                                     <div class="card-body">
-                                        <div class="form-check">
-                                            <input class="form-check-input permission-item" type="checkbox" id="viewSettingsPerm" name="permissions[]" value="view_settings" data-group="settings">
-                                            <label class="form-check-label" for="viewSettingsPerm">
-                                                View Settings
-                                            </label>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_stock_view" name="permissions[]" value="stock_view" data-group="stock">
+                                            <label class="form-check-label" for="perm_stock_view">View Stock</label>
                                         </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input permission-item" type="checkbox" id="editSettingsPerm" name="permissions[]" value="edit_settings" data-group="settings">
-                                            <label class="form-check-label" for="editSettingsPerm">
-                                                Edit Settings
-                                            </label>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_stock_manage" name="permissions[]" value="stock_manage" data-group="stock">
+                                            <label class="form-check-label" for="perm_stock_manage">Manage Stock</label>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             
-                            <div class="col-md-4 mb-3">
-                                <div class="card h-100">
+                            <div class="col-md-3 mb-3">
+                                <div class="permission-card card h-100">
                                     <div class="card-header">
                                         <div class="form-check">
-                                            <input class="form-check-input permission-group" type="checkbox" id="adminPermissionGroup" data-group="admin">
-                                            <label class="form-check-label" for="adminPermissionGroup">
-                                                <strong>Admin</strong>
+                                            <input class="form-check-input permission-group" type="checkbox" id="ordersGroup" data-group="orders">
+                                            <label class="form-check-label fw-bold" for="ordersGroup">
+                                                <i class="fas fa-shopping-cart me-2"></i>Orders
                                             </label>
                                         </div>
                                     </div>
                                     <div class="card-body">
-                                        <div class="form-check">
-                                            <input class="form-check-input permission-item" type="checkbox" id="viewAdminsPerm" name="permissions[]" value="view_admins" data-group="admin">
-                                            <label class="form-check-label" for="viewAdminsPerm">
-                                                View Admins
-                                            </label>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_orders_view" name="permissions[]" value="orders_view" data-group="orders">
+                                            <label class="form-check-label" for="perm_orders_view">View Orders</label>
                                         </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input permission-item" type="checkbox" id="addAdminPerm" name="permissions[]" value="add_admin" data-group="admin">
-                                            <label class="form-check-label" for="addAdminPerm">
-                                                Add Admin
-                                            </label>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_orders_edit" name="permissions[]" value="orders_edit" data-group="orders">
+                                            <label class="form-check-label" for="perm_orders_edit">Edit Orders</label>
                                         </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input permission-item" type="checkbox" id="editAdminPerm" name="permissions[]" value="edit_admin" data-group="admin">
-                                            <label class="form-check-label" for="editAdminPerm">
-                                                Edit Admin
-                                            </label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input permission-item" type="checkbox" id="deleteAdminPerm" name="permissions[]" value="delete_admin" data-group="admin">
-                                            <label class="form-check-label" for="deleteAdminPerm">
-                                                Delete Admin
-                                            </label>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_orders_delete" name="permissions[]" value="orders_delete" data-group="orders">
+                                            <label class="form-check-label" for="perm_orders_delete">Delete Orders</label>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <div class="permission-card card h-100">
+                                    <div class="card-header">
+                                        <div class="form-check">
+                                            <input class="form-check-input permission-group" type="checkbox" id="incompleteOrdersGroup" data-group="incomplete_orders">
+                                            <label class="form-check-label fw-bold" for="incompleteOrdersGroup">
+                                                <i class="fas fa-clock me-2"></i>Incomplete Orders
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_incomplete_orders_view" name="permissions[]" value="incomplete_orders_view" data-group="incomplete_orders">
+                                            <label class="form-check-label" for="perm_incomplete_orders_view">View Incomplete Orders</label>
+                                        </div>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_incomplete_orders_manage" name="permissions[]" value="incomplete_orders_manage" data-group="incomplete_orders">
+                                            <label class="form-check-label" for="perm_incomplete_orders_manage">Manage Incomplete Orders</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <div class="permission-card card h-100">
+                                    <div class="card-header">
+                                        <div class="form-check">
+                                            <input class="form-check-input permission-group" type="checkbox" id="reviewsGroup" data-group="reviews">
+                                            <label class="form-check-label fw-bold" for="reviewsGroup">
+                                                <i class="fas fa-star me-2"></i>Reviews
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_reviews_view" name="permissions[]" value="reviews_view" data-group="reviews">
+                                            <label class="form-check-label" for="perm_reviews_view">View Reviews</label>
+                                        </div>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_reviews_moderate" name="permissions[]" value="reviews_moderate" data-group="reviews">
+                                            <label class="form-check-label" for="perm_reviews_moderate">Moderate Reviews</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <div class="permission-card card h-100">
+                                    <div class="card-header">
+                                        <div class="form-check">
+                                            <input class="form-check-input permission-group" type="checkbox" id="contactsGroup" data-group="contacts">
+                                            <label class="form-check-label fw-bold" for="contactsGroup">
+                                                <i class="fas fa-envelope me-2"></i>Contacts
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_contacts_view" name="permissions[]" value="contacts_view" data-group="contacts">
+                                            <label class="form-check-label" for="perm_contacts_view">View Contacts</label>
+                                        </div>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_contacts_respond" name="permissions[]" value="contacts_respond" data-group="contacts">
+                                            <label class="form-check-label" for="perm_contacts_respond">Respond to Contacts</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <div class="permission-card card h-100">
+                                    <div class="card-header">
+                                        <div class="form-check">
+                                            <input class="form-check-input permission-group" type="checkbox" id="pagesGroup" data-group="pages">
+                                            <label class="form-check-label fw-bold" for="pagesGroup">
+                                                <i class="fas fa-file-alt me-2"></i>Pages
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_pages_view" name="permissions[]" value="pages_view" data-group="pages">
+                                            <label class="form-check-label" for="perm_pages_view">View Pages</label>
+                                        </div>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_pages_edit" name="permissions[]" value="pages_edit" data-group="pages">
+                                            <label class="form-check-label" for="perm_pages_edit">Edit Pages</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <div class="permission-card card h-100">
+                                    <div class="card-header">
+                                        <div class="form-check">
+                                            <input class="form-check-input permission-group" type="checkbox" id="blocklistGroup" data-group="blocklist">
+                                            <label class="form-check-label fw-bold" for="blocklistGroup">
+                                                <i class="fas fa-shield-alt me-2"></i>Block List
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_blocklist_view" name="permissions[]" value="blocklist_view" data-group="blocklist">
+                                            <label class="form-check-label" for="perm_blocklist_view">View Block List</label>
+                                        </div>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_blocklist_manage" name="permissions[]" value="blocklist_manage" data-group="blocklist">
+                                            <label class="form-check-label" for="perm_blocklist_manage">Manage Block List</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <div class="permission-card card h-100">
+                                    <div class="card-header">
+                                        <div class="form-check">
+                                            <input class="form-check-input permission-group" type="checkbox" id="usersGroup" data-group="users">
+                                            <label class="form-check-label fw-bold" for="usersGroup">
+                                                <i class="fas fa-users me-2"></i>Users
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_users_view" name="permissions[]" value="users_view" data-group="users">
+                                            <label class="form-check-label" for="perm_users_view">View Users</label>
+                                        </div>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_users_edit" name="permissions[]" value="users_edit" data-group="users">
+                                            <label class="form-check-label" for="perm_users_edit">Edit Users</label>
+                                        </div>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_users_ban" name="permissions[]" value="users_ban" data-group="users">
+                                            <label class="form-check-label" for="perm_users_ban">Ban Users</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <div class="permission-card card h-100">
+                                    <div class="card-header">
+                                        <div class="form-check">
+                                            <input class="form-check-input permission-group" type="checkbox" id="expensesGroup" data-group="expenses">
+                                            <label class="form-check-label fw-bold" for="expensesGroup">
+                                                <i class="fas fa-money-bill-wave me-2"></i>Expenses
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_expenses_view" name="permissions[]" value="expenses_view" data-group="expenses">
+                                            <label class="form-check-label" for="perm_expenses_view">View Expenses</label>
+                                        </div>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_expenses_manage" name="permissions[]" value="expenses_manage" data-group="expenses">
+                                            <label class="form-check-label" for="perm_expenses_manage">Manage Expenses</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <div class="permission-card card h-100">
+                                    <div class="card-header">
+                                        <div class="form-check">
+                                            <input class="form-check-input permission-group" type="checkbox" id="statisticsGroup" data-group="statistics">
+                                            <label class="form-check-label fw-bold" for="statisticsGroup">
+                                                <i class="fas fa-chart-bar me-2"></i>Statistics
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_statistics_view" name="permissions[]" value="statistics_view" data-group="statistics">
+                                            <label class="form-check-label" for="perm_statistics_view">View Statistics</label>
+                                        </div>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_statistics_export" name="permissions[]" value="statistics_export" data-group="statistics">
+                                            <label class="form-check-label" for="perm_statistics_export">Export Statistics</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <div class="permission-card card h-100">
+                                    <div class="card-header">
+                                        <div class="form-check">
+                                            <input class="form-check-input permission-group" type="checkbox" id="emailSettingsGroup" data-group="email_settings">
+                                            <label class="form-check-label fw-bold" for="emailSettingsGroup">
+                                                <i class="fas fa-mail-bulk me-2"></i>Email Settings
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_email_settings_view" name="permissions[]" value="email_settings_view" data-group="email_settings">
+                                            <label class="form-check-label" for="perm_email_settings_view">View Email Settings</label>
+                                        </div>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_email_settings_edit" name="permissions[]" value="email_settings_edit" data-group="email_settings">
+                                            <label class="form-check-label" for="perm_email_settings_edit">Edit Email Settings</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <div class="permission-card card h-100">
+                                    <div class="card-header">
+                                        <div class="form-check">
+                                            <input class="form-check-input permission-group" type="checkbox" id="settingsGroup" data-group="settings">
+                                            <label class="form-check-label fw-bold" for="settingsGroup">
+                                                <i class="fas fa-cog me-2"></i>Settings
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_settings_view" name="permissions[]" value="settings_view" data-group="settings">
+                                            <label class="form-check-label" for="perm_settings_view">View Settings</label>
+                                        </div>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_settings_edit" name="permissions[]" value="settings_edit" data-group="settings">
+                                            <label class="form-check-label" for="perm_settings_edit">Edit Settings</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <div class="permission-card card h-100">
+                                    <div class="card-header">
+                                        <div class="form-check">
+                                            <input class="form-check-input permission-group" type="checkbox" id="accountsGroup" data-group="accounts">
+                                            <label class="form-check-label fw-bold" for="accountsGroup">
+                                                <i class="fas fa-user-shield me-2"></i>Staff Accounts
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_accounts_view" name="permissions[]" value="accounts_view" data-group="accounts">
+                                            <label class="form-check-label" for="perm_accounts_view">View Staff Accounts</label>
+                                        </div>
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_accounts_manage" name="permissions[]" value="accounts_manage" data-group="accounts">
+                                            <label class="form-check-label" for="perm_accounts_manage">Manage Staff Accounts</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <div class="permission-card card h-100">
+                                    <div class="card-header">
+                                        <div class="form-check">
+                                            <input class="form-check-input permission-group" type="checkbox" id="apiDocsGroup" data-group="api_docs">
+                                            <label class="form-check-label fw-bold" for="apiDocsGroup">
+                                                <i class="fas fa-code me-2"></i>API Docs
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-check permission-item">
+                                            <input class="form-check-input permission-item-input" type="checkbox" id="perm_api_docs_view" name="permissions[]" value="api_docs_view" data-group="api_docs">
+                                            <label class="form-check-label" for="perm_api_docs_view">View API Docs</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Permission Actions -->
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-success btn-sm me-2" id="selectAllPermissions">
+                                <i class="fas fa-check-double me-1"></i>Select All
+                            </button>
+                            <button type="button" class="btn btn-warning btn-sm me-2" id="clearAllPermissions">
+                                <i class="fas fa-times me-1"></i>Clear All
+                            </button>
+                            <button type="button" class="btn btn-info btn-sm" id="loadPresetPermissions">
+                                <i class="fas fa-magic me-1"></i>Load Role Preset
+                            </button>
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="saveNewRoleBtn">Save</button>
+                <button type="button" class="btn btn-primary" id="createStaffBtn">
+                    <i class="fas fa-save me-2"></i>Create Staff Account
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- View Permissions Modal -->
-<div class="modal fade" id="viewPermissionsModal" tabindex="-1" aria-labelledby="viewPermissionsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<!-- Edit Staff Permissions Modal -->
+<div class="modal fade" id="editPermissionsModal" tabindex="-1" aria-labelledby="editPermissionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="viewPermissionsModalLabel">Role Permissions</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                <h5 class="modal-title" id="editPermissionsModalLabel">
+                    <i class="fas fa-shield-alt me-2"></i>Edit Staff Permissions
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Module</th>
-                            <th>Permissions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="permissionsTableBody">
-                        <!-- Will be filled dynamically -->
-                    </tbody>
-                </table>
+                <div class="row mb-3">
+                    <div class="col-md-8">
+                        <h6 class="text-primary">Staff Member: <span id="editPermissionsStaffName">John Smith</span></h6>
+                        <p class="text-muted mb-0">Role: <span id="editPermissionsStaffRole">Store Manager</span></p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <button type="button" class="btn btn-success btn-sm me-2" id="selectAllEditPermissions">
+                            <i class="fas fa-check-double me-1"></i>Select All
+                        </button>
+                        <button type="button" class="btn btn-warning btn-sm" id="clearAllEditPermissions">
+                            <i class="fas fa-times me-1"></i>Clear All
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="editPermissionsContainer">
+                    <!-- Permissions will be loaded dynamically -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="savePermissionsBtn">
+                    <i class="fas fa-save me-2"></i>Save Permissions
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Activity Log Modal -->
+<div class="modal fade" id="activityLogModal" tabindex="-1" aria-labelledby="activityLogModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
+                <h5 class="modal-title" id="activityLogModalLabel">
+                    <i class="fas fa-history me-2"></i>Activity Log
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <h6 class="text-primary">Staff Member: <span id="activityLogStaffName">John Smith</span></h6>
+                </div>
+                
+                <div class="activity-timeline">
+                    <div class="timeline-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">Logged in to dashboard</h6>
+                                <p class="text-muted mb-0">IP: 192.168.1.100 | Browser: Chrome</p>
+                            </div>
+                            <small class="text-muted">2 hours ago</small>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">Updated product inventory</h6>
+                                <p class="text-muted mb-0">Modified stock levels for 5 products</p>
+                            </div>
+                            <small class="text-muted">4 hours ago</small>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">Processed customer order</h6>
+                                <p class="text-muted mb-0">Order #12345 - Status changed to shipped</p>
+                            </div>
+                            <small class="text-muted">Yesterday</small>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">Added new product</h6>
+                                <p class="text-muted mb-0">Created "Premium Wireless Headphones"</p>
+                            </div>
+                            <small class="text-muted">2 days ago</small>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">Updated user permissions</h6>
+                                <p class="text-muted mb-0">Modified access level for Sarah Johnson</p>
+                            </div>
+                            <small class="text-muted">3 days ago</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <button class="btn btn-outline-primary">Load More Activities</button>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Export Log</button>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+<div class="modal fade" id="deleteStaffModal" tabindex="-1" aria-labelledby="deleteStaffModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteConfirmModalLabel">Confirm Delete</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteStaffModalLabel">
+                    <i class="fas fa-trash me-2"></i>Delete Staff Account
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to delete the admin user <span id="deleteAdminName" class="fw-bold"></span>?</p>
-                <p class="text-danger">This action cannot be undone.</p>
+                <div class="text-center mb-3">
+                    <i class="fas fa-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                </div>
+                <p class="text-center">Are you sure you want to delete the staff account for <strong id="deleteStaffName">John Smith</strong>?</p>
+                <p class="text-center text-danger"><strong>This action cannot be undone!</strong></p>
+                
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="confirmDeleteCheckbox">
+                    <label class="form-check-label" for="confirmDeleteCheckbox">
+                        I understand that this action is permanent
+                    </label>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Role Modal -->
-<div class="modal fade" id="editRoleModal" tabindex="-1" aria-labelledby="editRoleModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editRoleModalLabel">Edit Role</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editRoleForm">
-                    <input type="hidden" id="editRoleId" name="role_id">
-                    <div class="mb-3">
-                        <label for="editRoleName" class="form-label">Role Name</label>
-                        <input type="text" class="form-control" id="editRoleName" name="role_name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editRoleDescription" class="form-label">Description</label>
-                        <textarea class="form-control" id="editRoleDescription" name="role_description" rows="2"></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-info me-auto" id="editPermissionsBtn">
-                    <i class="fas fa-lock me-1"></i> Edit Permissions
+                <button type="button" class="btn btn-danger" id="confirmDeleteStaffBtn" disabled>
+                    <i class="fas fa-trash me-2"></i>Delete Account
                 </button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="updateRoleBtn">Update</button>
             </div>
         </div>
     </div>
@@ -679,386 +1135,457 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize datatables
-    if ($.fn.DataTable) {
-        $('#adminsTable').DataTable({
-            responsive: true
+    
+    // Initialize page functionality
+    initializeSearch();
+    initializeFilters();
+    initializePermissions();
+    initializeStaffActions();
+    initializeModals();
+    
+    // Search functionality
+    function initializeSearch() {
+        const searchInput = document.getElementById('staffSearch');
+        const searchBtn = document.getElementById('searchBtn');
+        
+        function performSearch() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const staffItems = document.querySelectorAll('.staff-item');
+            
+            staffItems.forEach(item => {
+                const staffName = item.querySelector('h6').textContent.toLowerCase();
+                const staffEmail = item.querySelector('p').textContent.toLowerCase();
+                const staffRole = item.querySelector('.badge').textContent.toLowerCase();
+                
+                if (staffName.includes(searchTerm) || 
+                    staffEmail.includes(searchTerm) || 
+                    staffRole.includes(searchTerm)) {
+                    item.style.display = 'block';
+                    item.classList.add('animate__animated', 'animate__fadeIn');
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        
+        searchBtn.addEventListener('click', performSearch);
+        searchInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
         });
         
-        $('#loginHistoryTable').DataTable({
-            responsive: true,
-            order: [[2, 'desc']], // Sort by login time descending
-            pageLength: 10
-        });
+        // Real-time search
+        searchInput.addEventListener('input', performSearch);
     }
     
-    // Handle admin CRUD operations
-    function setupAdminCRUD() {
-        // Add new admin
-        $('#saveNewAdminBtn').on('click', function() {
-            const form = document.getElementById('addAdminForm');
-            if (form.checkValidity()) {
-                const formData = new FormData(form);
-                const data = Object.fromEntries(formData.entries());
-                
-                // Validate passwords match
-                if (data.password !== data.confirm_password) {
-                    alert('Passwords do not match');
-                    return;
-                }
-                
-                // Mock API call
-                console.log('Creating new admin:', data);
-                
-                // Close modal
-                $('#addAdminModal').modal('hide');
-                
-                // Show success message and refresh table (in real app)
-                showAlert('Admin user created successfully!', 'success');
-                
-                // Reset form
-                form.reset();
-            } else {
-                form.reportValidity();
-            }
-        });
+    // Filter functionality
+    function initializeFilters() {
+        const filterTabs = document.querySelectorAll('.filter-tab');
         
-        // Edit admin - populate form when modal is opened
-        $('#editAdminModal').on('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            const adminId = button.getAttribute('data-admin-id');
-            
-            // In a real app, you would fetch admin data from API
-            // Mock data for demo
-            let adminData = {
-                id: adminId,
-                username: '',
-                name: '',
-                email: '',
-                role: '',
-                is_active: true
-            };
-            
-            if (adminId === '1') {
-                adminData.username = 'admin';
-                adminData.name = 'Administrator';
-                adminData.email = 'admin@example.com';
-                adminData.role = '1'; // Super Admin
-            } else if (adminId === '2') {
-                adminData.username = 'manager';
-                adminData.name = 'Store Manager';
-                adminData.email = 'manager@example.com';
-                adminData.role = '2'; // Manager
-            } else if (adminId === '3') {
-                adminData.username = 'editor';
-                adminData.name = 'Content Editor';
-                adminData.email = 'editor@example.com';
-                adminData.role = '3'; // Editor
-            }
-            
-            // Populate form
-            document.getElementById('editAdminId').value = adminData.id;
-            document.getElementById('editAdminUsername').value = adminData.username;
-            document.getElementById('editAdminName').value = adminData.name;
-            document.getElementById('editAdminEmail').value = adminData.email;
-            document.getElementById('editAdminRole').value = adminData.role;
-            document.getElementById('editAdminActive').checked = adminData.is_active;
-        });
-        
-        // Update admin
-        $('#updateAdminBtn').on('click', function() {
-            const form = document.getElementById('editAdminForm');
-            if (form.checkValidity()) {
-                const formData = new FormData(form);
-                const data = Object.fromEntries(formData.entries());
+        filterTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remove active class from all tabs
+                filterTabs.forEach(t => t.classList.remove('active'));
+                // Add active class to clicked tab
+                this.classList.add('active');
                 
-                // Check if passwords are provided and match
-                if (data.password || data.confirm_password) {
-                    if (data.password !== data.confirm_password) {
-                        alert('Passwords do not match');
-                        return;
+                const filter = this.getAttribute('data-filter');
+                const staffItems = document.querySelectorAll('.staff-item');
+                
+                staffItems.forEach(item => {
+                    const status = item.getAttribute('data-status');
+                    
+                    if (filter === 'all') {
+                        item.style.display = 'block';
+                    } else if (filter === status) {
+                        item.style.display = 'block';
+                    } else if (filter === 'online' && status === 'active') {
+                        // Mock online status - in real app, check actual online status
+                        item.style.display = Math.random() > 0.5 ? 'block' : 'none';
+                    } else {
+                        item.style.display = 'none';
                     }
-                }
-                
-                // Mock API call
-                console.log('Updating admin:', data);
-                
-                // Close modal
-                $('#editAdminModal').modal('hide');
-                
-                // Show success message and refresh table (in real app)
-                showAlert('Admin user updated successfully!', 'success');
-            } else {
-                form.reportValidity();
-            }
-        });
-        
-        // Delete admin - populate confirmation modal
-        $('#deleteConfirmModal').on('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            const adminId = button.getAttribute('data-admin-id');
-            const adminName = button.getAttribute('data-admin-name');
-            
-            document.getElementById('deleteAdminName').textContent = adminName;
-            document.getElementById('confirmDeleteBtn').setAttribute('data-admin-id', adminId);
-        });
-        
-        // Confirm delete admin
-        $('#confirmDeleteBtn').on('click', function() {
-            const adminId = this.getAttribute('data-admin-id');
-            
-            // Mock API call
-            console.log('Deleting admin ID:', adminId);
-            
-            // Close modal
-            $('#deleteConfirmModal').modal('hide');
-            
-            // Show success message and refresh table (in real app)
-            showAlert('Admin user deleted successfully!', 'success');
+                    
+                    // Add animation
+                    if (item.style.display === 'block') {
+                        item.classList.add('animate__animated', 'animate__fadeIn');
+                    }
+                });
+            });
         });
     }
     
-    // Handle role management
-    function setupRoleManagement() {
-        // Permission group checkboxes
-        document.querySelectorAll('.permission-group').forEach(function(groupCheckbox) {
+    // Permission system
+    function initializePermissions() {
+        // Group checkbox handlers
+        document.querySelectorAll('.permission-group').forEach(groupCheckbox => {
             groupCheckbox.addEventListener('change', function() {
                 const group = this.getAttribute('data-group');
                 const isChecked = this.checked;
                 
-                // Check or uncheck all items in the group
-                document.querySelectorAll(`.permission-item[data-group="${group}"]`).forEach(function(item) {
+                // Check/uncheck all items in the group
+                document.querySelectorAll(`.permission-item-input[data-group="${group}"]`).forEach(item => {
                     item.checked = isChecked;
+                    
+                    // Add visual feedback
+                    const permissionItem = item.closest('.permission-item');
+                    if (isChecked) {
+                        permissionItem.classList.add('selected');
+                    } else {
+                        permissionItem.classList.remove('selected');
+                    }
                 });
+                
+                // Update permission card appearance
+                const card = this.closest('.permission-card');
+                if (isChecked) {
+                    card.style.background = 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)';
+                } else {
+                    card.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                }
             });
         });
         
-        // Permission items affect group checkbox
-        document.querySelectorAll('.permission-item').forEach(function(itemCheckbox) {
+        // Individual permission handlers
+        document.querySelectorAll('.permission-item-input').forEach(itemCheckbox => {
             itemCheckbox.addEventListener('change', function() {
                 const group = this.getAttribute('data-group');
                 const groupCheckbox = document.querySelector(`.permission-group[data-group="${group}"]`);
-                const groupItems = document.querySelectorAll(`.permission-item[data-group="${group}"]`);
+                const groupItems = document.querySelectorAll(`.permission-item-input[data-group="${group}"]`);
                 
                 // Check if all items in the group are checked
                 const allChecked = Array.from(groupItems).every(item => item.checked);
                 const anyChecked = Array.from(groupItems).some(item => item.checked);
                 
                 groupCheckbox.checked = allChecked;
-                
-                // Indeterminate state if some but not all items are checked
                 groupCheckbox.indeterminate = anyChecked && !allChecked;
+                
+                // Visual feedback
+                const permissionItem = this.closest('.permission-item');
+                if (this.checked) {
+                    permissionItem.classList.add('selected');
+                } else {
+                    permissionItem.classList.remove('selected');
+                }
+                
+                // Update card appearance based on any checked items
+                const card = groupCheckbox.closest('.permission-card');
+                if (anyChecked) {
+                    card.style.background = 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)';
+                } else {
+                    card.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                }
             });
         });
         
-        // Save new role
-        document.getElementById('saveNewRoleBtn').addEventListener('click', function() {
-            const form = document.getElementById('addRoleForm');
-            if (form.checkValidity()) {
-                const formData = new FormData(form);
-                const data = {
-                    role_name: formData.get('role_name'),
-                    role_description: formData.get('role_description'),
-                    permissions: formData.getAll('permissions[]')
-                };
-                
-                // Mock API call
-                console.log('Creating new role:', data);
-                
-                // Close modal
-                $('#addRoleModal').modal('hide');
-                
-                // Show success message and refresh table (in real app)
-                showAlert('Role created successfully!', 'success');
-                
-                // Reset form
-                form.reset();
-                
-                // Reset indeterminate state
-                document.querySelectorAll('.permission-group').forEach(function(groupCheckbox) {
-                    groupCheckbox.indeterminate = false;
-                });
-            } else {
-                form.reportValidity();
-            }
+        // Permission action buttons
+        document.getElementById('selectAllPermissions')?.addEventListener('click', function() {
+            document.querySelectorAll('.permission-group').forEach(cb => {
+                cb.checked = true;
+                cb.dispatchEvent(new Event('change'));
+            });
+            showAlert('All permissions selected!', 'success');
         });
         
-        // View permissions modal
-        document.getElementById('viewPermissionsModal').addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            const roleId = button.getAttribute('data-role-id');
-            const roleName = {
-                '1': 'Super Admin',
-                '2': 'Manager',
-                '3': 'Editor'
-            }[roleId];
+        document.getElementById('clearAllPermissions')?.addEventListener('click', function() {
+            document.querySelectorAll('.permission-group').forEach(cb => {
+                cb.checked = false;
+                cb.dispatchEvent(new Event('change'));
+            });
+            showAlert('All permissions cleared!', 'warning');
+        });
+        
+        document.getElementById('loadPresetPermissions')?.addEventListener('click', function() {
+            const role = document.getElementById('staffRole').value;
+            if (!role) {
+                showAlert('Please select a role first!', 'warning');
+                return;
+            }
             
-            this.querySelector('.modal-title').textContent = `${roleName} Permissions`;
+            // Clear all first
+            document.getElementById('clearAllPermissions').click();
             
-            // Mock permission data
-            const permissions = {
-                '1': { // Super Admin
-                    Dashboard: ['View Dashboard', 'Edit Widgets'],
-                    Products: ['View Products', 'Add Product', 'Edit Product', 'Delete Product'],
-                    Orders: ['View Orders', 'Edit Order', 'Delete Order'],
-                    Users: ['View Users', 'Edit User', 'Delete User'],
-                    Settings: ['View Settings', 'Edit Settings'],
-                    Admin: ['View Admins', 'Add Admin', 'Edit Admin', 'Delete Admin']
-                },
-                '2': { // Manager
-                    Dashboard: ['View Dashboard', 'Edit Widgets'],
-                    Products: ['View Products', 'Add Product', 'Edit Product', 'Delete Product'],
-                    Orders: ['View Orders', 'Edit Order', 'Delete Order'],
-                    Users: ['View Users', 'Edit User'],
-                    Settings: ['View Settings']
-                },
-                '3': { // Editor
-                    Dashboard: ['View Dashboard'],
-                    Products: ['View Products', 'Edit Product'],
-                    Orders: ['View Orders']
+            // Load preset based on role
+            const presets = {
+                'super_admin': ['dashboard', 'products', 'categories', 'media', 'stock', 'orders', 'incomplete_orders', 'reviews', 'contacts', 'pages', 'blocklist', 'users', 'expenses', 'statistics', 'email_settings', 'settings', 'accounts', 'api_docs'],
+                'manager': ['dashboard', 'products', 'categories', 'media', 'stock', 'orders', 'incomplete_orders', 'reviews', 'contacts', 'pages', 'users', 'expenses', 'statistics'],
+                'content_manager': ['dashboard', 'products', 'categories', 'media', 'pages', 'reviews'],
+                'customer_support': ['dashboard', 'orders', 'incomplete_orders', 'users', 'contacts', 'reviews'],
+                'inventory_manager': ['dashboard', 'products', 'categories', 'stock', 'orders']
+            };
+            
+            const rolePermissions = presets[role] || [];
+            rolePermissions.forEach(group => {
+                const groupCheckbox = document.querySelector(`.permission-group[data-group="${group}"]`);
+                if (groupCheckbox) {
+                    groupCheckbox.checked = true;
+                    groupCheckbox.dispatchEvent(new Event('change'));
                 }
-            }[roleId];
+            });
             
-            // Populate table
-            const tbody = document.getElementById('permissionsTableBody');
-            tbody.innerHTML = '';
-            
-            for (const [module, perms] of Object.entries(permissions)) {
-                const row = document.createElement('tr');
-                
-                const moduleCell = document.createElement('td');
-                moduleCell.innerHTML = `<strong>${module}</strong>`;
-                row.appendChild(moduleCell);
-                
-                const permsCell = document.createElement('td');
-                perms.forEach(perm => {
-                    const badge = document.createElement('span');
-                    badge.className = 'badge bg-info me-1 mb-1';
-                    badge.textContent = perm;
-                    permsCell.appendChild(badge);
-                });
-                row.appendChild(permsCell);
-                
-                tbody.appendChild(row);
-            }
-        });
-        
-        // Edit role modal
-        document.getElementById('editRoleModal').addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            const roleId = button.getAttribute('data-role-id');
-            
-            // Mock role data
-            const roleData = {
-                '1': {
-                    id: '1',
-                    name: 'Super Admin',
-                    description: 'Full access to all features and settings'
-                },
-                '2': {
-                    id: '2',
-                    name: 'Manager',
-                    description: 'Access to all features except admin management'
-                },
-                '3': {
-                    id: '3',
-                    name: 'Editor',
-                    description: 'Access to content management features'
-                }
-            }[roleId];
-            
-            document.getElementById('editRoleId').value = roleData.id;
-            document.getElementById('editRoleName').value = roleData.name;
-            document.getElementById('editRoleDescription').value = roleData.description;
-        });
-        
-        // Update role
-        document.getElementById('updateRoleBtn').addEventListener('click', function() {
-            const form = document.getElementById('editRoleForm');
-            if (form.checkValidity()) {
-                const formData = new FormData(form);
-                const data = Object.fromEntries(formData.entries());
-                
-                // Mock API call
-                console.log('Updating role:', data);
-                
-                // Close modal
-                $('#editRoleModal').modal('hide');
-                
-                // Show success message and refresh table (in real app)
-                showAlert('Role updated successfully!', 'success');
-            } else {
-                form.reportValidity();
-            }
-        });
-        
-        // Edit permissions button
-        document.getElementById('editPermissionsBtn').addEventListener('click', function() {
-            const roleId = document.getElementById('editRoleId').value;
-            const roleName = document.getElementById('editRoleName').value;
-            
-            // Close edit role modal
-            $('#editRoleModal').modal('hide');
-            
-            // Open add role modal with permissions
-            setTimeout(() => {
-                document.getElementById('addRoleModalLabel').textContent = `Edit ${roleName} Permissions`;
-                document.getElementById('roleName').value = roleName;
-                document.getElementById('roleDescription').value = document.getElementById('editRoleDescription').value;
-                
-                // Set permissions based on role ID (mock data)
-                const permissions = {
-                    '1': [ // Super Admin - all permissions
-                        'view_dashboard', 'edit_widgets',
-                        'view_products', 'add_product', 'edit_product', 'delete_product',
-                        'view_orders', 'edit_order', 'delete_order',
-                        'view_users', 'edit_user', 'delete_user',
-                        'view_settings', 'edit_settings',
-                        'view_admins', 'add_admin', 'edit_admin', 'delete_admin'
-                    ],
-                    '2': [ // Manager
-                        'view_dashboard', 'edit_widgets',
-                        'view_products', 'add_product', 'edit_product', 'delete_product',
-                        'view_orders', 'edit_order', 'delete_order',
-                        'view_users', 'edit_user',
-                        'view_settings'
-                    ],
-                    '3': [ // Editor
-                        'view_dashboard',
-                        'view_products', 'edit_product',
-                        'view_orders'
-                    ]
-                }[roleId];
-                
-                // Check permissions
-                document.querySelectorAll('.permission-item').forEach(function(item) {
-                    item.checked = permissions.includes(item.value);
-                    
-                    // Trigger change event to update group checkboxes
-                    const changeEvent = new Event('change');
-                    item.dispatchEvent(changeEvent);
-                });
-                
-                // Change save button text
-                document.getElementById('saveNewRoleBtn').textContent = 'Update Permissions';
-                
-                $('#addRoleModal').modal('show');
-            }, 500);
+            showAlert(`Loaded ${role.replace('_', ' ')} permissions!`, 'info');
         });
     }
     
-    // Helper function to show alerts
+    // Staff actions
+    function initializeStaffActions() {
+        document.addEventListener('click', function(e) {
+            const action = e.target.getAttribute('data-action') || e.target.closest('[data-action]')?.getAttribute('data-action');
+            const staffId = e.target.getAttribute('data-id') || e.target.closest('[data-id]')?.getAttribute('data-id');
+            
+            if (!action || !staffId) return;
+            
+            switch(action) {
+                case 'edit':
+                    editStaff(staffId);
+                    break;
+                case 'permissions':
+                    editPermissions(staffId);
+                    break;
+                case 'activity':
+                    viewActivity(staffId);
+                    break;
+                case 'delete':
+                    deleteStaff(staffId);
+                    break;
+            }
+        });
+    }
+    
+    function editStaff(staffId) {
+        // Mock staff data - in real app, fetch from API
+        const staffData = {
+            '1': { name: 'John Smith', email: 'john.smith@company.com', role: 'Store Manager' },
+            '2': { name: 'Sarah Johnson', email: 'sarah.johnson@company.com', role: 'Content Manager' },
+            '3': { name: 'Mike Wilson', email: 'mike.wilson@company.com', role: 'Customer Support' }
+        };
+        
+        const staff = staffData[staffId];
+        if (staff) {
+            // Open create modal in edit mode
+            document.getElementById('createStaffModalLabel').textContent = 'Edit Staff Account';
+            document.getElementById('staffFirstName').value = staff.name.split(' ')[0];
+            document.getElementById('staffLastName').value = staff.name.split(' ')[1];
+            document.getElementById('staffEmail').value = staff.email;
+            
+            const modal = new bootstrap.Modal(document.getElementById('createStaffModal'));
+            modal.show();
+        }
+    }
+    
+    function editPermissions(staffId) {
+        const staffData = {
+            '1': { name: 'John Smith', role: 'Store Manager' },
+            '2': { name: 'Sarah Johnson', role: 'Content Manager' },
+            '3': { name: 'Mike Wilson', role: 'Customer Support' }
+        };
+        
+        const staff = staffData[staffId];
+        if (staff) {
+            document.getElementById('editPermissionsStaffName').textContent = staff.name;
+            document.getElementById('editPermissionsStaffRole').textContent = staff.role;
+            
+            // Clone permissions from create modal
+            const originalContainer = document.querySelector('#createStaffModal .row:has(.permission-card)');
+            const editContainer = document.getElementById('editPermissionsContainer');
+            editContainer.innerHTML = '<div class="row">' + originalContainer.innerHTML + '</div>';
+            
+            // Initialize permissions for edit modal
+            initializeEditPermissions();
+            
+            const modal = new bootstrap.Modal(document.getElementById('editPermissionsModal'));
+            modal.show();
+        }
+    }
+    
+    function initializeEditPermissions() {
+        // Re-initialize permission functionality for edit modal
+        document.querySelectorAll('#editPermissionsModal .permission-group').forEach(groupCheckbox => {
+            groupCheckbox.addEventListener('change', function() {
+                const group = this.getAttribute('data-group');
+                const isChecked = this.checked;
+                
+                document.querySelectorAll(`#editPermissionsModal .permission-item-input[data-group="${group}"]`).forEach(item => {
+                    item.checked = isChecked;
+                });
+            });
+        });
+        
+        document.getElementById('selectAllEditPermissions')?.addEventListener('click', function() {
+            document.querySelectorAll('#editPermissionsModal .permission-group').forEach(cb => {
+                cb.checked = true;
+                cb.dispatchEvent(new Event('change'));
+            });
+        });
+        
+        document.getElementById('clearAllEditPermissions')?.addEventListener('click', function() {
+            document.querySelectorAll('#editPermissionsModal .permission-group').forEach(cb => {
+                cb.checked = false;
+                cb.dispatchEvent(new Event('change'));
+            });
+        });
+    }
+    
+    function viewActivity(staffId) {
+        const staffData = {
+            '1': { name: 'John Smith' },
+            '2': { name: 'Sarah Johnson' },
+            '3': { name: 'Mike Wilson' }
+        };
+        
+        const staff = staffData[staffId];
+        if (staff) {
+            document.getElementById('activityLogStaffName').textContent = staff.name;
+            
+            const modal = new bootstrap.Modal(document.getElementById('activityLogModal'));
+            modal.show();
+        }
+    }
+    
+    function deleteStaff(staffId) {
+        const staffData = {
+            '1': { name: 'John Smith' },
+            '2': { name: 'Sarah Johnson' },
+            '3': { name: 'Mike Wilson' }
+        };
+        
+        const staff = staffData[staffId];
+        if (staff) {
+            document.getElementById('deleteStaffName').textContent = staff.name;
+            document.getElementById('confirmDeleteStaffBtn').setAttribute('data-staff-id', staffId);
+            
+            const modal = new bootstrap.Modal(document.getElementById('deleteStaffModal'));
+            modal.show();
+        }
+    }
+    
+    // Modal handlers
+    function initializeModals() {
+        // Create staff form submission
+        document.getElementById('createStaffBtn')?.addEventListener('click', function() {
+            const form = document.getElementById('createStaffForm');
+            if (validateStaffForm(form)) {
+                const formData = new FormData(form);
+                const staffData = Object.fromEntries(formData.entries());
+                
+                // Get selected permissions
+                staffData.permissions = Array.from(document.querySelectorAll('#createStaffModal input[name="permissions[]"]:checked'))
+                    .map(input => input.value);
+                
+                console.log('Creating staff:', staffData);
+                
+                // Mock API call
+                setTimeout(() => {
+                    showAlert('Staff account created successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('createStaffModal')).hide();
+                    form.reset();
+                    
+                    // Reset permissions
+                    document.getElementById('clearAllPermissions').click();
+                }, 1000);
+            }
+        });
+        
+        // Save permissions
+        document.getElementById('savePermissionsBtn')?.addEventListener('click', function() {
+            const selectedPermissions = Array.from(document.querySelectorAll('#editPermissionsModal input[name="permissions[]"]:checked'))
+                .map(input => input.value);
+            
+            console.log('Saving permissions:', selectedPermissions);
+            
+            showAlert('Permissions updated successfully!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('editPermissionsModal')).hide();
+        });
+        
+        // Delete confirmation
+        document.getElementById('confirmDeleteCheckbox')?.addEventListener('change', function() {
+            document.getElementById('confirmDeleteStaffBtn').disabled = !this.checked;
+        });
+        
+        document.getElementById('confirmDeleteStaffBtn')?.addEventListener('click', function() {
+            const staffId = this.getAttribute('data-staff-id');
+            
+            console.log('Deleting staff:', staffId);
+            
+            showAlert('Staff account deleted successfully!', 'info');
+            bootstrap.Modal.getInstance(document.getElementById('deleteStaffModal')).hide();
+            
+            // Remove staff card from UI
+            document.querySelector(`[data-id="${staffId}"]`)?.closest('.staff-item').remove();
+        });
+        
+        // Reset modal when hidden
+        document.getElementById('createStaffModal')?.addEventListener('hidden.bs.modal', function() {
+            document.getElementById('createStaffModalLabel').textContent = 'Create New Staff Account';
+            document.getElementById('createStaffForm').reset();
+            document.getElementById('clearAllPermissions')?.click();
+        });
+    }
+    
+    // Form validation
+    function validateStaffForm(form) {
+        const password = form.querySelector('#staffPassword').value;
+        const confirmPassword = form.querySelector('#staffPasswordConfirm').value;
+        
+        if (password !== confirmPassword) {
+            showAlert('Passwords do not match!', 'danger');
+            return false;
+        }
+        
+        if (password.length < 8) {
+            showAlert('Password must be at least 8 characters long!', 'danger');
+            return false;
+        }
+        
+        const selectedPermissions = document.querySelectorAll('#createStaffModal input[name="permissions[]"]:checked');
+        if (selectedPermissions.length === 0) {
+            showAlert('Please select at least one permission!', 'warning');
+            return false;
+        }
+        
+        return form.checkValidity();
+    }
+    
+    // Load more functionality
+    document.getElementById('loadMoreBtn')?.addEventListener('click', function() {
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading...';
+        
+        // Mock loading more staff
+        setTimeout(() => {
+            this.innerHTML = '<i class="fas fa-plus-circle me-2"></i>Load More Staff';
+            showAlert('No more staff to load', 'info');
+        }, 2000);
+    });
+    
+    // Auto-generate username from name
+    document.getElementById('staffFirstName')?.addEventListener('input', generateUsername);
+    document.getElementById('staffLastName')?.addEventListener('input', generateUsername);
+    
+    function generateUsername() {
+        const firstName = document.getElementById('staffFirstName').value.toLowerCase();
+        const lastName = document.getElementById('staffLastName').value.toLowerCase();
+        
+        if (firstName && lastName) {
+            const username = firstName + '.' + lastName;
+            document.getElementById('staffUsername').value = username;
+        }
+    }
+    
+    // Utility function for alerts
     function showAlert(message, type) {
+        // Remove existing alerts
+        document.querySelectorAll('.alert').forEach(alert => alert.remove());
+        
         const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
         alertDiv.innerHTML = `
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         `;
         
-        // Insert at the top of content
-        const content = document.querySelector('.content-wrapper');
-        content.insertBefore(alertDiv, content.firstChild);
+        document.body.appendChild(alertDiv);
         
         // Auto dismiss after 5 seconds
         setTimeout(() => {
@@ -1069,9 +1596,43 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     }
     
-    // Initialize all functionality
-    setupAdminCRUD();
-    setupRoleManagement();
+    // Add smooth animations
+    function addAnimations() {
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            
+            .animate__animated {
+                animation-duration: 0.5s;
+                animation-fill-mode: both;
+            }
+            
+            .animate__fadeIn {
+                animation-name: fadeIn;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    addAnimations();
+    
+    // Initialize tooltips and popovers
+    if (typeof bootstrap !== 'undefined') {
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Initialize popovers
+        const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+        popoverTriggerList.map(function (popoverTriggerEl) {
+            return new bootstrap.Popover(popoverTriggerEl);
+        });
+    }
 });
 </script>
 {% endblock %}
