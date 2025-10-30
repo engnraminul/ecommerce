@@ -2304,14 +2304,6 @@ def dashboard_profile(request):
 
 @login_required
 @user_passes_test(is_admin)
-def dashboard_accounts(request):
-    context = {
-        'active_page': 'accounts'
-    }
-    return render(request, 'dashboard/accounts.html', context)
-
-@login_required
-@user_passes_test(is_admin)
 def dashboard_api_docs(request):
     context = {
         'active_page': 'api_docs'

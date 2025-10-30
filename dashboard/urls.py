@@ -92,7 +92,6 @@ urlpatterns = [
     path('settings/debug/', views.debug_settings, name='debug_settings'),
     path('settings/test/', views.test_settings_post, name='test_settings_post'),
     path('profile/', views.dashboard_profile, name='profile'),
-    path('accounts/', views.dashboard_accounts, name='accounts'),
     path('api-docs/', views.dashboard_api_docs, name='api_docs'),
     path('pages/', views.dashboard_pages, name='pages'),
     path('blocklist/', views.dashboard_blocklist, name='blocklist'),
