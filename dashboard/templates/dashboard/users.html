@@ -56,13 +56,14 @@
                         <th>Email Verified</th>
                         <th>Role</th>
                         <th>Status</th>
+                        <th>Dashboard Access</th>
                         <th>Joined</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="usersTableBody">
                     <tr>
-                        <td colspan="9" class="text-center py-4">
+                        <td colspan="10" class="text-center py-4">
                             <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
@@ -170,6 +171,15 @@
                                     
                                     <dt class="col-sm-5">Last Login</dt>
                                     <dd class="col-sm-7" id="userDetailLastLogin"></dd>
+                                </dl>
+                                
+                                <h6 class="mb-3 text-primary mt-4">Dashboard Permissions</h6>
+                                <dl class="row">
+                                    <dt class="col-sm-5">Access Level</dt>
+                                    <dd class="col-sm-7" id="userDetailDashboardAccess"></dd>
+                                    
+                                    <dt class="col-sm-5">Allowed Tabs</dt>
+                                    <dd class="col-sm-7" id="userDetailAllowedTabs"></dd>
                                 </dl>
                             </div>
                         </div>
@@ -352,6 +362,19 @@
 
                             <hr>
                             
+                            <h6 class="mb-3 text-primary">Dashboard Permissions</h6>
+                            <div class="mb-3">
+                                <small class="text-muted">Select which dashboard tabs this user can access. Note: Staff and administrators have full access regardless of these settings.</small>
+                            </div>
+                            <div id="dashboardPermissionsContainer" class="mb-3">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                    <span class="visually-hidden">Loading permissions...</span>
+                                </div>
+                                <span class="ms-2">Loading dashboard tabs...</span>
+                            </div>
+
+                            <hr>
+                            
                             <h6 class="mb-3 text-primary">Profile Picture</h6>
                             <div class="mb-3">
                                 <label for="profilePicture" class="form-label">Upload Image</label>
@@ -511,6 +534,19 @@
                                     <input class="form-check-input" type="checkbox" id="editIsSuperuser" name="is_superuser">
                                     <label class="form-check-label" for="editIsSuperuser">Administrator</label>
                                 </div>
+                            </div>
+
+                            <hr>
+                            
+                            <h6 class="mb-3 text-primary">Dashboard Permissions</h6>
+                            <div class="mb-3">
+                                <small class="text-muted">Select which dashboard tabs this user can access. Note: Staff and administrators have full access regardless of these settings.</small>
+                            </div>
+                            <div id="editDashboardPermissionsContainer" class="mb-3">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                    <span class="visually-hidden">Loading permissions...</span>
+                                </div>
+                                <span class="ms-2">Loading dashboard tabs...</span>
                             </div>
 
                             <hr>
@@ -691,6 +727,97 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initial data loading
     loadUsers(1);
+    loadDashboardTabs();
+    
+    // Load available dashboard tabs for permission selection
+    function loadDashboardTabs() {
+        fetch('/mb-admin/api/users/dashboard_tabs/')
+            .then(response => response.json())
+            .then(tabs => {
+                createDashboardPermissionsUI(tabs, 'dashboardPermissionsContainer', 'dashboard_permissions');
+                createDashboardPermissionsUI(tabs, 'editDashboardPermissionsContainer', 'edit_dashboard_permissions');
+            })
+            .catch(error => {
+                console.error('Error loading dashboard tabs:', error);
+                document.getElementById('dashboardPermissionsContainer').innerHTML = '<span class="text-danger">Error loading dashboard tabs</span>';
+                document.getElementById('editDashboardPermissionsContainer').innerHTML = '<span class="text-danger">Error loading dashboard tabs</span>';
+            });
+    }
+    
+    function createDashboardPermissionsUI(tabs, containerId, namePrefix) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        
+        // Create checkbox grid
+        const checkboxGrid = document.createElement('div');
+        checkboxGrid.className = 'row row-cols-1 row-cols-md-2 g-2';
+        
+        tabs.forEach(tab => {
+            const col = document.createElement('div');
+            col.className = 'col';
+            
+            const checkboxDiv = document.createElement('div');
+            checkboxDiv.className = 'form-check';
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'form-check-input';
+            checkbox.id = `${namePrefix}_${tab.value}`;
+            checkbox.name = `${namePrefix}[]`;
+            checkbox.value = tab.value;
+            
+            const label = document.createElement('label');
+            label.className = 'form-check-label';
+            label.htmlFor = checkbox.id;
+            label.textContent = tab.label;
+            
+            checkboxDiv.appendChild(checkbox);
+            checkboxDiv.appendChild(label);
+            col.appendChild(checkboxDiv);
+            checkboxGrid.appendChild(col);
+        });
+        
+        // Add select all / deselect all buttons
+        const buttonsDiv = document.createElement('div');
+        buttonsDiv.className = 'mb-3';
+        
+        const selectAllBtn = document.createElement('button');
+        selectAllBtn.type = 'button';
+        selectAllBtn.className = 'btn btn-sm btn-outline-primary me-2';
+        selectAllBtn.textContent = 'Select All';
+        selectAllBtn.onclick = () => toggleAllCheckboxes(namePrefix, true);
+        
+        const deselectAllBtn = document.createElement('button');
+        deselectAllBtn.type = 'button';
+        deselectAllBtn.className = 'btn btn-sm btn-outline-secondary';
+        deselectAllBtn.textContent = 'Deselect All';
+        deselectAllBtn.onclick = () => toggleAllCheckboxes(namePrefix, false);
+        
+        buttonsDiv.appendChild(selectAllBtn);
+        buttonsDiv.appendChild(deselectAllBtn);
+        
+        container.appendChild(buttonsDiv);
+        container.appendChild(checkboxGrid);
+    }
+    
+    function toggleAllCheckboxes(namePrefix, checked) {
+        const checkboxes = document.querySelectorAll(`input[name="${namePrefix}[]"]`);
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = checked;
+        });
+    }
+    
+    function getDashboardPermissions(namePrefix) {
+        const checkboxes = document.querySelectorAll(`input[name="${namePrefix}[]"]:checked`);
+        return Array.from(checkboxes).map(checkbox => checkbox.value);
+    }
+    
+    function setDashboardPermissions(namePrefix, permissions) {
+        const checkboxes = document.querySelectorAll(`input[name="${namePrefix}[]"]`);
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = permissions.includes(checkbox.value);
+        });
+    }
     
     // Load users with pagination and filtering
     function loadUsers(page = 1) {
@@ -716,7 +843,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show loading indicator
         document.getElementById('usersTableBody').innerHTML = `
             <tr>
-                <td colspan="8" class="text-center py-4">
+                <td colspan="10" class="text-center py-4">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
@@ -736,7 +863,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error loading users:', error);
                 document.getElementById('usersTableBody').innerHTML = `
                     <tr>
-                        <td colspan="8" class="text-center py-4 text-danger">
+                        <td colspan="10" class="text-center py-4 text-danger">
                             <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
                             <p>Error loading users. Please try again.</p>
                         </td>
@@ -752,7 +879,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!users || users.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="8" class="text-center py-4">No users found.</td>
+                    <td colspan="10" class="text-center py-4">No users found.</td>
                 </tr>
             `;
             return;
@@ -772,6 +899,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 '<span class="badge bg-success"><i class="fas fa-check"></i> Verified</span>' : 
                 '<span class="badge bg-warning"><i class="fas fa-exclamation-triangle"></i> Unverified</span>';
             
+            // Dashboard access summary
+            let dashboardAccessBadge = '';
+            if (user.dashboard_access_summary) {
+                const summary = user.dashboard_access_summary;
+                switch (summary.type) {
+                    case 'superuser':
+                        dashboardAccessBadge = '<span class="badge bg-success">🔓 Full Access (Superuser)</span>';
+                        break;
+                    case 'staff':
+                        dashboardAccessBadge = '<span class="badge bg-info">🔓 Full Access (Staff)</span>';
+                        break;
+                    case 'limited':
+                        dashboardAccessBadge = `<span class="badge bg-warning">🔐 Limited (${summary.tab_count} tabs)</span>`;
+                        break;
+                    case 'none':
+                        dashboardAccessBadge = '<span class="badge bg-danger">🔒 No Access</span>';
+                        break;
+                    default:
+                        dashboardAccessBadge = '<span class="badge bg-secondary">Unknown</span>';
+                }
+            } else {
+                dashboardAccessBadge = '<span class="badge bg-secondary">Not Set</span>';
+            }
+            
             tr.innerHTML = `
                 <td>${user.id}</td>
                 <td>${user.username}</td>
@@ -780,6 +931,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>${emailVerifiedBadge}</td>
                 <td>${roleBadge}</td>
                 <td>${statusBadge}</td>
+                <td>${dashboardAccessBadge}</td>
                 <td>${new Date(user.date_joined).toLocaleDateString()}</td>
                 <td>
                     <div class="btn-group btn-group-sm" role="group">
@@ -909,6 +1061,43 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('userDetailIsStaff').textContent = user.is_staff ? 'Yes' : 'No';
         document.getElementById('userDetailIsAdmin').textContent = user.is_superuser ? 'Yes' : 'No';
         
+        // Dashboard Permissions
+        if (user.dashboard_access_summary) {
+            const summary = user.dashboard_access_summary;
+            let accessLevel = '';
+            switch (summary.type) {
+                case 'superuser':
+                    accessLevel = '<span class="badge bg-success">Full Access (Superuser)</span>';
+                    break;
+                case 'staff':
+                    accessLevel = '<span class="badge bg-info">Full Access (Staff)</span>';
+                    break;
+                case 'limited':
+                    accessLevel = `<span class="badge bg-warning">Limited Access (${summary.tab_count} tabs)</span>`;
+                    break;
+                case 'none':
+                    accessLevel = '<span class="badge bg-danger">No Access</span>';
+                    break;
+                default:
+                    accessLevel = '<span class="badge bg-secondary">Unknown</span>';
+            }
+            document.getElementById('userDetailDashboardAccess').innerHTML = accessLevel;
+        } else {
+            document.getElementById('userDetailDashboardAccess').innerHTML = '<span class="badge bg-secondary">Not Set</span>';
+        }
+        
+        // Display allowed tabs
+        if (user.dashboard_permissions && user.dashboard_permissions.allowed_tab_names && user.dashboard_permissions.allowed_tab_names.length > 0) {
+            const tabsList = user.dashboard_permissions.allowed_tab_names.map(tab => 
+                `<span class="badge bg-light text-dark me-1 mb-1">${tab}</span>`
+            ).join('');
+            document.getElementById('userDetailAllowedTabs').innerHTML = tabsList;
+        } else if (user.is_superuser || user.is_staff) {
+            document.getElementById('userDetailAllowedTabs').innerHTML = '<span class="text-muted">All tabs (full access)</span>';
+        } else {
+            document.getElementById('userDetailAllowedTabs').innerHTML = '<span class="text-muted">No specific tabs assigned</span>';
+        }
+        
         // Profile Picture
         const profilePicture = document.getElementById('userProfilePicture');
         const defaultAvatar = document.getElementById('userDefaultAvatar');
@@ -1034,6 +1223,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Clear file input
                 document.getElementById('editProfilePicture').value = '';
                 
+                // Set dashboard permissions
+                if (user.dashboard_permissions && user.dashboard_permissions.allowed_tabs) {
+                    setDashboardPermissions('edit_dashboard_permissions', user.dashboard_permissions.allowed_tabs);
+                } else {
+                    setDashboardPermissions('edit_dashboard_permissions', []);
+                }
+                
                 // Show the modal
                 const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
                 modal.show();
@@ -1094,7 +1290,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 is_active: document.getElementById('isActive').checked,
                 is_email_verified: document.getElementById('isEmailVerified').checked,
                 is_staff: document.getElementById('isStaff').checked,
-                is_superuser: document.getElementById('isSuperuser').checked
+                is_superuser: document.getElementById('isSuperuser').checked,
+                dashboard_permissions: {
+                    allowed_tabs: getDashboardPermissions('dashboard_permissions')
+                }
             };
             
             fetch('/mb-admin/api/users/', {
@@ -1170,7 +1369,10 @@ document.addEventListener('DOMContentLoaded', function() {
             is_active: document.getElementById('editIsActive').checked,
             is_email_verified: document.getElementById('editIsEmailVerified').checked,
             is_staff: document.getElementById('editIsStaff').checked,
-            is_superuser: document.getElementById('editIsSuperuser').checked
+            is_superuser: document.getElementById('editIsSuperuser').checked,
+            dashboard_permissions: {
+                allowed_tabs: getDashboardPermissions('edit_dashboard_permissions')
+            }
         };
         
         // Add password only if provided

@@ -149,6 +149,16 @@ class UserDashboardViewSet(viewsets.ModelViewSet):
     search_fields = ['username', 'email', 'first_name', 'last_name']
     ordering_fields = ['username', 'date_joined', 'last_login']
     
+    def get_queryset(self):
+        return User.objects.select_related('dashboard_permissions').all()
+    
+    @action(detail=False, methods=['get'])
+    def dashboard_tabs(self, request):
+        """Return available dashboard tabs for permission selection"""
+        from users.models import DashboardPermission
+        tabs = [{'value': code, 'label': name} for code, name in DashboardPermission.DASHBOARD_TABS]
+        return Response(tabs)
+    
     def perform_create(self, serializer):
         instance = serializer.save()
         try:

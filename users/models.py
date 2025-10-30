@@ -108,6 +108,72 @@ class User(AbstractUser):
     def can_login(self):
         """Check if user can login (must have verified email)."""
         return self.is_active and self.is_email_verified
+    
+    def has_dashboard_access(self, tab_code):
+        """Check if user has access to a specific dashboard tab"""
+        # Only superusers have automatic access to everything
+        if self.is_superuser:
+            return True
+        
+        # Staff and regular users must have explicit permissions
+        try:
+            return self.dashboard_permissions.has_tab_access(tab_code)
+        except DashboardPermission.DoesNotExist:
+            return False
+
+
+class DashboardPermission(models.Model):
+    """Dashboard permission model to control access to dashboard tabs"""
+    DASHBOARD_TABS = [
+        ('home', 'Dashboard Home'),
+        ('products', 'Products'),
+        ('categories', 'Categories'),
+        ('media', 'Media'),
+        ('stock', 'Stock'),
+        ('orders', 'Orders'),
+        ('incomplete_orders', 'Incomplete Orders'),
+        ('reviews', 'Reviews'),
+        ('contacts', 'Contacts'),
+        ('pages', 'Pages'),
+        ('blocklist', 'Block List'),
+        ('users', 'Users'),
+        ('expenses', 'Expenses'),
+        ('statistics', 'Statistics'),
+        ('email_settings', 'Email Settings'),
+        ('settings', 'Settings'),
+        ('api_docs', 'API Docs'),
+    ]
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='dashboard_permissions')
+    allowed_tabs = models.JSONField(default=list, blank=True, help_text="List of dashboard tab codes the user can access")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Dashboard Permission"
+        verbose_name_plural = "Dashboard Permissions"
+    
+    def __str__(self):
+        return f"Dashboard permissions for {self.user.username}"
+    
+    def has_tab_access(self, tab_code):
+        """Check if user has access to a specific dashboard tab"""
+        # Only superusers get automatic access
+        if self.user.is_superuser:
+            return True
+        # Staff and regular users must have explicit permission
+        return tab_code in self.allowed_tabs
+    
+    def get_allowed_tab_names(self):
+        """Get human-readable names of allowed tabs"""
+        tab_dict = dict(self.DASHBOARD_TABS)
+        return [tab_dict.get(tab, tab) for tab in self.allowed_tabs]
+    
+    @classmethod
+    def get_all_tab_choices(cls):
+        """Get all available dashboard tab choices"""
+        return cls.DASHBOARD_TABS
 
 
 class UserProfile(models.Model):

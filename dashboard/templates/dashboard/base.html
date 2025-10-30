@@ -1,4 +1,5 @@
 {% load static %}
+{% load dashboard_permissions %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -212,86 +213,118 @@
                         <i class="fas fa-tachometer-alt"></i> Dashboard
                     </a>
                 </li>
+                {% if user.is_superuser or user|has_dashboard_access:'products' %}
                 <li>
                     <a href="{% url 'dashboard:products' %}" class="{% if active_page == 'products' %}active{% endif %}">
                         <i class="fas fa-box"></i> Products
                     </a>
                 </li>
+                {% endif %}
+                {% if user.is_superuser or user|has_dashboard_access:'categories' %}
                 <li>
                     <a href="{% url 'dashboard:categories' %}" class="{% if active_page == 'categories' %}active{% endif %}">
                         <i class="fas fa-folder"></i> Categories
                     </a>
                 </li>
+                {% endif %}
+                {% if user.is_superuser or user|has_dashboard_access:'media' %}
                 <li>
                     <a href="{% url 'dashboard:media' %}" class="{% if active_page == 'media' %}active{% endif %}">
                         <i class="fas fa-images"></i> Media
                     </a>
                 </li>
+                {% endif %}
+                {% if user.is_superuser or user|has_dashboard_access:'stock' %}
                 <li>
                     <a href="{% url 'dashboard:stock' %}" class="{% if active_page == 'stock' %}active{% endif %}">
                         <i class="fas fa-warehouse"></i> Stock
                     </a>
                 </li>
+                {% endif %}
+                {% if user.is_superuser or user|has_dashboard_access:'orders' %}
                 <li>
                     <a href="{% url 'dashboard:orders' %}" class="{% if active_page == 'orders' %}active{% endif %}">
                         <i class="fas fa-shopping-cart"></i> Orders
                     </a>
                 </li>
+                {% endif %}
+                {% if user.is_superuser or user|has_dashboard_access:'incomplete_orders' %}
                 <li>
                     <a href="{% url 'dashboard:incomplete_orders' %}" class="{% if active_page == 'incomplete_orders' %}active{% endif %}">
                         <i class="fas fa-clock"></i> Incomplete Orders
                     </a>
                 </li>
+                {% endif %}
+                {% if user.is_superuser or user|has_dashboard_access:'reviews' %}
                 <li>
                     <a href="{% url 'dashboard:reviews' %}" class="{% if active_page == 'reviews' %}active{% endif %}">
                         <i class="fas fa-star"></i> Reviews
                     </a>
                 </li>
+                {% endif %}
+                {% if user.is_superuser or user|has_dashboard_access:'contacts' %}
                 <li>
                     <a href="{% url 'dashboard:contacts' %}" class="{% if active_page == 'contacts' %}active{% endif %}">
                         <i class="fas fa-envelope"></i> Contacts
                     </a>
                 </li>
+                {% endif %}
+                {% if user.is_superuser or user|has_dashboard_access:'pages' %}
                 <li>
                     <a href="{% url 'dashboard:pages' %}" class="{% if active_page == 'pages' %}active{% endif %}">
                         <i class="fas fa-file-alt"></i> Pages
                     </a>
                 </li>
+                {% endif %}
+                {% if user.is_superuser or user|has_dashboard_access:'blocklist' %}
                 <li>
                     <a href="{% url 'dashboard:blocklist' %}" class="{% if active_page == 'blocklist' %}active{% endif %}">
                         <i class="fas fa-shield-alt"></i> Block List
                     </a>
                 </li>
+                {% endif %}
+                {% if user.is_superuser or user|has_dashboard_access:'users' %}
                 <li>
                     <a href="{% url 'dashboard:users' %}" class="{% if active_page == 'users' %}active{% endif %}">
                         <i class="fas fa-users"></i> Users
                     </a>
                 </li>
+                {% endif %}
+                {% if user.is_superuser or user|has_dashboard_access:'expenses' %}
                 <li>
                     <a href="{% url 'dashboard:expenses' %}" class="{% if active_page == 'expenses' %}active{% endif %}">
                         <i class="fas fa-money-bill-wave"></i> Expenses
                     </a>
                 </li>
+                {% endif %}
+                {% if user.is_superuser or user|has_dashboard_access:'statistics' %}
                 <li>
                     <a href="{% url 'dashboard:statistics' %}" class="{% if active_page == 'statistics' %}active{% endif %}">
                         <i class="fas fa-chart-bar"></i> Statistics
                     </a>
                 </li>
+                {% endif %}
+                {% if user.is_superuser or user|has_dashboard_access:'email_settings' %}
                 <li>
                     <a href="{% url 'dashboard:email_settings_index' %}" class="{% if active_page == 'email_settings' %}active{% endif %}">
                         <i class="fas fa-mail-bulk"></i> Email Settings
                     </a>
                 </li>
+                {% endif %}
+                {% if user.is_superuser or user|has_dashboard_access:'settings' %}
                 <li>
                     <a href="{% url 'dashboard:settings' %}" class="{% if active_page == 'settings' %}active{% endif %}">
                         <i class="fas fa-cog"></i> Settings
                     </a>
                 </li>
+                {% endif %}
+                {% if user.is_superuser or user|has_dashboard_access:'api_docs' %}
                 <li>
                     <a href="{% url 'dashboard:api_docs' %}" class="{% if active_page == 'api_docs' %}active{% endif %}">
                         <i class="fas fa-code"></i> API Docs
                     </a>
                 </li>
+                {% endif %}
                 <li>
                     <a href="/" target="_blank">
                         <i class="fas fa-store"></i> Visit Store

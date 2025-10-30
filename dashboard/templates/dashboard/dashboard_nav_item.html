@@ -1,0 +1,8 @@
+{% load static %}
+{% if has_access %}
+<li>
+    <a href="{% url url_name %}" class="{% if is_active %}active{% endif %}">
+        <i class="{{ icon }}"></i> {{ label }}
+    </a>
+</li>
+{% endif %}

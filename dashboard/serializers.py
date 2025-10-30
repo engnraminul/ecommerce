@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import DashboardSetting, AdminActivity, Expense, BlockList
 from products.models import Product, ProductVariant, ProductImage, Category
 from orders.models import Order, OrderItem, ShippingAddress
-from users.models import User
+from users.models import User, DashboardPermission
 
 class DashboardSettingSerializer(serializers.ModelSerializer):
     class Meta:
@@ -18,18 +18,63 @@ class AdminActivitySerializer(serializers.ModelSerializer):
                   'object_repr', 'changes', 'ip_address', 'timestamp']
         read_only_fields = fields
 
+class DashboardPermissionSerializer(serializers.ModelSerializer):
+    """Serializer for dashboard permissions with checkbox handling"""
+    allowed_tabs = serializers.MultipleChoiceField(
+        choices=DashboardPermission.DASHBOARD_TABS,
+        required=False,
+        allow_empty=True
+    )
+    allowed_tab_names = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = DashboardPermission
+        fields = ['id', 'user', 'allowed_tabs', 'allowed_tab_names', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+    
+    def get_allowed_tab_names(self, obj):
+        """Get human-readable names of allowed tabs"""
+        if not obj.allowed_tabs:
+            return []
+        tab_dict = dict(DashboardPermission.DASHBOARD_TABS)
+        return [tab_dict.get(tab, tab) for tab in obj.allowed_tabs]
+
+
 class UserDashboardSerializer(serializers.ModelSerializer):
+    dashboard_permissions = DashboardPermissionSerializer(required=False)
+    dashboard_access_summary = serializers.SerializerMethodField()
+    
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_staff', 
                   'is_active', 'is_email_verified', 'date_joined', 'last_login', 
-                  'email_verification_sent_at']
+                  'email_verification_sent_at', 'dashboard_permissions', 'dashboard_access_summary']
         extra_kwargs = {
             'password': {'write_only': True},
             'email_verification_sent_at': {'read_only': True},
         }
+    
+    def get_dashboard_access_summary(self, obj):
+        """Get summary of dashboard access permissions"""
+        if obj.is_superuser:
+            return {'type': 'superuser', 'message': 'Full Access (Superuser)', 'tab_count': len(DashboardPermission.DASHBOARD_TABS)}
+        elif obj.is_staff:
+            return {'type': 'staff', 'message': 'Full Access (Staff)', 'tab_count': len(DashboardPermission.DASHBOARD_TABS)}
+        else:
+            try:
+                permissions = obj.dashboard_permissions
+                if permissions.allowed_tabs:
+                    count = len(permissions.allowed_tabs)
+                    return {'type': 'limited', 'message': f'Limited Access ({count} tabs)', 'tab_count': count}
+                else:
+                    return {'type': 'none', 'message': 'No Access', 'tab_count': 0}
+            except DashboardPermission.DoesNotExist:
+                return {'type': 'none', 'message': 'No Permissions Set', 'tab_count': 0}
         
     def update(self, instance, validated_data):
+        # Handle dashboard permissions separately
+        dashboard_permissions_data = validated_data.pop('dashboard_permissions', None)
+        
         # Handle password separately if provided
         password = validated_data.pop('password', None)
         if password:
@@ -40,7 +85,38 @@ class UserDashboardSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         
         instance.save()
+        
+        # Handle dashboard permissions
+        if dashboard_permissions_data is not None:
+            permissions, created = DashboardPermission.objects.get_or_create(
+                user=instance,
+                defaults={'allowed_tabs': dashboard_permissions_data.get('allowed_tabs', [])}
+            )
+            if not created:
+                permissions.allowed_tabs = dashboard_permissions_data.get('allowed_tabs', [])
+                permissions.save()
+        
         return instance
+    
+    def create(self, validated_data):
+        # Handle dashboard permissions separately
+        dashboard_permissions_data = validated_data.pop('dashboard_permissions', None)
+        
+        # Create user
+        password = validated_data.pop('password', None)
+        user = User.objects.create(**validated_data)
+        if password:
+            user.set_password(password)
+            user.save()
+        
+        # Create dashboard permissions if provided
+        if dashboard_permissions_data is not None:
+            DashboardPermission.objects.create(
+                user=user,
+                allowed_tabs=dashboard_permissions_data.get('allowed_tabs', [])
+            )
+        
+        return user
 
 class CategoryDashboardSerializer(serializers.ModelSerializer):
     product_count = serializers.SerializerMethodField()
