@@ -30,7 +30,7 @@ class DashboardPermissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = DashboardPermission
         fields = ['id', 'user', 'allowed_tabs', 'allowed_tab_names', 'created_at', 'updated_at']
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'user', 'created_at', 'updated_at']
     
     def get_allowed_tab_names(self, obj):
         """Get human-readable names of allowed tabs"""
@@ -88,12 +88,17 @@ class UserDashboardSerializer(serializers.ModelSerializer):
         
         # Handle dashboard permissions
         if dashboard_permissions_data is not None:
+            allowed_tabs = dashboard_permissions_data.get('allowed_tabs', [])
+            # Ensure allowed_tabs is a list, not a set
+            if isinstance(allowed_tabs, set):
+                allowed_tabs = list(allowed_tabs)
+            
             permissions, created = DashboardPermission.objects.get_or_create(
                 user=instance,
-                defaults={'allowed_tabs': dashboard_permissions_data.get('allowed_tabs', [])}
+                defaults={'allowed_tabs': allowed_tabs}
             )
             if not created:
-                permissions.allowed_tabs = dashboard_permissions_data.get('allowed_tabs', [])
+                permissions.allowed_tabs = allowed_tabs
                 permissions.save()
         
         return instance
@@ -111,9 +116,14 @@ class UserDashboardSerializer(serializers.ModelSerializer):
         
         # Create dashboard permissions if provided
         if dashboard_permissions_data is not None:
+            allowed_tabs = dashboard_permissions_data.get('allowed_tabs', [])
+            # Ensure allowed_tabs is a list, not a set
+            if isinstance(allowed_tabs, set):
+                allowed_tabs = list(allowed_tabs)
+                
             DashboardPermission.objects.create(
                 user=user,
-                allowed_tabs=dashboard_permissions_data.get('allowed_tabs', [])
+                allowed_tabs=allowed_tabs
             )
         
         return user
