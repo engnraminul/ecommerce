@@ -1433,6 +1433,9 @@ input[readonly]:focus {
 {% endblock %}
 
 {% block extra_js %}
+<!-- TinyMCE Script - With API Key -->
+<script src="https://cdn.tiny.cloud/1/otaolz4vlw64z1nic5r4gpfpoe1zju4rtax994f61d5ilduq/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     let currentPage = 1;
@@ -1440,6 +1443,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentMediaPage = 1;
     let selectedMediaFiles = [];
     let mediaLibraryCallback = null;
+    let productDescriptionEditor = null;
+    let editProductDescriptionEditor = null;
     
     // Initial data loading
     loadCategories();
@@ -1452,6 +1457,26 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('updateProductBtn').addEventListener('click', updateProduct);
     document.getElementById('saveVariantBtn').addEventListener('click', saveVariant);
     document.getElementById('updateVariantBtn').addEventListener('click', updateVariant);
+    
+    // Initialize TinyMCE when Add Product Modal is shown
+    document.getElementById('addProductModal').addEventListener('shown.bs.modal', function() {
+        initializeTinyMCE('productDescription');
+    });
+    
+    // Destroy TinyMCE when Add Product Modal is hidden
+    document.getElementById('addProductModal').addEventListener('hidden.bs.modal', function() {
+        destroyTinyMCE('productDescription');
+    });
+    
+    // Initialize TinyMCE when Edit Product Modal is shown
+    document.getElementById('editProductModal').addEventListener('shown.bs.modal', function() {
+        initializeTinyMCE('editProductDescription');
+    });
+    
+    // Destroy TinyMCE when Edit Product Modal is hidden
+    document.getElementById('editProductModal').addEventListener('hidden.bs.modal', function() {
+        destroyTinyMCE('editProductDescription');
+    });
     
     // Media Library Event Listeners
     document.getElementById('openMediaLibraryBtn').addEventListener('click', function() {
@@ -1795,6 +1820,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('addProductForm');
         const formData = new FormData(form);
         
+        // Get TinyMCE content for description
+        const descriptionEditor = tinymce.get('productDescription');
+        if (descriptionEditor) {
+            const descriptionContent = descriptionEditor.getContent();
+            formData.set('description', descriptionContent);
+        }
+        
         // Convert checkbox values to boolean
         formData.set('is_active', document.getElementById('productStatus').value === 'true');
         formData.set('is_featured', document.getElementById('productIsFeatured').checked);
@@ -1934,7 +1966,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('editProductId').value = product.id;
                 document.getElementById('editProductName').value = product.name || '';
                 document.getElementById('editProductSlug').value = product.slug || '';
-                document.getElementById('editProductDescription').value = product.description || '';
+                
+                // Set TinyMCE content for description
+                const descriptionEditor = tinymce.get('editProductDescription');
+                if (descriptionEditor) {
+                    descriptionEditor.setContent(product.description || '');
+                } else {
+                    document.getElementById('editProductDescription').value = product.description || '';
+                }
+                
                 document.getElementById('editProductShortDescription').value = product.short_description || '';
                 
                 // Product identification
@@ -1994,6 +2034,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('editProductForm');
         const formData = new FormData(form);
         const productId = document.getElementById('editProductId').value;
+        
+        // Get TinyMCE content for description
+        const descriptionEditor = tinymce.get('editProductDescription');
+        if (descriptionEditor) {
+            const descriptionContent = descriptionEditor.getContent();
+            formData.set('description', descriptionContent);
+        }
         
         // Convert checkbox values to boolean
         formData.set('is_active', document.getElementById('editProductStatus').value === 'true');
@@ -3388,6 +3435,171 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         return col;
+    }
+    
+    // TinyMCE initialization function
+    function initializeTinyMCE(textareaId) {
+        console.log('Initializing TinyMCE for:', textareaId);
+        
+        // Check if TinyMCE is loaded
+        if (typeof tinymce === 'undefined') {
+            console.error('TinyMCE not loaded');
+            return false;
+        }
+        
+        // Check if textarea exists
+        const textarea = document.getElementById(textareaId);
+        if (!textarea) {
+            console.error('Textarea not found:', textareaId);
+            return false;
+        }
+        
+        // Remove existing instance if it exists
+        const existingEditor = tinymce.get(textareaId);
+        if (existingEditor) {
+            console.log('Removing existing TinyMCE instance for:', textareaId);
+            existingEditor.remove();
+        }
+        
+        try {
+            // Initialize TinyMCE with premium features
+            tinymce.init({
+                selector: '#' + textareaId,
+                height: 500,
+                
+                // Core editing features + Premium features
+                plugins: [
+                    // Core editing features
+                    'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'link', 'lists', 
+                    'media', 'searchreplace', 'table', 'visualblocks', 'wordcount', 'code', 'fullscreen',
+                    'image', 'insertdatetime', 'preview', 'help',
+                    
+                    // Premium features (trial until Nov 13, 2025)
+                    'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed', 
+                    'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste', 
+                    'advtable', 'advcode', 'advtemplate', 'ai', 'mentions', 
+                    'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 
+                    'autocorrect', 'typography', 'inlinecss', 'markdown', 
+                    'importword', 'exportword', 'exportpdf'
+                ],
+                
+                toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | ' +
+                    'link image media table mergetags | addcomment showcomments | ' +
+                    'spellcheckdialog a11ycheck typography | align lineheight | ' +
+                    'checklist numlist bullist indent outdent | emoticons charmap | ' +
+                    'codesample code | preview fullscreen | removeformat help',
+                
+                menubar: 'file edit view insert format tools table help',
+                
+                // Comments configuration
+                tinycomments_mode: 'embedded',
+                tinycomments_author: 'Admin',
+                
+                // Merge tags for dynamic content
+                mergetags_list: [
+                    { value: 'product.name', title: 'Product Name' },
+                    { value: 'product.price', title: 'Product Price' },
+                    { value: 'product.sku', title: 'Product SKU' },
+                    { value: 'category.name', title: 'Category Name' },
+                ],
+                
+                // AI Assistant configuration (placeholder - requires backend implementation)
+                ai_request: (request, respondWith) => respondWith.string(() => 
+                    Promise.reject('AI Assistant requires backend implementation')
+                ),
+                
+                // Content styling
+                content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; line-height: 1.6; }',
+                
+                // Branding
+                branding: false,
+                promotion: false,
+                
+                // URL handling
+                relative_urls: false,
+                remove_script_host: false,
+                convert_urls: true,
+                
+                // Image upload handler
+                images_upload_handler: function (blobInfo, success, failure) {
+                    const formData = new FormData();
+                    formData.append('file', blobInfo.blob(), blobInfo.filename());
+                    
+                    fetch('/mb-admin/api/media/', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.file) {
+                            success(data.file);
+                        } else {
+                            failure('Failed to upload image');
+                        }
+                    })
+                    .catch(error => {
+                        failure('Error uploading image: ' + error);
+                    });
+                },
+                
+                // Font options
+                font_family_formats: 'Arial=arial,helvetica,sans-serif; Courier New=courier new,courier,monospace; Georgia=georgia,palatino; Tahoma=tahoma,arial,helvetica,sans-serif; Times New Roman=times new roman,times; Verdana=verdana,geneva',
+                
+                font_size_formats: '8pt 10pt 12pt 14pt 16pt 18pt 24pt 36pt 48pt',
+                
+                // Advanced table features
+                table_toolbar: 'tableprops tabledelete | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol',
+                
+                table_class_list: [
+                    { title: 'None', value: '' },
+                    { title: 'Table Bordered', value: 'table table-bordered' },
+                    { title: 'Table Striped', value: 'table table-striped' },
+                    { title: 'Table Hover', value: 'table table-hover' },
+                ],
+                
+                // Setup callback
+                setup: function(editor) {
+                    editor.on('init', function() {
+                        console.log('TinyMCE editor initialized:', textareaId);
+                        if (textareaId === 'productDescription') {
+                            productDescriptionEditor = editor;
+                        } else if (textareaId === 'editProductDescription') {
+                            editProductDescriptionEditor = editor;
+                        }
+                    });
+                    
+                    editor.on('change', function() {
+                        editor.save(); // Save content back to textarea
+                    });
+                }
+            });
+            
+            console.log('TinyMCE initialization started for:', textareaId);
+            return true;
+        } catch (error) {
+            console.error('Error initializing TinyMCE:', error);
+            return false;
+        }
+    }
+    
+    // TinyMCE destroy function
+    function destroyTinyMCE(textareaId) {
+        console.log('Destroying TinyMCE for:', textareaId);
+        const editor = tinymce.get(textareaId);
+        if (editor) {
+            editor.remove();
+            console.log('TinyMCE removed for:', textareaId);
+        }
+        
+        // Clear references
+        if (textareaId === 'productDescription') {
+            productDescriptionEditor = null;
+        } else if (textareaId === 'editProductDescription') {
+            editProductDescriptionEditor = null;
+        }
     }
 });
 </script>
