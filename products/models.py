@@ -184,7 +184,12 @@ class Product(models.Model):
         if not self.track_inventory:
             return False
         return self.stock_quantity <= self.low_stock_threshold
-    
+
+    @property
+    def has_stock_in_variants(self):
+        """Check if any active variant has stock (in_stock=True)"""
+        return self.variants.filter(is_active=True, in_stock=True).exists()
+
     @property
     def discount_percentage(self):
         """Calculate discount percentage if compare_price is set"""

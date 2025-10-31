@@ -68,9 +68,32 @@ def add_to_cart(request):
     if variant_id:
         variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True)
     
+    # Auto-select variant if main product is out of stock but variants are available
+    if not variant and product.track_inventory and product.stock_quantity < quantity:
+        # Check if product has available variants
+        available_variant = product.variants.filter(
+            is_active=True, 
+            in_stock=True, 
+            stock_quantity__gte=quantity
+        ).first()
+        
+        if available_variant:
+            # Try to get default variant first, then first available
+            default_variant = product.variants.filter(
+                is_default=True, 
+                is_active=True, 
+                in_stock=True, 
+                stock_quantity__gte=quantity
+            ).first()
+            
+            variant = default_variant if default_variant else available_variant
+            
+            # Update cart item to include the auto-selected variant
+            # This allows the cart to work even when main product stock is 0
+
     # Check stock availability
     if variant:
-        if variant.stock_quantity < quantity:
+        if not variant.in_stock or variant.stock_quantity < quantity:
             return Response({
                 'error': f'Only {variant.stock_quantity} items available in stock'
             }, status=status.HTTP_400_BAD_REQUEST)
@@ -107,11 +130,30 @@ def add_to_cart(request):
         cart_item.quantity = new_quantity
         cart_item.save()
     
-    return Response({
-        'message': 'Product added to cart successfully',
+    # Prepare response message
+    response_message = 'Product added to cart successfully'
+    auto_selected_variant = False
+    
+    # Check if we auto-selected a variant
+    if variant and not variant_id:
+        response_message = f'Added {variant.name or "variant"} to cart (auto-selected available option)'
+        auto_selected_variant = True
+    
+    response_data = {
+        'message': response_message,
         'cart_item': CartItemSerializer(cart_item, context={'request': request}).data,
         'cart_total': cart.total_items
-    })
+    }
+    
+    # Include variant info if auto-selected
+    if auto_selected_variant:
+        response_data['auto_selected_variant'] = {
+            'id': variant.id,
+            'name': variant.name,
+            'message': f'Automatically selected {variant.name or "available variant"} since main product is out of stock'
+        }
+    
+    return Response(response_data)
 
 
 @api_view(['PUT'])
