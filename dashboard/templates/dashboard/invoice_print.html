@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice #{{ order.order_number }} - MB Invoice</title>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #fff;
+            color: #333;
+            line-height: 1.4;
+            font-size: 13px;
+            margin: 0;
+            padding: 10px;
+        }
+        
+        .invoice-container {
+            max-width: 750px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        /* Compact Header */
+        .invoice-header {
+            background: linear-gradient(135deg, #930000 0%, #b71c1c 100%);
+            color: white;
+            padding: 1rem;
+            position: relative;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .company-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .company-logo {
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .company-details h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0 0 0.3rem 0;
+        }
+        
+        .company-details p {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin: 0;
+            line-height: 1.2;
+        }
+        
+        .invoice-meta {
+            text-align: right;
+            background: rgba(255,255,255,0.1);
+            padding: 1rem;
+            border-radius: 6px;
+            min-width: 200px;
+        }
+        
+        .invoice-meta h2 {
+            font-size: 1.5rem;
+            margin: 0 0 0.5rem 0;
+        }
+        
+        .invoice-meta p {
+            margin: 0 0 0.2rem 0;
+            font-size: 0.85rem;
+        }
+        
+        /* Compact Customer Section */
+        .customer-section {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .customer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        
+        .info-block h3 {
+            color: #930000;
+            font-size: 1rem;
+            margin: 0 0 0.5rem 0;
+            font-weight: 600;
+            border-bottom: 1px solid #930000;
+            padding-bottom: 0.2rem;
+        }
+        
+        .info-block p {
+            margin: 0 0 0.2rem 0;
+            font-size: 0.85rem;
+            line-height: 1.3;
+        }
+        
+        .info-block strong {
+            color: #333;
+            font-weight: 600;
+            display: inline-block;
+            min-width: 70px;
+        }
+        
+        /* Compact Items Section */
+        .items-section {
+            padding: 1rem;
+        }
+        
+        .items-section h3 {
+            color: #930000;
+            font-size: 1.1rem;
+            margin: 0 0 0.8rem 0;
+            font-weight: 600;
+            text-align: center;
+            border-bottom: 1px solid #930000;
+            padding-bottom: 0.3rem;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            font-size: 0.85rem;
+        }
+        
+        .items-table thead {
+            background: linear-gradient(135deg, #930000 0%, #b71c1c 100%);
+            color: white;
+        }
+        
+        .items-table th {
+            padding: 0.6rem 0.5rem;
+            font-weight: 600;
+            text-align: left;
+            font-size: 0.8rem;
+        }
+        
+        .items-table th:last-child,
+        .items-table td:last-child {
+            text-align: right;
+        }
+        
+        .items-table tbody tr {
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .items-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .items-table td {
+            padding: 0.6rem 0.5rem;
+            font-size: 0.8rem;
+            vertical-align: middle;
+        }
+        
+        .product-info {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        
+        .product-image {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+            background: #f8f9fa;
+            flex-shrink: 0;
+        }
+        
+        .product-details h4 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 0.1rem 0;
+            line-height: 1.2;
+        }
+        
+        .product-details p {
+            font-size: 0.75rem;
+            color: #666;
+            margin: 0;
+        }
+        
+        .variant-name {
+            background: #e9ecef;
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            color: #495057;
+            margin-top: 0.1rem;
+            display: inline-block;
+        }
+        
+        .quantity-badge {
+            background: #930000;
+            color: white;
+            padding: 0.3rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+        
+        .price-cell {
+            font-weight: 600;
+            color: #930000;
+            font-size: 0.85rem;
+        }
+        
+        /* Compact Totals Section */
+        .totals-section {
+            padding: 0 1rem 1rem;
+        }
+        
+        .totals-table {
+            margin-left: auto;
+            min-width: 250px;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        
+        .totals-table td {
+            padding: 0.4rem 0.8rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .totals-table td:first-child {
+            font-weight: 600;
+            color: white;
+            text-align: right;
+            border-right: 1px solid #e9ecef;
+        }
+        
+        .totals-table td:last-child {
+            text-align: right;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .totals-table tr.total-row {
+            background: #930000;
+            color: white;
+        }
+        
+        .totals-table tr.total-row td {
+            border-bottom: none;
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding: 0.6rem 0.8rem;
+        }
+        
+        /* Compact Payment Info */
+        .payment-section {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .payment-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .payment-method {
+            background: white;
+            padding: 0.8rem;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .payment-method h4 {
+            color: #930000;
+            margin: 0 0 0.5rem 0;
+            font-size: 0.9rem;
+        }
+        
+        .payment-method p {
+            margin: 0 0 0.2rem 0;
+            font-size: 0.8rem;
+            line-height: 1.3;
+        }
+        
+        /* Compact Footer */
+        .invoice-footer {
+            background: #343a40;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .footer-content h4 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1rem;
+        }
+        
+        .footer-content p {
+            margin: 0 0 0.2rem 0;
+            opacity: 0.9;
+            font-size: 0.8rem;
+        }
+        
+        .contact-info {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.8rem;
+        }
+        
+        /* Status Badge */
+        .status-badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-confirmed { background: #d4edda; color: #155724; }
+        .status-processing { background: #cce7ff; color: #004085; }
+        .status-ready_for_shipped { background: #e2e3e5; color: #383d41; }
+        .status-shipped { background: #cff4fc; color: #055160; }
+        .status-delivered { background: #d1e7dd; color: #0f5132; }
+        .status-cancelled { background: #f8d7da; color: #721c24; }
+        .status-returned { background: #fff3cd; color: #856404; }
+        .status-partially_returned { background: #fff3cd; color: #856404; }
+        
+        /* Print Styles - Single Page Optimization */
+        @media print {
+            @page {
+                size: A4;
+                margin: 0.3in;
+            }
+            
+            body {
+                background: white;
+                margin: 0;
+                padding: 0;
+                font-size: 11px;
+                line-height: 1.2;
+            }
+            
+            .invoice-container {
+                max-width: none;
+                margin: 0;
+                box-shadow: none;
+                border-radius: 0;
+                page-break-inside: avoid;
+            }
+            
+            .invoice-header {
+                background: #930000 !important;
+                color: white !important;
+                padding: 0.6rem !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                page-break-after: avoid;
+                min-height: auto !important;
+                display: block !important;
+            }
+            
+            .header-content {
+                gap: 0.8rem !important;
+                flex-direction: row !important;
+                justify-content: space-between !important;
+                align-items: flex-start !important;
+                flex-wrap: nowrap !important;
+            }
+            
+            .company-info {
+                flex: 1 !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 0.5rem !important;
+                justify-content: flex-start !important;
+            }
+            
+            .invoice-meta {
+                flex: 0 0 auto !important;
+                min-width: 180px !important;
+                max-width: 200px !important;
+            }
+            
+            .company-logo {
+                width: 35px !important;
+                height: 35px !important;
+                font-size: 1rem !important;
+                flex-shrink: 0 !important;
+            }
+            
+            .company-details {
+                flex: 1 !important;
+                margin-left: 0.5rem !important;
+            }
+            
+            .company-details h1 {
+                font-size: 1.4rem !important;
+                margin: 0 0 0.2rem 0 !important;
+                white-space: nowrap !important;
+            }
+            
+            .company-details p {
+                font-size: 0.7rem !important;
+                line-height: 1.1 !important;
+                margin: 0 !important;
+                white-space: nowrap !important;
+            }
+            
+            .invoice-meta {
+                padding: 0.6rem !important;
+                min-width: 180px !important;
+                max-width: 200px !important;
+                flex-shrink: 0 !important;
+                text-align: right !important;
+                background: rgba(255,255,255,0.1) !important;
+                border-radius: 6px !important;
+            }
+            
+            .invoice-meta h2 {
+                font-size: 1.2rem !important;
+                margin: 0 0 0.3rem 0 !important;
+                white-space: nowrap !important;
+            }
+            
+            .invoice-meta p {
+                font-size: 0.7rem !important;
+                margin: 0 0 0.1rem 0 !important;
+                white-space: nowrap !important;
+            }
+            
+            .customer-section {
+                padding: 0.6rem !important;
+                page-break-after: avoid;
+            }
+            
+            .customer-grid {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr !important;
+                gap: 1rem !important;
+                align-items: flex-start !important;
+            }
+            
+            .info-block h3 {
+                font-size: 0.85rem !important;
+                margin: 0 0 0.3rem 0 !important;
+                padding-bottom: 0.1rem !important;
+            }
+            
+            .info-block p {
+                font-size: 0.7rem !important;
+                margin: 0 0 0.1rem 0 !important;
+                line-height: 1.2 !important;
+            }
+            
+            .info-block strong {
+                min-width: 50px !important;
+            }
+            
+            .items-section {
+                padding: 0.6rem !important;
+                page-break-inside: avoid;
+            }
+            
+            .items-section h3 {
+                font-size: 0.9rem !important;
+                margin: 0 0 0.5rem 0 !important;
+                padding-bottom: 0.2rem !important;
+            }
+            
+            .items-table {
+                margin-bottom: 0.6rem !important;
+                font-size: 0.7rem !important;
+                page-break-inside: avoid;
+            }
+            
+            .items-table thead {
+                background: #930000 !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .items-table th {
+                padding: 0.4rem 0.3rem !important;
+                font-size: 0.7rem !important;
+            }
+            
+            .items-table td {
+                padding: 0.4rem 0.3rem !important;
+                font-size: 0.7rem !important;
+                vertical-align: top !important;
+            }
+            
+            .product-info {
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 0.5rem !important;
+                justify-content: flex-start !important;
+            }
+            
+            .product-image {
+                width: 25px !important;
+                height: 25px !important;
+                flex-shrink: 0 !important;
+            }
+            
+            .product-details {
+                flex: 1 !important;
+                min-width: 0 !important;
+            }
+            
+            .product-details h4 {
+                font-size: 0.7rem !important;
+                margin: 0 !important;
+                line-height: 1.1 !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }
+            
+            .product-details p {
+                font-size: 0.6rem !important;
+            }
+            
+            .variant-name {
+                font-size: 0.6rem !important;
+                padding: 0.05rem 0.2rem !important;
+                margin-top: 0.05rem !important;
+            }
+            
+            .quantity-badge {
+                padding: 0.2rem 0.3rem !important;
+                font-size: 0.7rem !important;
+            }
+            
+            .price-cell {
+                font-size: 0.7rem !important;
+            }
+            
+            .totals-section {
+                padding: 0 0.6rem 0.6rem !important;
+                page-break-inside: avoid;
+            }
+            
+            .totals-table {
+                min-width: 200px !important;
+                font-size: 0.7rem !important;
+            }
+            
+            .totals-table td {
+                padding: 0.2rem 0.5rem !important;
+            }
+            
+            .totals-table tr.total-row td {
+                background: #930000 !important;
+                color: white !important;
+                font-size: 0.75rem !important;
+                font-weight: 700 !important;
+                padding: 0.3rem 0.5rem !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .payment-section {
+                padding: 0.6rem !important;
+                page-break-inside: avoid;
+            }
+            
+            .payment-grid {
+                gap: 0.6rem !important;
+            }
+            
+            .payment-method {
+                padding: 0.5rem !important;
+            }
+            
+            .payment-method h4 {
+                font-size: 0.75rem !important;
+                margin: 0 0 0.3rem 0 !important;
+            }
+            
+            .payment-method p {
+                font-size: 0.65rem !important;
+                margin: 0 0 0.1rem 0 !important;
+                line-height: 1.2 !important;
+            }
+            
+            .invoice-footer {
+                background: #343a40 !important;
+                color: white !important;
+                padding: 0.5rem !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                page-break-inside: avoid;
+            }
+            
+            .footer-content h4 {
+                font-size: 0.8rem !important;
+                margin: 0 0 0.3rem 0 !important;
+            }
+            
+            .footer-content p {
+                font-size: 0.65rem !important;
+                margin: 0 0 0.1rem 0 !important;
+            }
+            
+            .contact-info {
+                gap: 0.6rem !important;
+                margin-top: 0.3rem !important;
+            }
+            
+            .contact-item {
+                font-size: 0.65rem !important;
+                gap: 0.2rem !important;
+            }
+            
+            .status-badge {
+                padding: 0.1rem 0.3rem !important;
+                font-size: 0.6rem !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            
+            /* Force single page */
+            .invoice-header,
+            .customer-section,
+            .items-section,
+            .payment-section,
+            .invoice-footer {
+                page-break-inside: avoid !important;
+                page-break-after: avoid !important;
+            }
+            
+            .items-table tr {
+                page-break-inside: avoid !important;
+            }
+            
+            /* Ensure header layout stability */
+            @media print {
+                .header-content {
+                    display: flex !important;
+                    flex-direction: row !important;
+                    justify-content: space-between !important;
+                    align-items: flex-start !important;
+                    width: 100% !important;
+                }
+                
+                .company-info {
+                    display: flex !important;
+                    align-items: center !important;
+                    flex: 1 !important;
+                }
+                
+                .invoice-meta {
+                    display: block !important;
+                    flex: 0 0 auto !important;
+                }
+            }
+            
+            /* Hide QR code section in print to save space */
+            .invoice-meta > div:last-child {
+                display: none !important;
+            }
+        }
+        
+        /* Responsive Design - Mobile Optimized */
+        @media (max-width: 768px) {
+            .invoice-container {
+                margin: 5px;
+                border-radius: 0;
+            }
+            
+            .header-content {
+                flex-direction: row;
+                text-align: left;
+                gap: 0.8rem;
+                justify-content: space-between;
+                align-items: flex-start;
+            }
+            
+            .company-info {
+                justify-content: flex-start;
+                flex: 1;
+            }
+            
+            .invoice-meta {
+                text-align: right;
+                min-width: 150px;
+                flex-shrink: 0;
+            }
+            
+            .customer-grid,
+            .payment-grid {
+                grid-template-columns: 1fr;
+                gap: 0.8rem;
+            }
+            
+            .items-table {
+                font-size: 0.75rem;
+            }
+            
+            .items-table th,
+            .items-table td {
+                padding: 0.3rem;
+            }
+            
+            .product-info {
+                flex-direction: column;
+                text-align: center;
+                gap: 0.3rem;
+            }
+            
+            .product-image {
+                width: 30px !important;
+                height: 30px !important;
+                margin: 0 auto;
+            }
+            
+            .contact-info {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .company-logo {
+                width: 35px;
+                height: 35px;
+                font-size: 0.9rem;
+            }
+            
+            .company-details h1 {
+                font-size: 1.2rem;
+            }
+            
+            .totals-table {
+                min-width: 200px;
+            }
+        }
+        
+        /* Animation for better UX */
+        .printing .invoice-container {
+            transform: scale(0.98);
+            transition: transform 0.3s ease;
+        }
+        
+        .product-image {
+            transition: transform 0.2s ease;
+        }
+        
+        .product-image:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Loading state for images */
+        .product-image {
+            background: linear-gradient(45deg, #f8f9fa 25%, transparent 25%), 
+                        linear-gradient(-45deg, #f8f9fa 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #f8f9fa 75%), 
+                        linear-gradient(-45deg, transparent 75%, #f8f9fa 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+        
+        /* No-print elements */
+        .no-print {
+            display: block;
+        }
+        
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <!-- Print Button (hidden when printing) -->
+        <div class="no-print" style="padding: 0.5rem; text-align: center; background: #f8f9fa; border-bottom: 1px solid #e9ecef;">
+            <button onclick="window.print()" style="background: #930000; color: white; border: none; padding: 0.5rem 1.5rem; border-radius: 4px; font-size: 0.9rem; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.2); margin-right: 0.5rem;">
+                <i class="fas fa-print" style="margin-right: 0.3rem;"></i>Print Invoice
+            </button>
+            <button onclick="window.close()" style="background: #6c757d; color: white; border: none; padding: 0.5rem 1.5rem; border-radius: 4px; font-size: 0.9rem; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">
+                Close
+            </button>
+        </div>
+        
+        <!-- Invoice Header -->
+        <div class="invoice-header">
+            <div class="header-content">
+                <div class="company-info">
+
+                    <div class="company-details">
+                        <h1>Manob Bazar</h1>
+                        <p>📍 Dhaka, Bangladesh</p>
+                        <p>📞 01777173040</p>
+                        <p>🌐 www.manobbazar.com</p>
+                        <p>✉️ manobbazar@gmail.com</p>
+                    </div>
+                </div>
+                <div class="invoice-meta">
+                    <h2>INVOICE</h2>
+                    <p><strong>Invoice #:</strong> {{ order.order_number }}</p>
+                    <p><strong>Date:</strong> {{ order.created_at|date:"F d, Y" }}</p>
+                    <p><strong>Time:</strong> {{ order.created_at|time:"g:i A" }}</p>
+                    <p><strong>Status:</strong> <span class="status-badge status-{{ order.status }}">{{ order.get_status_display }}</span></p>
+                    {% if order.curier_id %}
+                    <p><strong>Courier ID:</strong> {{ order.curier_id }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Customer Information -->
+        <div class="customer-section">
+            <div class="customer-grid">
+                <div class="info-block">
+                    <h3>👤 Customer Information</h3>
+                    <p><strong>Name:</strong> {{ order.shipping_address.full_name|default:"N/A" }}</p>
+                    <p><strong>Email:</strong> {{ order.customer_email }}</p>
+                    <p><strong>Phone:</strong> {{ order.customer_phone|default:order.shipping_address.phone|default:"N/A" }}</p>
+                    {% if order.customer_ip %}
+                    <p><strong>IP Address:</strong> {{ order.customer_ip }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="info-block">
+                    <h3>🚚 Shipping Address</h3>
+                    {% if order.shipping_address %}
+                    <p><strong>{{ order.shipping_address.full_name }}</strong></p>
+                    {% if order.shipping_address.company %}
+                    <p>{{ order.shipping_address.company }}</p>
+                    {% endif %}
+                    <p>{{ order.shipping_address.address_line_1 }}</p>
+                    {% if order.shipping_address.address_line_2 %}
+                    <p>{{ order.shipping_address.address_line_2 }}</p>
+                    {% endif %}
+                    <p>{{ order.shipping_address.city }}, {{ order.shipping_address.state }}</p>
+                    <p>{{ order.shipping_address.postal_code }}, {{ order.shipping_address.country }}</p>
+                    {% if order.shipping_address.phone %}
+                    <p><strong>Phone:</strong> {{ order.shipping_address.phone }}</p>
+                    {% endif %}
+                    {% else %}
+                    <p>No shipping address provided</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Items -->
+        <div class="items-section">
+            <h3>📦 Order Items</h3>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items.all %}
+                    <tr>
+                        <td>
+                            <div class="product-info">
+                                {% if item.product and item.product.images.first %}
+                                <img src="{{ item.product.images.first.image_url }}" alt="{{ item.product_name }}" class="product-image">
+                                {% else %}
+                                <div class="product-image" style="display: flex; align-items: center; justify-content: center; background: #f8f9fa; color: #6c757d; font-size: 0.8rem;">
+                                    No Image
+                                </div>
+                                {% endif %}
+                                <div class="product-details">
+                                    <h4>{{ item.product_name }}</h4>
+                                    {% if item.product_sku %}
+                                    <p>SKU: {{ item.product_sku }}</p>
+                                    {% endif %}
+                                    {% if item.variant_name %}
+                                    <span class="variant-name">{{ item.variant_name }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ item.product_sku|default:"N/A" }}</td>
+                        <td>
+                            <div class="quantity-badge">{{ item.quantity }}</div>
+                        </td>
+                        <td class="price-cell">৳{{ item.unit_price|floatformat:2 }}</td>
+                        <td class="price-cell">৳{{ item.total_price|floatformat:2 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 2rem; color: #6c757d;">
+                            No items found in this order.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            <!-- Order Totals -->
+            <div class="totals-section">
+                <table class="totals-table">
+                    <tr>
+                        <td>Subtotal:</td>
+                        <td>৳{{ order.subtotal|floatformat:2 }}</td>
+                    </tr>
+                    {% if order.shipping_cost %}
+                    <tr>
+                        <td>Shipping:</td>
+                        <td>৳{{ order.shipping_cost|floatformat:2 }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if order.tax_amount %}
+                    <tr>
+                        <td>Tax:</td>
+                        <td>৳{{ order.tax_amount|floatformat:2 }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if order.discount_amount %}
+                    <tr>
+                        <td>Discount:</td>
+                        <td>-৳{{ order.discount_amount|floatformat:2 }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if order.coupon_discount %}
+                    <tr>
+                        <td>Coupon Discount ({{ order.coupon_code }}):</td>
+                        <td>-৳{{ order.coupon_discount|floatformat:2 }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if order.curier_charge %}
+                    <tr>
+                        <td>Courier Charge:</td>
+                        <td>৳{{ order.curier_charge|floatformat:2 }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr class="total-row">
+                        <td>Total Amount:</td>
+                        <td>৳{{ order.total_amount|floatformat:2 }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Payment Information -->
+        <div class="payment-section">
+            <div class="payment-grid">
+                <div class="payment-method">
+                    <h4>💳 Payment Method</h4>
+                    <p><strong>Method:</strong> {{ order.get_payment_method_display }}</p>
+                    <p><strong>Status:</strong> {{ order.get_payment_status_display }}</p>
+                    
+                    {% if order.payment_method == 'bkash' %}
+                        {% if order.bkash_transaction_id %}
+                        <p><strong>Transaction ID:</strong> {{ order.bkash_transaction_id }}</p>
+                        {% endif %}
+                        {% if order.bkash_sender_number %}
+                        <p><strong>Sender Number:</strong> {{ order.bkash_sender_number }}</p>
+                        {% endif %}
+                    {% elif order.payment_method == 'nagad' %}
+                        {% if order.nagad_transaction_id %}
+                        <p><strong>Transaction ID:</strong> {{ order.nagad_transaction_id }}</p>
+                        {% endif %}
+                        {% if order.nagad_sender_number %}
+                        <p><strong>Sender Number:</strong> {{ order.nagad_sender_number }}</p>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                
+                <div class="payment-method">
+                    <h4>📋 Order Notes</h4>
+                    {% if order.customer_notes %}
+                    <p><strong>Customer Notes:</strong></p>
+                    <p>{{ order.customer_notes }}</p>
+                    {% else %}
+                    <p>No customer notes provided.</p>
+                    {% endif %}
+                    
+                    {% if order.admin_notes %}
+                    <p><strong>Admin Notes:</strong></p>
+                    <p>{{ order.admin_notes }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Invoice Footer -->
+        <div class="invoice-footer">
+            <div class="footer-content">
+                <h4>Thank you for your order!</h4>
+                <p>For queries: manobbazar@gmail.com | 01777173040 | www.manobbazar.com</p>
+                <p style="margin-top: 0.3rem; font-size: 0.75rem; opacity: 0.8;">
+                    Invoice generated on {{ "now"|date:"M d, Y \a\\t g:i A" }}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Auto-focus for print dialog
+        window.onload = function() {
+            // Auto-print if URL contains print parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('print') === 'true') {
+                setTimeout(() => {
+                    window.print();
+                }, 500);
+            }
+            
+            // Initialize QR code if available
+            generateOrderQR();
+        };
+        
+        // Generate QR Code for order tracking
+        function generateOrderQR() {
+            // This is a placeholder for QR code generation
+            // You could integrate with a QR code library like qrcode.js
+            const qrContainer = document.querySelector('.qr-placeholder');
+            if (qrContainer) {
+                // For now, just style it nicely
+                qrContainer.innerHTML = '📱<br>SCAN<br>TO<br>TRACK';
+            }
+        }
+        
+        // Handle print button clicks
+        function printInvoice() {
+            // Add print-specific styles
+            document.body.classList.add('printing');
+            window.print();
+            setTimeout(() => {
+                document.body.classList.remove('printing');
+            }, 1000);
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+P for print
+            if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                printInvoice();
+            }
+            // Esc to close
+            if (e.key === 'Escape') {
+                window.close();
+            }
+        });
+        
+        // Print event listeners
+        window.addEventListener('beforeprint', function() {
+            document.body.classList.add('printing');
+        });
+        
+        window.addEventListener('afterprint', function() {
+            document.body.classList.remove('printing');
+        });
+    </script>
+</body>
+</html>

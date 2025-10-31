@@ -4211,3 +4211,20 @@ def dashboard_contacts(request):
         ]
     }
     return render(request, 'dashboard/contacts.html', context)
+
+
+@staff_member_required
+def print_order_invoice(request, order_id):
+    """Print professional invoice for an order"""
+    try:
+        order = get_object_or_404(Order, id=order_id)
+        
+        context = {
+            'order': order,
+            'print': request.GET.get('print', False)
+        }
+        
+        return render(request, 'dashboard/invoice_print.html', context)
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=404)

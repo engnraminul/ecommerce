@@ -3186,8 +3186,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Set up print button
         document.getElementById('printOrderBtn').onclick = function() {
-            // Redirect to invoice print view
-            window.open(`/orders/${order.id}/invoice/`, '_blank');
+            // Open professional invoice in new window
+            window.open(`/mb-admin/orders/${order.id}/invoice/?print=true`, '_blank', 'width=900,height=700,scrollbars=yes');
         };
         
         // Set up add to courier button with SweetAlert2 confirmation

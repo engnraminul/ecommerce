@@ -97,6 +97,9 @@ urlpatterns = [
     path('blocklist/', views.dashboard_blocklist, name='blocklist'),
     path('contacts/', views.dashboard_contacts, name='contacts'),
     
+    # Invoice printing
+    path('orders/<int:order_id>/invoice/', views.print_order_invoice, name='print_order_invoice'),
+    
     # Reviews Management URLs
     path('reviews/', views.reviews_dashboard, name='reviews'),
     path('reviews/bulk-action/', views.review_bulk_action, name='review_bulk_action'),
