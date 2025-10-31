@@ -537,13 +537,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         return '\n\n'.join(scripts)
     
     def get_all_body_scripts(self):
-        """Get all scripts that should be placed before closing </body> tag"""
+        """Get all scripts that should be placed immediately after opening <body> tag"""
         scripts = []
         
         # GTM noscript (should be immediately after opening body tag)
         gtm_noscript = self.get_gtm_noscript()
         if gtm_noscript:
             scripts.append(gtm_noscript)
+        
+        return '\n\n'.join(scripts)
+    
+    def get_footer_scripts(self):
+        """Get all scripts that should be placed before closing </body> tag"""
+        scripts = []
         
         # Custom footer scripts
         if self.footer_scripts:

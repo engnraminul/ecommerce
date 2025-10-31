@@ -178,6 +178,9 @@
     <script src="{% static 'frontend/js/wishlist.js' %}?v=1.4"></script>
     {% block extra_js %}{% endblock %}
     
+    <!-- Integration Footer Scripts -->
+    {{ integration_footer_scripts|safe }}
+    
     <!-- CSRF Token for AJAX requests -->
     <script>
         window.csrfToken = '{{ csrf_token }}';
