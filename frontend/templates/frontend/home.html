@@ -22,32 +22,54 @@
     <section class="section categories-section">
         <div class="container">
             <h2 class="section-title">Shop by Category</h2>
-            <div class="category-grid">
-                {% for category in featured_categories %}
-                <a href="{% url 'frontend:category_products' category.slug %}" class="category-card">
-                    <div class="category-icon">
-                        {% if category.name == 'Electronics' %}
-                            <i class="fas fa-laptop"></i>
-                        {% elif category.name == 'Clothing' %}
-                            <i class="fas fa-tshirt"></i>
-                        {% elif category.name == 'Books' %}
-                            <i class="fas fa-book"></i>
-                        {% elif category.name == 'Home & Garden' %}
-                            <i class="fas fa-home"></i>
-                        {% elif category.name == 'Sports' %}
-                            <i class="fas fa-dumbbell"></i>
-                        {% else %}
-                            <i class="fas fa-tag"></i>
-                        {% endif %}
+            <div class="categories-carousel-wrapper">
+                <!-- Navigation Arrows -->
+                <button class="carousel-nav prev-btn" id="prevBtn">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="carousel-nav next-btn" id="nextBtn">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                
+                <!-- Categories Carousel -->
+                <div class="categories-carousel" id="categoriesCarousel">
+                    {% for category in featured_categories %}
+                    <div class="category-slide">
+                        <a href="{% url 'frontend:category_products' category.slug %}" class="category-card">
+                            <div class="category-image-container">
+                                {% if category.image_url %}
+                                    <img src="{{ category.image_url }}" 
+                                         alt="{{ category.name }}" 
+                                         class="category-image"
+                                         onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjhmOWZhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzZjNzU3ZCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';">
+                                {% else %}
+                                    <div class="category-placeholder">
+                                        <i class="fas fa-tag"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="category-info">
+                                <h3 class="category-name">{{ category.name }}</h3>
+                                <p class="category-description">{{ category.description|truncatechars:50 }}</p>
+                            </div>
+                        </a>
                     </div>
-                    <h3 class="category-name">{{ category.name }}</h3>
-                    <p class="category-description">{{ category.description|truncatechars:50 }}</p>
-                </a>
-                {% empty %}
-                <div class="col-12">
-                    <p class="text-center">No categories available.</p>
+                    {% empty %}
+                    <div class="category-slide">
+                        <div class="no-categories-card">
+                            <div class="no-categories-icon">
+                                <i class="fas fa-tags"></i>
+                            </div>
+                            <p>No categories available.</p>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
+                
+                <!-- Pagination Dots -->
+                <div class="carousel-pagination" id="carouselPagination">
+                    <!-- Dots will be dynamically generated -->
+                </div>
             </div>
         </div>
     </section>
@@ -375,6 +397,250 @@
             margin: 0.5rem 0;
         }
     }
+
+    /* Categories Carousel Styles */
+    .categories-carousel-wrapper {
+        position: relative;
+        margin: 2rem 0;
+    }
+
+    .categories-carousel {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: calc(20% - 1rem); /* 5 items per row on desktop */
+        gap: 1.5rem;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        padding: 1rem 0;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE/Edge */
+    }
+
+    .categories-carousel::-webkit-scrollbar {
+        display: none; /* Chrome/Safari */
+    }
+
+    .category-slide {
+        flex: 0 0 auto;
+        width: 100%;
+    }
+
+    .category-card {
+        display: block;
+        background: var(--white);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        transition: var(--transition);
+        text-decoration: none;
+        color: inherit;
+        height: 100%;
+    }
+
+    .category-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .category-image-container {
+        position: relative;
+        height: 180px;
+        overflow: hidden;
+        background: var(--light-color);
+    }
+
+    .category-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: var(--transition);
+    }
+
+    .category-card:hover .category-image {
+        transform: scale(1.05);
+    }
+
+    .category-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        color: var(--white);
+        font-size: 3rem;
+    }
+
+    .category-info {
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .category-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--dark-color);
+    }
+
+    .category-description {
+        font-size: 0.9rem;
+        color: var(--secondary-color);
+        line-height: 1.4;
+        margin: 0;
+    }
+
+    /* Carousel Navigation */
+    .carousel-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: var(--white);
+        border: 2px solid var(--border-color);
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: var(--transition);
+        z-index: 10;
+        box-shadow: var(--shadow);
+    }
+
+    .carousel-nav:hover {
+        background: var(--primary-color);
+        color: var(--white);
+        border-color: var(--primary-color);
+        transform: translateY(-50%) scale(1.1);
+    }
+
+    .prev-btn {
+        left: -25px;
+    }
+
+    .next-btn {
+        right: -25px;
+    }
+
+    /* Carousel Pagination */
+    .carousel-pagination {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 2rem;
+    }
+
+    .pagination-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--border-color);
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .pagination-dot.active {
+        background: var(--primary-color);
+        transform: scale(1.2);
+    }
+
+    .pagination-dot:hover {
+        background: var(--primary-color);
+        opacity: 0.7;
+    }
+
+    /* No Categories Card */
+    .no-categories-card {
+        background: var(--white);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        padding: 3rem 2rem;
+        text-align: center;
+        color: var(--secondary-color);
+    }
+
+    .no-categories-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+        .categories-carousel {
+            grid-auto-columns: calc(25% - 1rem); /* 4 items per row on large tablets */
+        }
+    }
+
+    @media (max-width: 992px) {
+        .categories-carousel {
+            grid-auto-columns: calc(25% - 1rem); /* 4 items per row on tablets */
+        }
+        
+        .category-image-container {
+            height: 150px;
+        }
+        
+        .category-info {
+            padding: 1rem;
+        }
+        
+        .category-name {
+            font-size: 1.1rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .categories-carousel {
+            grid-auto-columns: calc(33.333% - 1rem); /* 3 items per row on mobile */
+            gap: 1rem;
+        }
+        
+        .category-image-container {
+            height: 120px;
+        }
+        
+        .category-info {
+            padding: 0.75rem;
+        }
+        
+        .category-name {
+            font-size: 1rem;
+        }
+        
+        .category-description {
+            font-size: 0.8rem;
+        }
+        
+        .carousel-nav {
+            width: 40px;
+            height: 40px;
+            font-size: 0.9rem;
+        }
+        
+        .prev-btn {
+            left: -20px;
+        }
+        
+        .next-btn {
+            right: -20px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .categories-carousel {
+            grid-auto-columns: calc(50% - 0.5rem); /* 2 items per row on very small mobile */
+            gap: 0.75rem;
+        }
+        
+        .carousel-nav {
+            display: none; /* Hide navigation arrows on very small screens */
+        }
+    }
 </style>
 {% endblock %}
 
@@ -412,6 +678,167 @@
         document.querySelectorAll('.feature-card, .category-card, .product-card').forEach(el => {
             observer.observe(el);
         });
+
+        // Categories Carousel Functionality
+        const categoriesCarousel = document.getElementById('categoriesCarousel');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const pagination = document.getElementById('carouselPagination');
+        
+        if (categoriesCarousel && prevBtn && nextBtn) {
+            let currentPage = 0;
+            let itemsPerPage = getItemsPerPage();
+            let totalItems = categoriesCarousel.children.length;
+            let totalPages = Math.ceil(totalItems / itemsPerPage);
+            
+            // Function to get items per page based on screen size
+            function getItemsPerPage() {
+                const width = window.innerWidth;
+                if (width <= 480) return 2;
+                if (width <= 768) return 3;
+                if (width <= 992) return 4;
+                return 5;
+            }
+            
+            // Initialize pagination dots
+            function initPagination() {
+                pagination.innerHTML = '';
+                for (let i = 0; i < totalPages; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = `pagination-dot ${i === 0 ? 'active' : ''}`;
+                    dot.addEventListener('click', () => goToPage(i));
+                    pagination.appendChild(dot);
+                }
+            }
+            
+            // Update carousel position
+            function updateCarousel() {
+                const scrollAmount = currentPage * (categoriesCarousel.scrollWidth / totalPages);
+                categoriesCarousel.scrollTo({
+                    left: scrollAmount,
+                    behavior: 'smooth'
+                });
+                
+                // Update pagination dots
+                const dots = pagination.querySelectorAll('.pagination-dot');
+                dots.forEach((dot, index) => {
+                    dot.classList.toggle('active', index === currentPage);
+                });
+                
+                // Update navigation buttons
+                prevBtn.style.opacity = currentPage === 0 ? '0.5' : '1';
+                nextBtn.style.opacity = currentPage === totalPages - 1 ? '0.5' : '1';
+                prevBtn.style.pointerEvents = currentPage === 0 ? 'none' : 'auto';
+                nextBtn.style.pointerEvents = currentPage === totalPages - 1 ? 'none' : 'auto';
+            }
+            
+            // Go to specific page
+            function goToPage(page) {
+                if (page >= 0 && page < totalPages) {
+                    currentPage = page;
+                    updateCarousel();
+                }
+            }
+            
+            // Previous button functionality
+            prevBtn.addEventListener('click', () => {
+                if (currentPage > 0) {
+                    currentPage--;
+                    updateCarousel();
+                }
+            });
+            
+            // Next button functionality
+            nextBtn.addEventListener('click', () => {
+                if (currentPage < totalPages - 1) {
+                    currentPage++;
+                    updateCarousel();
+                }
+            });
+            
+            // Handle window resize
+            function handleResize() {
+                const newItemsPerPage = getItemsPerPage();
+                if (newItemsPerPage !== itemsPerPage) {
+                    itemsPerPage = newItemsPerPage;
+                    totalPages = Math.ceil(totalItems / itemsPerPage);
+                    currentPage = Math.min(currentPage, totalPages - 1);
+                    initPagination();
+                    updateCarousel();
+                }
+            }
+            
+            window.addEventListener('resize', handleResize);
+            
+            // Touch/swipe support for mobile
+            let touchStartX = 0;
+            let touchEndX = 0;
+            
+            categoriesCarousel.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+            });
+            
+            categoriesCarousel.addEventListener('touchend', (e) => {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            });
+            
+            function handleSwipe() {
+                const swipeThreshold = 50;
+                const diff = touchStartX - touchEndX;
+                
+                if (Math.abs(diff) > swipeThreshold) {
+                    if (diff > 0) {
+                        // Swipe left - next
+                        if (currentPage < totalPages - 1) {
+                            currentPage++;
+                            updateCarousel();
+                        }
+                    } else {
+                        // Swipe right - previous
+                        if (currentPage > 0) {
+                            currentPage--;
+                            updateCarousel();
+                        }
+                    }
+                }
+            }
+            
+            // Auto-scroll functionality (optional)
+            let autoScrollInterval;
+            const autoScrollDelay = 5000; // 5 seconds
+            
+            function startAutoScroll() {
+                autoScrollInterval = setInterval(() => {
+                    if (currentPage < totalPages - 1) {
+                        currentPage++;
+                    } else {
+                        currentPage = 0;
+                    }
+                    updateCarousel();
+                }, autoScrollDelay);
+            }
+            
+            function stopAutoScroll() {
+                clearInterval(autoScrollInterval);
+            }
+            
+            // Start auto-scroll on desktop, pause on hover
+            if (window.innerWidth > 768) {
+                startAutoScroll();
+                
+                categoriesCarousel.addEventListener('mouseenter', stopAutoScroll);
+                categoriesCarousel.addEventListener('mouseleave', startAutoScroll);
+                prevBtn.addEventListener('click', stopAutoScroll);
+                nextBtn.addEventListener('click', stopAutoScroll);
+            }
+            
+            // Initialize
+            if (totalItems > 0) {
+                initPagination();
+                updateCarousel();
+            }
+        }
     });
 </script>
 {% endblock %}
