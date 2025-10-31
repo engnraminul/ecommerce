@@ -1,4 +1,4 @@
-from .models import SiteSettings, CheckoutCustomization
+from .models import SiteSettings, CheckoutCustomization, IntegrationSettings
 from products.models import Category
 
 def site_settings(request):
@@ -50,4 +50,28 @@ def navbar_categories(request):
         print(f"Error loading navbar categories: {e}")
         return {
             'navbar_categories': []
+        }
+
+def integration_settings(request):
+    """
+    Context processor to make integration settings available in all templates
+    """
+    try:
+        settings = IntegrationSettings.get_active_settings()
+        
+        # Return all integration data and helper methods
+        return {
+            'integration_settings': settings,
+            'integration_meta_tags': settings.get_verification_meta_tags() if settings else '',
+            'integration_header_scripts': settings.get_all_header_scripts() if settings else '',
+            'integration_body_scripts': settings.get_all_body_scripts() if settings else '',
+        }
+    except Exception as e:
+        # Return empty values if there's an error to prevent template crashes
+        print(f"Error loading integration settings: {e}")
+        return {
+            'integration_settings': None,
+            'integration_meta_tags': '',
+            'integration_header_scripts': '',
+            'integration_body_scripts': '',
         }

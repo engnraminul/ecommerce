@@ -29,7 +29,7 @@ from products.models import Product, ProductVariant, ProductImage, Category
 from orders.models import Order, OrderItem
 from incomplete_orders.models import IncompleteOrder, IncompleteOrderItem, IncompleteShippingAddress
 from users.models import User
-from settings.models import CheckoutCustomization, SiteSettings
+from settings.models import CheckoutCustomization, SiteSettings, IntegrationSettings
 
 # Helper functions for stock management
 def restock_order_items(order):
@@ -2167,10 +2167,12 @@ def dashboard_settings(request):
     
     settings = DashboardSetting.objects.all()
     site_settings = SiteSettings.get_active_settings()
+    integration_settings = IntegrationSettings.get_active_settings()
     
     context = {
         'settings': settings,
         'site_settings': site_settings,
+        'integration_settings': integration_settings,
         'active_page': 'settings'
     }
     return render(request, 'dashboard/settings.html', context)
@@ -4211,6 +4213,149 @@ def dashboard_contacts(request):
         ]
     }
     return render(request, 'dashboard/contacts.html', context)
+
+
+class IntegrationSettingsViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing Integration Settings"""
+    queryset = IntegrationSettings.objects.all()
+    permission_classes = [IsStaffUser]
+    
+    def get_serializer_class(self):
+        """Return appropriate serializer for Integration Settings"""
+        from .serializers import IntegrationSettingsSerializer
+        return IntegrationSettingsSerializer
+    
+    def get_queryset(self):
+        """Get active integration settings"""
+        return IntegrationSettings.objects.filter(is_active=True)
+    
+    @action(detail=False, methods=['get'])
+    def active_settings(self, request):
+        """Get the active integration settings"""
+        try:
+            settings = IntegrationSettings.get_active_settings()
+            if not settings.pk:
+                # Create default settings if none exist
+                settings = IntegrationSettings.objects.create()
+            
+            serializer = self.get_serializer(settings)
+            return Response({
+                'success': True,
+                'settings': serializer.data
+            })
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+    
+    @action(detail=False, methods=['post'])
+    def bulk_update(self, request):
+        """Update integration settings via bulk update"""
+        try:
+            print(f"DEBUG: bulk_update called with data: {request.data}")
+            print(f"DEBUG: User: {request.user}, is_authenticated: {request.user.is_authenticated}, is_staff: {request.user.is_staff}")
+            
+            # Get or create active settings
+            settings = IntegrationSettings.get_active_settings()
+            if not settings or not settings.pk:
+                print("DEBUG: Creating new IntegrationSettings instance")
+                settings = IntegrationSettings()
+            else:
+                print(f"DEBUG: Using existing settings with ID: {settings.pk}")
+            
+            # Update fields from request data
+            print(f"DEBUG: Processing {len(request.data)} fields")
+            for field_name, value in request.data.items():
+                if hasattr(settings, field_name):
+                    print(f"DEBUG: Setting {field_name} = {value}")
+                    setattr(settings, field_name, value)
+                else:
+                    print(f"DEBUG: Field {field_name} not found in model")
+            
+            # Set as active and save
+            settings.is_active = True
+            print("DEBUG: Saving settings...")
+            settings.save()
+            print(f"DEBUG: Settings saved with ID: {settings.pk}")
+            
+            # Deactivate other settings
+            deactivated_count = IntegrationSettings.objects.exclude(pk=settings.pk).update(is_active=False)
+            print(f"DEBUG: Deactivated {deactivated_count} other settings")
+            
+            # Log the activity
+            try:
+                AdminActivity.objects.create(
+                    user=request.user,
+                    action='updated_integration_settings',
+                    model_name='IntegrationSettings',
+                    object_id=settings.id,
+                    object_repr="Integration Settings",
+                    ip_address=self.get_client_ip(),
+                    user_agent=request.META.get('HTTP_USER_AGENT', '')
+                )
+                print("DEBUG: Activity logged successfully")
+            except Exception as e:
+                print(f"DEBUG: Error logging activity: {str(e)}")
+            
+            print("DEBUG: bulk_update completed successfully")
+            return Response({
+                'success': True,
+                'message': 'Integration settings updated successfully!'
+            })
+            
+        except Exception as e:
+            print(f"DEBUG: Exception in bulk_update: {str(e)}")
+            print(f"DEBUG: Exception type: {type(e).__name__}")
+            import traceback
+            print(f"DEBUG: Traceback: {traceback.format_exc()}")
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+    
+    @action(detail=False, methods=['post'])
+    def reset_to_defaults(self, request):
+        """Reset integration settings to defaults"""
+        try:
+            # Deactivate current settings
+            IntegrationSettings.objects.filter(is_active=True).update(is_active=False)
+            
+            # Create new default settings
+            settings = IntegrationSettings.objects.create()
+            
+            # Log the activity
+            try:
+                AdminActivity.objects.create(
+                    user=request.user,
+                    action='reset_integration_settings',
+                    model_name='IntegrationSettings',
+                    object_id=settings.id,
+                    object_repr="Integration Settings Reset",
+                    ip_address=self.get_client_ip(),
+                    user_agent=request.META.get('HTTP_USER_AGENT', '')
+                )
+            except Exception as e:
+                print(f"Error logging activity: {str(e)}")
+            
+            serializer = self.get_serializer(settings)
+            return Response({
+                'success': True,
+                'message': 'Integration settings reset to defaults successfully!',
+                'settings': serializer.data
+            })
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+    
+    def get_client_ip(self):
+        x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            return x_forwarded_for.split(',')[0]
+        return self.request.META.get('REMOTE_ADDR')
 
 
 @staff_member_required

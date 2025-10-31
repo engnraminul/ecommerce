@@ -37,10 +37,19 @@
     <!-- CSRF Token for AJAX requests -->
     <meta name="csrf-token" content="{{ csrf_token }}">
     
+    <!-- Search Engine Verification Meta Tags -->
+    {{ integration_meta_tags|safe }}
+    
+    <!-- Integration Header Scripts -->
+    {{ integration_header_scripts|safe }}
+    
     {% block extra_css %}{% endblock %}
     {% block extra_head %}{% endblock %}
 </head>
 <body class="{% if user.is_authenticated %}user-authenticated{% endif %}">
+    <!-- Integration Body Scripts -->
+    {{ integration_body_scripts|safe }}
+    
     <style>
           /* Custom Color Variables */
     :root {

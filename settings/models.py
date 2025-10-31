@@ -289,3 +289,246 @@ class CheckoutCustomization(models.Model):
         except cls.DoesNotExist:
             # Return default settings if none exist
             return cls()
+
+
+class IntegrationSettings(models.Model):
+    """Model for storing third-party integration codes and settings"""
+    
+    # Meta Pixel Integration
+    meta_pixel_code = models.TextField(
+        blank=True, 
+        null=True,
+        help_text="Meta Pixel code for Facebook advertising and analytics"
+    )
+    meta_pixel_enabled = models.BooleanField(default=False)
+    
+    # Google Analytics Integration
+    google_analytics_code = models.TextField(
+        blank=True, 
+        null=True,
+        help_text="Google Analytics tracking code (GA4 or Universal Analytics)"
+    )
+    google_analytics_measurement_id = models.CharField(
+        max_length=50, 
+        blank=True, 
+        null=True,
+        help_text="Google Analytics Measurement ID (e.g., G-XXXXXXXXXX)"
+    )
+    google_analytics_enabled = models.BooleanField(default=False)
+    
+    # Search Engine Verification
+    google_search_console_code = models.CharField(
+        max_length=100, 
+        blank=True, 
+        null=True,
+        help_text="Google Search Console verification meta tag content"
+    )
+    google_search_console_enabled = models.BooleanField(default=False)
+    
+    bing_webmaster_code = models.CharField(
+        max_length=100, 
+        blank=True, 
+        null=True,
+        help_text="Bing Webmaster Tools verification meta tag content"
+    )
+    bing_webmaster_enabled = models.BooleanField(default=False)
+    
+    yandex_verification_code = models.CharField(
+        max_length=100, 
+        blank=True, 
+        null=True,
+        help_text="Yandex Webmaster verification meta tag content"
+    )
+    yandex_verification_enabled = models.BooleanField(default=False)
+    
+    # Additional Tracking Scripts
+    header_scripts = models.TextField(
+        blank=True, 
+        null=True,
+        help_text="Custom scripts to be added in the <head> section"
+    )
+    footer_scripts = models.TextField(
+        blank=True, 
+        null=True,
+        help_text="Custom scripts to be added before closing </body> tag"
+    )
+    
+    # Google Tag Manager
+    gtm_container_id = models.CharField(
+        max_length=20, 
+        blank=True, 
+        null=True,
+        help_text="Google Tag Manager Container ID (e.g., GTM-XXXXXXX)"
+    )
+    gtm_enabled = models.BooleanField(default=False)
+    
+    # Hotjar Integration
+    hotjar_site_id = models.CharField(
+        max_length=20, 
+        blank=True, 
+        null=True,
+        help_text="Hotjar Site ID for heatmaps and user behavior analytics"
+    )
+    hotjar_enabled = models.BooleanField(default=False)
+    
+    # Metadata
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Integration Settings"
+        verbose_name_plural = "Integration Settings"
+    
+    def __str__(self):
+        return f"Integration Settings (Updated: {self.updated_at.strftime('%Y-%m-%d %H:%M')})"
+    
+    @classmethod
+    def get_active_settings(cls):
+        """Get the active integration settings"""
+        try:
+            return cls.objects.filter(is_active=True).first()
+        except cls.DoesNotExist:
+            # Return default settings if none exist
+            return cls()
+    
+    def get_meta_pixel_script(self):
+        """Generate Meta Pixel script tag"""
+        if not self.meta_pixel_enabled or not self.meta_pixel_code:
+            return ""
+        
+        return f"""
+<!-- Meta Pixel Code -->
+<script>
+{self.meta_pixel_code}
+</script>
+<noscript>
+  <img height="1" width="1" style="display:none" 
+       src="https://www.facebook.com/tr?id=YOUR_PIXEL_ID&ev=PageView&noscript=1" />
+</noscript>
+<!-- End Meta Pixel Code -->
+        """.strip()
+    
+    def get_google_analytics_script(self):
+        """Generate Google Analytics script tag"""
+        if not self.google_analytics_enabled or not self.google_analytics_measurement_id:
+            return ""
+        
+        return f"""
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={self.google_analytics_measurement_id}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){{dataLayer.push(arguments);}}
+  gtag('js', new Date());
+  gtag('config', '{self.google_analytics_measurement_id}');
+</script>
+<!-- End Google Analytics -->
+        """.strip()
+    
+    def get_gtm_script(self):
+        """Generate Google Tag Manager script"""
+        if not self.gtm_enabled or not self.gtm_container_id:
+            return ""
+        
+        return f"""
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){{w[l]=w[l]||[];w[l].push({{'gtm.start':
+new Date().getTime(),event:'gtm.js'}});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+}})(window,document,'script','dataLayer','{self.gtm_container_id}');</script>
+<!-- End Google Tag Manager -->
+        """.strip()
+    
+    def get_gtm_noscript(self):
+        """Generate Google Tag Manager noscript tag"""
+        if not self.gtm_enabled or not self.gtm_container_id:
+            return ""
+        
+        return f"""
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id={self.gtm_container_id}"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+        """.strip()
+    
+    def get_hotjar_script(self):
+        """Generate Hotjar script tag"""
+        if not self.hotjar_enabled or not self.hotjar_site_id:
+            return ""
+        
+        return f"""
+<!-- Hotjar Tracking Code -->
+<script>
+    (function(h,o,t,j,a,r){{
+        h.hj=h.hj||function(){{(h.hj.q=h.hj.q||[]).push(arguments)}};
+        h._hjSettings={{hjid:{self.hotjar_site_id},hjsv:6}};
+        a=o.getElementsByTagName('head')[0];
+        r=o.createElement('script');r.async=1;
+        r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+        a.appendChild(r);
+    }})(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+</script>
+<!-- End Hotjar Tracking Code -->
+        """.strip()
+    
+    def get_verification_meta_tags(self):
+        """Generate search engine verification meta tags"""
+        meta_tags = []
+        
+        if self.google_search_console_enabled and self.google_search_console_code:
+            meta_tags.append(f'<meta name="google-site-verification" content="{self.google_search_console_code}" />')
+        
+        if self.bing_webmaster_enabled and self.bing_webmaster_code:
+            meta_tags.append(f'<meta name="msvalidate.01" content="{self.bing_webmaster_code}" />')
+        
+        if self.yandex_verification_enabled and self.yandex_verification_code:
+            meta_tags.append(f'<meta name="yandex-verification" content="{self.yandex_verification_code}" />')
+        
+        return '\n'.join(meta_tags)
+    
+    def get_all_header_scripts(self):
+        """Get all scripts that should be placed in the <head> section"""
+        scripts = []
+        
+        # Google Tag Manager (must be in head)
+        gtm = self.get_gtm_script()
+        if gtm:
+            scripts.append(gtm)
+        
+        # Google Analytics
+        ga = self.get_google_analytics_script()
+        if ga:
+            scripts.append(ga)
+        
+        # Meta Pixel
+        meta_pixel = self.get_meta_pixel_script()
+        if meta_pixel:
+            scripts.append(meta_pixel)
+        
+        # Hotjar
+        hotjar = self.get_hotjar_script()
+        if hotjar:
+            scripts.append(hotjar)
+        
+        # Custom header scripts
+        if self.header_scripts:
+            scripts.append(self.header_scripts)
+        
+        return '\n\n'.join(scripts)
+    
+    def get_all_body_scripts(self):
+        """Get all scripts that should be placed before closing </body> tag"""
+        scripts = []
+        
+        # GTM noscript (should be immediately after opening body tag)
+        gtm_noscript = self.get_gtm_noscript()
+        if gtm_noscript:
+            scripts.append(gtm_noscript)
+        
+        # Custom footer scripts
+        if self.footer_scripts:
+            scripts.append(self.footer_scripts)
+        
+        return '\n\n'.join(scripts)

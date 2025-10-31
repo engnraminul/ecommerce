@@ -810,3 +810,73 @@ class BlockListSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             validated_data['blocked_by'] = request.user
         return super().create(validated_data)
+
+
+class IntegrationSettingsSerializer(serializers.ModelSerializer):
+    """Serializer for Integration Settings"""
+    
+    class Meta:
+        model = None  # Will be imported dynamically to avoid circular imports
+        fields = [
+            'id', 'meta_pixel_code', 'meta_pixel_enabled',
+            'google_analytics_code', 'google_analytics_measurement_id', 'google_analytics_enabled',
+            'google_search_console_code', 'google_search_console_enabled',
+            'bing_webmaster_code', 'bing_webmaster_enabled',
+            'yandex_verification_code', 'yandex_verification_enabled',
+            'header_scripts', 'footer_scripts',
+            'gtm_container_id', 'gtm_enabled',
+            'hotjar_site_id', 'hotjar_enabled',
+            'is_active', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Import the model dynamically to avoid circular imports
+        from settings.models import IntegrationSettings
+        self.Meta.model = IntegrationSettings
+    
+    def validate_google_analytics_measurement_id(self, value):
+        """Validate Google Analytics Measurement ID format"""
+        if value and not value.strip():
+            return None
+        
+        if value and not (value.startswith('G-') or value.startswith('UA-')):
+            raise serializers.ValidationError(
+                "Google Analytics Measurement ID should start with 'G-' (GA4) or 'UA-' (Universal Analytics)"
+            )
+        return value
+    
+    def validate_gtm_container_id(self, value):
+        """Validate Google Tag Manager Container ID format"""
+        if value and not value.strip():
+            return None
+        
+        if value and not value.startswith('GTM-'):
+            raise serializers.ValidationError(
+                "Google Tag Manager Container ID should start with 'GTM-'"
+            )
+        return value
+    
+    def validate_meta_pixel_code(self, value):
+        """Validate Meta Pixel code contains essential components"""
+        if not value or not value.strip():
+            return value
+        
+        # Basic validation - check if it contains fbq or similar Facebook pixel code
+        if value and 'fbq' not in value.lower() and 'facebook' not in value.lower():
+            # Don't raise error, just warn in response
+            pass
+        
+        return value
+    
+    def validate_hotjar_site_id(self, value):
+        """Validate Hotjar Site ID is numeric"""
+        if value and not value.strip():
+            return None
+        
+        if value and not value.isdigit():
+            raise serializers.ValidationError(
+                "Hotjar Site ID should be a numeric value"
+            )
+        return value

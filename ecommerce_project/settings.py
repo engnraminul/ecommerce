@@ -94,6 +94,7 @@ TEMPLATES = [
                 'settings.context_processors.site_settings',
                 'settings.context_processors.checkout_customization',
                 'settings.context_processors.navbar_categories',
+                'settings.context_processors.integration_settings',
             ],
         },
     },

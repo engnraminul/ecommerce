@@ -263,7 +263,7 @@
         
         .totals-table td:first-child {
             font-weight: 600;
-            color: white;
+            color: Black;
             text-align: right;
             border-right: 1px solid #e9ecef;
         }
@@ -271,7 +271,7 @@
         .totals-table td:last-child {
             text-align: right;
             font-weight: 600;
-            color: white;
+            color: Black;
         }
         
         .totals-table tr.total-row {
@@ -979,13 +979,13 @@
                         <td>-৳{{ order.coupon_discount|floatformat:2 }}</td>
                     </tr>
                     {% endif %}
-                    {% if order.curier_charge %}
+                    {% if order.shipping_charge %}
                     <tr>
-                        <td>Courier Charge:</td>
-                        <td>৳{{ order.curier_charge|floatformat:2 }}</td>
+                        <td>Shipping:</td>
+                        <td>৳{{ order.shipping_charge|floatformat:2 }}</td>
                     </tr>
                     {% endif %}
-                    <tr class="total-row">
+                    <tr class="total-row" style="color: white;">
                         <td>Total Amount:</td>
                         <td>৳{{ order.total_amount|floatformat:2 }}</td>
                     </tr>
