@@ -397,24 +397,29 @@ class IntegrationSettings(models.Model):
         if not self.meta_pixel_enabled or not self.meta_pixel_code:
             return ""
         
+        # If the code already contains script tags, return as is
+        if '<script>' in self.meta_pixel_code.lower():
+            return self.meta_pixel_code
+        
+        # Otherwise, wrap the code in script tags
         return f"""
 <!-- Meta Pixel Code -->
 <script>
 {self.meta_pixel_code}
 </script>
-<noscript>
-  <img height="1" width="1" style="display:none" 
-       src="https://www.facebook.com/tr?id=YOUR_PIXEL_ID&ev=PageView&noscript=1" />
-</noscript>
 <!-- End Meta Pixel Code -->
         """.strip()
     
     def get_google_analytics_script(self):
         """Generate Google Analytics script tag"""
-        if not self.google_analytics_enabled or not self.google_analytics_measurement_id:
+        if not self.google_analytics_enabled:
             return ""
         
-        return f"""
+        scripts = []
+        
+        # Add GA4 script if measurement ID is provided
+        if self.google_analytics_measurement_id:
+            scripts.append(f"""
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id={self.google_analytics_measurement_id}"></script>
 <script>
@@ -423,8 +428,21 @@ class IntegrationSettings(models.Model):
   gtag('js', new Date());
   gtag('config', '{self.google_analytics_measurement_id}');
 </script>
-<!-- End Google Analytics -->
-        """.strip()
+<!-- End Google Analytics -->""".strip())
+        
+        # Add custom analytics code if provided
+        if self.google_analytics_code:
+            if '<script>' in self.google_analytics_code.lower():
+                scripts.append(self.google_analytics_code)
+            else:
+                scripts.append(f"""
+<!-- Custom Google Analytics Code -->
+<script>
+{self.google_analytics_code}
+</script>
+<!-- End Custom Google Analytics Code -->""".strip())
+        
+        return '\n\n'.join(scripts)
     
     def get_gtm_script(self):
         """Generate Google Tag Manager script"""
