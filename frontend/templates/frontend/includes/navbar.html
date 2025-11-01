@@ -68,10 +68,15 @@
                                 </select>
                             </div>
                             <div class="search-divider"></div>
-                            <input type="text" name="q" class="search-input" placeholder="Search for products..." value="{{ request.GET.q }}">
+                            <input type="text" name="q" class="search-input" placeholder="Search for products..." value="{{ request.GET.q }}" autocomplete="off">
                             <button type="submit" class="search-button">
                                 <i class="fas fa-search"></i>
                             </button>
+                            
+                            <!-- Search Suggestions Dropdown -->
+                            <div class="search-suggestions" id="searchSuggestions">
+                                <!-- Search suggestions will be populated here by JavaScript -->
+                            </div>
                         </div>
                     </form>
                 </div>

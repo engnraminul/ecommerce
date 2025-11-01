@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .search-container { position: relative; max-width: 500px; margin: 20px 0; }
+        .search-input { width: 100%; padding: 10px; font-size: 16px; border: 2px solid #ddd; }
+        .search-suggestions { 
+            position: absolute; top: 100%; left: 0; right: 0; 
+            background: white; border: 1px solid #ddd; border-top: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-height: 300px; overflow-y: auto;
+            z-index: 1000; display: none;
+        }
+        .suggestion-item { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; }
+        .suggestion-item:hover { background: #f5f5f5; }
+        .debug-log { background: #f8f9fa; padding: 15px; margin: 20px 0; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h2>Search Debug Test</h2>
+    
+    <div class="search-container">
+        <input type="text" class="search-input" placeholder="Type to search..." autocomplete="off">
+        <div class="search-suggestions"></div>
+    </div>
+    
+    <div class="debug-log" id="debugLog">
+        <strong>Debug Log:</strong><br>
+        Page loaded...<br>
+    </div>
+
+    <script>
+        let debugLog = document.getElementById('debugLog');
+        let searchTimeout = null;
+        
+        function log(message) {
+            console.log(message);
+            debugLog.innerHTML += new Date().toLocaleTimeString() + ': ' + message + '<br>';
+            debugLog.scrollTop = debugLog.scrollHeight;
+        }
+        
+        function setupSearch() {
+            const searchInput = document.querySelector('.search-input');
+            const searchSuggestions = document.querySelector('.search-suggestions');
+            
+            log('Setting up search...');
+            log('Search input found: ' + !!searchInput);
+            log('Search suggestions found: ' + !!searchSuggestions);
+            
+            if (!searchInput || !searchSuggestions) {
+                log('ERROR: Required elements not found!');
+                return;
+            }
+            
+            searchInput.addEventListener('input', function(e) {
+                const value = e.target.value.trim();
+                log('Input event: "' + value + '"');
+                
+                if (searchTimeout) {
+                    clearTimeout(searchTimeout);
+                }
+                
+                if (value.length >= 2) {
+                    searchTimeout = setTimeout(() => {
+                        fetchResults(value);
+                    }, 300);
+                } else {
+                    hideResults();
+                }
+            });
+            
+            searchInput.addEventListener('focus', function() {
+                log('Search input focused');
+                const value = this.value.trim();
+                if (value.length >= 2) {
+                    fetchResults(value);
+                }
+            });
+            
+            searchInput.addEventListener('blur', function() {
+                log('Search input blurred');
+                setTimeout(() => {
+                    hideResults();
+                }, 200);
+            });
+            
+            log('Event listeners attached successfully');
+        }
+        
+        async function fetchResults(query) {
+            log('Fetching results for: "' + query + '"');
+            
+            try {
+                const url = '/api/search/?q=' + encodeURIComponent(query);
+                log('Making request to: ' + url);
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                log('Response status: ' + response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log('Received ' + data.results.length + ' results');
+                    displayResults(data.results, query);
+                } else {
+                    log('ERROR: Response not OK - ' + response.status);
+                }
+            } catch (error) {
+                log('ERROR: ' + error.message);
+            }
+        }
+        
+        function displayResults(results, query) {
+            const container = document.querySelector('.search-suggestions');
+            log('Displaying results in container: ' + !!container);
+            
+            container.innerHTML = '';
+            
+            if (results && results.length > 0) {
+                results.forEach((result, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'suggestion-item';
+                    item.innerHTML = `
+                        <strong>${highlightQuery(result.title, query)}</strong><br>
+                        <small>${result.description}</small>
+                        ${result.price ? '<br><span style="color: #007bff;">' + result.price + '</span>' : ''}
+                    `;
+                    
+                    item.addEventListener('click', () => {
+                        log('Clicked result: ' + result.title);
+                        if (result.url) {
+                            window.open(result.url, '_blank');
+                        }
+                    });
+                    
+                    container.appendChild(item);
+                });
+                
+                showResults();
+                log('Results displayed successfully');
+            } else {
+                const noResults = document.createElement('div');
+                noResults.className = 'suggestion-item';
+                noResults.innerHTML = '<em>No results found</em>';
+                container.appendChild(noResults);
+                showResults();
+                log('No results message displayed');
+            }
+        }
+        
+        function highlightQuery(text, query) {
+            if (!query || !text) return text;
+            const regex = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+            return text.replace(regex, '<mark style="background: yellow;">$1</mark>');
+        }
+        
+        function showResults() {
+            const container = document.querySelector('.search-suggestions');
+            container.style.display = 'block';
+            log('Search suggestions shown');
+        }
+        
+        function hideResults() {
+            const container = document.querySelector('.search-suggestions');
+            container.style.display = 'none';
+            log('Search suggestions hidden');
+        }
+        
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            log('DOM loaded, initializing search...');
+            setupSearch();
+        });
+    </script>
+</body>
+</html>

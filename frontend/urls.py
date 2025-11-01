@@ -12,6 +12,7 @@ urlpatterns = [
     path('categories/', views.categories, name='categories'),
     path('category/<slug:slug>/', views.category_products, name='category_products'),
     path('search/', views.search, name='search'),
+    path('api/search/', views.ajax_search, name='ajax_search'),
     
     # User authentication
     path('login/', views.user_login, name='login'),
@@ -48,4 +49,10 @@ urlpatterns = [
     path('frontend/submit-review/<int:product_id>/', views.submit_review, name='submit_review'),
     path('load-more-reviews/<int:product_id>/', views.load_more_reviews, name='load_more_reviews'),
     path('api/v1/reviews/load-more/<slug:product_slug>/', views.load_more_reviews_api, name='load_more_reviews_api'),
+    
+    # Test endpoint for live search
+    path('test-live-search/', lambda request: __import__('test_views').test_live_search(request), name='test_live_search'),
+    path('debug-search/', views.debug_search, name='debug_search'),
+    path('simple-search-test/', views.simple_search_test, name='simple_search_test'),
+    path('search-debug/', views.search_debug, name='search_debug'),
 ]

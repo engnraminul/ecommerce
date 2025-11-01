@@ -1,0 +1,155 @@
+{% extends 'frontend/base.html' %}
+
+{% block title %}Search Debug{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 120px;">
+    <h2>Live Search Debug Page</h2>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h5>Test Search (Same as Navbar)</h5>
+                <div class="navbar-search">
+                    <form class="search-form" method="get" action="{% url 'frontend:search' %}">
+                        <div class="search-input-wrapper">
+                            <div class="search-category">
+                                <select name="category" class="category-select">
+                                    <option value="">All Categories</option>
+                                    {% for category in navbar_categories %}
+                                    <option value="{{ category.slug }}">{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="search-divider"></div>
+                            <input type="text" name="q" class="search-input" placeholder="Search for products..." value="{{ request.GET.q }}" autocomplete="off">
+                            <button type="submit" class="search-button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            
+                            <!-- Search Suggestions Dropdown -->
+                            <div class="search-suggestions" id="testSearchSuggestions">
+                                <!-- Search suggestions will be populated here by JavaScript -->
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <button onclick="testSearch()" class="btn btn-primary">Test Search Function</button>
+            <button onclick="showTestResults()" class="btn btn-secondary">Show Test Results</button>
+        </div>
+        
+        <div class="col-md-4">
+            <div style="background: #ffffff; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+                <h6>Debug Console</h6>
+                <div id="debugConsole" style="font-family: monospace; font-size: 12px; max-height: 400px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 4px;">
+                    Debug started...<br>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let debugConsole = document.getElementById('debugConsole');
+
+function debugLog(message) {
+    console.log(message);
+    debugConsole.innerHTML += new Date().toLocaleTimeString() + ': ' + message + '<br>';
+    debugConsole.scrollTop = debugConsole.scrollHeight;
+}
+
+function testSearch() {
+    debugLog('Testing search function...');
+    
+    const searchInput = document.querySelector('.search-input');
+    const searchSuggestions = document.querySelector('.search-suggestions');
+    
+    debugLog('Search input found: ' + !!searchInput);
+    debugLog('Search suggestions found: ' + !!searchSuggestions);
+    
+    if (searchInput && searchSuggestions) {
+        debugLog('Setting test value: "audio"');
+        searchInput.value = 'audio';
+        searchInput.focus();
+        
+        // Trigger input event
+        const event = new Event('input', { bubbles: true });
+        searchInput.dispatchEvent(event);
+        
+        debugLog('Input event dispatched');
+    } else {
+        debugLog('ERROR: Required elements not found');
+    }
+}
+
+function showTestResults() {
+    debugLog('Showing test results manually...');
+    
+    const container = document.querySelector('.search-suggestions');
+    if (container) {
+        container.innerHTML = `
+            <div style="padding: 15px; border-bottom: 1px solid #eee;">
+                <strong>Test Result 1</strong><br>
+                <small>This is a test result</small>
+            </div>
+            <div style="padding: 15px;">
+                <strong>Test Result 2</strong><br>
+                <small>This is another test result</small>
+            </div>
+        `;
+        
+        container.style.display = 'block';
+        container.style.position = 'absolute';
+        container.style.top = '100%';
+        container.style.left = '0';
+        container.style.right = '0';
+        container.style.background = 'white';
+        container.style.border = '1px solid #ddd';
+        container.style.borderTop = 'none';
+        container.style.borderRadius = '0 0 8px 8px';
+        container.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+        container.style.zIndex = '9999';
+        
+        debugLog('Test results displayed manually');
+        debugLog('Container display: ' + container.style.display);
+        debugLog('Container z-index: ' + container.style.zIndex);
+    } else {
+        debugLog('ERROR: Container not found');
+    }
+}
+
+// Check if NavbarManager is available
+document.addEventListener('DOMContentLoaded', function() {
+    debugLog('DOM loaded');
+    
+    setTimeout(() => {
+        debugLog('NavbarManager available: ' + !!window.navbarManager);
+        debugLog('NavbarManager type: ' + typeof window.navbarManager);
+        
+        if (window.navbarManager) {
+            debugLog('NavbarManager fetchSearchSuggestions: ' + typeof window.navbarManager.fetchSearchSuggestions);
+        }
+        
+        // Test basic search functionality
+        debugLog('Testing basic fetch to /api/search/...');
+        fetch('/api/search/?q=test', {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            debugLog('API test response status: ' + response.status);
+            return response.json();
+        })
+        .then(data => {
+            debugLog('API test data received: ' + data.results.length + ' results');
+        })
+        .catch(error => {
+            debugLog('API test error: ' + error.message);
+        });
+    }, 1000);
+});
+</script>
+{% endblock %}

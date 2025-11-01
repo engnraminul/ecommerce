@@ -146,6 +146,7 @@
 }
 
 .search-input-wrapper {
+    position: relative;
     display: flex;
     background: var(--light-color);
     border: 2px solid var(--border-color);
@@ -1413,39 +1414,289 @@
     top: 100%;
     left: 0;
     right: 0;
-    background: var(--white);
-    border: 1px solid var(--border-color);
+    background: #ffffff;
+    border: 1px solid #dee2e6;
     border-top: none;
-    border-radius: 0 0 var(--border-radius) var(--border-radius);
-    box-shadow: var(--shadow-lg);
-    max-height: 300px;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    max-height: 400px;
     overflow-y: auto;
-    z-index: 1002;
+    z-index: 9999 !important;
     display: none;
+    animation: slideDown 0.3s ease;
+    width: 100%;
+}
+
+.search-suggestions.show {
+    display: block !important;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.suggestions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--light-color);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.875rem;
+}
+
+.suggestions-title {
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+.suggestions-count {
+    color: var(--secondary-color);
+    font-size: 0.8rem;
 }
 
 .suggestion-item {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.75rem 1rem;
+    padding: 1rem;
     cursor: pointer;
     transition: var(--transition);
     border-bottom: 1px solid var(--light-color);
+    position: relative;
 }
 
-.suggestion-item:hover {
+.suggestion-item:hover,
+.suggestion-item.hovered,
+.suggestion-item.active {
     background: var(--light-color);
-    color: var(--primary-color);
+    transform: translateX(2px);
 }
 
 .suggestion-item:last-child {
     border-bottom: none;
 }
 
-.suggestion-item i {
+/* Category suggestions */
+.suggestion-category .suggestion-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--primary-color);
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 0.875rem;
+}
+
+/* Product suggestions */
+.suggestion-product .suggestion-image {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    background: var(--light-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.suggestion-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.suggestion-image .no-image {
+    color: var(--secondary-color);
+    font-size: 1.2rem;
+}
+
+.suggestion-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.suggestion-title {
+    font-weight: 600;
+    color: var(--dark-color);
+    margin-bottom: 0.25rem;
+    line-height: 1.3;
+    font-size: 0.9rem;
+}
+
+.suggestion-title mark {
+    background: var(--primary-color);
+    color: var(--white);
+    padding: 0.1rem 0.2rem;
+    border-radius: 2px;
+    font-weight: 700;
+}
+
+.suggestion-description {
+    color: var(--secondary-color);
+    font-size: 0.8rem;
+    line-height: 1.4;
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.suggestion-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.suggestion-price {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 0.9rem;
+}
+
+.suggestion-price .original-price {
+    text-decoration: line-through;
+    color: var(--secondary-color);
+    font-weight: 400;
+    margin-left: 0.5rem;
+    font-size: 0.8rem;
+}
+
+.suggestion-category {
+    background: var(--light-color);
+    color: var(--dark-color);
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.featured-badge {
+    background: var(--warning-color, #ffc107);
+    color: var(--white);
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.out-of-stock-badge {
+    background: var(--danger-color, #dc3545);
+    color: var(--white);
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.suggestion-arrow {
     color: var(--secondary-color);
     font-size: 0.875rem;
+    transition: var(--transition);
+}
+
+.suggestion-item:hover .suggestion-arrow {
+    color: var(--primary-color);
+    transform: translateX(2px);
+}
+
+/* Loading state */
+.suggestion-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 2rem 1rem;
+    color: var(--secondary-color);
+}
+
+.loading-spinner {
+    color: var(--primary-color);
+}
+
+/* No results */
+.suggestion-no-results {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--secondary-color);
+}
+
+.no-results-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.no-results-title {
+    font-weight: 600;
+    color: var(--dark-color);
+    margin-bottom: 0.5rem;
+}
+
+.no-results-description {
+    font-size: 0.875rem;
+}
+
+/* View all results */
+.suggestion-view-all {
+    padding: 0.75rem 1rem;
+    background: var(--light-color);
+    border-top: 1px solid var(--border-color);
+}
+
+.view-all-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: var(--transition);
+}
+
+.view-all-link:hover {
+    color: var(--primary-color);
+    transform: translateY(-1px);
+}
+
+/* Responsive design for search suggestions */
+@media (max-width: 768px) {
+    .search-suggestions {
+        max-height: 300px;
+        left: -1rem;
+        right: -1rem;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+    }
+    
+    .suggestion-item {
+        padding: 0.875rem 1rem;
+    }
+    
+    .suggestion-title {
+        font-size: 0.875rem;
+    }
+    
+    .suggestion-description {
+        font-size: 0.75rem;
+    }
 }
 
 /* Cart Items in Dropdown */

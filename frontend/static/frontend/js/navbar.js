@@ -2,6 +2,7 @@
 
 class NavbarManager {
     constructor() {
+        this.searchTimeout = null; // Initialize search timeout
         this.init();
     }
 
@@ -265,7 +266,23 @@ class NavbarManager {
             });
             
             searchInput.addEventListener('focus', () => {
-                this.showSearchSuggestions();
+                // Show suggestions if there's already text and suggestions exist
+                const value = searchInput.value.trim();
+                if (value.length >= 2) {
+                    this.fetchSearchSuggestions(value);
+                }
+            });
+            
+            searchInput.addEventListener('blur', () => {
+                // Hide suggestions after a small delay to allow click events on suggestions
+                setTimeout(() => {
+                    this.hideSearchSuggestions();
+                }, 200);
+            });
+            
+            // Keyboard navigation for suggestions
+            searchInput.addEventListener('keydown', (e) => {
+                this.handleSearchKeyDown(e);
             });
         }
 
@@ -297,9 +314,21 @@ class NavbarManager {
     }
 
     handleSearchInput(value) {
+        console.log('Search input changed:', value);
+        // Clear any existing timeout
+        if (this.searchTimeout) {
+            clearTimeout(this.searchTimeout);
+        }
+        
         if (value.length >= 2) {
-            this.fetchSearchSuggestions(value);
+            console.log('Starting search timeout for:', value);
+            // Add debouncing - wait 300ms after user stops typing
+            this.searchTimeout = setTimeout(() => {
+                console.log('Timeout fired, fetching suggestions for:', value);
+                this.fetchSearchSuggestions(value);
+            }, 300);
         } else {
+            console.log('Value too short, hiding suggestions');
             this.hideSearchSuggestions();
         }
     }
@@ -331,56 +360,263 @@ class NavbarManager {
 
     async fetchSearchSuggestions(query) {
         try {
-            const response = await fetch(`/api/search/suggestions/?q=${encodeURIComponent(query)}`);
+            console.log('Fetching search suggestions for:', query);
+            // Show loading state
+            this.showSearchLoading();
+            
+            const categorySelect = document.querySelector('.category-select');
+            const category = categorySelect ? categorySelect.value : '';
+            
+            // Build API URL
+            const params = new URLSearchParams();
+            params.append('q', query);
+            if (category) {
+                params.append('category', category);
+            }
+            
+            const url = `/api/search/?${params.toString()}`;
+            console.log('Making request to:', url);
+            
+            const response = await fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            console.log('Response status:', response.status);
+            
             if (response.ok) {
-                const suggestions = await response.json();
-                this.displaySearchSuggestions(suggestions);
+                const data = await response.json();
+                console.log('Received data:', data);
+                this.displaySearchSuggestions(data.results, query);
+            } else {
+                console.error('Search API error:', response.status);
+                this.hideSearchSuggestions();
             }
         } catch (error) {
             console.error('Error fetching search suggestions:', error);
+            this.hideSearchSuggestions();
         }
     }
 
-    displaySearchSuggestions(suggestions) {
+    displaySearchSuggestions(results, query) {
         const container = document.querySelector('.search-suggestions');
-        if (!container) return;
+        console.log('Displaying suggestions in container:', container);
+        if (!container) {
+            console.error('Search suggestions container not found!');
+            return;
+        }
 
         container.innerHTML = '';
+        console.log('Results to display:', results);
         
-        if (suggestions.length > 0) {
-            suggestions.forEach(suggestion => {
+        if (results && results.length > 0) {
+            // Add search header
+            const header = document.createElement('div');
+            header.className = 'suggestions-header';
+            header.innerHTML = `
+                <span class="suggestions-title">Search results for "${query}"</span>
+                <span class="suggestions-count">${results.length} results</span>
+            `;
+            container.appendChild(header);
+            
+            results.forEach(result => {
                 const item = document.createElement('div');
-                item.className = 'suggestion-item';
-                item.innerHTML = `
-                    <i class="fas fa-search"></i>
-                    <span>${suggestion.name}</span>
-                `;
+                item.className = `suggestion-item suggestion-${result.type}`;
                 
-                item.addEventListener('click', () => {
-                    document.querySelector('.search-input').value = suggestion.name;
-                    this.performSearch();
+                if (result.type === 'category') {
+                    item.innerHTML = `
+                        <div class="suggestion-icon">
+                            <i class="fas fa-tag"></i>
+                        </div>
+                        <div class="suggestion-content">
+                            <div class="suggestion-title">${this.highlightQuery(result.title, query)}</div>
+                            <div class="suggestion-description">${result.description}</div>
+                        </div>
+                        <div class="suggestion-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    `;
+                } else if (result.type === 'product') {
+                    item.innerHTML = `
+                        <div class="suggestion-image">
+                            ${result.image ? 
+                                `<img src="${result.image}" alt="${result.title}" loading="lazy">` : 
+                                `<div class="no-image"><i class="fas fa-image"></i></div>`
+                            }
+                        </div>
+                        <div class="suggestion-content">
+                            <div class="suggestion-title">${this.highlightQuery(result.title, query)}</div>
+                            <div class="suggestion-description">${result.description}</div>
+                            <div class="suggestion-meta">
+                                <span class="suggestion-price">${result.price}</span>
+                                <span class="suggestion-category">${result.category}</span>
+                                ${result.is_featured ? '<span class="featured-badge">Featured</span>' : ''}
+                                ${!result.in_stock ? '<span class="out-of-stock-badge">Out of Stock</span>' : ''}
+                            </div>
+                        </div>
+                        <div class="suggestion-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    `;
+                }
+                
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    console.log('Clicked suggestion:', result.title);
+                    window.location.href = result.url;
+                });
+                
+                // Add hover effect
+                item.addEventListener('mouseenter', () => {
+                    item.classList.add('hovered');
+                });
+                
+                item.addEventListener('mouseleave', () => {
+                    item.classList.remove('hovered');
                 });
                 
                 container.appendChild(item);
             });
             
+            // Add "View all results" link
+            const viewAll = document.createElement('div');
+            viewAll.className = 'suggestion-view-all';
+            viewAll.innerHTML = `
+                <a href="/search/?q=${encodeURIComponent(query)}" class="view-all-link">
+                    <i class="fas fa-search"></i>
+                    View all results for "${query}"
+                </a>
+            `;
+            container.appendChild(viewAll);
+            
             this.showSearchSuggestions();
+            console.log('Search suggestions displayed successfully');
         } else {
-            this.hideSearchSuggestions();
+            // Show "no results" message
+            const noResults = document.createElement('div');
+            noResults.className = 'suggestion-no-results';
+            noResults.innerHTML = `
+                <div class="no-results-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="no-results-text">
+                    <div class="no-results-title">No results found</div>
+                    <div class="no-results-description">Try searching with different keywords</div>
+                </div>
+            `;
+            container.appendChild(noResults);
+            this.showSearchSuggestions();
+            console.log('No results message displayed');
+        }
+    }
+    
+    highlightQuery(text, query) {
+        if (!query || !text) return text;
+        
+        const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        return text.replace(regex, '<mark>$1</mark>');
+    }
+    
+    showSearchLoading() {
+        const container = document.querySelector('.search-suggestions');
+        if (!container) return;
+        
+        container.innerHTML = `
+            <div class="suggestion-loading">
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </div>
+                <span>Searching...</span>
+            </div>
+        `;
+        container.style.display = 'block';
+        container.classList.add('show');
+        console.log('Loading state shown');
+    }
+    
+    handleSearchKeyDown(e) {
+        const container = document.querySelector('.search-suggestions');
+        if (!container || container.style.display === 'none') return;
+        
+        const items = container.querySelectorAll('.suggestion-item');
+        if (items.length === 0) return;
+        
+        const currentActive = container.querySelector('.suggestion-item.active');
+        let activeIndex = -1;
+        
+        if (currentActive) {
+            activeIndex = Array.from(items).indexOf(currentActive);
+        }
+        
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                activeIndex = activeIndex < items.length - 1 ? activeIndex + 1 : 0;
+                this.setActiveSuggestion(items, activeIndex);
+                break;
+                
+            case 'ArrowUp':
+                e.preventDefault();
+                activeIndex = activeIndex > 0 ? activeIndex - 1 : items.length - 1;
+                this.setActiveSuggestion(items, activeIndex);
+                break;
+                
+            case 'Enter':
+                e.preventDefault();
+                if (currentActive) {
+                    currentActive.click();
+                } else {
+                    this.performSearch();
+                }
+                break;
+                
+            case 'Escape':
+                e.preventDefault();
+                this.hideSearchSuggestions();
+                document.querySelector('.search-input').blur();
+                break;
+        }
+    }
+    
+    setActiveSuggestion(items, activeIndex) {
+        // Remove active class from all items
+        items.forEach(item => item.classList.remove('active'));
+        
+        // Add active class to current item
+        if (items[activeIndex]) {
+            items[activeIndex].classList.add('active');
+            
+            // Scroll item into view if needed
+            items[activeIndex].scrollIntoView({
+                block: 'nearest',
+                behavior: 'smooth'
+            });
         }
     }
 
     showSearchSuggestions() {
         const container = document.querySelector('.search-suggestions');
+        console.log('Showing search suggestions, container:', container);
         if (container) {
             container.style.display = 'block';
+            container.classList.add('show');
+            console.log('Container display set to block and show class added, computed style:', window.getComputedStyle(container).display);
+            console.log('Container visibility:', window.getComputedStyle(container).visibility);
+            console.log('Container z-index:', window.getComputedStyle(container).zIndex);
+        } else {
+            console.error('Search suggestions container not found when trying to show!');
         }
     }
 
     hideSearchSuggestions() {
         const container = document.querySelector('.search-suggestions');
+        console.log('Hiding search suggestions, container:', container);
         if (container) {
             container.style.display = 'none';
+            container.classList.remove('show');
+            console.log('Container display set to none and show class removed');
         }
     }
 
