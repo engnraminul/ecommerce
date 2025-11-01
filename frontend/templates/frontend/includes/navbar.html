@@ -78,123 +78,141 @@
 
                 <!-- User Actions -->
                 <div class="navbar-actions">
-                    <!-- User Account -->
-                    <div class="action-item user-account">
-                        {% if user.is_authenticated %}
-                            <div class="user-dropdown">
-                                <button class="user-trigger">
-                                    <div class="user-avatar">
-                                        {% if user.profile.avatar %}
-                                            <img src="{{ user.profile.avatar.url }}" alt="Avatar">
-                                        {% else %}
-                                            <i class="fas fa-user"></i>
-                                        {% endif %}
-                                    </div>
-                                    <div class="user-info">
-                                        <span class="user-name">{{ user.first_name|default:user.username }}</span>
-                                        <span class="user-role">My Account</span>
-                                    </div>
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                                <div class="user-menu">
-                                    <a href="{% url 'frontend:dashboard' %}" class="menu-item">
-                                        <i class="fas fa-tachometer-alt"></i> Dashboard
-                                    </a>
-                                    <a href="{% url 'frontend:profile' %}" class="menu-item">
-                                        <i class="fas fa-user"></i> Profile
-                                    </a>
-                                    <a href="{% url 'frontend:orders' %}" class="menu-item">
-                                        <i class="fas fa-box"></i> Orders
-                                    </a>
-                                    <a href="{% url 'frontend:wishlist' %}" class="menu-item">
-                                        <i class="fas fa-heart"></i> Wishlist
-                                    </a>
-                                    <a href="#" class="menu-item">
-                                        <i class="fas fa-cog"></i> Settings
-                                    </a>
-                                    <div class="menu-divider"></div>
-                                    <form action="{% url 'frontend:logout' %}" method="post" style="display:inline;" id="dropdown-logout-form">
-                                        {% csrf_token %}
-                                        <a href="#" onclick="document.getElementById('dropdown-logout-form').submit(); return false;" class="menu-item logout">
-                                            <i class="fas fa-sign-out-alt"></i> Logout
+                    <!-- Desktop Actions -->
+                    <div class="desktop-actions">
+                        <!-- User Account -->
+                        <div class="action-item user-account">
+                            {% if user.is_authenticated %}
+                                <div class="user-dropdown">
+                                    <button class="user-trigger">
+                                        <div class="user-avatar">
+                                            {% if user.profile.avatar %}
+                                                <img src="{{ user.profile.avatar.url }}" alt="Avatar">
+                                            {% else %}
+                                                <i class="fas fa-user"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div class="user-info">
+                                            <span class="user-name">{{ user.first_name|default:user.username }}</span>
+                                            <span class="user-role">My Account</span>
+                                        </div>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    <div class="user-menu">
+                                        <a href="{% url 'frontend:dashboard' %}" class="menu-item">
+                                            <i class="fas fa-tachometer-alt"></i> Dashboard
                                         </a>
-                                    </form>
+                                        <a href="{% url 'frontend:profile' %}" class="menu-item">
+                                            <i class="fas fa-user"></i> Profile
+                                        </a>
+                                        <a href="{% url 'frontend:orders' %}" class="menu-item">
+                                            <i class="fas fa-box"></i> Orders
+                                        </a>
+                                        <a href="{% url 'frontend:wishlist' %}" class="menu-item">
+                                            <i class="fas fa-heart"></i> Wishlist
+                                        </a>
+                                        <a href="#" class="menu-item">
+                                            <i class="fas fa-cog"></i> Settings
+                                        </a>
+                                        <div class="menu-divider"></div>
+                                        <form action="{% url 'frontend:logout' %}" method="post" style="display:inline;" id="dropdown-logout-form">
+                                            {% csrf_token %}
+                                            <a href="#" onclick="document.getElementById('dropdown-logout-form').submit(); return false;" class="menu-item logout">
+                                                <i class="fas fa-sign-out-alt"></i> Logout
+                                            </a>
+                                        </form>
+                                    </div>
                                 </div>
-                            </div>
-                        {% else %}
-                            <div class="auth-buttons">
-                                <a href="{% url 'frontend:login' %}" class="auth-btn login-btn">
-                                    <i class="fas fa-sign-in-alt"></i>
-                                    <span>Login</span>
-                                </a>
-                                <a href="{% url 'frontend:register' %}" class="auth-btn register-btn">
-                                    <i class="fas fa-user-plus"></i>
-                                    <span>Register</span>
-                                </a>
-                            </div>
-                        {% endif %}
-                    </div>
+                            {% else %}
+                                <div class="auth-buttons">
+                                    <a href="{% url 'frontend:login' %}" class="auth-btn login-btn">
+                                        <i class="fas fa-sign-in-alt"></i>
+                                        <span>Login</span>
+                                    </a>
+                                    <a href="{% url 'frontend:register' %}" class="auth-btn register-btn">
+                                        <i class="fas fa-user-plus"></i>
+                                        <span>Register</span>
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
 
-                    <!-- Wishlist -->
-                    <div class="action-item wishlist">
-                        <a href="{% url 'frontend:wishlist' %}" class="action-link">
-                            <div class="action-icon">
-                                <i class="fas fa-heart"></i>
-                                <span class="action-badge wishlist-count" style="display: flex !important; visibility: visible !important; opacity: 1 !important;">0</span>
-                            </div>
-                            <div class="action-text">
-                                <span class="action-label">Wishlist</span>
-                                <span class="action-count wishlist-items">0 items</span>
-                            </div>
-                        </a>
-                    </div>
+                        <!-- Wishlist -->
+                        <div class="action-item wishlist">
+                            <a href="{% url 'frontend:wishlist' %}" class="action-link">
+                                <div class="action-icon">
+                                    <i class="fas fa-heart"></i>
+                                    <span class="action-badge wishlist-count" style="display: flex !important; visibility: visible !important; opacity: 1 !important;">0</span>
+                                </div>
+                                <div class="action-text">
+                                    <span class="action-label">Wishlist</span>
+                                    <span class="action-count wishlist-items">0 items</span>
+                                </div>
+                            </a>
+                        </div>
 
-                    <!-- Shopping Cart -->
-                    <div class="action-item cart">
-                        <a href="{% url 'frontend:cart' %}" class="action-link cart-link">
-                            <div class="action-icon">
-                                <i class="fas fa-shopping-cart"></i>
-                                <span style="display: flex !important; visibility: visible !important; opacity: 1 !important;" class="action-badge cart-count">0</span>
-                            </div>
-                            <div class="action-text">
-                                <span class="action-label">Cart</span>
-                                <span class="action-count cart-total">৳0.00</span>
-                            </div>
-                        </a>
-                        
-                        <!-- Cart Dropdown -->
-                        <div class="cart-dropdown">
-                            <div class="cart-dropdown-header">
-                                <h4>Shopping Cart</h4>
-                                <span class="cart-items-count">0 items</span>
-                            </div>
-                            <div class="cart-dropdown-body">
-                                <div class="empty-cart">
+                        <!-- Shopping Cart -->
+                        <div class="action-item cart">
+                            <a href="{% url 'frontend:cart' %}" class="action-link cart-link">
+                                <div class="action-icon">
                                     <i class="fas fa-shopping-cart"></i>
-                                    <p>Your cart is empty</p>
-                                    <a href="{% url 'frontend:products' %}" class="btn-shop-now">Shop Now</a>
+                                    <span style="display: flex !important; visibility: visible !important; opacity: 1 !important;" class="action-badge cart-count">0</span>
                                 </div>
-                                <!-- Cart items will be loaded here via JavaScript -->
-                            </div>
-                            <div class="cart-dropdown-footer">
-                                <div class="cart-total-display">
-                                    <span>Total: <strong class="total-amount">৳0.00</strong></span>
+                                <div class="action-text">
+                                    <span class="action-label">Cart</span>
+                                    <span class="action-count cart-total">৳0.00</span>
                                 </div>
-                                <div class="cart-actions">
-                                    <a href="{% url 'frontend:cart' %}" class="btn btn-outline">View Cart</a>
-                                    <a href="{% url 'frontend:checkout' %}" class="btn btn-primary">Checkout</a>
+                            </a>
+                            
+                            <!-- Cart Dropdown -->
+                            <div class="cart-dropdown">
+                                <div class="cart-dropdown-header">
+                                    <h4>Shopping Cart</h4>
+                                    <span class="cart-items-count">0 items</span>
+                                </div>
+                                <div class="cart-dropdown-body">
+                                    <div class="empty-cart">
+                                        <i class="fas fa-shopping-cart"></i>
+                                        <p>Your cart is empty</p>
+                                        <a href="{% url 'frontend:products' %}" class="btn-shop-now">Shop Now</a>
+                                    </div>
+                                    <!-- Cart items will be loaded here via JavaScript -->
+                                </div>
+                                <div class="cart-dropdown-footer">
+                                    <div class="cart-total-display">
+                                        <span>Total: <strong class="total-amount">৳0.00</strong></span>
+                                    </div>
+                                    <div class="cart-actions">
+                                        <a href="{% url 'frontend:cart' %}" class="btn btn-outline">View Cart</a>
+                                        <a href="{% url 'frontend:checkout' %}" class="btn btn-primary">Checkout</a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Mobile Menu Toggle -->
-                    <div class="mobile-menu-toggle">
-                        <button class="menu-toggle-btn">
-                            <span class="hamburger"></span>
-                            <span class="hamburger"></span>
-                            <span class="hamburger"></span>
-                        </button>
+                    <!-- Mobile Actions -->
+                    <div class="mobile-actions">
+                        <!-- Mobile Cart -->
+                        <div class="mobile-cart">
+                            <a href="{% url 'frontend:cart' %}" class="mobile-cart-link">
+                                <div class="mobile-cart-icon">
+                                    <i class="fas fa-shopping-cart"></i>
+                                    <span class="mobile-cart-badge">0</span>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- Mobile Menu Toggle -->
+                        <div class="mobile-menu-toggle">
+                            <button class="menu-toggle-btn" id="mobileMenuToggle">
+                                <div class="hamburger-container">
+                                    <span class="hamburger"></span>
+                                    <span class="hamburger"></span>
+                                    <span class="hamburger"></span>
+                                </div>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -303,85 +321,222 @@
     </div>
 
     <!-- Mobile Menu Overlay -->
-    <div class="mobile-menu-overlay">
-        <div class="mobile-menu">
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay">
+        <div class="mobile-menu" id="mobileMenu">
             <div class="mobile-menu-header">
-                <div class="brand-logo">
-                    <div class="logo-icon">
-                        <i class="fas fa-store"></i>
-                    </div>
-                    <div class="logo-text">
-                        <span class="brand-name">StyleHub</span>
-                        <span class="brand-tagline">Fashion Forward</span>
-                    </div>
+                <div class="mobile-brand-logo">
+                    <a href="{% url 'frontend:home' %}" class="mobile-brand-link">
+                        <div class="mobile-logo-icon">
+                            <img src="{{ site_settings.site_logo }}" alt="{{ site_settings.site_name }}" style="max-height: 35px;">
+                        </div>
+                        
+                    </a>
                 </div>
-                <button class="mobile-menu-close">
+                <button class="mobile-menu-close" id="mobileMenuClose">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             
             <div class="mobile-menu-body">
                 <!-- Mobile Search -->
-                <form class="search-form" method="get" action="{% url 'frontend:search' %}">
-                    <div class="search-input-wrapper">
-                        <input type="text" class="search-input" name="q" placeholder="Search products..." value="{{ request.GET.q }}">
-                        <button type="submit" class="search-button">
-                            <i class="fas fa-search"></i>
-                        </button>
+                <div class="mobile-search-section">
+                    <form class="mobile-search-form" method="get" action="{% url 'frontend:search' %}">
+                        <div class="mobile-search-wrapper">
+                            <input type="text" class="mobile-search-input" name="q" placeholder="Search products..." value="{{ request.GET.q }}">
+                            <button type="submit" class="mobile-search-button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- User Profile Section (if authenticated) -->
+                {% if user.is_authenticated %}
+                <div class="mobile-user-section">
+                    <div class="mobile-user-profile">
+                        <div class="mobile-user-avatar">
+                            {% if user.profile.avatar %}
+                                <img src="{{ user.profile.avatar.url }}" alt="Avatar">
+                            {% else %}
+                                <i class="fas fa-user"></i>
+                            {% endif %}
+                        </div>
+                        <div class="mobile-user-info">
+                            <span class="mobile-user-name">{{ user.first_name|default:user.username }}</span>
+                            <span class="mobile-user-email">{{ user.email }}</span>
+                        </div>
                     </div>
-                </form>
+                    <div class="mobile-user-stats">
+                        <div class="mobile-stat">
+                            <span class="stat-number cart-count">0</span>
+                            <span class="stat-label">Cart Items</span>
+                        </div>
+                        <div class="mobile-stat">
+                            <span class="stat-number wishlist-count">0</span>
+                            <span class="stat-label">Wishlist</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
                 
                 <!-- Mobile Navigation -->
                 <nav class="mobile-nav">
-                    <a href="{% url 'frontend:home' %}" class="mobile-nav-link">
-                        <i class="fas fa-home"></i> Home
-                    </a>
-                    <a href="{% url 'frontend:products' %}" class="mobile-nav-link">
-                        <i class="fas fa-shopping-bag"></i> Products
-                    </a>
-                    <a href="{% url 'frontend:categories' %}" class="mobile-nav-link">
-                        <i class="fas fa-th-large"></i> Categories
-                    </a>
-                    <a href="#" class="mobile-nav-link">
-                        <i class="fas fa-fire"></i> Deals
-                    </a>
-                    <a href="{% url 'frontend:about' %}" class="mobile-nav-link">
-                        <i class="fas fa-info-circle"></i> About
-                    </a>
-                    <a href="{% url 'contact_app:contact_page' %}" class="mobile-nav-link">
-                        <i class="fas fa-envelope"></i> Contact
-                    </a>
+                    <div class="mobile-nav-section">
+                        <h4 class="mobile-nav-title">Menu</h4>
+                        <a href="{% url 'frontend:home' %}" class="mobile-nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                            <div class="mobile-nav-icon">
+                                <i class="fas fa-home"></i>
+                            </div>
+                            <span>Home</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        
+                        <a href="{% url 'frontend:products' %}" class="mobile-nav-link {% if request.resolver_match.url_name == 'products' %}active{% endif %}">
+                            <div class="mobile-nav-icon">
+                                <i class="fas fa-shopping-bag"></i>
+                            </div>
+                            <span>Products</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        
+                        <a href="{% url 'frontend:categories' %}" class="mobile-nav-link {% if request.resolver_match.url_name == 'categories' %}active{% endif %}">
+                            <div class="mobile-nav-icon">
+                                <i class="fas fa-th-large"></i>
+                            </div>
+                            <span>Categories</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        
+                        <a href="{% url 'frontend:reviews' %}" class="mobile-nav-link {% if request.resolver_match.url_name == 'reviews' %}active{% endif %}">
+                            <div class="mobile-nav-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <span>Reviews</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        
+                        <a href="{% url 'frontend:about' %}" class="mobile-nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">
+                            <div class="mobile-nav-icon">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <span>About</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        
+                        <a href="{% url 'contact_app:contact_page' %}" class="mobile-nav-link {% if 'contact' in request.path %}active{% endif %}">
+                            <div class="mobile-nav-icon">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <span>Contact</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </div>
                     
                     {% if user.is_authenticated %}
-                        <div class="menu-divider"></div>
-                        <a href="{% url 'frontend:dashboard' %}" class="mobile-nav-link">
-                            <i class="fas fa-tachometer-alt"></i> Dashboard
-                        </a>
-                        <a href="{% url 'frontend:profile' %}" class="mobile-nav-link">
-                            <i class="fas fa-user"></i> Profile
-                        </a>
-                        <a href="{% url 'frontend:orders' %}" class="mobile-nav-link">
-                            <i class="fas fa-box"></i> Orders
-                        </a>
-                        <a href="{% url 'frontend:wishlist' %}" class="mobile-nav-link">
-                            <i class="fas fa-heart"></i> Wishlist
-                        </a>
-                        <form action="{% url 'frontend:logout' %}" method="post" style="display:inline;" id="mobile-logout-form">
-                            {% csrf_token %}
-                            <a href="#" onclick="document.getElementById('mobile-logout-form').submit(); return false;" class="mobile-nav-link">
-                                <i class="fas fa-sign-out-alt"></i> Logout
+                        <div class="mobile-nav-section">
+                            <h4 class="mobile-nav-title">Account</h4>
+                            <a href="{% url 'frontend:dashboard' %}" class="mobile-nav-link">
+                                <div class="mobile-nav-icon">
+                                    <i class="fas fa-tachometer-alt"></i>
+                                </div>
+                                <span>Dashboard</span>
+                                <i class="fas fa-chevron-right"></i>
                             </a>
-                        </form>
+                            <a href="{% url 'frontend:profile' %}" class="mobile-nav-link">
+                                <div class="mobile-nav-icon">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <span>Profile</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                            <a href="{% url 'frontend:orders' %}" class="mobile-nav-link">
+                                <div class="mobile-nav-icon">
+                                    <i class="fas fa-box"></i>
+                                </div>
+                                <span>My Orders</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                            <a href="{% url 'frontend:wishlist' %}" class="mobile-nav-link">
+                                <div class="mobile-nav-icon">
+                                    <i class="fas fa-heart"></i>
+                                </div>
+                                <span>Wishlist</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                            <a href="{% url 'frontend:cart' %}" class="mobile-nav-link">
+                                <div class="mobile-nav-icon">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </div>
+                                <span>Shopping Cart</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </div>
+                        
+                        <div class="mobile-nav-section">
+                            <form action="{% url 'frontend:logout' %}" method="post" style="display:inline;" id="mobile-logout-form">
+                                {% csrf_token %}
+                                <a href="#" onclick="document.getElementById('mobile-logout-form').submit(); return false;" class="mobile-nav-link logout-link">
+                                    <div class="mobile-nav-icon">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                    </div>
+                                    <span>Logout</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </form>
+                        </div>
                     {% else %}
-                        <div class="menu-divider"></div>
-                        <a href="{% url 'frontend:login' %}" class="mobile-nav-link">
-                            <i class="fas fa-sign-in-alt"></i> Login
-                        </a>
-                        <a href="{% url 'frontend:register' %}" class="mobile-nav-link">
-                            <i class="fas fa-user-plus"></i> Register
-                        </a>
+                        <div class="mobile-nav-section">
+                            <h4 class="mobile-nav-title">Account</h4>
+                            <a href="{% url 'frontend:login' %}" class="mobile-nav-link">
+                                <div class="mobile-nav-icon">
+                                    <i class="fas fa-sign-in-alt"></i>
+                                </div>
+                                <span>Login</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                            <a href="{% url 'frontend:register' %}" class="mobile-nav-link">
+                                <div class="mobile-nav-icon">
+                                    <i class="fas fa-user-plus"></i>
+                                </div>
+                                <span>Register</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </div>
                     {% endif %}
                 </nav>
+                
+                <!-- Mobile Quick Actions -->
+                <div class="mobile-quick-actions">
+                    <h4 class="mobile-nav-title">Quick Actions</h4>
+                    <div class="mobile-action-buttons">
+                        <a href="{% url 'frontend:products' %}?featured=true" class="mobile-action-btn">
+                            <i class="fas fa-fire"></i>
+                            <span>Featured</span>
+                        </a>
+                        <a href="{% url 'frontend:products' %}?new=true" class="mobile-action-btn">
+                            <i class="fas fa-sparkles"></i>
+                            <span>New</span>
+                        </a>
+                        <a href="{% url 'frontend:products' %}?sale=true" class="mobile-action-btn">
+                            <i class="fas fa-tags"></i>
+                            <span>Sale</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Mobile Menu Footer -->
+            <div class="mobile-menu-footer">
+                <div class="mobile-contact-info">
+                    <div class="mobile-contact-item">
+                        <i class="fas fa-phone"></i>
+                        <span>{{ site_settings.contact_phone|default:'01777173040' }}</span>
+                    </div>
+                    <div class="mobile-contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>{{ site_settings.contact_email|default:'contact@manobbazar.com' }}</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

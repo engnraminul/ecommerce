@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Menu Test</title>
+    <style>
+        /* Basic reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+
+        /* Test navbar */
+        .test-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-weight: bold;
+            font-size: 1.5rem;
+            color: #930000;
+        }
+
+        .mobile-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .cart-icon {
+            background: #f0f0f0;
+            padding: 0.75rem;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #930000;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+        }
+
+        /* Mobile Menu Toggle */
+        .menu-toggle-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .menu-toggle-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .hamburger-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            width: 24px;
+            height: 18px;
+            justify-content: center;
+        }
+
+        .hamburger {
+            width: 24px;
+            height: 3px;
+            background: #333;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border-radius: 2px;
+        }
+
+        .menu-toggle-btn.active .hamburger:nth-child(1) {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+
+        .menu-toggle-btn.active .hamburger:nth-child(2) {
+            opacity: 0;
+            transform: scale(0);
+        }
+
+        .menu-toggle-btn.active .hamburger:nth-child(3) {
+            transform: rotate(-45deg) translate(6px, -6px);
+        }
+
+        /* Mobile Menu Overlay */
+        .mobile-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s ease;
+        }
+
+        .mobile-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .mobile-menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 85%;
+            max-width: 350px;
+            height: 100%;
+            background: white;
+            transform: translateX(-100%);
+            transition: transform 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .mobile-menu-overlay.active .mobile-menu {
+            transform: translateX(0);
+        }
+
+        .mobile-menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 1.5rem;
+            background: linear-gradient(135deg, #930000, #b91c1c);
+            color: white;
+        }
+
+        .mobile-brand-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .mobile-menu-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            font-size: 1.25rem;
+            cursor: pointer;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .mobile-menu-body {
+            flex: 1;
+            padding: 1rem;
+        }
+
+        .test-menu-item {
+            display: block;
+            padding: 1rem;
+            color: #333;
+            text-decoration: none;
+            border-bottom: 1px solid #eee;
+            transition: all 0.3s ease;
+        }
+
+        .test-menu-item:hover {
+            background: #f0f0f0;
+            color: #930000;
+        }
+
+        /* Main content */
+        .main-content {
+            margin-top: 100px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .test-button {
+            background: #930000;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 0.5rem;
+        }
+
+        .test-button:hover {
+            background: #b91c1c;
+        }
+    </style>
+</head>
+<body>
+    <!-- Test Navbar -->
+    <nav class="test-navbar">
+        <div class="logo">Test Store</div>
+        <div class="mobile-actions">
+            <div class="cart-icon">
+                🛒
+                <span class="cart-badge">3</span>
+            </div>
+            <button class="menu-toggle-btn" id="testMenuToggle">
+                <div class="hamburger-container">
+                    <span class="hamburger"></span>
+                    <span class="hamburger"></span>
+                    <span class="hamburger"></span>
+                </div>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" id="testMenuOverlay">
+        <div class="mobile-menu">
+            <div class="mobile-menu-header">
+                <div class="mobile-brand-name">Test Store</div>
+                <button class="mobile-menu-close" id="testMenuClose">×</button>
+            </div>
+            <div class="mobile-menu-body">
+                <a href="#" class="test-menu-item">🏠 Home</a>
+                <a href="#" class="test-menu-item">🛍️ Products</a>
+                <a href="#" class="test-menu-item">📂 Categories</a>
+                <a href="#" class="test-menu-item">⭐ Reviews</a>
+                <a href="#" class="test-menu-item">📞 Contact</a>
+                <a href="#" class="test-menu-item">👤 Profile</a>
+                <a href="#" class="test-menu-item">🛒 Cart</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <h1>Mobile Menu Test Page</h1>
+        <p>Test the hamburger menu by clicking the ≡ icon in the top right corner.</p>
+        <p>This should slide a menu from the left side of the screen.</p>
+        
+        <div style="margin-top: 2rem;">
+            <button class="test-button" onclick="testOpenMenu()">Open Menu (JS)</button>
+            <button class="test-button" onclick="testCloseMenu()">Close Menu (JS)</button>
+            <button class="test-button" onclick="testToggleMenu()">Toggle Menu (JS)</button>
+        </div>
+        
+        <div style="margin-top: 2rem; font-size: 0.9rem; color: #666;">
+            <p><strong>Debug Info:</strong></p>
+            <p id="debugInfo">Ready for testing...</p>
+        </div>
+    </div>
+
+    <script>
+        let isMenuOpen = false;
+        
+        function updateDebugInfo(message) {
+            document.getElementById('debugInfo').innerHTML = message;
+            console.log(message);
+        }
+
+        function testOpenMenu() {
+            const overlay = document.getElementById('testMenuOverlay');
+            const toggle = document.getElementById('testMenuToggle');
+            
+            if (overlay && toggle) {
+                overlay.classList.add('active');
+                toggle.classList.add('active');
+                isMenuOpen = true;
+                updateDebugInfo('Menu opened via JavaScript');
+            } else {
+                updateDebugInfo('Error: Could not find menu elements');
+            }
+        }
+
+        function testCloseMenu() {
+            const overlay = document.getElementById('testMenuOverlay');
+            const toggle = document.getElementById('testMenuToggle');
+            
+            if (overlay && toggle) {
+                overlay.classList.remove('active');
+                toggle.classList.remove('active');
+                isMenuOpen = false;
+                updateDebugInfo('Menu closed via JavaScript');
+            } else {
+                updateDebugInfo('Error: Could not find menu elements');
+            }
+        }
+
+        function testToggleMenu() {
+            if (isMenuOpen) {
+                testCloseMenu();
+            } else {
+                testOpenMenu();
+            }
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuToggle = document.getElementById('testMenuToggle');
+            const menuClose = document.getElementById('testMenuClose');
+            const menuOverlay = document.getElementById('testMenuOverlay');
+
+            updateDebugInfo('Page loaded. Click hamburger menu to test.');
+
+            if (menuToggle) {
+                menuToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    updateDebugInfo('Hamburger button clicked!');
+                    testToggleMenu();
+                });
+            }
+
+            if (menuClose) {
+                menuClose.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    updateDebugInfo('Close button clicked!');
+                    testCloseMenu();
+                });
+            }
+
+            if (menuOverlay) {
+                menuOverlay.addEventListener('click', function(e) {
+                    if (e.target === menuOverlay) {
+                        updateDebugInfo('Overlay clicked!');
+                        testCloseMenu();
+                    }
+                });
+            }
+
+            // ESC key support
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && isMenuOpen) {
+                    updateDebugInfo('ESC key pressed!');
+                    testCloseMenu();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
