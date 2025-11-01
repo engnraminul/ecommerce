@@ -21,7 +21,7 @@
     <!-- Featured Categories -->
     <section class="section categories-section">
         <div class="container">
-            <h2 class="section-title">Shop by Category</h2>
+            <h2 class="section-title">All Categories</h2>
             <div class="categories-carousel-wrapper">
                 <!-- Navigation Arrows -->
                 <button class="carousel-nav prev-btn" id="prevBtn">
@@ -33,7 +33,7 @@
                 
                 <!-- Categories Carousel -->
                 <div class="categories-carousel" id="categoriesCarousel">
-                    {% for category in featured_categories %}
+                    {% for category in parent_categories %}
                     <div class="category-slide">
                         <a href="{% url 'frontend:category_products' category.slug %}" class="category-card">
                             <div class="category-image-container">
@@ -649,6 +649,7 @@
     .category-slide {
         flex: 0 0 auto;
         width: 100%;
+        min-height: 280px; /* Ensure consistent height */
     }
 
     .category-card {
@@ -911,29 +912,52 @@
         const nextBtn = document.getElementById('nextBtn');
         const pagination = document.getElementById('carouselPagination');
         
+        // Debug information
+        console.log('Debug Carousel Initialization:');
+        console.log('categoriesCarousel:', categoriesCarousel);
+        console.log('prevBtn:', prevBtn);
+        console.log('nextBtn:', nextBtn);
+        console.log('pagination:', pagination);
+        
         if (categoriesCarousel && prevBtn && nextBtn) {
             let currentPage = 0;
-            let itemsPerPage = getItemsPerPage();
             let totalItems = categoriesCarousel.children.length;
-            let totalPages = Math.ceil(totalItems / itemsPerPage);
             
-            // Function to get items per page based on screen size
+            // Function to get items per page based on screen size and total items
             function getItemsPerPage() {
                 const width = window.innerWidth;
                 if (width <= 480) return 2;
                 if (width <= 768) return 3;
                 if (width <= 992) return 4;
-                return 5;
+                
+                // For desktop, show 5 items per page, but if there are fewer than 5 items total,
+                // show all items on one page
+                return Math.min(5, totalItems);
             }
+            
+            let itemsPerPage = getItemsPerPage();
+            let totalPages = Math.ceil(totalItems / itemsPerPage);
+            
+            console.log('Carousel initialized with:');
+            console.log('totalItems:', totalItems);
+            console.log('itemsPerPage:', itemsPerPage);
+            console.log('totalPages:', totalPages);
             
             // Initialize pagination dots
             function initPagination() {
                 pagination.innerHTML = '';
-                for (let i = 0; i < totalPages; i++) {
-                    const dot = document.createElement('div');
-                    dot.className = `pagination-dot ${i === 0 ? 'active' : ''}`;
-                    dot.addEventListener('click', () => goToPage(i));
-                    pagination.appendChild(dot);
+                
+                // Only show pagination if there are multiple pages
+                if (totalPages > 1) {
+                    for (let i = 0; i < totalPages; i++) {
+                        const dot = document.createElement('div');
+                        dot.className = `pagination-dot ${i === 0 ? 'active' : ''}`;
+                        dot.addEventListener('click', () => goToPage(i));
+                        pagination.appendChild(dot);
+                    }
+                    pagination.style.display = 'flex';
+                } else {
+                    pagination.style.display = 'none';
                 }
             }
             
@@ -951,11 +975,19 @@
                     dot.classList.toggle('active', index === currentPage);
                 });
                 
-                // Update navigation buttons
-                prevBtn.style.opacity = currentPage === 0 ? '0.5' : '1';
-                nextBtn.style.opacity = currentPage === totalPages - 1 ? '0.5' : '1';
-                prevBtn.style.pointerEvents = currentPage === 0 ? 'none' : 'auto';
-                nextBtn.style.pointerEvents = currentPage === totalPages - 1 ? 'none' : 'auto';
+                // Update navigation buttons - hide if only one page
+                if (totalPages <= 1) {
+                    prevBtn.style.display = 'none';
+                    nextBtn.style.display = 'none';
+                } else {
+                    prevBtn.style.display = 'flex';
+                    nextBtn.style.display = 'flex';
+                    
+                    prevBtn.style.opacity = currentPage === 0 ? '0.5' : '1';
+                    nextBtn.style.opacity = currentPage === totalPages - 1 ? '0.5' : '1';
+                    prevBtn.style.pointerEvents = currentPage === 0 ? 'none' : 'auto';
+                    nextBtn.style.pointerEvents = currentPage === totalPages - 1 ? 'none' : 'auto';
+                }
             }
             
             // Go to specific page
@@ -1030,19 +1062,22 @@
                 }
             }
             
-            // Auto-scroll functionality (optional)
+            // Auto-scroll functionality (optional) - only enable if there are multiple pages
             let autoScrollInterval;
-            const autoScrollDelay = 5000; // 5 seconds
+            const autoScrollDelay = 6000; // 6 seconds (increased for better UX with more items)
             
             function startAutoScroll() {
-                autoScrollInterval = setInterval(() => {
-                    if (currentPage < totalPages - 1) {
-                        currentPage++;
-                    } else {
-                        currentPage = 0;
-                    }
-                    updateCarousel();
-                }, autoScrollDelay);
+                // Only auto-scroll if there are multiple pages
+                if (totalPages > 1) {
+                    autoScrollInterval = setInterval(() => {
+                        if (currentPage < totalPages - 1) {
+                            currentPage++;
+                        } else {
+                            currentPage = 0;
+                        }
+                        updateCarousel();
+                    }, autoScrollDelay);
+                }
             }
             
             function stopAutoScroll() {

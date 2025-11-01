@@ -27,14 +27,19 @@ def home(request):
         is_active=True
     ).select_related('category').prefetch_related('images')[:8]
     
-    featured_categories = Category.objects.filter(
+    # Get all parent categories (not limited to 6)
+    parent_categories = Category.objects.filter(
         is_active=True, 
         parent=None
-    )[:6]
+    ).order_by('name')
+    
+    # Also keep featured categories for backward compatibility if needed
+    featured_categories = parent_categories[:6]
     
     context = {
         'featured_products': featured_products,
         'featured_categories': featured_categories,
+        'parent_categories': parent_categories,  # All parent categories
     }
     return render(request, 'frontend/home.html', context)
 

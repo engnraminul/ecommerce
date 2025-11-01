@@ -1054,7 +1054,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 1.25rem 1.5rem;
-    background: linear-gradient(135deg, var(--primary-color), #b91c1c);
+    background: var(--primary-color);
     color: var(--white);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     position: relative;
