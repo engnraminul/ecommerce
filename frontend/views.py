@@ -264,8 +264,12 @@ def category_products(request, slug):
 
 
 def search(request):
-    """Search results page."""
+    """Enhanced search results page with filters and proper image handling."""
     query = request.GET.get('q', '')
+    sort = request.GET.get('sort', '')
+    category = request.GET.get('category', '')
+    price_range = request.GET.get('price_range', '')
+    
     products_list = Product.objects.none()
     
     if query:
@@ -275,6 +279,41 @@ def search(request):
             Q(category__name__icontains=query),
             is_active=True
         ).select_related('category').prefetch_related('images').distinct()
+        
+        # Apply category filter
+        if category:
+            products_list = products_list.filter(category__slug=category)
+        
+        # Apply price range filter
+        if price_range:
+            if price_range == '0-50':
+                products_list = products_list.filter(price__lte=50)
+            elif price_range == '50-100':
+                products_list = products_list.filter(price__gte=50, price__lte=100)
+            elif price_range == '100-500':
+                products_list = products_list.filter(price__gte=100, price__lte=500)
+            elif price_range == '500+':
+                products_list = products_list.filter(price__gte=500)
+        
+        # Apply sorting
+        if sort:
+            if sort == 'name':
+                products_list = products_list.order_by('name')
+            elif sort == '-name':
+                products_list = products_list.order_by('-name')
+            elif sort == 'price':
+                products_list = products_list.order_by('price')
+            elif sort == '-price':
+                products_list = products_list.order_by('-price')
+            elif sort == '-created_at':
+                products_list = products_list.order_by('-created_at')
+            else:
+                products_list = products_list.order_by('-created_at')  # Default sort
+        else:
+            products_list = products_list.order_by('-created_at')  # Default sort
+    
+    # Get all categories for filter dropdown
+    categories = Category.objects.filter(is_active=True, parent=None).order_by('name')
     
     # Pagination
     paginator = Paginator(products_list, 12)
@@ -284,6 +323,10 @@ def search(request):
     context = {
         'query': query,
         'products': products_page,
+        'categories': categories,
+        'current_sort': sort,
+        'current_category': category,
+        'current_price_range': price_range,
     }
     return render(request, 'frontend/search.html', context)
 
