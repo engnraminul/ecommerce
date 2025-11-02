@@ -388,6 +388,75 @@ def live_search_api(request):
         }, status=500)
 
 
+def ajax_search(request):
+    """AJAX search endpoint for live search suggestions."""
+    if not request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'error': 'Invalid request'}, status=400)
+    
+    query = request.GET.get('q', '').strip()
+    
+    if not query or len(query) < 2:
+        return JsonResponse({'results': []})
+    
+    # Search for products
+    products = Product.objects.filter(
+        Q(name__icontains=query) |
+        Q(description__icontains=query) |
+        Q(category__name__icontains=query) |
+        Q(sku__icontains=query),
+        is_active=True
+    ).select_related('category').prefetch_related('images')[:8]  # Limit to 8 results
+    
+    # Search for categories
+    categories = Category.objects.filter(
+        Q(name__icontains=query) |
+        Q(description__icontains=query),
+        is_active=True
+    )[:3]  # Limit to 3 categories
+    
+    results = []
+    
+    # Add category results
+    for category in categories:
+        results.append({
+            'type': 'category',
+            'title': category.name,
+            'description': f"Category - {category.description[:50]}..." if category.description else "Category",
+            'url': f'/category/{category.slug}/',
+            'image': get_image_url(category.image, request) if category.image else None
+        })
+    
+    # Add product results
+    for product in products:
+        # Get first image if available
+        first_image = product.images.first()
+        image_url = None
+        if first_image and first_image.image:
+            image_url = get_image_url(first_image.image, request)
+        
+        # Format price
+        price_display = f"৳{product.price}"
+        if hasattr(product, 'compare_price') and product.compare_price and product.compare_price > product.price:
+            price_display = f"৳{product.price} <span class='original-price'>৳{product.compare_price}</span>"
+        
+        results.append({
+            'type': 'product',
+            'title': product.name,
+            'description': product.description[:100] + "..." if len(product.description) > 100 else product.description,
+            'price': price_display,
+            'category': product.category.name,
+            'url': f"/products/{product.slug}/",
+            'image': image_url,
+            'is_featured': getattr(product, 'is_featured', False)
+        })
+    
+    return JsonResponse({
+        'results': results,
+        'query': query,
+        'total_count': len(results)
+    })
+
+
 def live_search_test(request):
     """Test page for live search functionality."""
     return render(request, 'frontend/live_search_test.html')
@@ -396,6 +465,26 @@ def live_search_test(request):
 def image_test(request):
     """Test page for image functionality."""
     return render(request, 'frontend/image_test.html')
+
+
+def debug_search(request):
+    """Debug search page for testing live search functionality."""
+    return render(request, 'frontend/debug_search.html')
+
+
+def simple_search_test(request):
+    """Simple search test page."""
+    return render(request, 'frontend/simple_search_test.html')
+
+
+def search_debug(request):
+    """Comprehensive search debug page."""
+    from products.models import Category
+    navbar_categories = Category.objects.filter(is_active=True, parent=None)[:10]
+    context = {
+        'navbar_categories': navbar_categories,
+    }
+    return render(request, 'frontend/search_debug.html', context)
 
 
 def cart(request):
