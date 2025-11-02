@@ -20,6 +20,30 @@ from pages.models import Page
 logger = logging.getLogger(__name__)
 
 
+def get_image_url(image_path, request=None):
+    """
+    Utility function to get proper image URL from image path
+    """
+    if not image_path:
+        return ''
+    
+    # If it's already a full URL, return as is
+    if image_path.startswith(('http://', 'https://')):
+        return image_path
+    
+    # Get the base URL from request or use default
+    if request:
+        base_url = f"{request.scheme}://{request.get_host()}"
+    else:
+        base_url = "http://127.0.0.1:8000"  # Default for development
+    
+    # Handle different path formats
+    if image_path.startswith('/'):
+        return f"{base_url}{image_path}"
+    else:
+        return f"{base_url}/media/{image_path}"
+
+
 def home(request):
     """Homepage view with featured products and categories."""
     featured_products = Product.objects.filter(
@@ -262,6 +286,116 @@ def search(request):
         'products': products_page,
     }
     return render(request, 'frontend/search.html', context)
+
+
+def live_search_api(request):
+    """AJAX endpoint for live search suggestions."""
+    try:
+        query = request.GET.get('q', '').strip()
+        category = request.GET.get('category', '')
+        
+        if len(query) < 2:
+            return JsonResponse({
+                'suggestions': [],
+                'products': [],
+                'categories': [],
+                'search_history': []
+            })
+        
+        # Build base query
+        products_query = Q(name__icontains=query) | Q(description__icontains=query)
+        if category:
+            products_query &= Q(category__slug=category)
+        
+        # Get product suggestions (limited to 5)
+        products = Product.objects.filter(
+            products_query,
+            is_active=True
+        ).select_related('category')[:5]
+        
+        # Get category suggestions
+        categories = Category.objects.filter(
+            name__icontains=query,
+            is_active=True
+        )[:3]
+        
+        # Format product suggestions
+        product_suggestions = []
+        for product in products:
+            image_url = ''
+            # Try to get product image safely
+            try:
+                if hasattr(product, 'images') and product.images.exists():
+                    # Get primary image or first image
+                    primary_image = product.images.filter(is_primary=True).first()
+                    if not primary_image:
+                        primary_image = product.images.first()
+                    
+                    if primary_image and primary_image.image:
+                        image_url = get_image_url(primary_image.image, request)
+                                
+            except Exception as e:
+                logger.error(f"Error getting product image for {product.name}: {str(e)}")
+                image_url = ''
+            
+            product_suggestions.append({
+                'id': product.id,
+                'name': product.name,
+                'slug': product.slug,
+                'price': str(product.price),
+                'category': product.category.name if product.category else 'Uncategorized',
+                'image': image_url,
+                'url': f'/products/{product.slug}/'
+            })
+        
+        # Format category suggestions
+        category_suggestions = []
+        for cat in categories:
+            # Get category image URL
+            category_image = get_image_url(cat.image, request) if cat.image else ''
+                
+            category_suggestions.append({
+                'id': cat.id,
+                'name': cat.name,
+                'slug': cat.slug,
+                'image': category_image,
+                'url': f'/category/{cat.slug}/'
+            })
+        
+        # Search term suggestions based on product names
+        search_suggestions = list(
+            Product.objects.filter(
+                name__icontains=query,
+                is_active=True
+            ).values_list('name', flat=True)[:5]
+        )
+        
+        return JsonResponse({
+            'suggestions': search_suggestions,
+            'products': product_suggestions,
+            'categories': category_suggestions,
+            'query': query
+        })
+        
+    except Exception as e:
+        logger.error(f"Live search API error: {str(e)}")
+        return JsonResponse({
+            'error': 'Search temporarily unavailable',
+            'suggestions': [],
+            'products': [],
+            'categories': [],
+            'query': query if 'query' in locals() else ''
+        }, status=500)
+
+
+def live_search_test(request):
+    """Test page for live search functionality."""
+    return render(request, 'frontend/live_search_test.html')
+
+
+def image_test(request):
+    """Test page for image functionality."""
+    return render(request, 'frontend/image_test.html')
 
 
 def cart(request):

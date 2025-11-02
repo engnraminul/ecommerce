@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Search Demo - Professional eCommerce</title>
+    
+    <!-- Load static files -->
+    <link rel="stylesheet" href="/static/frontend/css/style.css">
+    <link rel="stylesheet" href="/static/frontend/css/navbar.css">
+    <link rel="stylesheet" href="/static/frontend/css/live-search.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .demo-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 60px;
+        }
+        
+        .demo-header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .demo-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .search-demo-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        }
+        
+        .search-demo-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+        }
+        
+        .search-demo-description {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1rem;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        
+        .feature-card {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 24px;
+        }
+        
+        .feature-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .feature-description {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .demo-instructions {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .demo-instructions h3 {
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .demo-instructions p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        
+        @media (max-width: 768px) {
+            .demo-header h1 {
+                font-size: 2rem;
+            }
+            
+            .search-demo-section {
+                padding: 20px;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <!-- Header -->
+        <div class="demo-header">
+            <h1>🔍 Live Search Demo</h1>
+            <p>Experience our professional real-time search with intelligent suggestions, search history, and lightning-fast results</p>
+        </div>
+        
+        <!-- Instructions -->
+        <div class="demo-instructions">
+            <h3>🚀 Try It Out!</h3>
+            <p>Start typing in the search box below and watch the magic happen. Try searching for "phone", "laptop", "test", or any product name!</p>
+        </div>
+        
+        <!-- Search Demo Section -->
+        <div class="search-demo-section">
+            <h2 class="search-demo-title">Professional Live Search</h2>
+            <p class="search-demo-description">Type to see real-time search suggestions with products, categories, and search history</p>
+            
+            <!-- Search Bar -->
+            <div class="navbar-search" style="max-width: 800px; margin: 0 auto;">
+                <form class="search-form" method="get" action="/search/" id="mainSearchForm">
+                    <div class="search-input-wrapper">
+                        <div class="search-category">
+                            <select name="category" class="category-select" id="categorySelect">
+                                <option value="">All Categories</option>
+                                <option value="electronics">Electronics</option>
+                                <option value="clothing">Clothing</option>
+                                <option value="books">Books</option>
+                                <option value="home-garden">Home & Garden</option>
+                                <option value="sports">Sports</option>
+                            </select>
+                        </div>
+                        <div class="search-divider"></div>
+                        <input type="text" 
+                               name="q" 
+                               class="search-input" 
+                               id="mainSearchInput"
+                               placeholder="Search for products..." 
+                               autocomplete="off"
+                               autocapitalize="off"
+                               spellcheck="false">
+                        <button type="submit" class="search-button" id="searchSubmitBtn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Features -->
+        <div class="search-demo-section">
+            <h2 class="search-demo-title">🌟 Advanced Features</h2>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <div class="feature-title">Real-time Results</div>
+                    <div class="feature-description">
+                        Get instant search results as you type with intelligent debouncing and caching for optimal performance.
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <div class="feature-title">Smart Suggestions</div>
+                    <div class="feature-description">
+                        Advanced suggestion engine shows products, categories, and search terms based on your query.
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="feature-title">Search History</div>
+                    <div class="feature-description">
+                        Personalized search history stored locally for quick access to your recent searches.
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-keyboard"></i>
+                    </div>
+                    <div class="feature-title">Keyboard Navigation</div>
+                    <div class="feature-description">
+                        Full keyboard support with arrow keys, Enter, and Escape for accessibility and power users.
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <div class="feature-title">Mobile Optimized</div>
+                    <div class="feature-description">
+                        Responsive design that works perfectly on all devices with touch-friendly interface.
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <div class="feature-title">Performance Focused</div>
+                    <div class="feature-description">
+                        Optimized with caching, debouncing, and efficient API calls for lightning-fast search experience.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script src="/static/frontend/js/live-search.js"></script>
+    
+    <!-- CSRF Token for AJAX requests -->
+    <script>
+        window.csrfToken = '{{ csrf_token }}';
+    </script>
+    
+    <script>
+        // Demo-specific enhancements
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Live Search Demo loaded');
+            
+            // Add some demo search history
+            setTimeout(() => {
+                if (window.liveSearch) {
+                    window.liveSearch.addToSearchHistory('iPhone');
+                    window.liveSearch.addToSearchHistory('Laptop');
+                    window.liveSearch.addToSearchHistory('Headphones');
+                }
+            }, 1000);
+            
+            // Add demo interactions
+            const searchInput = document.getElementById('mainSearchInput');
+            if (searchInput) {
+                // Show placeholder suggestions
+                searchInput.addEventListener('focus', function() {
+                    console.log('Search input focused - live search should activate');
+                });
+                
+                // Add some visual feedback
+                searchInput.addEventListener('input', function() {
+                    if (this.value.length > 0) {
+                        this.style.boxShadow = '0 0 0 3px rgba(0, 123, 255, 0.25)';
+                    } else {
+                        this.style.boxShadow = '';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

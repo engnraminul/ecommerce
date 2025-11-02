@@ -57,10 +57,10 @@
 
                 <!-- Search Bar -->
                 <div class="navbar-search">
-                    <form class="search-form" method="get" action="{% url 'frontend:search' %}">
+                    <form class="search-form" method="get" action="{% url 'frontend:search' %}" id="mainSearchForm">
                         <div class="search-input-wrapper">
                             <div class="search-category">
-                                <select name="category" class="category-select">
+                                <select name="category" class="category-select" id="categorySelect">
                                     <option value="">All Categories</option>
                                     {% for category in navbar_categories %}
                                     <option value="{{ category.slug }}">{{ category.name }}</option>
@@ -68,8 +68,16 @@
                                 </select>
                             </div>
                             <div class="search-divider"></div>
-                            <input type="text" name="q" class="search-input" placeholder="Search for products..." value="{{ request.GET.q }}">
-                            <button type="submit" class="search-button">
+                            <input type="text" 
+                                   name="q" 
+                                   class="search-input" 
+                                   id="mainSearchInput"
+                                   placeholder="Search for products..." 
+                                   value="{{ request.GET.q }}"
+                                   autocomplete="off"
+                                   autocapitalize="off"
+                                   spellcheck="false">
+                            <button type="submit" class="search-button" id="searchSubmitBtn">
                                 <i class="fas fa-search"></i>
                             </button>
                         </div>
@@ -340,9 +348,17 @@
             <div class="mobile-menu-body">
                 <!-- Mobile Search -->
                 <div class="mobile-search-section">
-                    <form class="mobile-search-form" method="get" action="{% url 'frontend:search' %}">
+                    <form class="mobile-search-form" method="get" action="{% url 'frontend:search' %}" id="mobileSearchForm">
                         <div class="mobile-search-wrapper">
-                            <input type="text" class="mobile-search-input" name="q" placeholder="Search products..." value="{{ request.GET.q }}">
+                            <input type="text" 
+                                   class="mobile-search-input" 
+                                   name="q" 
+                                   id="mobileSearchInput"
+                                   placeholder="Search products..." 
+                                   value="{{ request.GET.q }}"
+                                   autocomplete="off"
+                                   autocapitalize="off"
+                                   spellcheck="false">
                             <button type="submit" class="mobile-search-button">
                                 <i class="fas fa-search"></i>
                             </button>

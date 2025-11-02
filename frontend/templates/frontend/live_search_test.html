@@ -1,0 +1,351 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Search Test - {{ site_settings.site_name|default:'eCommerce' }}</title>
+    
+    <!-- Load CSS -->
+    <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'frontend/css/live-search.css' %}">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background: #f8f9fa;
+        }
+        .test-container { 
+            max-width: 1000px; 
+            margin: 0 auto; 
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .test-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .test-section { 
+            margin: 20px; 
+            padding: 25px; 
+            border: 1px solid #e9ecef; 
+            border-radius: 8px; 
+            background: #f8f9fa;
+        }
+        .test-button { 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            margin: 5px; 
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .test-button:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+        .test-result { 
+            background: white; 
+            padding: 15px; 
+            border-radius: 6px; 
+            margin: 15px 0; 
+            border-left: 4px solid #007bff;
+        }
+        .success { border-left-color: #28a745; }
+        .error { border-left-color: #dc3545; }
+        .search-demo {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        pre {
+            background: #f1f3f4;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1><i class="fas fa-search"></i> Live Search Test Page</h1>
+            <p>Comprehensive testing for the live search functionality</p>
+        </div>
+        
+        <div class="test-section">
+            <h3><i class="fas fa-server"></i> 1. API Test</h3>
+            <p>Test the live search API endpoint directly:</p>
+            <button class="test-button" onclick="testAPI()">Test API</button>
+            <button class="test-button" onclick="testAPIWithCategory()">Test with Category</button>
+            <div id="api-result" class="test-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3><i class="fas fa-code"></i> 2. JavaScript Elements Test</h3>
+            <p>Check if all required DOM elements and JavaScript components are loaded:</p>
+            <button class="test-button" onclick="testElements()">Check Elements</button>
+            <div id="elements-result" class="test-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3><i class="fas fa-magic"></i> 3. Live Search Demo</h3>
+            <p>Test the actual live search functionality (type in the box below):</p>
+            <div class="search-demo">
+                <div class="navbar-search" style="max-width: 100%; margin: 0;">
+                    <form class="search-form" method="get" action="{% url 'frontend:search' %}">
+                        <div class="search-input-wrapper">
+                            <div class="search-category">
+                                <select name="category" class="category-select">
+                                    <option value="">All Categories</option>
+                                    {% for category in navbar_categories %}
+                                    <option value="{{ category.slug }}">{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="search-divider"></div>
+                            <input type="text" 
+                                   name="q" 
+                                   class="search-input" 
+                                   placeholder="Search for products (try 'phone', 'laptop', etc.)" 
+                                   autocomplete="off">
+                            <button type="submit" class="search-button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <p><small><strong>Instructions:</strong> Type at least 2 characters to see suggestions. Use arrow keys to navigate, Enter to select.</small></p>
+        </div>
+        
+        <div class="test-section">
+            <h3><i class="fas fa-bug"></i> 4. Debug Information</h3>
+            <p>View detailed debug information about the live search system:</p>
+            <button class="test-button" onclick="debugLiveSearch()">Show Debug Info</button>
+            <button class="test-button" onclick="clearCache()">Clear Cache</button>
+            <button class="test-button" onclick="testSearchHistory()">Test Search History</button>
+            <div id="debug-result" class="test-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3><i class="fas fa-chart-line"></i> 5. Performance Test</h3>
+            <p>Test search performance and response times:</p>
+            <button class="test-button" onclick="performanceTest()">Run Performance Test</button>
+            <div id="performance-result" class="test-result"></div>
+        </div>
+    </div>
+
+    <!-- Load JavaScript -->
+    <script src="{% static 'frontend/js/live-search.js' %}"></script>
+    
+    <!-- CSRF Token -->
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    
+    <script>
+        // Test functions
+        function testAPI() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing API...';
+            
+            fetch('/api/live-search/?q=phone', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                resultDiv.className = 'test-result success';
+                resultDiv.innerHTML = `
+                    <h4><i class="fas fa-check-circle"></i> API Test Result: Success</h4>
+                    <p><strong>Products found:</strong> ${data.products ? data.products.length : 0}</p>
+                    <p><strong>Categories found:</strong> ${data.categories ? data.categories.length : 0}</p>
+                    <p><strong>Suggestions found:</strong> ${data.suggestions ? data.suggestions.length : 0}</p>
+                    <details>
+                        <summary>View full response</summary>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </details>
+                `;
+            })
+            .catch(error => {
+                resultDiv.className = 'test-result error';
+                resultDiv.innerHTML = `
+                    <h4><i class="fas fa-exclamation-triangle"></i> API Test Result: Error</h4>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                `;
+            });
+        }
+        
+        function testAPIWithCategory() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing API with category...';
+            
+            fetch('/api/live-search/?q=phone&category=electronics', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                resultDiv.className = 'test-result success';
+                resultDiv.innerHTML = `
+                    <h4><i class="fas fa-check-circle"></i> API Test with Category: Success</h4>
+                    <p><strong>Query:</strong> "phone" in "electronics"</p>
+                    <p><strong>Results:</strong> ${data.products ? data.products.length : 0} products</p>
+                `;
+            })
+            .catch(error => {
+                resultDiv.className = 'test-result error';
+                resultDiv.innerHTML = `
+                    <h4><i class="fas fa-exclamation-triangle"></i> API Test Error</h4>
+                    <p>${error.message}</p>
+                `;
+            });
+        }
+        
+        function testElements() {
+            const resultDiv = document.getElementById('elements-result');
+            const searchInput = document.querySelector('.search-input');
+            const searchForm = document.querySelector('.search-form');
+            const categorySelect = document.querySelector('.category-select');
+            const dropdown = document.querySelector('.live-search-dropdown');
+            
+            const checks = [
+                { name: 'Search Input', element: searchInput },
+                { name: 'Search Form', element: searchForm },
+                { name: 'Category Select', element: categorySelect },
+                { name: 'Live Search Manager', element: window.liveSearch },
+                { name: 'Dropdown Element', element: dropdown }
+            ];
+            
+            let html = '<h4><i class="fas fa-check-circle"></i> Elements Check:</h4><ul>';
+            checks.forEach(check => {
+                const status = check.element ? '✅' : '❌';
+                const statusText = check.element ? 'Found' : 'Not found';
+                html += `<li><strong>${check.name}:</strong> ${status} ${statusText}</li>`;
+            });
+            html += '</ul>';
+            
+            resultDiv.className = 'test-result';
+            resultDiv.innerHTML = html;
+        }
+        
+        function debugLiveSearch() {
+            const resultDiv = document.getElementById('debug-result');
+            if (window.debugLiveSearch) {
+                console.log('=== Live Search Debug ===');
+                window.debugLiveSearch();
+                resultDiv.innerHTML = `
+                    <h4><i class="fas fa-info-circle"></i> Debug Information</h4>
+                    <p>Debug information has been logged to the browser console.</p>
+                    <p><small>Open browser Developer Tools (F12) and check the Console tab for detailed information.</small></p>
+                `;
+            } else {
+                resultDiv.className = 'test-result error';
+                resultDiv.innerHTML = `
+                    <h4><i class="fas fa-exclamation-triangle"></i> Debug Not Available</h4>
+                    <p>Debug function not available. Live search may not be initialized properly.</p>
+                `;
+            }
+        }
+        
+        function clearCache() {
+            if (window.liveSearch && window.liveSearch.clearCache) {
+                window.liveSearch.clearCache();
+                document.getElementById('debug-result').innerHTML = `
+                    <h4><i class="fas fa-trash"></i> Cache Cleared</h4>
+                    <p>Search cache has been cleared successfully.</p>
+                `;
+            }
+        }
+        
+        function testSearchHistory() {
+            if (window.liveSearch) {
+                window.liveSearch.addToSearchHistory('test search 1');
+                window.liveSearch.addToSearchHistory('test search 2');
+                document.getElementById('debug-result').innerHTML = `
+                    <h4><i class="fas fa-history"></i> Search History Test</h4>
+                    <p>Added test entries to search history. Focus on search box to see them.</p>
+                `;
+            }
+        }
+        
+        function performanceTest() {
+            const resultDiv = document.getElementById('performance-result');
+            resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running performance test...';
+            
+            const startTime = performance.now();
+            let completedRequests = 0;
+            const totalRequests = 5;
+            const testQueries = ['phone', 'laptop', 'test', 'electronics', 'wireless'];
+            
+            Promise.all(
+                testQueries.map(query => 
+                    fetch(`/api/live-search/?q=${query}`, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    }).then(response => {
+                        completedRequests++;
+                        return response.json();
+                    })
+                )
+            ).then(results => {
+                const endTime = performance.now();
+                const totalTime = endTime - startTime;
+                const avgTime = totalTime / totalRequests;
+                
+                resultDiv.className = 'test-result success';
+                resultDiv.innerHTML = `
+                    <h4><i class="fas fa-tachometer-alt"></i> Performance Test Results</h4>
+                    <p><strong>Total Requests:</strong> ${totalRequests}</p>
+                    <p><strong>Total Time:</strong> ${totalTime.toFixed(2)}ms</p>
+                    <p><strong>Average Time:</strong> ${avgTime.toFixed(2)}ms per request</p>
+                    <p><strong>Status:</strong> ${avgTime < 300 ? '✅ Excellent' : avgTime < 500 ? '⚠️ Good' : '❌ Needs Optimization'}</p>
+                `;
+            }).catch(error => {
+                resultDiv.className = 'test-result error';
+                resultDiv.innerHTML = `
+                    <h4><i class="fas fa-exclamation-triangle"></i> Performance Test Failed</h4>
+                    <p>${error.message}</p>
+                `;
+            });
+        }
+        
+        // Auto-run tests when page loads
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testAPI();
+                testElements();
+            }, 1500);
+        });
+        
+        // Add some visual feedback for the search input
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const searchInput = document.querySelector('.search-input');
+                if (searchInput) {
+                    searchInput.addEventListener('focus', () => {
+                        console.log('Search input focused - live search should activate');
+                    });
+                    
+                    searchInput.addEventListener('input', (e) => {
+                        console.log('Search input value:', e.target.value);
+                    });
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Search Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-container { max-width: 800px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .test-button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 5px; }
+        .test-result { background: #f8f9fa; padding: 10px; border-radius: 4px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Live Search Test Page</h1>
+        
+        <div class="test-section">
+            <h3>1. API Test</h3>
+            <button class="test-button" onclick="testAPI()">Test API</button>
+            <div id="api-result" class="test-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>2. Search Elements Test</h3>
+            <button class="test-button" onclick="testElements()">Check Elements</button>
+            <div id="elements-result" class="test-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>3. Live Search Functionality</h3>
+            <p>Test the actual search functionality:</p>
+            <div class="navbar-search" style="max-width: 600px;">
+                <form class="search-form" method="get" action="/search/">
+                    <div class="search-input-wrapper" style="display: flex; border: 2px solid #e1e5e9; border-radius: 12px; background: white;">
+                        <div class="search-category" style="background: #f8f9fa; padding: 12px;">
+                            <select name="category" class="category-select" style="border: none; background: transparent;">
+                                <option value="">All Categories</option>
+                                <option value="electronics">Electronics</option>
+                                <option value="smartphones">Smartphones</option>
+                            </select>
+                        </div>
+                        <input type="text" 
+                               name="q" 
+                               class="search-input" 
+                               placeholder="Search for products..." 
+                               style="flex: 1; padding: 12px; border: none; outline: none;"
+                               autocomplete="off">
+                        <button type="submit" class="search-button" style="background: #007bff; color: white; border: none; padding: 12px 20px;">
+                            🔍
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <p><small>Type "phone", "laptop", or any product name to test</small></p>
+        </div>
+        
+        <div class="test-section">
+            <h3>4. Debug Information</h3>
+            <button class="test-button" onclick="debugLiveSearch()">Show Debug Info</button>
+            <div id="debug-result" class="test-result"></div>
+        </div>
+    </div>
+
+    <!-- Load the live search files -->
+    <link rel="stylesheet" href="/static/frontend/css/live-search.css">
+    <script src="/static/frontend/js/live-search.js"></script>
+    
+    <script>
+        function testAPI() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.innerHTML = 'Testing API...';
+            
+            fetch('/api/live-search/?q=phone', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                resultDiv.innerHTML = `
+                    <h4>API Test Result: ✅ Success</h4>
+                    <p>Products found: ${data.products ? data.products.length : 0}</p>
+                    <p>Categories found: ${data.categories ? data.categories.length : 0}</p>
+                    <p>Suggestions found: ${data.suggestions ? data.suggestions.length : 0}</p>
+                    <pre>${JSON.stringify(data, null, 2).substring(0, 500)}...</pre>
+                `;
+            })
+            .catch(error => {
+                resultDiv.innerHTML = `
+                    <h4>API Test Result: ❌ Error</h4>
+                    <p>Error: ${error.message}</p>
+                `;
+            });
+        }
+        
+        function testElements() {
+            const resultDiv = document.getElementById('elements-result');
+            const searchInput = document.querySelector('.search-input');
+            const searchForm = document.querySelector('.search-form');
+            const categorySelect = document.querySelector('.category-select');
+            
+            resultDiv.innerHTML = `
+                <h4>Elements Check:</h4>
+                <p>Search Input: ${searchInput ? '✅ Found' : '❌ Not found'}</p>
+                <p>Search Form: ${searchForm ? '✅ Found' : '❌ Not found'}</p>
+                <p>Category Select: ${categorySelect ? '✅ Found' : '❌ Not found'}</p>
+                <p>Live Search Manager: ${window.liveSearch ? '✅ Initialized' : '❌ Not initialized'}</p>
+            `;
+        }
+        
+        function debugLiveSearch() {
+            const resultDiv = document.getElementById('debug-result');
+            if (window.debugLiveSearch) {
+                console.log('=== Live Search Debug ===');
+                window.debugLiveSearch();
+                resultDiv.innerHTML = '<p>Debug information logged to console. Open browser dev tools to see details.</p>';
+            } else {
+                resultDiv.innerHTML = '<p>Debug function not available. Live search may not be initialized.</p>';
+            }
+        }
+        
+        // Auto-run tests when page loads
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testAPI();
+                testElements();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

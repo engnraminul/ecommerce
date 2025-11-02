@@ -12,6 +12,9 @@ urlpatterns = [
     path('categories/', views.categories, name='categories'),
     path('category/<slug:slug>/', views.category_products, name='category_products'),
     path('search/', views.search, name='search'),
+    path('api/live-search/', views.live_search_api, name='live_search_api'),
+    path('test/live-search/', views.live_search_test, name='live_search_test'),
+    path('test/images/', views.image_test, name='image_test'),
     
     # User authentication
     path('login/', views.user_login, name='login'),
