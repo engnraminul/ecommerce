@@ -216,6 +216,15 @@
                             </a>
                         </div>
 
+                        <!-- Mobile Search -->
+                        <div class="mobile-search">
+                            <button class="mobile-search-btn" id="mobileSearchToggle">
+                                <div class="mobile-search-icon">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                            </button>
+                        </div>
+
                         <!-- Mobile Menu Toggle -->
                         <div class="mobile-menu-toggle">
                             <button class="menu-toggle-btn" id="mobileMenuToggle">
@@ -556,6 +565,50 @@
                     <div class="mobile-contact-item">
                         <i class="fas fa-envelope"></i>
                         <span>{{ site_settings.contact_email|default:'contact@manobbazar.com' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Search Overlay -->
+    <div class="mobile-search-overlay" id="mobileSearchOverlay">
+        <div class="mobile-search-container">
+            <div class="mobile-search-header">
+                <h3 class="mobile-search-title">Search Products</h3>
+                <button class="mobile-search-close" id="mobileSearchClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mobile-search-form">
+                <form method="get" action="{% url 'frontend:search' %}" class="mobile-search-form-inner">
+                    <div class="mobile-search-input-group">
+                        <input type="text" 
+                               name="q" 
+                               class="mobile-search-input" 
+                               placeholder="What are you looking for?" 
+                               autocomplete="off"
+                               id="mobileSearchInput">
+                        <button type="submit" class="mobile-search-submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Live Search Results -->
+                <div class="mobile-search-results" id="mobileSearchResults" style="display: none;">
+                    <!-- Results will be populated by JavaScript -->
+                </div>
+                
+                <!-- Search Suggestions -->
+                <div class="mobile-search-suggestions">
+                    <h4 class="suggestions-title">Popular Searches</h4>
+                    <div class="suggestion-tags">
+                        <a href="{% url 'frontend:search' %}?q=wallet" class="suggestion-tag">Wallet</a>
+                        <a href="{% url 'frontend:search' %}?q=bag" class="suggestion-tag">Bag</a>
+                        <a href="{% url 'frontend:search' %}?q=phone" class="suggestion-tag">Phone</a>
+                        <a href="{% url 'frontend:search' %}?q=book" class="suggestion-tag">Book</a>
+                        <a href="{% url 'frontend:search' %}?q=clothing" class="suggestion-tag">Clothing</a>
                     </div>
                 </div>
             </div>

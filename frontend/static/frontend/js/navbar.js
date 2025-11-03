@@ -8,6 +8,7 @@ class NavbarManager {
 
     init() {
         this.setupMobileMenu();
+        this.setupMobileSearch();
         this.setupDropdowns();
         this.setupSearch();
         this.setupScrollEffect();
@@ -154,6 +155,161 @@ class NavbarManager {
             body.style.overflow = '';
         } else {
             console.error('Could not find overlay or menu toggle elements');
+        }
+    }
+
+    // Mobile Search Management
+    setupMobileSearch() {
+        const searchToggle = document.querySelector('#mobileSearchToggle');
+        const searchOverlay = document.querySelector('#mobileSearchOverlay');
+        const searchClose = document.querySelector('#mobileSearchClose');
+        const searchInput = document.querySelector('#mobileSearchInput');
+        const searchResults = document.querySelector('#mobileSearchResults');
+
+        console.log('Setting up mobile search...');
+
+        // Open search overlay
+        if (searchToggle) {
+            searchToggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.openMobileSearch();
+            });
+        }
+
+        // Close search overlay
+        if (searchClose) {
+            searchClose.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.closeMobileSearch();
+            });
+        }
+
+        // Close on overlay click
+        if (searchOverlay) {
+            searchOverlay.addEventListener('click', (e) => {
+                if (e.target === searchOverlay) {
+                    this.closeMobileSearch();
+                }
+            });
+        }
+
+        // Live search functionality
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.trim();
+                if (query.length >= 2) {
+                    this.performMobileLiveSearch(query, searchResults);
+                } else {
+                    this.hideMobileSearchResults(searchResults);
+                }
+            });
+
+            // Focus input when overlay opens
+            searchOverlay?.addEventListener('transitionend', () => {
+                if (searchOverlay.classList.contains('active')) {
+                    searchInput.focus();
+                }
+            });
+        }
+
+        // Close on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && searchOverlay?.classList.contains('active')) {
+                this.closeMobileSearch();
+            }
+        });
+    }
+
+    openMobileSearch() {
+        const overlay = document.querySelector('#mobileSearchOverlay');
+        const body = document.body;
+        
+        if (overlay) {
+            overlay.classList.add('active');
+            body.style.overflow = 'hidden';
+        }
+    }
+
+    closeMobileSearch() {
+        const overlay = document.querySelector('#mobileSearchOverlay');
+        const body = document.body;
+        const searchInput = document.querySelector('#mobileSearchInput');
+        const searchResults = document.querySelector('#mobileSearchResults');
+        
+        if (overlay) {
+            overlay.classList.remove('active');
+            body.style.overflow = '';
+        }
+        
+        // Clear search input and results
+        if (searchInput) {
+            searchInput.value = '';
+        }
+        
+        this.hideMobileSearchResults(searchResults);
+    }
+
+    performMobileLiveSearch(query, resultsContainer) {
+        // Clear previous timeout
+        if (this.searchTimeout) {
+            clearTimeout(this.searchTimeout);
+        }
+
+        // Debounce search
+        this.searchTimeout = setTimeout(() => {
+            this.fetchMobileSearchResults(query, resultsContainer);
+        }, 300);
+    }
+
+    async fetchMobileSearchResults(query, resultsContainer) {
+        try {
+            const response = await fetch(`/api/live-search/?q=${encodeURIComponent(query)}`);
+            if (!response.ok) throw new Error('Search failed');
+            
+            const data = await response.json();
+            this.displayMobileSearchResults(data.products || [], resultsContainer);
+        } catch (error) {
+            console.error('Mobile search error:', error);
+            this.hideMobileSearchResults(resultsContainer);
+        }
+    }
+
+    displayMobileSearchResults(products, resultsContainer) {
+        if (!resultsContainer) return;
+
+        if (products.length === 0) {
+            resultsContainer.innerHTML = `
+                <div class="mobile-search-result-item">
+                    <div class="mobile-search-result-info">
+                        <h4>No products found</h4>
+                        <p>Try different keywords</p>
+                    </div>
+                </div>
+            `;
+        } else {
+            resultsContainer.innerHTML = products.slice(0, 5).map(product => `
+                <a href="/products/${product.slug}/" class="mobile-search-result-item">
+                    <img src="${product.image || '/static/frontend/images/no-image.jpg'}" 
+                         alt="${product.name}" 
+                         class="mobile-search-result-image"
+                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yMCAyNkMxNy43OSAyNiAxNiAyNC4yMSAxNiAyMkMxNiAxOS43OSAxNy43OSAxOCAyMCAxOEMyMi4yMSAxOCAyNCAxOS43OSAyNCAyMkMyNCAyNC4yMSAyMi4yMSAyNiAyMCAyNloiIGZpbGw9IiM5Q0EzQUYiLz4KPHN0cHMgZD0iTTE2IDEwSDI0VjE0SDE2VjEwWiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K';">
+                    <div class="mobile-search-result-info">
+                        <h4>${product.name}</h4>
+                        <p>৳${product.price}</p>
+                    </div>
+                </a>
+            `).join('');
+        }
+
+        resultsContainer.style.display = 'block';
+    }
+
+    hideMobileSearchResults(resultsContainer) {
+        if (resultsContainer) {
+            resultsContainer.style.display = 'none';
+            resultsContainer.innerHTML = '';
         }
     }
 

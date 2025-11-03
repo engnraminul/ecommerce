@@ -929,6 +929,242 @@
     animation: bounceScale 0.5s ease;
 }
 
+/* Mobile Search Styles */
+.mobile-search {
+    margin-left: 1rem;
+}
+
+.mobile-search-btn {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    padding: 0.75rem;
+    border-radius: 50%;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+}
+
+.mobile-search-btn:hover {
+    background: var(--light-bg);
+    color: var(--primary-color);
+    transform: scale(1.05);
+}
+
+.mobile-search-icon {
+    font-size: 1.25rem;
+}
+
+/* Mobile Search Overlay */
+.mobile-search-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition);
+    backdrop-filter: blur(5px);
+}
+
+.mobile-search-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.mobile-search-container {
+    background: var(--white);
+    margin: 2rem 1rem;
+    border-radius: 15px;
+    box-shadow: var(--shadow-lg);
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+    transform: translateY(-20px);
+    transition: var(--transition);
+}
+
+.mobile-search-overlay.active .mobile-search-container {
+    transform: translateY(0);
+}
+
+.mobile-search-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.mobile-search-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.mobile-search-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-light);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    min-height: 40px;
+}
+
+.mobile-search-close:hover {
+    background: var(--light-bg);
+    color: var(--text-color);
+}
+
+.mobile-search-form {
+    padding: 1.5rem;
+}
+
+.mobile-search-input-group {
+    position: relative;
+    display: flex;
+    background: var(--light-bg);
+    border-radius: 25px;
+    border: 2px solid var(--border-color);
+    transition: var(--transition);
+    overflow: hidden;
+}
+
+.mobile-search-input-group:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+}
+
+.mobile-search-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+    color: var(--text-color);
+    outline: none;
+}
+
+.mobile-search-input::placeholder {
+    color: var(--text-light);
+}
+
+.mobile-search-submit {
+    background: var(--primary-color);
+    border: none;
+    color: var(--white);
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.mobile-search-submit:hover {
+    background: var(--primary-dark);
+}
+
+/* Mobile Search Results */
+.mobile-search-results {
+    margin-top: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--white);
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.mobile-search-result-item {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: var(--text-color);
+}
+
+.mobile-search-result-item:last-child {
+    border-bottom: none;
+}
+
+.mobile-search-result-item:hover {
+    background: var(--light-bg);
+}
+
+.mobile-search-result-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 5px;
+    object-fit: cover;
+    margin-right: 1rem;
+    background: var(--light-bg);
+}
+
+.mobile-search-result-info h4 {
+    margin: 0 0 0.25rem 0;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.mobile-search-result-info p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+/* Mobile Search Suggestions */
+.mobile-search-suggestions {
+    margin-top: 1.5rem;
+}
+
+.suggestions-title {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.suggestion-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.suggestion-tag {
+    background: var(--light-bg);
+    color: var(--text-color);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: var(--transition);
+    border: 1px solid var(--border-color);
+}
+
+.suggestion-tag:hover {
+    background: var(--primary-color);
+    color: var(--white);
+    border-color: var(--primary-color);
+}
+
 @keyframes bounceScale {
     0% { transform: scale(1); }
     50% { transform: scale(1.3); }
@@ -2186,5 +2422,82 @@
         animation: none;
         opacity: 1;
         transform: translateX(0);
+    }
+}
+
+/* Mobile Search Responsive Styles */
+@media (max-width: 480px) {
+    .mobile-search-container {
+        margin: 1rem 0.5rem;
+        border-radius: 10px;
+    }
+    
+    .mobile-search-header {
+        padding: 1rem 1rem;
+    }
+    
+    .mobile-search-title {
+        font-size: 1.1rem;
+    }
+    
+    .mobile-search-form {
+        padding: 1rem;
+    }
+    
+    .mobile-search-input {
+        padding: 0.875rem 1rem;
+        font-size: 0.95rem;
+    }
+    
+    .mobile-search-submit {
+        padding: 0.875rem 1.25rem;
+        font-size: 1rem;
+    }
+    
+    .suggestion-tag {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+    }
+    
+    .mobile-search-result-item {
+        padding: 0.75rem;
+    }
+    
+    .mobile-search-result-image {
+        width: 35px;
+        height: 35px;
+        margin-right: 0.75rem;
+    }
+    
+    .mobile-search-result-info h4 {
+        font-size: 0.85rem;
+    }
+    
+    .mobile-search-result-info p {
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 320px) {
+    .mobile-search-container {
+        margin: 0.5rem 0.25rem;
+    }
+    
+    .mobile-actions {
+        gap: 0.25rem;
+    }
+    
+    .mobile-search {
+        margin-left: 0.5rem;
+    }
+    
+    .mobile-search-btn {
+        padding: 0.625rem;
+        min-width: 40px;
+        min-height: 40px;
+    }
+    
+    .mobile-search-icon {
+        font-size: 1.1rem;
     }
 }
