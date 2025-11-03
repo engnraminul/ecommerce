@@ -14,46 +14,77 @@
         <!-- Categories Grid -->
         <div class="categories-grid">
             {% for category in categories %}
-            <div class="category-card fade-in">
+            <div class="category-card fade-in" data-category="{{ category.slug }}">
                 <a href="{% url 'frontend:category_products' category.slug %}" class="category-link">
-                    <div class="category-image-container">
-                        {% if category.image %}
-                            <img src="{{ category.image_url }}" 
-                                 alt="{{ category.name }}" 
-                                 class="category-image"
-                                 onerror="this.onerror=null; this.src='{{ MEDIA_URL }}default.webp';">
-                        {% else %}
-                            <img src="{{ MEDIA_URL }}default.webp" 
-                                 alt="{{ category.name }}" 
-                                 class="category-image"
-                                 onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjhmOWZhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzZjNzU3ZCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkNhdGVnb3J5PC90ZXh0Pjwvc3ZnPg==';">
-                        {% endif %}
-                        
-                        <div class="category-overlay">
-                            <div class="category-info">
-                                <h3 class="category-name">{{ category.name }}</h3>
-                                <p class="category-description">{{ category.description|truncatechars:100 }}</p>
-                                <div class="category-stats">
-                                    <span class="product-count">{{ category.products.count }} Products</span>
-                                </div>
+                    <!-- Category Image -->
+                    <div class="category-image-wrapper">
+                        <div class="image-container">
+                            {% if category.image %}
+                                <img src="{{ category.image_url }}" 
+                                     alt="{{ category.name }}" 
+                                     class="category-image"
+                                     loading="lazy"
+                                     onerror="this.onerror=null; this.src='{{ MEDIA_URL }}default.webp';">
+                            {% else %}
+                                <img src="{{ MEDIA_URL }}default.webp" 
+                                     alt="{{ category.name }}" 
+                                     class="category-image"
+                                     loading="lazy"
+                                     onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjhmOWZhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzZjNzU3ZCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkNhdGVnb3J5PC90ZXh0Pjwvc3ZnPg==';">
+                            {% endif %}
+                            <div class="image-overlay"></div>
+                            <div class="hover-icon">
+                                <i class="fas fa-arrow-right"></i>
                             </div>
                         </div>
+                    </div>
+                    
+                    <!-- Category Content -->
+                    <div class="category-content">
+                        <!-- Category Name -->
+                        <h3 class="category-name">{{ category.name }}</h3>
+                        
+                        <!-- Category Description -->
+                        <h4 class="category-description">{{ category.description|truncatechars:80|default:"Discover amazing products in this category" }}</h4>
+                        
+                        <!-- Product Count -->
+                         {% if not category.subcategories.exists %}
+                        <div class="product-count-badge">
+                            <i class="fas fa-box"></i>
+                            <span>{{ category.products.count }} Product{{ category.products.count|pluralize }}</span>
+                        </div>
+                        {% endif %}
                     </div>
                 </a>
                 
                 <!-- Subcategories -->
                 {% if category.subcategories.exists %}
-                <div class="subcategories">
-                    <h4>Subcategories:</h4>
-                    <div class="subcategory-links">
-                        {% for subcategory in category.subcategories.all|slice:":5" %}
-                        <a href="{% url 'frontend:category_products' subcategory.slug %}" class="subcategory-link">
-                            {{ subcategory.name }}
+                <div class="subcategories-section">
+                    <div class="subcategories-header">
+                        <span>
+                          <i class="fas fa-sitemap"></i>
+                          <span>Subcategories</span>
+                        </span>
+                        <Span>
+                            <div class="product-count-badge">
+                            <i class="fas fa-box"></i>
+                            <span>{{ category.products.count }} Product{{ category.products.count|pluralize }}</span>
+                        </div>
+                    </div>
+                    <div class="subcategory-grid">
+                        {% for subcategory in category.subcategories.all|slice:":4" %}
+                        <a href="{% url 'frontend:category_products' subcategory.slug %}" class="subcategory-chip">
+                            <span>{{ subcategory.name }}</span>
+                            <i class="fas fa-chevron-right"></i>
                         </a>
                         {% endfor %}
-                        {% if category.subcategories.count > 5 %}
-                        <span class="more-subcategories">+{{ category.subcategories.count|add:"-5" }} more</span>
+                        {% if category.subcategories.count > 4 %}
+                        <div class="more-subcategories-chip">
+                            <span>+{{ category.subcategories.count|add:"-4" }} more</span>
+                            <i class="fas fa-ellipsis-h"></i>
+                        </div>
                         {% endif %}
+                        
                     </div>
                 </div>
                 {% endif %}
@@ -124,7 +155,7 @@
         text-align: center;
         padding: 3rem 0;
         margin-bottom: 3rem;
-        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        background: linear-gradient(135deg, var(--primary-color), var(--black));
         color: var(--white);
         border-radius: var(--border-radius);
     }
@@ -142,23 +173,41 @@
 
     .categories-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-        gap: 2rem;
+        grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+        gap: 2.5rem;
         margin-bottom: 4rem;
+        padding: 1rem 0;
     }
 
     .category-card {
         background: var(--white);
-        border-radius: var(--border-radius);
-        box-shadow: var(--shadow);
+        border-radius: 20px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
         overflow: hidden;
-        transition: var(--transition);
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
         position: relative;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .category-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary-color), #667eea);
+        opacity: 0;
+        transition: opacity 0.3s ease;
     }
 
     .category-card:hover {
-        transform: translateY(-5px);
-        box-shadow: var(--shadow-lg);
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+
+    .category-card:hover::before {
+        opacity: 1;
     }
 
     .category-link {
@@ -167,112 +216,216 @@
         display: block;
     }
 
-    .category-image-container {
+    .category-image-wrapper {
         position: relative;
-        height: 250px;
+        height: 300px;
         overflow: hidden;
-        background: var(--light-color);
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    }
+
+    .image-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
     }
 
     .category-image {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        transition: transform 0.3s ease;
+        transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
         display: block;
     }
 
     .category-card:hover .category-image {
-        transform: scale(1.1);
+        transform: scale(1.08);
     }
 
-    .category-overlay {
+    .image-overlay {
         position: absolute;
-        bottom: 0;
+        top: 0;
         left: 0;
         right: 0;
-        background: linear-gradient(transparent, rgba(0,0,0,0.8));
-        color: var(--white);
-        padding: 2rem 1.5rem 1.5rem;
-        transform: translateY(20px);
-        transition: var(--transition);
+        bottom: 0;
+        background: linear-gradient(
+            135deg, 
+            rgba(0,0,0,0.1) 0%, 
+            rgba(0,0,0,0.3) 100%
+        );
+        opacity: 0;
+        transition: opacity 0.3s ease;
     }
 
-    .category-card:hover .category-overlay {
-        transform: translateY(0);
+    .category-card:hover .image-overlay {
+        opacity: 1;
+    }
+
+    .hover-icon {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        background: var(--white);
+        color: var(--primary-color);
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    .category-card:hover .hover-icon {
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    .category-content {
+        padding: 1rem 1.5rem 1.5rem;
+        position: relative;
     }
 
     .category-name {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 0.2rem;
+        color: var(--dark-color);
+        line-height: 1.3;
+        letter-spacing: -0.02em;
     }
 
     .category-description {
-        font-size: 0.9rem;
-        opacity: 0.9;
-        margin-bottom: 1rem;
-        line-height: 1.4;
+        font-size: 0.95rem;
+        color: var(--secondary-color);
+        line-height: 1;
+        margin-bottom: 0.5rem;
+        min-height: 0.1rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        line-clamp: 2;
+        overflow: hidden;
     }
 
-    .category-stats {
+    .product-count-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(135deg, var(--primary-color), #667eea);
+        color: var(--white);
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transition: all 0.3s ease;
+    }
+
+    .category-card:hover .product-count-badge {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    }
+
+    .subcategories-section {
+        background: #f8f9fa;
+        padding: 1rem 1.5rem;
+        border-top: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .subcategories-header {
         display: flex;
         align-items: center;
-        gap: 1rem;
-    }
-
-    .product-count {
-        background: var(--primary-color);
-        color: var(--white);
-        padding: 0.25rem 0.75rem;
-        border-radius: 15px;
-        font-size: 0.8rem;
-        font-weight: 600;
-    }
-
-    .subcategories {
-        padding: 1.5rem;
-        border-top: 1px solid var(--border-color);
-        background: var(--light-color);
-    }
-
-    .subcategories h4 {
-        font-size: 0.9rem;
-        color: var(--secondary-color);
-        margin-bottom: 0.75rem;
-        text-transform: uppercase;
-        font-weight: 600;
-    }
-
-    .subcategory-links {
-        display: flex;
-        flex-wrap: wrap;
+        justify-content: space-between;
         gap: 0.5rem;
+        margin-bottom: 1rem;
+        color: var(--secondary-color);
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
-    .subcategory-link {
+    .subcategories-header i {
+        font-size: 0.8rem;
+    }
+
+    .subcategory-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 0.8rem;
+    }
+
+    .subcategory-chip {
         background: var(--white);
-        color: var(--primary-color);
-        padding: 0.4rem 0.8rem;
-        border-radius: var(--border-radius);
+        color: var(--dark-color);
+        padding: 0.6rem 1rem;
+        border-radius: 12px;
         text-decoration: none;
         font-size: 0.85rem;
         font-weight: 500;
-        border: 1px solid var(--border-color);
-        transition: var(--transition);
+        border: 1px solid rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
     }
 
-    .subcategory-link:hover {
+    .subcategory-chip::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .subcategory-chip:hover {
         background: var(--primary-color);
         color: var(--white);
         border-color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
 
-    .more-subcategories {
+    .subcategory-chip:hover::before {
+        left: 100%;
+    }
+
+    .subcategory-chip i {
+        font-size: 0.7rem;
+        opacity: 0.7;
+        transition: all 0.3s ease;
+    }
+
+    .subcategory-chip:hover i {
+        opacity: 1;
+        transform: translateX(2px);
+    }
+
+    .more-subcategories-chip {
+        background: linear-gradient(135deg, #e9ecef, #dee2e6);
         color: var(--secondary-color);
-        font-size: 0.8rem;
-        padding: 0.4rem 0.8rem;
+        padding: 0.6rem 1rem;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        border: 1px solid rgba(0,0,0,0.08);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         font-style: italic;
+        cursor: default;
+    }
+
+    .more-subcategories-chip i {
+        font-size: 0.7rem;
+        opacity: 0.5;
     }
 
     .no-categories {
@@ -366,18 +519,47 @@
         .categories-grid {
             grid-template-columns: 1fr;
             gap: 1.5rem;
+            padding: 0;
         }
 
-        .category-image-container {
-            height: 200px;
+        .category-card {
+            border-radius: 16px;
         }
 
-        .category-overlay {
-            padding: 1.5rem 1rem 1rem;
+        .category-image-wrapper {
+            height: 250px;
+        }
+
+        .category-content {
+            padding: 1.5rem 1.2rem 1.2rem;
         }
 
         .category-name {
-            font-size: 1.25rem;
+            font-size: 1.3rem;
+        }
+
+        .category-description {
+            font-size: 0.9rem;
+            min-height: auto;
+        }
+
+        .product-count-badge {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
+        }
+
+        .subcategories-section {
+            padding: 1.2rem;
+        }
+
+        .subcategory-grid {
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.6rem;
+        }
+
+        .subcategory-chip {
+            padding: 0.5rem 0.8rem;
+            font-size: 0.8rem;
         }
 
         .stats-grid {
@@ -397,17 +579,77 @@
     }
 
     @media (max-width: 480px) {
+        .page-header h1 {
+            font-size: 1.8rem;
+        }
+
         .categories-grid {
             grid-template-columns: 1fr;
         }
 
-        .subcategory-links {
-            flex-direction: column;
+        .category-image-wrapper {
+            height: 300px;
+        }
+
+        .category-content {
+            padding: 1.2rem 1rem 1rem;
+        }
+
+        .category-name {
+            font-size: 1.2rem;
+        }
+
+
+
+        .subcategory-chip {
+            justify-content: center;
         }
 
         .stats-grid {
             grid-template-columns: 1fr;
         }
+
+        .hover-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+    }
+
+    /* Enhanced animations and micro-interactions */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .fade-in {
+        animation: fadeInUp 0.6s ease forwards;
+    }
+
+    /* Loading state for better UX */
+    .category-card.loading {
+        opacity: 0.7;
+        pointer-events: none;
+    }
+
+    .category-card.loading::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255,255,255,0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
     }
 </style>
 {% endblock %}
@@ -415,20 +657,32 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Add loading state for category cards
+        // Enhanced loading state for category cards
         const categoryCards = document.querySelectorAll('.category-card');
         
         categoryCards.forEach(card => {
             card.addEventListener('click', function(e) {
-                if (!e.target.closest('.subcategory-link')) {
-                    // Add loading state
-                    card.style.opacity = '0.7';
-                    card.style.pointerEvents = 'none';
+                if (!e.target.closest('.subcategory-chip') && !e.target.closest('.more-subcategories-chip')) {
+                    // Add loading state with enhanced feedback
+                    card.classList.add('loading');
+                    
+                    // Add a subtle pulse effect
+                    const pulse = setInterval(() => {
+                        card.style.transform = 'scale(0.98)';
+                        setTimeout(() => {
+                            card.style.transform = 'scale(1)';
+                        }, 100);
+                    }, 200);
+                    
+                    // Clear pulse after navigation
+                    setTimeout(() => {
+                        clearInterval(pulse);
+                    }, 1000);
                 }
             });
         });
 
-        // Intersection Observer for fade-in animation
+        // Enhanced Intersection Observer for staggered fade-in animation
         const observerOptions = {
             threshold: 0.1,
             rootMargin: '0px 0px -50px 0px'
@@ -439,17 +693,96 @@
                 if (entry.isIntersecting) {
                     entry.target.style.opacity = '1';
                     entry.target.style.transform = 'translateY(0)';
+                    entry.target.classList.add('fade-in');
                 }
             });
         }, observerOptions);
 
-        // Apply fade-in animation to category cards
+        // Apply enhanced fade-in animation to category cards
         categoryCards.forEach((card, index) => {
             card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-            card.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = `all 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) ${index * 0.1}s`;
             observer.observe(card);
         });
+
+        // Enhanced hover effects for subcategory chips
+        const subcategoryChips = document.querySelectorAll('.subcategory-chip');
+        subcategoryChips.forEach(chip => {
+            chip.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-3px) scale(1.02)';
+            });
+            
+            chip.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+
+        // Add smooth scroll behavior for better UX
+        const categoryLinks = document.querySelectorAll('.category-link');
+        categoryLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                // Add a subtle loading indicator
+                const card = this.closest('.category-card');
+                card.style.filter = 'brightness(0.9)';
+                
+                setTimeout(() => {
+                    card.style.filter = 'brightness(1)';
+                }, 300);
+            });
+        });
+
+        // Lazy loading enhancement for images
+        const categoryImages = document.querySelectorAll('.category-image');
+        categoryImages.forEach(img => {
+            img.addEventListener('load', function() {
+                this.style.opacity = '1';
+                this.parentElement.style.background = 'transparent';
+            });
+            
+            img.addEventListener('error', function() {
+                this.parentElement.style.background = 'linear-gradient(135deg, #f8f9fa, #e9ecef)';
+            });
+        });
+
+        // Enhanced product count badge animation
+        const productBadges = document.querySelectorAll('.product-count-badge');
+        productBadges.forEach(badge => {
+            badge.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px) scale(1.05)';
+            });
+            
+            badge.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+
+        // Parallax effect for category images on scroll (subtle)
+        let ticking = false;
+        
+        function updateParallax() {
+            const scrolled = window.pageYOffset;
+            const parallaxElements = document.querySelectorAll('.category-image');
+            
+            parallaxElements.forEach(element => {
+                const rate = scrolled * -0.02;
+                element.style.transform = `translate3d(0, ${rate}px, 0) scale(1.1)`;
+            });
+            
+            ticking = false;
+        }
+        
+        function requestTick() {
+            if (!ticking) {
+                requestAnimationFrame(updateParallax);
+                ticking = true;
+            }
+        }
+        
+        // Only apply parallax on larger screens
+        if (window.innerWidth > 768) {
+            window.addEventListener('scroll', requestTick);
+        }
     });
 </script>
 {% endblock %}
