@@ -50,7 +50,7 @@
                 <div class="navbar-brand">
                     <a href="{% url 'frontend:home' %}" class="brand-logo">
                         <div class="main-logo">
-                            <img src="{{ site_settings.site_logo }}" alt="{{ site_settings.site_name }}" style="max-height: 50px;">
+                            <img src="{{ site_settings.site_logo }}" alt="{{ site_settings.site_name }}" style="max-height: 40px;">
                         </div>
                     </a>
                 </div>
@@ -360,26 +360,6 @@
             </div>
             
             <div class="mobile-menu-body">
-                <!-- Mobile Search -->
-                <div class="mobile-search-section">
-                    <form class="mobile-search-form" method="get" action="{% url 'frontend:search' %}" id="mobileSearchForm">
-                        <div class="mobile-search-wrapper">
-                            <input type="text" 
-                                   class="mobile-search-input" 
-                                   name="q" 
-                                   id="mobileSearchInput"
-                                   placeholder="Search products..." 
-                                   value="{{ request.GET.q }}"
-                                   autocomplete="off"
-                                   autocapitalize="off"
-                                   spellcheck="false">
-                            <button type="submit" class="mobile-search-button">
-                                <i class="fas fa-search"></i>
-                            </button>
-                        </div>
-                    </form>
-                </div>
-                
                 <!-- User Profile Section (if authenticated) -->
                 {% if user.is_authenticated %}
                 <div class="mobile-user-section">
@@ -605,10 +585,11 @@
                     <h4 class="suggestions-title">Popular Searches</h4>
                     <div class="suggestion-tags">
                         <a href="{% url 'frontend:search' %}?q=wallet" class="suggestion-tag">Wallet</a>
-                        <a href="{% url 'frontend:search' %}?q=bag" class="suggestion-tag">Bag</a>
-                        <a href="{% url 'frontend:search' %}?q=phone" class="suggestion-tag">Phone</a>
-                        <a href="{% url 'frontend:search' %}?q=book" class="suggestion-tag">Book</a>
-                        <a href="{% url 'frontend:search' %}?q=clothing" class="suggestion-tag">Clothing</a>
+                        <a href="{% url 'frontend:search' %}?q=long wallet" class="suggestion-tag">Long wallet</a>
+                        <a href="{% url 'frontend:search' %}?q=belt" class="suggestion-tag">Belt</a>
+                        <a href="{% url 'frontend:search' %}?q=short wallet" class="suggestion-tag">Short wallet</a>
+                        <a href="{% url 'frontend:search' %}?q=Black" class="suggestion-tag">Black</a>
+                        <a href="{% url 'frontend:search' %}?q=Chocolate" class="suggestion-tag">Chocolate</a>
                     </div>
                 </div>
             </div>
