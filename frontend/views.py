@@ -71,6 +71,8 @@ def home(request):
 
 def products(request):
     """Products listing page with filters."""
+    from django.db.models import Avg
+    
     products_list = Product.objects.filter(is_active=True).select_related(
         'category'
     ).prefetch_related('images')
@@ -100,7 +102,11 @@ def products(request):
     min_rating = request.GET.get('min_rating')
     if min_rating:
         try:
-            products_list = products_list.filter(average_rating__gte=float(min_rating))
+            rating_value = float(min_rating)
+            # Use database aggregation instead of property
+            products_list = products_list.annotate(
+                avg_rating=Avg('reviews__rating')
+            ).filter(avg_rating__gte=rating_value)
         except ValueError:
             pass
     
@@ -116,12 +122,20 @@ def products(request):
             Q(description__icontains=search_query)
         )
     
-    # Ordering
+    # Ordering - handle rating ordering properly
     ordering = request.GET.get('ordering', '-created_at')
     if ordering in ['price', '-price', 'name', '-name', 'rating', '-rating', 'created_at', '-created_at']:
         if ordering in ['rating', '-rating']:
-            ordering = ordering.replace('rating', 'average_rating')
-        products_list = products_list.order_by(ordering)
+            # Use annotated average rating for ordering
+            products_list = products_list.annotate(
+                avg_rating=Avg('reviews__rating')
+            )
+            if ordering == 'rating':
+                products_list = products_list.order_by('avg_rating')
+            else:  # -rating
+                products_list = products_list.order_by('-avg_rating')
+        else:
+            products_list = products_list.order_by(ordering)
     
     # Pagination
     paginator = Paginator(products_list, 12)  # 12 products per page
