@@ -3320,7 +3320,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        let slidesHtml = '<div class="list-group">';
+        let slidesHtml = '<div class="d-flex flex-column gap-3">';
         
         heroSlides.forEach((slide, index) => {
             const desktopImage = slide.desktop_image || 'media/images/placeholder-hero.jpg';
@@ -3330,87 +3330,101 @@ document.addEventListener('DOMContentLoaded', function() {
                 '<span class="badge bg-secondary">Inactive</span>';
             
             slidesHtml += `
-                <div class="list-group-item list-group-item-action">
-                    <div class="row align-items-center">
-                        <!-- Desktop Image Preview -->
-                        <div class="col-md-2">
-                            <div class="position-relative">
-                                <img src="${desktopImage}" 
-                                     class="img-fluid rounded" 
-                                     style="height: 80px; width: 120px; object-fit: cover;" 
-                                     alt="${slide.title}" 
-                                     onerror="this.src='data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" width=\\"120\\" height=\\"80\\"><rect width=\\"100%\\" height=\\"100%\\" fill=\\"%23e9ecef\\"/><text x=\\"50%\\" y=\\"50%\\" text-anchor=\\"middle\\" dy=\\".35em\\" fill=\\"%236c757d\\" font-size=\\"12\\">Desktop</text></svg>'">
-                                <div class="position-absolute top-0 start-0">
-                                    <small class="badge bg-primary text-white" style="font-size: 0.6rem;">Desktop</small>
+                <div class="card border shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="row align-items-center">
+                            <!-- Desktop Image Preview -->
+                            <div class="col-md-2">
+                                <div class="text-center mb-2">
+                                    <small class="text-muted fw-medium d-block mb-1">
+                                        <i class="fas fa-desktop me-1"></i>Desktop
+                                    </small>
+                                    <div class="border rounded overflow-hidden shadow-sm">
+                                        <img src="${desktopImage}" 
+                                             class="img-fluid" 
+                                             style="height: 80px; width: 120px; object-fit: cover; display: block;" 
+                                             alt="${slide.title}" 
+                                             onerror="this.src='data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" width=\\"120\\" height=\\"80\\"><rect width=\\"100%\\" height=\\"100%\\" fill=\\"%23f8f9fa\\"/><text x=\\"50%\\" y=\\"50%\\" text-anchor=\\"middle\\" dy=\\".35em\\" fill=\\"%236c757d\\" font-size=\\"12\\"></text></svg>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <!-- Mobile Image Preview -->
-                        <div class="col-md-2">
-                            <div class="position-relative">
-                                <img src="${mobileImage}" 
-                                     class="img-fluid rounded" 
-                                     style="height: 80px; width: 60px; object-fit: cover;" 
-                                     alt="${slide.title} Mobile" 
-                                     onerror="this.src='data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" width=\\"60\\" height=\\"80\\"><rect width=\\"100%\\" height=\\"100%\\" fill=\\"%23e9ecef\\"/><text x=\\"50%\\" y=\\"50%\\" text-anchor=\\"middle\\" dy=\\".35em\\" fill=\\"%236c757d\\" font-size=\\"10\\">Mobile</text></svg>'">
-                                <div class="position-absolute top-0 start-0">
-                                    <small class="badge bg-info text-white" style="font-size: 0.6rem;">Mobile</small>
+                            
+                            <!-- Mobile Image Preview -->
+                            <div class="col-md-2">
+                                <div class="text-center mb-2">
+                                    <small class="text-muted fw-medium d-block mb-1">
+                                        <i class="fas fa-mobile-alt me-1"></i>Mobile
+                                    </small>
+                                    <div class="border rounded overflow-hidden shadow-sm mx-auto" style="width: 60px;">
+                                        <img src="${mobileImage}" 
+                                             class="img-fluid" 
+                                             style="height: 80px; width: 60px; object-fit: cover; display: block;" 
+                                             alt="${slide.title} Mobile" 
+                                             onerror="this.src='data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" width=\\"60\\" height=\\"80\\"><rect width=\\"100%\\" height=\\"100%\\" fill=\\"%23f8f9fa\\"/><text x=\\"50%\\" y=\\"40%\\" text-anchor=\\"middle\\" dy=\\".35em\\" fill=\\"%236c757d\\" font-size=\\"8\\"></text><text x=\\"50%\\" y=\\"60%\\" text-anchor=\\"middle\\" dy=\\".35em\\" fill=\\"%236c757d\\" font-size=\\"8\\"></text></svg>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <!-- Slide Information -->
-                        <div class="col-md-5">
-                            <div class="d-flex justify-content-between align-items-start mb-1">
-                                <h6 class="mb-1 fw-bold">${slide.title}</h6>
-                                ${statusBadge}
-                            </div>
-                            <p class="mb-1 text-muted small">${slide.subtitle || 'No subtitle'}</p>
-                            <div class="d-flex gap-2 text-muted small">
-                                <span><i class="fas fa-sort me-1"></i>Order: ${slide.display_order}</span>
-                                <span><i class="fas fa-desktop me-1"></i>${slide.desktop_image ? '✓' : '✗'}</span>
-                                <span><i class="fas fa-mobile me-1"></i>${slide.mobile_image ? '✓' : '✗'}</span>
-                            </div>
-                            <div class="d-flex gap-2 mt-1">
-                                ${slide.primary_button_text ? `<small class="badge bg-light text-dark">BTN: ${slide.primary_button_text}</small>` : ''}
-                                ${slide.secondary_button_text ? `<small class="badge bg-light text-dark">BTN: ${slide.secondary_button_text}</small>` : ''}
-                            </div>
-                        </div>
-                        
-                        <!-- Slide Details -->
-                        <div class="col-md-2">
-                            <div class="text-center small text-muted">
-                                <div class="mb-1">
-                                    <span class="badge" style="background-color: ${slide.text_color}; color: ${slide.background_color};">Text</span>
-                                    <span class="badge" style="background-color: ${slide.background_color}; color: ${slide.text_color};">BG</span>
+                            
+                            <!-- Slide Information -->
+                            <div class="col-md-5">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="mb-0 fw-bold text-dark">${slide.title}</h5>
+                                    ${statusBadge}
                                 </div>
-                                <div class="mb-1">
-                                    <i class="fas fa-${slide.text_shadow ? 'check-circle text-success' : 'times-circle text-muted'}" title="Text Shadow"></i>
-                                    <span class="ms-1">Shadow</span>
+                                <p class="mb-2 text-muted">${slide.subtitle || 'No subtitle provided'}</p>
+                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                    <small class="badge bg-light text-dark border">
+                                        <i class="fas fa-sort me-1"></i>Order: ${slide.display_order}
+                                    </small>
+                                    <small class="badge ${slide.desktop_image ? 'bg-success' : 'bg-danger'} text-white">
+                                        <i class="fas fa-desktop me-1"></i>${slide.desktop_image ? 'Desktop ✓' : 'Desktop ✗'}
+                                    </small>
+                                    <small class="badge ${slide.mobile_image ? 'bg-success' : 'bg-danger'} text-white">
+                                        <i class="fas fa-mobile-alt me-1"></i>${slide.mobile_image ? 'Mobile ✓' : 'Mobile ✗'}
+                                    </small>
                                 </div>
-                                ${slide.background_gradient ? '<div><small class="text-info"><i class="fas fa-palette"></i> Gradient</small></div>' : ''}
+                                <div class="d-flex flex-wrap gap-2">
+                                    ${slide.primary_button_text ? `<small class="badge bg-primary text-white"><i class="fas fa-mouse-pointer me-1"></i>${slide.primary_button_text}</small>` : ''}
+                                    ${slide.secondary_button_text ? `<small class="badge bg-secondary text-white"><i class="fas fa-hand-pointer me-1"></i>${slide.secondary_button_text}</small>` : ''}
+                                </div>
                             </div>
-                        </div>
-                        
-                        <!-- Action Buttons -->
-                        <div class="col-md-1">
-                            <div class="btn-group-vertical btn-group-sm" role="group">
-                                <button class="btn btn-outline-primary btn-sm" 
-                                        onclick="editHeroSlide(${slide.id})" 
-                                        title="Edit Slide">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-outline-${slide.is_active ? 'warning' : 'success'} btn-sm" 
-                                        onclick="toggleSlideStatus(${slide.id})" 
-                                        title="${slide.is_active ? 'Deactivate' : 'Activate'} Slide">
-                                    <i class="fas fa-${slide.is_active ? 'eye-slash' : 'eye'}"></i>
-                                </button>
-                                <button class="btn btn-outline-danger btn-sm" 
-                                        onclick="deleteHeroSlide(${slide.id})" 
-                                        title="Delete Slide">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                            
+                            <!-- Slide Styling Details -->
+                            <div class="col-md-2">
+                                <div class="text-center">
+                                    <small class="text-muted fw-medium d-block mb-2">Colors & Style</small>
+                                    <div class="d-flex justify-content-center gap-1 mb-2">
+                                        <div class="rounded border" style="width: 24px; height: 24px; background-color: ${slide.text_color};" title="Text Color"></div>
+                                        <div class="rounded border" style="width: 24px; height: 24px; background-color: ${slide.background_color};" title="Background Color"></div>
+                                    </div>
+                                    <div class="d-flex justify-content-center gap-2 text-muted small">
+                                        <span title="Text Shadow">
+                                            <i class="fas fa-${slide.text_shadow ? 'check-circle text-success' : 'times-circle text-muted'}"></i>
+                                        </span>
+                                        ${slide.background_gradient ? '<span title="Gradient"><i class="fas fa-palette text-info"></i></span>' : '<span title="No Gradient"><i class="fas fa-palette text-muted"></i></span>'}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div class="col-md-1">
+                                <div class="d-flex flex-column gap-2">
+                                    <button class="btn btn-outline-primary btn-sm" 
+                                            onclick="editHeroSlide(${slide.id})" 
+                                            title="Edit Slide">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-outline-${slide.is_active ? 'warning' : 'success'} btn-sm" 
+                                            onclick="toggleSlideStatus(${slide.id})" 
+                                            title="${slide.is_active ? 'Deactivate' : 'Activate'} Slide">
+                                        <i class="fas fa-${slide.is_active ? 'eye-slash' : 'eye'}"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm" 
+                                            onclick="deleteHeroSlide(${slide.id})" 
+                                            title="Delete Slide">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
