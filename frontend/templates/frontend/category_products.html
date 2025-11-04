@@ -179,6 +179,7 @@
                         <a href="{% url 'frontend:product_detail' product.slug %}" class="product-title-link">
                             <h3 class="product-title">{{ product.name }}</h3>
                         </a>
+                        <!-- <p class="product-description">{{ product.description|truncatechars:100 }}</p> -->
                         
                         <div class="product-price">
                             {% if product.discounted_price %}
@@ -227,7 +228,7 @@
                                     onclick="addToWishlist({{ product.id }})"
                                     data-product-id="{{ product.id }}"
                                     title="Add to Wishlist">
-                                <i class="far fa-heart"></i>
+                                <i class="fas fa-heart"></i>
                             </button>
                         </div>
                     </div>
