@@ -46,6 +46,11 @@ def get_image_url(image_path, request=None):
 
 def home(request):
     """Homepage view with featured products and categories."""
+    from settings.models import HeroContent
+    
+    # Get hero slides
+    hero_slides = HeroContent.get_active_slides()
+    
     featured_products = Product.objects.filter(
         is_featured=True, 
         is_active=True
@@ -61,6 +66,7 @@ def home(request):
     featured_categories = parent_categories[:6]
     
     context = {
+        'hero_slides': hero_slides,
         'featured_products': featured_products,
         'featured_categories': featured_categories,
         'parent_categories': parent_categories,  # All parent categories

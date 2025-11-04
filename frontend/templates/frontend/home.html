@@ -4,7 +4,88 @@
 {% block title %}Home - Professional eCommerce{% endblock %}
 
 {% block content %}
-    <!-- Hero Section -->
+    <!-- Hero Carousel Section -->
+    {% if hero_slides %}
+    <section class="hero-carousel-section">
+        <div class="hero-carousel-wrapper">
+            <!-- Navigation Arrows -->
+            <button class="hero-nav prev-btn" id="heroPrevBtn" aria-label="Previous slide">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="hero-nav next-btn" id="heroNextBtn" aria-label="Next slide">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+            
+            <!-- Hero Slides Container -->
+            <div class="hero-carousel" id="heroCarousel">
+                {% for slide in hero_slides %}
+                <div class="hero-slide{% if forloop.first %} active{% endif %}" 
+                     data-slide="{{ forloop.counter0 }}"
+                     style="{% if slide.background_gradient %}background: {{ slide.background_gradient }};{% elif slide.background_color %}background-color: {{ slide.background_color }};{% endif %}">
+                    
+                    <!-- Background Images -->
+                    {% if slide.desktop_image %}
+                    <div class="hero-bg desktop-bg">
+                        <img src="{{ slide.get_desktop_image_url }}" 
+                             alt="{{ slide.title }}" 
+                             class="hero-bg-image"
+                             loading="{% if forloop.first %}eager{% else %}lazy{% endif %}">
+                    </div>
+                    {% endif %}
+                    
+                    {% if slide.mobile_image %}
+                    <div class="hero-bg mobile-bg">
+                        <img src="{{ slide.get_mobile_image_url }}" 
+                             alt="{{ slide.title }}" 
+                             class="hero-bg-image"
+                             loading="{% if forloop.first %}eager{% else %}lazy{% endif %}">
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Content Overlay -->
+                    <div class="hero-overlay"></div>
+                    
+                    <!-- Hero Content -->
+                    <div class="container">
+                        <div class="hero-content" style="color: {{ slide.text_color }};">
+                            <h1 class="hero-title{% if slide.text_shadow %} text-shadow{% endif %}">
+                                {{ slide.title }}
+                            </h1>
+                            <p class="hero-subtitle{% if slide.text_shadow %} text-shadow{% endif %}">
+                                {{ slide.subtitle }}
+                            </p>
+                            <div class="hero-actions">
+                                {% if slide.primary_button_text %}
+                                <a href="{{ slide.primary_button_url }}" class="btn btn-primary hero-btn">
+                                    {{ slide.primary_button_text }}
+                                </a>
+                                {% endif %}
+                                {% if slide.secondary_button_text %}
+                                <a href="{{ slide.secondary_button_url }}" class="btn btn-secondary hero-btn">
+                                    {{ slide.secondary_button_text }}
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination Dots -->
+            {% if hero_slides|length > 1 %}
+            <div class="hero-pagination" id="heroPagination">
+                {% for slide in hero_slides %}
+                <button class="pagination-dot{% if forloop.first %} active{% endif %}" 
+                        data-slide="{{ forloop.counter0 }}"
+                        aria-label="Go to slide {{ forloop.counter }}"></button>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </section>
+    {% else %}
+    <!-- Fallback Hero Section (when no slides are configured) -->
     <section class="hero-section">
         <div class="container">
             <div class="hero-content">
@@ -17,6 +98,7 @@
             </div>
         </div>
     </section>
+    {% endif %}
 
     <!-- Featured Categories -->
     <section class="section categories-section">
@@ -224,7 +306,225 @@
 
 {% block extra_css %}
 <style>
-    /* Additional styles for homepage */
+    /* Hero Carousel Styles */
+    .hero-carousel-section {
+        position: relative;
+        overflow: hidden;
+        height: 60vh;
+        min-height: 500px;
+        max-height: 700px;
+    }
+
+    .hero-carousel-wrapper {
+        position: relative;
+        width: 100%;
+        height: 100%;
+    }
+
+    .hero-carousel {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .hero-slide {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        transition: opacity 1s ease-in-out;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    }
+
+    .hero-slide.active {
+        opacity: 1;
+        z-index: 2;
+    }
+
+    .hero-slide.next {
+        opacity: 1;
+        z-index: 1;
+    }
+
+    /* Background Images */
+    .hero-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+    }
+
+    .hero-bg-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+    }
+
+    /* Show desktop image by default, mobile on small screens */
+    .hero-bg.mobile-bg {
+        display: none;
+    }
+
+    @media (max-width: 768px) {
+        .hero-bg.desktop-bg {
+            display: none;
+        }
+        .hero-bg.mobile-bg {
+            display: block;
+        }
+    }
+
+    /* Content Overlay */
+    .hero-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        z-index: 2;
+    }
+
+    /* Hero Content */
+    .hero-content {
+        position: relative;
+        z-index: 3;
+        text-align: center;
+        color: var(--white);
+        padding: 2rem;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .hero-title {
+        font-size: 3.5rem;
+        margin-bottom: 1.5rem;
+        font-weight: 300;
+        line-height: 1.2;
+        animation: fadeInUp 1s ease-out;
+    }
+
+    .hero-subtitle {
+        font-size: 1.5rem;
+        margin-bottom: 2.5rem;
+        opacity: 0.95;
+        line-height: 1.4;
+        animation: fadeInUp 1s ease-out 0.2s both;
+    }
+
+    .text-shadow {
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+    }
+
+    .hero-actions {
+        animation: fadeInUp 1s ease-out 0.4s both;
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .hero-btn {
+        margin: 0.5rem;
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        font-weight: 500;
+        text-decoration: none;
+        border-radius: 50px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .hero-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        text-decoration: none;
+    }
+
+    /* Navigation Arrows */
+    .hero-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(255, 255, 255, 0.9);
+        border: none;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 10;
+        font-size: 1.2rem;
+        color: var(--dark-color);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .hero-nav:hover {
+        background: var(--white);
+        transform: translateY(-50%) scale(1.1);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .hero-nav.prev-btn {
+        left: 2rem;
+    }
+
+    .hero-nav.next-btn {
+        right: 2rem;
+    }
+
+    /* Hide arrows on single slide */
+    .hero-carousel-wrapper[data-single-slide="true"] .hero-nav {
+        display: none;
+    }
+
+    /* Pagination Dots */
+    .hero-pagination {
+        position: absolute;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 0.75rem;
+        z-index: 10;
+    }
+
+    .pagination-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.5);
+        border: 2px solid rgba(255, 255, 255, 0.8);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(5px);
+    }
+
+    .pagination-dot.active {
+        background: var(--white);
+        transform: scale(1.2);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .pagination-dot:hover {
+        background: rgba(255, 255, 255, 0.8);
+        transform: scale(1.1);
+    }
+
+    /* Fallback Hero Section (existing styles) */
     .hero-section {
         background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
         color: var(--white);
@@ -245,33 +545,142 @@
         opacity: 0.1;
     }
 
-    .hero-content {
+    .hero-section .hero-content {
         position: relative;
         z-index: 1;
     }
 
-    .hero-content h1 {
+    .hero-section .hero-content h1 {
         font-size: 3.5rem;
         margin-bottom: 1.5rem;
         font-weight: 300;
         animation: fadeInUp 1s ease-out;
     }
 
-    .hero-content p {
+    .hero-section .hero-content p {
         font-size: 1.5rem;
         margin-bottom: 2.5rem;
         opacity: 0.9;
         animation: fadeInUp 1s ease-out 0.2s both;
     }
 
-    .hero-actions {
+    .hero-section .hero-actions {
         animation: fadeInUp 1s ease-out 0.4s both;
     }
 
-    .hero-actions .btn {
+    .hero-section .hero-actions .btn {
         margin: 0 0.5rem;
     }
 
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+        .hero-carousel-section {
+            height: 50vh;
+            min-height: 400px;
+        }
+
+        .hero-nav {
+            width: 50px;
+            height: 50px;
+            font-size: 1rem;
+        }
+
+        .hero-nav.prev-btn {
+            left: 1rem;
+        }
+
+        .hero-nav.next-btn {
+            right: 1rem;
+        }
+
+        .hero-title {
+            font-size: 2.8rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.3rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .hero-carousel-section {
+            height: 60vh;
+            min-height: 450px;
+        }
+
+        .hero-title {
+            font-size: 2.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        .hero-actions {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hero-btn {
+            padding: 0.8rem 1.8rem;
+            font-size: 1rem;
+            margin: 0.3rem;
+            min-width: 200px;
+        }
+
+        .hero-nav {
+            width: 45px;
+            height: 45px;
+            font-size: 0.9rem;
+        }
+
+        .hero-nav.prev-btn {
+            left: 0.5rem;
+        }
+
+        .hero-nav.next-btn {
+            right: 0.5rem;
+        }
+
+        .hero-pagination {
+            bottom: 1.5rem;
+        }
+
+        .pagination-dot {
+            width: 12px;
+            height: 12px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .hero-carousel-section {
+            min-height: 400px;
+        }
+
+        .hero-title {
+            font-size: 1.8rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1rem;
+        }
+
+        .hero-btn {
+            padding: 0.7rem 1.5rem;
+            font-size: 0.95rem;
+            min-width: 180px;
+        }
+
+        .hero-nav {
+            width: 40px;
+            height: 40px;
+            font-size: 0.8rem;
+        }
+    }
+
+    /* Animation Keyframes */
     @keyframes fadeInUp {
         from {
             opacity: 0;
@@ -281,6 +690,38 @@
             opacity: 1;
             transform: translateY(0);
         }
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes slideOut {
+        from {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(-100%);
+        }
+    }
+
+    /* Loading State */
+    .hero-slide.loading .hero-bg-image {
+        opacity: 0;
+        transition: opacity 0.5s ease;
+    }
+
+    .hero-slide.loaded .hero-bg-image {
+        opacity: 1;
     }
 
     /* Product Badge Styling */
@@ -874,6 +1315,9 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Hero Carousel Functionality
+        initHeroCarousel();
+        
         // Newsletter form submission
         const newsletterForm = document.getElementById('newsletterForm');
         if (newsletterForm) {
@@ -1337,6 +1781,265 @@
         }
     `;
     document.head.appendChild(style);
+
+    // Hero Carousel Implementation
+    function initHeroCarousel() {
+        const carousel = document.getElementById('heroCarousel');
+        const prevBtn = document.getElementById('heroPrevBtn');
+        const nextBtn = document.getElementById('heroNextBtn');
+        const pagination = document.getElementById('heroPagination');
+        
+        if (!carousel) return;
+        
+        const slides = carousel.querySelectorAll('.hero-slide');
+        const totalSlides = slides.length;
+        
+        // If only one slide, hide navigation
+        if (totalSlides <= 1) {
+            if (prevBtn) prevBtn.style.display = 'none';
+            if (nextBtn) nextBtn.style.display = 'none';
+            if (pagination) pagination.style.display = 'none';
+            return;
+        }
+        
+        let currentSlide = 0;
+        let autoSlideInterval;
+        let isTransitioning = false;
+        
+        // Auto-slide interval (3 seconds)
+        const AUTO_SLIDE_DELAY = 3000;
+        
+        // Initialize carousel
+        function init() {
+            // Ensure first slide is active
+            slides.forEach((slide, index) => {
+                slide.classList.toggle('active', index === 0);
+            });
+            
+            // Update pagination
+            updatePagination();
+            
+            // Start auto-slide
+            startAutoSlide();
+            
+            // Add event listeners
+            addEventListeners();
+            
+            // Preload images
+            preloadImages();
+        }
+        
+        // Update slide display
+        function showSlide(index) {
+            if (isTransitioning || index === currentSlide) return;
+            
+            isTransitioning = true;
+            
+            // Update active slide
+            slides[currentSlide].classList.remove('active');
+            slides[index].classList.add('active');
+            
+            currentSlide = index;
+            
+            // Update pagination
+            updatePagination();
+            
+            // Reset transition flag after animation
+            setTimeout(() => {
+                isTransitioning = false;
+            }, 1000);
+        }
+        
+        // Update pagination dots
+        function updatePagination() {
+            if (!pagination) return;
+            
+            const dots = pagination.querySelectorAll('.pagination-dot');
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentSlide);
+            });
+        }
+        
+        // Next slide
+        function nextSlide() {
+            const next = (currentSlide + 1) % totalSlides;
+            showSlide(next);
+        }
+        
+        // Previous slide
+        function prevSlide() {
+            const prev = (currentSlide - 1 + totalSlides) % totalSlides;
+            showSlide(prev);
+        }
+        
+        // Go to specific slide
+        function goToSlide(index) {
+            if (index >= 0 && index < totalSlides) {
+                showSlide(index);
+            }
+        }
+        
+        // Start auto-slide
+        function startAutoSlide() {
+            stopAutoSlide();
+            autoSlideInterval = setInterval(nextSlide, AUTO_SLIDE_DELAY);
+        }
+        
+        // Stop auto-slide
+        function stopAutoSlide() {
+            if (autoSlideInterval) {
+                clearInterval(autoSlideInterval);
+                autoSlideInterval = null;
+            }
+        }
+        
+        // Add event listeners
+        function addEventListeners() {
+            // Navigation buttons
+            if (prevBtn) {
+                prevBtn.addEventListener('click', () => {
+                    prevSlide();
+                    stopAutoSlide();
+                    // Restart auto-slide after user interaction
+                    setTimeout(startAutoSlide, AUTO_SLIDE_DELAY);
+                });
+            }
+            
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    nextSlide();
+                    stopAutoSlide();
+                    setTimeout(startAutoSlide, AUTO_SLIDE_DELAY);
+                });
+            }
+            
+            // Pagination dots
+            if (pagination) {
+                pagination.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('pagination-dot')) {
+                        const slideIndex = parseInt(e.target.dataset.slide);
+                        if (!isNaN(slideIndex)) {
+                            goToSlide(slideIndex);
+                            stopAutoSlide();
+                            setTimeout(startAutoSlide, AUTO_SLIDE_DELAY);
+                        }
+                    }
+                });
+            }
+            
+            // Touch/swipe support
+            let touchStartX = 0;
+            let touchEndX = 0;
+            
+            carousel.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+            });
+            
+            carousel.addEventListener('touchend', (e) => {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            });
+            
+            function handleSwipe() {
+                const swipeThreshold = 50;
+                const diff = touchStartX - touchEndX;
+                
+                if (Math.abs(diff) > swipeThreshold) {
+                    if (diff > 0) {
+                        // Swipe left - next slide
+                        nextSlide();
+                    } else {
+                        // Swipe right - previous slide
+                        prevSlide();
+                    }
+                    stopAutoSlide();
+                    setTimeout(startAutoSlide, AUTO_SLIDE_DELAY);
+                }
+            }
+            
+            // Pause on hover (desktop only)
+            if (window.innerWidth > 768) {
+                carousel.addEventListener('mouseenter', stopAutoSlide);
+                carousel.addEventListener('mouseleave', startAutoSlide);
+            }
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (carousel.matches(':hover') || document.activeElement === carousel) {
+                    if (e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        prevSlide();
+                        stopAutoSlide();
+                        setTimeout(startAutoSlide, AUTO_SLIDE_DELAY);
+                    } else if (e.key === 'ArrowRight') {
+                        e.preventDefault();
+                        nextSlide();
+                        stopAutoSlide();
+                        setTimeout(startAutoSlide, AUTO_SLIDE_DELAY);
+                    }
+                }
+            });
+            
+            // Pause/resume on visibility change
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    stopAutoSlide();
+                } else {
+                    startAutoSlide();
+                }
+            });
+        }
+        
+        // Preload images for better performance
+        function preloadImages() {
+            slides.forEach((slide, index) => {
+                const images = slide.querySelectorAll('.hero-bg-image');
+                images.forEach(img => {
+                    if (index === 0) {
+                        // First slide images should load immediately
+                        img.classList.add('loaded');
+                    } else {
+                        // Preload other images
+                        const preloadImg = new Image();
+                        preloadImg.onload = () => {
+                            img.classList.add('loaded');
+                        };
+                        preloadImg.src = img.src;
+                    }
+                });
+            });
+        }
+        
+        // Handle window resize
+        function handleResize() {
+            // Update carousel height if needed
+            const wrapper = carousel.closest('.hero-carousel-section');
+            if (wrapper) {
+                // Recalculate heights for responsive design
+                const newHeight = Math.min(
+                    Math.max(window.innerHeight * 0.6, 400),
+                    700
+                );
+                wrapper.style.height = `${newHeight}px`;
+            }
+        }
+        
+        window.addEventListener('resize', handleResize);
+        
+        // Initialize the carousel
+        init();
+        
+        // Return public API for external control
+        return {
+            nextSlide,
+            prevSlide,
+            goToSlide,
+            getCurrentSlide: () => currentSlide,
+            getTotalSlides: () => totalSlides,
+            startAutoSlide,
+            stopAutoSlide
+        };
+    }
 
     // Make functions globally available
     window.addToCart = addToCart;

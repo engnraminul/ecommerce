@@ -1,5 +1,130 @@
 from django.db import models
 
+class HeroContent(models.Model):
+    """Model for storing hero carousel content with desktop and mobile images"""
+    
+    # Basic Content
+    title = models.CharField(
+        max_length=200, 
+        default="Welcome to Our Store",
+        help_text="Main headline for the hero slide"
+    )
+    subtitle = models.CharField(
+        max_length=300, 
+        default="Discover amazing products at unbeatable prices",
+        help_text="Supporting text below the main headline"
+    )
+    
+    # Desktop Image
+    desktop_image = models.CharField(
+        max_length=500, 
+        blank=True, 
+        null=True,
+        help_text="Path to desktop hero image (e.g., media/hero/desktop-hero-1.jpg) - Recommended size: 1920x600px"
+    )
+    
+    # Mobile Image  
+    mobile_image = models.CharField(
+        max_length=500, 
+        blank=True, 
+        null=True,
+        help_text="Path to mobile hero image (e.g., media/hero/mobile-hero-1.jpg) - Recommended size: 800x600px"
+    )
+    
+    # Call-to-Action Buttons
+    primary_button_text = models.CharField(
+        max_length=100, 
+        default="Shop Now",
+        help_text="Text for the primary action button"
+    )
+    primary_button_url = models.CharField(
+        max_length=200, 
+        default="/products/",
+        help_text="URL for the primary button (e.g., /products/ or external URL)"
+    )
+    
+    secondary_button_text = models.CharField(
+        max_length=100, 
+        default="Browse Categories",
+        help_text="Text for the secondary action button"
+    )
+    secondary_button_url = models.CharField(
+        max_length=200, 
+        default="/categories/",
+        help_text="URL for the secondary button (e.g., /categories/ or external URL)"
+    )
+    
+    # Display Settings
+    text_color = models.CharField(
+        max_length=7, 
+        default="#ffffff",
+        help_text="Text color for title and subtitle (hex color code)"
+    )
+    text_shadow = models.BooleanField(
+        default=True,
+        help_text="Add text shadow for better readability over images"
+    )
+    
+    # Background Settings (used when no image is provided)
+    background_color = models.CharField(
+        max_length=7, 
+        default="#930000",
+        help_text="Background color when no image is available (hex color code)"
+    )
+    background_gradient = models.CharField(
+        max_length=200, 
+        default="linear-gradient(135deg, #930000, #7a0000)",
+        help_text="CSS gradient for background (overrides background_color)"
+    )
+    
+    # Order and Status
+    display_order = models.PositiveIntegerField(
+        default=1,
+        help_text="Order in which this slide appears (1 = first, 2 = second, etc.)"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether this hero slide is active and should be displayed"
+    )
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Hero Content"
+        verbose_name_plural = "Hero Content"
+        ordering = ['display_order', 'created_at']
+    
+    def __str__(self):
+        return f"Hero Slide: {self.title} (Order: {self.display_order})"
+    
+    @classmethod
+    def get_active_slides(cls):
+        """Get all active hero slides ordered by display_order"""
+        return cls.objects.filter(is_active=True).order_by('display_order')
+    
+    def get_desktop_image_url(self):
+        """Get the full URL for desktop image"""
+        if self.desktop_image:
+            if self.desktop_image.startswith('http'):
+                return self.desktop_image
+            return f"/{self.desktop_image.lstrip('/')}"
+        return None
+    
+    def get_mobile_image_url(self):
+        """Get the full URL for mobile image"""
+        if self.mobile_image:
+            if self.mobile_image.startswith('http'):
+                return self.mobile_image
+            return f"/{self.mobile_image.lstrip('/')}"
+        return None
+    
+    def has_images(self):
+        """Check if this slide has at least one image"""
+        return bool(self.desktop_image or self.mobile_image)
+
+
 class SiteSettings(models.Model):
     """Model for storing general site settings and content"""
     

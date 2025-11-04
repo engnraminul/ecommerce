@@ -29,7 +29,7 @@ from products.models import Product, ProductVariant, ProductImage, Category
 from orders.models import Order, OrderItem
 from incomplete_orders.models import IncompleteOrder, IncompleteOrderItem, IncompleteShippingAddress
 from users.models import User
-from settings.models import CheckoutCustomization, SiteSettings, IntegrationSettings
+from settings.models import CheckoutCustomization, SiteSettings, IntegrationSettings, HeroContent
 
 # Helper functions for stock management
 def restock_order_items(order):
@@ -4373,3 +4373,165 @@ def print_order_invoice(request, order_id):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=404)
+
+
+# Hero Content API Endpoints
+import json
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAdminUser])
+def hero_content_api(request):
+    """Hero Content API - List and Create"""
+    
+    if request.method == 'GET':
+        try:
+            hero_slides = HeroContent.objects.all().order_by('display_order')
+            slides_data = []
+            
+            for slide in hero_slides:
+                slide_data = {
+                    'id': slide.id,
+                    'title': slide.title,
+                    'subtitle': slide.subtitle,
+                    'desktop_image': slide.desktop_image.url if slide.desktop_image else None,
+                    'mobile_image': slide.mobile_image.url if slide.mobile_image else None,
+                    'primary_button_text': slide.primary_button_text,
+                    'primary_button_url': slide.primary_button_url,
+                    'secondary_button_text': slide.secondary_button_text,
+                    'secondary_button_url': slide.secondary_button_url,
+                    'text_color': slide.text_color,
+                    'background_color': slide.background_color,
+                    'background_gradient': slide.background_gradient,
+                    'display_order': slide.display_order,
+                    'is_active': slide.is_active,
+                    'text_shadow': slide.text_shadow,
+                    'created_at': slide.created_at.isoformat() if slide.created_at else None,
+                    'updated_at': slide.updated_at.isoformat() if slide.updated_at else None,
+                }
+                slides_data.append(slide_data)
+            
+            return JsonResponse({
+                'success': True,
+                'slides': slides_data
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+    
+    elif request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            
+            # Create new hero slide
+            hero_slide = HeroContent.objects.create(
+                title=data.get('title', ''),
+                subtitle=data.get('subtitle', ''),
+                desktop_image=data.get('desktop_image', ''),
+                mobile_image=data.get('mobile_image', ''),
+                primary_button_text=data.get('primary_button_text', ''),
+                primary_button_url=data.get('primary_button_url', ''),
+                secondary_button_text=data.get('secondary_button_text', ''),
+                secondary_button_url=data.get('secondary_button_url', ''),
+                text_color=data.get('text_color', '#ffffff'),
+                background_color=data.get('background_color', '#930000'),
+                background_gradient=data.get('background_gradient', ''),
+                display_order=data.get('display_order', 1),
+                is_active=data.get('is_active', True),
+                text_shadow=data.get('text_shadow', True)
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Hero slide created successfully',
+                'slide_id': hero_slide.id
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+
+
+@api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([IsAdminUser])
+def hero_content_detail_api(request, slide_id):
+    """Hero Content Detail API - Get, Update, Delete"""
+    
+    try:
+        hero_slide = get_object_or_404(HeroContent, id=slide_id)
+        
+        if request.method == 'GET':
+            slide_data = {
+                'id': hero_slide.id,
+                'title': hero_slide.title,
+                'subtitle': hero_slide.subtitle,
+                'desktop_image': hero_slide.desktop_image.url if hero_slide.desktop_image else None,
+                'mobile_image': hero_slide.mobile_image.url if hero_slide.mobile_image else None,
+                'primary_button_text': hero_slide.primary_button_text,
+                'primary_button_url': hero_slide.primary_button_url,
+                'secondary_button_text': hero_slide.secondary_button_text,
+                'secondary_button_url': hero_slide.secondary_button_url,
+                'text_color': hero_slide.text_color,
+                'background_color': hero_slide.background_color,
+                'background_gradient': hero_slide.background_gradient,
+                'display_order': hero_slide.display_order,
+                'is_active': hero_slide.is_active,
+                'text_shadow': hero_slide.text_shadow,
+                'created_at': hero_slide.created_at.isoformat() if hero_slide.created_at else None,
+                'updated_at': hero_slide.updated_at.isoformat() if hero_slide.updated_at else None,
+            }
+            
+            return JsonResponse({
+                'success': True,
+                'slide': slide_data
+            })
+        
+        elif request.method == 'PUT':
+            data = json.loads(request.body)
+            
+            # Update hero slide
+            hero_slide.title = data.get('title', hero_slide.title)
+            hero_slide.subtitle = data.get('subtitle', hero_slide.subtitle)
+            hero_slide.desktop_image = data.get('desktop_image', hero_slide.desktop_image)
+            hero_slide.mobile_image = data.get('mobile_image', hero_slide.mobile_image)
+            hero_slide.primary_button_text = data.get('primary_button_text', hero_slide.primary_button_text)
+            hero_slide.primary_button_url = data.get('primary_button_url', hero_slide.primary_button_url)
+            hero_slide.secondary_button_text = data.get('secondary_button_text', hero_slide.secondary_button_text)
+            hero_slide.secondary_button_url = data.get('secondary_button_url', hero_slide.secondary_button_url)
+            hero_slide.text_color = data.get('text_color', hero_slide.text_color)
+            hero_slide.background_color = data.get('background_color', hero_slide.background_color)
+            hero_slide.background_gradient = data.get('background_gradient', hero_slide.background_gradient)
+            hero_slide.display_order = data.get('display_order', hero_slide.display_order)
+            hero_slide.is_active = data.get('is_active', hero_slide.is_active)
+            hero_slide.text_shadow = data.get('text_shadow', hero_slide.text_shadow)
+            
+            hero_slide.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Hero slide updated successfully'
+            })
+        
+        elif request.method == 'DELETE':
+            hero_slide.delete()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Hero slide deleted successfully'
+            })
+    
+    except HeroContent.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Hero slide not found'
+        }, status=404)
+    
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)

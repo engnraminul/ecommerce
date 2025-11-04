@@ -56,6 +56,183 @@
         box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
     
+    /* Hero Content Modal Styles */
+    .modal.fade .modal-dialog {
+        transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+        transform: translate(0, -50px);
+        opacity: 0;
+    }
+    
+    .modal.show .modal-dialog {
+        transform: translate(0, 0);
+        opacity: 1;
+    }
+    
+    .modal-dialog {
+        max-width: 800px;
+    }
+    
+    /* Prevent button jumping/multiple clicks */
+    .btn {
+        transition: all 0.2s ease;
+        position: relative;
+        transform: translateZ(0); /* Hardware acceleration */
+        backface-visibility: hidden; /* Prevent flickering */
+        will-change: transform; /* Optimize for animations */
+    }
+    
+    .btn:focus {
+        box-shadow: none !important;
+        outline: none !important;
+    }
+    
+    .btn:hover {
+        transform: translateZ(0) !important; /* Prevent jump on hover */
+    }
+    
+    .btn:active {
+        transform: translateY(1px) translateZ(0);
+    }
+    
+    .btn:disabled {
+        pointer-events: none;
+        opacity: 0.65;
+    }
+    
+    /* Prevent rapid clicks */
+    .btn-primary:active {
+        background-color: #7a0000 !important;
+        border-color: #7a0000 !important;
+    }
+    
+    /* Specific fix for Add Hero Slide button */
+    #addHeroSlideBtn {
+        transform: translateZ(0);
+        backface-visibility: hidden;
+        perspective: 1000px;
+    }
+    
+    #addHeroSlideBtn:hover {
+        transform: translateZ(0) !important;
+        background-color: #7a0000;
+        border-color: #7a0000;
+    }
+    
+    /* Modal specific improvements */
+    .modal {
+        z-index: 1055 !important;
+        transform: translateZ(0); /* Hardware acceleration */
+        position: fixed !important; /* Ensure fixed positioning */
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+    }
+    
+    .modal-backdrop {
+        z-index: 1050 !important;
+        transform: translateZ(0);
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+    }
+    
+    .modal.fade {
+        transition: opacity 0.3s linear;
+    }
+    
+    .modal.fade.show {
+        opacity: 1;
+    }
+    
+    .modal-dialog {
+        margin: 1.75rem auto;
+        pointer-events: none;
+        transform: translateZ(0);
+        will-change: transform, opacity;
+        position: relative;
+        z-index: 1056;
+    }
+    
+    .modal.show .modal-dialog {
+        pointer-events: auto;
+        transform: translateZ(0);
+    }
+    
+    /* Hero Slide Modal Specific Styles */
+    #heroSlideModal {
+        overflow-y: auto !important;
+    }
+    
+    #heroSlideModal .modal-dialog {
+        max-width: 90% !important;
+        margin: 20px auto !important;
+    }
+    
+    #heroSlideModal .modal-content {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    
+    #heroSlideModal .modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
+        padding: 30px;
+    }
+    
+    /* Smooth form transitions */
+    .form-control, .form-select {
+        transition: all 0.2s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #930000;
+        box-shadow: 0 0 0 0.2rem rgba(147, 0, 0, 0.25);
+    }
+    
+    /* Image preview styles */
+    .image-preview {
+        max-height: 100px;
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+        transition: all 0.3s ease;
+        transform: translateZ(0); /* Hardware acceleration */
+    }
+    
+    .image-preview:hover {
+        transform: translateZ(0) scale(1.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    
+    /* Global layout stability fixes */
+    * {
+        backface-visibility: hidden;
+    }
+    
+    /* Prevent any hover-induced layout shifts */
+    .container, .row, .col, .card, .modal, .btn {
+        transform: translateZ(0);
+        will-change: auto;
+    }
+    
+    /* Specific hover stability for hero content area */
+    .hero-content-container * {
+        transform: translateZ(0);
+    }
+    
+    .hero-content-container *:hover {
+        transform: translateZ(0) !important;
+    }
+    
+    /* Tab content stability */
+    .tab-content {
+        transform: translateZ(0);
+        backface-visibility: hidden;
+    }
+    
     .media-item.selected {
         border-color: #930000;
         background-color: rgba(147, 0, 0, 0.1);
@@ -102,6 +279,9 @@
                 <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
                     <button class="nav-link text-start active" id="general-tab" data-bs-toggle="pill" data-bs-target="#general" type="button" role="tab" aria-selected="true">
                         <i class="fas fa-cog fa-fw me-2"></i> General
+                    </button>
+                    <button class="nav-link text-start" id="hero-content-tab" data-bs-toggle="pill" data-bs-target="#hero-content" type="button" role="tab" aria-selected="false">
+                        <i class="fas fa-images fa-fw me-2"></i> Hero Content
                     </button>
                     <button class="nav-link text-start" id="checkout-tab" data-bs-toggle="pill" data-bs-target="#checkout" type="button" role="tab" aria-selected="false">
                         <i class="fas fa-shopping-cart fa-fw me-2"></i> Checkout Customize
@@ -523,6 +703,30 @@
                                 <i class="fas fa-save me-1"></i> Save General Settings
                             </button>
                         </form>
+                    </div>
+                    
+                    <!-- Hero Content Management -->
+                    <div class="tab-pane fade hero-content-container" id="hero-content" role="tabpanel" aria-labelledby="hero-content-tab">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="mb-0">Hero Content Management</h5>
+                            <button type="button" class="btn btn-primary" id="addHeroSlideBtn">
+                                <i class="fas fa-plus me-1"></i> Add New Slide
+                            </button>
+                        </div>
+                        
+                        <p class="text-muted mb-4">
+                            Manage your homepage hero carousel slides. Each slide can have different images for desktop and mobile devices, 
+                            custom text, and call-to-action buttons.
+                        </p>
+                        
+                        <!-- Hero Slides List -->
+                        <div id="heroSlidesList">
+                            <!-- Hero slides will be loaded here via AJAX -->
+                            <div class="text-center py-5">
+                                <i class="fas fa-spinner fa-spin fa-2x text-muted mb-3"></i>
+                                <p class="text-muted">Loading hero slides...</p>
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Checkout Customization -->
@@ -1555,6 +1759,254 @@
                 </button>
                 <button type="button" class="btn btn-primary" onclick="confirmSelection()" disabled id="confirmBtn">
                     <i class="fas fa-check me-1"></i>Select File
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Hero Slide Modal (Placed outside main content for full window popup) -->
+<div class="modal fade" id="heroSlideModal" tabindex="-1" aria-labelledby="heroSlideModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient" style="background: linear-gradient(135deg, #930000, #d32f2f);">
+                <h5 class="modal-title text-white" id="heroSlideModalLabel">
+                    <i class="fas fa-image me-2"></i>Add Hero Slide
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="heroSlideForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="slideId" name="slide_id">
+                    
+                    <!-- Basic Content -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-edit me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                            <h6 class="mb-0">Slide Content</h6>
+                        </div>
+                        
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                <h6 class="mb-0"><i class="fas fa-text-width me-2" style="color: var(--primary-color, #930000);"></i>Text Content</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="slideTitle" class="form-label fw-medium">Slide Title</label>
+                                        <input type="text" class="form-control" id="slideTitle" name="title" placeholder="Welcome to Our Store" required>
+                                        <div class="form-text">Main headline for the hero slide</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="slideSubtitle" class="form-label fw-medium">Slide Subtitle</label>
+                                        <input type="text" class="form-control" id="slideSubtitle" name="subtitle" placeholder="Discover amazing products at unbeatable prices">
+                                        <div class="form-text">Supporting text below the main headline</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hero Images -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-images me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                            <h6 class="mb-0">Hero Images</h6>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Desktop Image -->
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-desktop me-2" style="color: var(--primary-color, #930000);"></i>Desktop Image</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <label for="slideDesktopImage" class="form-label fw-medium">Desktop Image Path</label>
+                                        <div class="input-group mb-3">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-image"></i>
+                                            </span>
+                                            <input type="text" class="form-control" id="slideDesktopImage" name="desktop_image" placeholder="media/hero/desktop-hero-1.jpg">
+                                            <button type="button" class="btn btn-outline-secondary" onclick="openHeroMediaLibrary('slideDesktopImage')">
+                                                <i class="fas fa-folder-open me-1"></i> Browse
+                                            </button>
+                                        </div>
+                                        <div class="form-text mb-3">
+                                            <strong>Recommended size:</strong> 1920x600px (landscape)<br>
+                                            <strong>Format:</strong> JPG, PNG, or WebP
+                                        </div>
+                                        <!-- Desktop Image Preview -->
+                                        <div class="desktop-image-preview" id="slideDesktopImagePreview">
+                                            <div class="text-muted small">No desktop image selected</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Mobile Image -->
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                        <h6 class="mb-0"><i class="fas fa-mobile-alt me-2" style="color: var(--primary-color, #930000);"></i>Mobile Image</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <label for="slideMobileImage" class="form-label fw-medium">Mobile Image Path</label>
+                                        <div class="input-group mb-3">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-mobile-alt"></i>
+                                            </span>
+                                            <input type="text" class="form-control" id="slideMobileImage" name="mobile_image" placeholder="media/hero/mobile-hero-1.jpg">
+                                            <button type="button" class="btn btn-outline-secondary" onclick="openHeroMediaLibrary('slideMobileImage')">
+                                                <i class="fas fa-folder-open me-1"></i> Browse
+                                            </button>
+                                        </div>
+                                        <div class="form-text mb-3">
+                                            <strong>Recommended size:</strong> 800x600px (square/portrait)<br>
+                                            <strong>Format:</strong> JPG, PNG, or WebP
+                                        </div>
+                                        <!-- Mobile Image Preview -->
+                                        <div class="mobile-image-preview" id="slideMobileImagePreview">
+                                            <div class="text-muted small">No mobile image selected</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Call-to-Action Buttons -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-mouse-pointer me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                            <h6 class="mb-0">Call-to-Action Buttons</h6>
+                        </div>
+                        
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                <h6 class="mb-0"><i class="fas fa-link me-2" style="color: var(--primary-color, #930000);"></i>Button Configuration</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="slidePrimaryButtonText" class="form-label fw-medium">Primary Button Text</label>
+                                        <input type="text" class="form-control" id="slidePrimaryButtonText" name="primary_button_text" placeholder="Shop Now">
+                                        <div class="form-text">Text for the main action button</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="slidePrimaryButtonUrl" class="form-label fw-medium">Primary Button URL</label>
+                                        <input type="text" class="form-control" id="slidePrimaryButtonUrl" name="primary_button_url" placeholder="/products/">
+                                        <div class="form-text">URL for the primary button</div>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="slideSecondaryButtonText" class="form-label fw-medium">Secondary Button Text</label>
+                                        <input type="text" class="form-control" id="slideSecondaryButtonText" name="secondary_button_text" placeholder="Browse Categories">
+                                        <div class="form-text">Text for the secondary action button</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="slideSecondaryButtonUrl" class="form-label fw-medium">Secondary Button URL</label>
+                                        <input type="text" class="form-control" id="slideSecondaryButtonUrl" name="secondary_button_url" placeholder="/categories/">
+                                        <div class="form-text">URL for the secondary button</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Styling Options -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-palette me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                            <h6 class="mb-0">Styling Options</h6>
+                        </div>
+                        
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                <h6 class="mb-0"><i class="fas fa-paint-brush me-2" style="color: var(--primary-color, #930000);"></i>Visual Styling</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <label for="slideTextColor" class="form-label fw-medium">Text Color</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text p-1">
+                                                <input type="color" class="form-control form-control-color border-0 p-0" id="slideTextColorPicker" value="#ffffff" style="width: 30px; height: 30px;">
+                                            </span>
+                                            <input type="text" class="form-control" id="slideTextColor" name="text_color" value="#ffffff" placeholder="#ffffff">
+                                        </div>
+                                        <div class="form-text">Color for title and subtitle text</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="slideBackgroundColor" class="form-label fw-medium">Background Color</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text p-1">
+                                                <input type="color" class="form-control form-control-color border-0 p-0" id="slideBackgroundColorPicker" value="#930000" style="width: 30px; height: 30px;">
+                                            </span>
+                                            <input type="text" class="form-control" id="slideBackgroundColor" name="background_color" value="#930000" placeholder="#930000">
+                                        </div>
+                                        <div class="form-text">Fallback background color</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-medium">Text Shadow</label>
+                                        <div class="form-check form-switch mt-2">
+                                            <input class="form-check-input" type="checkbox" id="slideTextShadow" name="text_shadow" checked>
+                                            <label class="form-check-label" for="slideTextShadow">
+                                                Enable text shadow for better readability
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="slideBackgroundGradient" class="form-label fw-medium">Background Gradient (Optional)</label>
+                                    <input type="text" class="form-control" id="slideBackgroundGradient" name="background_gradient" placeholder="linear-gradient(135deg, #930000, #7a0000)">
+                                    <div class="form-text">CSS gradient overrides background color. Example: linear-gradient(135deg, #930000, #7a0000)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Display Settings -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-cogs me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                            <h6 class="mb-0">Display Settings</h6>
+                        </div>
+                        
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                <h6 class="mb-0"><i class="fas fa-sort me-2" style="color: var(--primary-color, #930000);"></i>Order & Status</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="slideDisplayOrder" class="form-label fw-medium">Display Order</label>
+                                        <input type="number" class="form-control" id="slideDisplayOrder" name="display_order" min="1" value="1" required>
+                                        <div class="form-text">Order in which this slide appears (1 = first, 2 = second, etc.)</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-medium">Active Status</label>
+                                        <div class="form-check form-switch mt-2">
+                                            <input class="form-check-input" type="checkbox" id="slideIsActive" name="is_active" checked>
+                                            <label class="form-check-label" for="slideIsActive">
+                                                <strong>Active</strong> - This slide will be displayed in the carousel
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="saveHeroSlideBtn">
+                    <i class="fas fa-save me-1"></i> Save Slide
                 </button>
             </div>
         </div>
@@ -2729,7 +3181,9 @@ document.addEventListener('DOMContentLoaded', function() {
         { picker: 'checkoutPrimaryColorPicker', input: 'checkoutPrimaryColor' },
         { picker: 'buttonColorPicker', input: 'button_color' },
         { picker: 'checkoutBackgroundColorPicker', input: 'checkoutBackgroundColor' },
-        { picker: 'checkoutCustomPrimaryColorPicker', input: 'checkoutCustomPrimaryColor' }
+        { picker: 'checkoutCustomPrimaryColorPicker', input: 'checkoutCustomPrimaryColor' },
+        { picker: 'slideTextColorPicker', input: 'slideTextColor' },
+        { picker: 'slideBackgroundColorPicker', input: 'slideBackgroundColor' }
     ];
     
     colorPickers.forEach(pair => {
@@ -2745,6 +3199,568 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (this.value.startsWith('#') && (this.value.length === 4 || this.value.length === 7)) {
                     picker.value = this.value;
                 }
+            });
+        }
+    });
+    
+    // Hero Content Management Functions
+    let heroSlides = [];
+    let editingSlideId = null;
+    let modalIsOpening = false;
+    
+    // Debounce function to prevent rapid clicks
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    // Load hero slides when the tab is activated
+    document.getElementById('hero-content-tab').addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Prevent multiple rapid clicks
+        if (this.disabled) return;
+        this.disabled = true;
+        
+        setTimeout(() => {
+            this.disabled = false;
+        }, 1000);
+        
+        // Small delay to ensure tab is fully loaded
+        setTimeout(() => {
+            loadHeroSlides();
+        }, 200);
+    });
+    
+    function loadHeroSlides() {
+        const heroSlidesList = document.getElementById('heroSlidesList');
+        heroSlidesList.innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-spinner fa-spin fa-2x text-muted mb-3"></i>
+                <p class="text-muted">Loading hero slides...</p>
+            </div>
+        `;
+        
+        fetch('/mb-admin/api/hero-content/')
+            .then(response => response.json())
+            .then(data => {
+                heroSlides = data.slides || [];
+                renderHeroSlides();
+            })
+            .catch(error => {
+                console.error('Error loading hero slides:', error);
+                heroSlidesList.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-exclamation-triangle fa-2x text-danger mb-3"></i>
+                        <p class="text-muted">Error loading hero slides. Please try again.</p>
+                        <button class="btn btn-outline-primary" onclick="loadHeroSlides()">
+                            <i class="fas fa-refresh me-1"></i> Retry
+                        </button>
+                    </div>
+                `;
+            });
+    }
+    
+    function renderHeroSlides() {
+        const heroSlidesList = document.getElementById('heroSlidesList');
+        
+        if (heroSlides.length === 0) {
+            heroSlidesList.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-images fa-3x text-muted mb-3"></i>
+                    <h6 class="text-muted">No Hero Slides Found</h6>
+                    <p class="text-muted mb-4">Create your first hero slide to get started with the carousel.</p>
+                    <button class="btn btn-primary" id="createFirstSlideBtn">
+                        <i class="fas fa-plus me-1"></i> Create First Slide
+                    </button>
+                </div>
+            `;
+            
+            // Add event listener for the dynamically created button
+            setTimeout(() => {
+                const createFirstSlideBtn = document.getElementById('createFirstSlideBtn');
+                if (createFirstSlideBtn) {
+                    const debouncedFirstSlide = debounce(() => {
+                        if (!modalIsOpening) {
+                            openHeroSlideModal();
+                        }
+                    }, 300);
+                    
+                    // Prevent layout shifts on hover
+                    createFirstSlideBtn.addEventListener('mouseenter', function(e) {
+                        e.stopPropagation();
+                        this.style.transform = 'translateZ(0)';
+                    });
+                    
+                    createFirstSlideBtn.addEventListener('mouseleave', function(e) {
+                        e.stopPropagation();
+                        this.style.transform = 'translateZ(0)';
+                    });
+                    
+                    createFirstSlideBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        
+                        // Visual feedback without layout shift
+                        this.style.transform = 'translateZ(0) scale(0.95)';
+                        setTimeout(() => {
+                            this.style.transform = 'translateZ(0)';
+                        }, 150);
+                        
+                        debouncedFirstSlide();
+                    });
+                    
+                    // Prevent double click
+                    createFirstSlideBtn.addEventListener('dblclick', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    });
+                    
+                    // Prevent context menu
+                    createFirstSlideBtn.addEventListener('contextmenu', function(e) {
+                        e.preventDefault();
+                    });
+                }
+            }, 100);
+            return;
+        }
+        
+        const slidesHtml = heroSlides.map(slide => `
+            <div class="card border-0 shadow-sm mb-3" data-slide-id="${slide.id}">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-primary me-2">#${slide.display_order}</span>
+                        <h6 class="mb-0">${slide.title}</h6>
+                        ${!slide.is_active ? '<span class="badge bg-secondary ms-2">Inactive</span>' : '<span class="badge bg-success ms-2">Active</span>'}
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-primary" onclick="editHeroSlide(${slide.id})" title="Edit Slide">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteHeroSlide(${slide.id})" title="Delete Slide">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        <button class="btn btn-sm ${slide.is_active ? 'btn-outline-warning' : 'btn-outline-success'}" onclick="toggleSlideStatus(${slide.id})" title="${slide.is_active ? 'Deactivate' : 'Activate'} Slide">
+                            <i class="fas fa-${slide.is_active ? 'eye-slash' : 'eye'}"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <p class="text-muted mb-2">${slide.subtitle}</p>
+                            <div class="d-flex gap-3 mb-3">
+                                <small class="text-muted">
+                                    <i class="fas fa-desktop me-1"></i>
+                                    Desktop: ${slide.desktop_image ? 'Yes' : 'No'}
+                                </small>
+                                <small class="text-muted">
+                                    <i class="fas fa-mobile-alt me-1"></i>
+                                    Mobile: ${slide.mobile_image ? 'Yes' : 'No'}
+                                </small>
+                            </div>
+                            <div class="d-flex gap-2">
+                                ${slide.primary_button_text ? `<span class="badge bg-light text-dark">${slide.primary_button_text}</span>` : ''}
+                                ${slide.secondary_button_text ? `<span class="badge bg-light text-dark">${slide.secondary_button_text}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex gap-2 justify-content-end">
+                                ${slide.desktop_image ? `<img src="/${slide.desktop_image}" alt="Desktop preview" style="height: 60px; width: auto; object-fit: cover; border-radius: 4px; border: 1px solid #dee2e6;">` : ''}
+                                ${slide.mobile_image ? `<img src="/${slide.mobile_image}" alt="Mobile preview" style="height: 60px; width: auto; object-fit: cover; border-radius: 4px; border: 1px solid #dee2e6;">` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+        heroSlidesList.innerHTML = slidesHtml;
+    }
+    
+    // Open the hero slide modal for adding/editing
+    function openHeroSlideModal(slideId = null) {
+        // Prevent multiple modal openings
+        if (modalIsOpening) {
+            return;
+        }
+        modalIsOpening = true;
+        
+        try {
+            editingSlideId = slideId;
+            const modalElement = document.getElementById('heroSlideModal');
+            const modalTitle = document.getElementById('heroSlideModalLabel');
+            const form = document.getElementById('heroSlideForm');
+            
+            if (!modalElement || !modalTitle || !form) {
+                console.error('Modal elements not found');
+                modalIsOpening = false;
+                return;
+            }
+            
+            // Ensure modal is properly positioned outside any containers
+            document.body.appendChild(modalElement);
+            
+            // Stabilize page layout before opening modal
+            document.body.style.overflow = 'hidden';
+            
+            // Reset modal positioning to ensure full window popup
+            modalElement.style.position = 'fixed';
+            modalElement.style.top = '0';
+            modalElement.style.left = '0';
+            modalElement.style.width = '100%';
+            modalElement.style.height = '100%';
+            modalElement.style.zIndex = '1055';
+            
+            // Reset form immediately
+            form.reset();
+            const slideIdField = document.getElementById('slideId');
+            if (slideIdField) {
+                slideIdField.value = slideId || '';
+            }
+            
+            // Clean up any existing modal instances
+            const existingModal = bootstrap.Modal.getInstance(modalElement);
+            if (existingModal) {
+                existingModal.dispose();
+            }
+            
+            // Hide modal initially to prevent flickering
+            modalElement.style.display = 'none';
+            modalElement.style.transform = 'translateZ(0)';
+            
+            // Configure modal content
+            if (slideId) {
+                modalTitle.innerHTML = '<i class="fas fa-edit me-2"></i>Edit Hero Slide';
+                const slide = heroSlides.find(s => s.id === slideId);
+                if (slide) {
+                    populateSlideForm(slide);
+                }
+            } else {
+                modalTitle.innerHTML = '<i class="fas fa-plus me-2"></i>Add Hero Slide';
+                // Set default values
+                setTimeout(() => {
+                    const orderField = document.getElementById('slideDisplayOrder');
+                    const textColorField = document.getElementById('slideTextColor');
+                    const textColorPicker = document.getElementById('slideTextColorPicker');
+                    const bgColorField = document.getElementById('slideBackgroundColor');
+                    const bgColorPicker = document.getElementById('slideBackgroundColorPicker');
+                    const activeField = document.getElementById('slideIsActive');
+                    const shadowField = document.getElementById('slideTextShadow');
+                    
+                    if (orderField) orderField.value = heroSlides.length + 1;
+                    if (textColorField) textColorField.value = '#ffffff';
+                    if (textColorPicker) textColorPicker.value = '#ffffff';
+                    if (bgColorField) bgColorField.value = '#930000';
+                    if (bgColorPicker) bgColorPicker.value = '#930000';
+                    if (activeField) activeField.checked = true;
+                    if (shadowField) shadowField.checked = true;
+                }, 50);
+            }
+            
+            // Create modal instance with specific options for full window popup
+            const modal = new bootstrap.Modal(modalElement, {
+                backdrop: 'static',
+                keyboard: true,
+                focus: true
+            });
+            
+            // Add event listeners for modal events
+            modalElement.addEventListener('shown.bs.modal', function() {
+                modalIsOpening = false;
+                // Focus on first input
+                const firstInput = modalElement.querySelector('input[type="text"]');
+                if (firstInput) {
+                    firstInput.focus();
+                }
+            }, { once: true });
+            
+            modalElement.addEventListener('hidden.bs.modal', function() {
+                modalIsOpening = false;
+                editingSlideId = null;
+                // Restore page scroll
+                document.body.style.overflow = '';
+            }, { once: true });
+            
+            // Show modal after a brief delay
+            setTimeout(() => {
+                modalElement.style.display = '';
+                modal.show();
+            }, 100);
+            
+        } catch (error) {
+            console.error('Error opening hero slide modal:', error);
+            modalIsOpening = false;
+            document.body.style.overflow = ''; // Restore scroll if error
+            showAlert('Error opening slide form. Please try again.', 'error');
+        }
+    }
+    
+    function populateSlideForm(slide) {
+        try {
+            // Safely populate each field
+            const setFieldValue = (id, value) => {
+                const field = document.getElementById(id);
+                if (field) {
+                    field.value = value || '';
+                }
+            };
+            
+            const setCheckboxValue = (id, value) => {
+                const field = document.getElementById(id);
+                if (field) {
+                    field.checked = value !== false;
+                }
+            };
+            
+            setFieldValue('slideTitle', slide.title);
+            setFieldValue('slideSubtitle', slide.subtitle);
+            setFieldValue('slideDesktopImage', slide.desktop_image);
+            setFieldValue('slideMobileImage', slide.mobile_image);
+            setFieldValue('slidePrimaryButtonText', slide.primary_button_text);
+            setFieldValue('slidePrimaryButtonUrl', slide.primary_button_url);
+            setFieldValue('slideSecondaryButtonText', slide.secondary_button_text);
+            setFieldValue('slideSecondaryButtonUrl', slide.secondary_button_url);
+            setFieldValue('slideTextColor', slide.text_color || '#ffffff');
+            setFieldValue('slideTextColorPicker', slide.text_color || '#ffffff');
+            setFieldValue('slideBackgroundColor', slide.background_color || '#930000');
+            setFieldValue('slideBackgroundColorPicker', slide.background_color || '#930000');
+            setFieldValue('slideBackgroundGradient', slide.background_gradient);
+            setFieldValue('slideDisplayOrder', slide.display_order || 1);
+            
+            setCheckboxValue('slideIsActive', slide.is_active);
+            setCheckboxValue('slideTextShadow', slide.text_shadow);
+            
+            // Update image previews
+            if (slide.desktop_image) {
+                updateHeroImagePreview('slideDesktopImage', slide.desktop_image);
+            }
+            if (slide.mobile_image) {
+                updateHeroImagePreview('slideMobileImage', slide.mobile_image);
+            }
+            
+        } catch (error) {
+            console.error('Error populating slide form:', error);
+        }
+    }
+    
+    function updateHeroImagePreview(inputId, imagePath) {
+        if (!imagePath) return;
+        
+        const previewId = inputId + 'Preview';
+        const previewElement = document.getElementById(previewId);
+        
+        if (previewElement) {
+            previewElement.innerHTML = `
+                <img src="/${imagePath}" alt="Preview" 
+                     style="max-height: 100px; max-width: 100%; object-fit: cover; border-radius: 4px; border: 1px solid #dee2e6;">
+            `;
+        }
+    }
+    
+    // Add event listeners with debouncing
+    const addHeroSlideBtn = document.getElementById('addHeroSlideBtn');
+    if (addHeroSlideBtn) {
+        const debouncedModalOpen = debounce(() => {
+            openHeroSlideModal();
+        }, 300);
+        
+        // Prevent layout shifts on hover
+        addHeroSlideBtn.addEventListener('mouseenter', function(e) {
+            e.stopPropagation();
+            this.style.transform = 'translateZ(0)';
+        });
+        
+        addHeroSlideBtn.addEventListener('mouseleave', function(e) {
+            e.stopPropagation();
+            this.style.transform = 'translateZ(0)';
+        });
+        
+        addHeroSlideBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            // Visual feedback without layout shift
+            this.style.transform = 'translateZ(0) scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = 'translateZ(0)';
+            }, 150);
+            
+            debouncedModalOpen();
+        });
+        
+        // Prevent double click
+        addHeroSlideBtn.addEventListener('dblclick', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+        
+        // Prevent context menu on right click
+        addHeroSlideBtn.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+    }
+    
+    const saveHeroSlideBtn = document.getElementById('saveHeroSlideBtn');
+    if (saveHeroSlideBtn) {
+        saveHeroSlideBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Prevent double submission
+            if (this.disabled) {
+                return;
+            }
+            
+            const form = document.getElementById('heroSlideForm');
+            if (!form) {
+                showAlert('Form not found. Please refresh the page.', 'error');
+                return;
+            }
+            
+            const formData = new FormData(form);
+            const slideId = document.getElementById('slideId').value;
+            
+            // Add loading state
+            const originalText = this.innerHTML;
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
+            
+            // Convert FormData to JSON
+            const slideData = {};
+            for (const [key, value] of formData.entries()) {
+                if (key === 'csrfmiddlewaretoken') continue;
+                slideData[key] = value;
+            }
+            
+            // Handle checkboxes
+            slideData.is_active = document.getElementById('slideIsActive').checked;
+            slideData.text_shadow = document.getElementById('slideTextShadow').checked;
+            
+            const url = slideId ? `/mb-admin/api/hero-content/${slideId}/` : '/mb-admin/api/hero-content/';
+            const method = slideId ? 'PUT' : 'POST';
+            
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify(slideData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                this.disabled = false;
+                this.innerHTML = originalText;
+                
+                if (data.success) {
+                    const modalElement = document.getElementById('heroSlideModal');
+                    const modal = bootstrap.Modal.getInstance(modalElement);
+                    if (modal) {
+                        modal.hide();
+                    }
+                    showAlert(slideId ? 'Hero slide updated successfully!' : 'Hero slide created successfully!', 'success');
+                    loadHeroSlides();
+                } else {
+                    showAlert(data.message || 'Error saving hero slide', 'error');
+                }
+            })
+            .catch(error => {
+                this.disabled = false;
+                this.innerHTML = originalText;
+                console.error('Error saving hero slide:', error);
+                showAlert('Error saving hero slide. Please try again.', 'error');
+            });
+        });
+    }
+    
+    // Global functions for hero slide management with debouncing
+    window.editHeroSlide = debounce(function(slideId) {
+        if (!modalIsOpening) {
+            openHeroSlideModal(slideId);
+        }
+    }, 300);
+    
+    window.deleteHeroSlide = debounce(function(slideId) {
+        if (confirm('Are you sure you want to delete this hero slide? This action cannot be undone.')) {
+            fetch(`/mb-admin/api/hero-content/${slideId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Hero slide deleted successfully!', 'success');
+                    loadHeroSlides();
+                } else {
+                    showAlert(data.message || 'Error deleting hero slide', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting hero slide:', error);
+                showAlert('Error deleting hero slide. Please try again.', 'error');
+            });
+        }
+    }, 500);
+    
+    window.toggleSlideStatus = debounce(function(slideId) {
+        const slide = heroSlides.find(s => s.id === slideId);
+        if (!slide) return;
+        
+        fetch(`/mb-admin/api/hero-content/${slideId}/`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                ...slide,
+                is_active: !slide.is_active
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(`Hero slide ${slide.is_active ? 'deactivated' : 'activated'} successfully!`, 'success');
+                loadHeroSlides();
+            } else {
+                showAlert(data.message || 'Error updating hero slide status', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating hero slide status:', error);
+            showAlert('Error updating hero slide status. Please try again.', 'error');
+        });
+    }, 500);
+    
+    // Hero media library function
+    window.openHeroMediaLibrary = function(inputId) {
+        // Reuse the existing media library modal
+        openMediaLibrary(inputId);
+    };
+    
+    // Update image preview for hero slides
+    const heroImageInputs = ['slideDesktopImage', 'slideMobileImage'];
+    heroImageInputs.forEach(inputId => {
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.addEventListener('input', function() {
+                updateHeroImagePreview(inputId, this.value);
             });
         }
     });

@@ -1,5 +1,76 @@
 from django.contrib import admin
-from .models import SiteSettings, Curier, CheckoutCustomization
+from .models import HeroContent, SiteSettings, Curier, CheckoutCustomization
+
+
+@admin.register(HeroContent)
+class HeroContentAdmin(admin.ModelAdmin):
+    list_display = ('title', 'display_order', 'is_active', 'has_images', 'updated_at')
+    list_filter = ('is_active', 'created_at', 'updated_at')
+    list_editable = ('display_order', 'is_active')
+    ordering = ('display_order', 'created_at')
+    readonly_fields = ('created_at', 'updated_at')
+    search_fields = ('title', 'subtitle')
+    
+    fieldsets = (
+        ('Hero Content', {
+            'fields': ('title', 'subtitle'),
+            'description': 'Main text content displayed on the hero slide'
+        }),
+        ('Hero Images', {
+            'fields': ('desktop_image', 'mobile_image'),
+            'description': '''
+            <strong>Image Guidelines:</strong><br>
+            • Desktop Image: Recommended size 1920x600px (wide landscape)<br>
+            • Mobile Image: Recommended size 800x600px (square/portrait oriented)<br>
+            • Upload images to media/hero/ folder and enter the path here<br>
+            • Example: media/hero/desktop-hero-1.jpg
+            '''
+        }),
+        ('Call-to-Action Buttons', {
+            'fields': (
+                ('primary_button_text', 'primary_button_url'),
+                ('secondary_button_text', 'secondary_button_url'),
+            ),
+            'description': 'Configure the action buttons displayed on the hero slide'
+        }),
+        ('Styling Options', {
+            'fields': (
+                ('text_color', 'text_shadow'),
+                ('background_color', 'background_gradient'),
+            ),
+            'description': 'Visual styling options for text and background',
+            'classes': ('collapse',)
+        }),
+        ('Display Settings', {
+            'fields': ('display_order', 'is_active'),
+            'description': 'Control when and in what order this slide appears'
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def has_images(self, obj):
+        """Display if the slide has images"""
+        if obj.desktop_image and obj.mobile_image:
+            return "✓ Both"
+        elif obj.desktop_image:
+            return "Desktop only"
+        elif obj.mobile_image:
+            return "Mobile only"
+        return "No images"
+    has_images.short_description = "Images"
+    
+    def get_queryset(self, request):
+        """Order queryset by display_order"""
+        return super().get_queryset(request).order_by('display_order', 'created_at')
+    
+    class Media:
+        css = {
+            'all': ('admin/css/hero_admin.css',)
+        }
+
 
 @admin.register(SiteSettings)
 class SiteSettingsAdmin(admin.ModelAdmin):

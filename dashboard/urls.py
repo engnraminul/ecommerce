@@ -76,6 +76,10 @@ urlpatterns = [
     path('api/blocklist/bulk-unblock/', views.BlockListViewSet.as_view({'post': 'bulk_unblock'}), name='blocklist-bulk-unblock'),
     path('api/blocklist/statistics/', views.BlockListViewSet.as_view({'get': 'statistics'}), name='blocklist-statistics'),
     
+    # Hero Content API
+    path('api/hero-content/', views.hero_content_api, name='hero_content_api'),
+    path('api/hero-content/<int:slide_id>/', views.hero_content_detail_api, name='hero_content_detail_api'),
+    
     # Frontend views for the dashboard SPA
     path('', views.dashboard_home, name='home'),
     path('login/', views.dashboard_login, name='login'),
