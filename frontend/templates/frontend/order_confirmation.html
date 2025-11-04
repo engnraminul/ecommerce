@@ -113,6 +113,12 @@
                                 <span>Shipping:</span>
                                 <span>৳{{ order.shipping_cost|default:"0.00" }}</span>
                             </div>
+                            {% if order.coupon_discount and order.coupon_discount > 0 %}
+                            <div class="total-line coupon-discount">
+                                <span>Coupon Discount {% if order.coupon_code %}({{ order.coupon_code }}){% endif %}:</span>
+                                <span class="discount-amount">-৳{{ order.coupon_discount|floatformat:2 }}</span>
+                            </div>
+                            {% endif %}
                             <div class="total-divider"></div>
                             <div class="total-line grand-total">
                                 <span>Total:</span>
@@ -493,6 +499,16 @@
         font-size: 1.3rem;
         font-weight: bold;
         color: var(--primary-color);
+    }
+
+    .total-line.coupon-discount {
+        color: #28a745;
+        font-weight: 600;
+    }
+
+    .discount-amount {
+        color: #28a745;
+        font-weight: bold;
     }
 
     .total-divider {
@@ -1099,6 +1115,20 @@
             border-top: 2px solid #dee2e6 !important;
             margin-top: 10px !important;
             padding-top: 10px !important;
+        }
+
+        .total-line.coupon-discount {
+            color: #28a745 !important;
+            font-weight: 600 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        .discount-amount {
+            color: #28a745 !important;
+            font-weight: bold !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
         
         .total-divider {

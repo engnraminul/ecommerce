@@ -127,37 +127,83 @@ class SavedItem(models.Model):
 
 
 class Coupon(models.Model):
-    """Discount coupon model"""
-    code = models.CharField(max_length=50, unique=True)
-    name = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
+    """Discount coupon model with flat and percentage discount support"""
+    code = models.CharField(max_length=50, unique=True, help_text="Unique coupon code (auto-generated or manual)")
+    name = models.CharField(max_length=100, help_text="Display name for the coupon")
+    description = models.TextField(blank=True, help_text="Description of the coupon and its benefits")
     
     DISCOUNT_TYPES = [
-        ('percentage', 'Percentage'),
-        ('fixed_amount', 'Fixed Amount'),
+        ('percentage', 'Percentage Discount'),
+        ('flat', 'Flat Amount Discount'),
         ('free_shipping', 'Free Shipping'),
     ]
     
-    discount_type = models.CharField(max_length=15, choices=DISCOUNT_TYPES)
-    discount_value = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
+    discount_type = models.CharField(max_length=15, choices=DISCOUNT_TYPES, help_text="Type of discount to apply")
+    discount_value = models.DecimalField(
+        max_digits=10, decimal_places=2, 
+        validators=[MinValueValidator(0)],
+        help_text="Discount value (percentage or flat amount depending on type)"
+    )
     
     # Usage limitations
-    minimum_order_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(0)])
-    maximum_discount_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
-    usage_limit = models.PositiveIntegerField(null=True, blank=True)  # Total usage limit
-    usage_limit_per_user = models.PositiveIntegerField(default=1)  # Per user limit
-    used_count = models.PositiveIntegerField(default=0)
+    minimum_order_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0, 
+        validators=[MinValueValidator(0)],
+        help_text="Minimum order amount required to use this coupon"
+    )
+    maximum_discount_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True, 
+        validators=[MinValueValidator(0)],
+        help_text="Maximum discount amount (useful for percentage coupons)"
+    )
+    usage_limit = models.PositiveIntegerField(
+        null=True, blank=True, 
+        help_text="Total number of times this coupon can be used (leave blank for unlimited)"
+    )
+    usage_limit_per_user = models.PositiveIntegerField(
+        default=1, 
+        help_text="Maximum number of times a single user can use this coupon"
+    )
+    used_count = models.PositiveIntegerField(default=0, help_text="Number of times this coupon has been used")
     
-    # Validity
-    valid_from = models.DateTimeField()
-    valid_until = models.DateTimeField()
-    is_active = models.BooleanField(default=True)
+    # Validity dates
+    valid_from = models.DateTimeField(help_text="Date and time from which this coupon becomes valid")
+    valid_until = models.DateTimeField(help_text="Date and time until which this coupon remains valid")
+    is_active = models.BooleanField(default=True, help_text="Whether this coupon is currently active")
+    
+    # Admin fields
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_coupons')
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['code']),
+            models.Index(fields=['is_active', 'valid_from', 'valid_until']),
+        ]
+    
     def __str__(self):
         return f"{self.code} - {self.name}"
+    
+    def save(self, *args, **kwargs):
+        # Auto-generate code if not provided
+        if not self.code:
+            self.code = self.generate_coupon_code()
+        # Convert code to uppercase for consistency
+        self.code = self.code.upper()
+        super().save(*args, **kwargs)
+    
+    @staticmethod
+    def generate_coupon_code():
+        """Generate a unique coupon code"""
+        import random
+        import string
+        while True:
+            code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+            if not Coupon.objects.filter(code=code).exists():
+                return code
     
     def is_valid(self, user=None, cart_total=0):
         """Check if coupon is valid for use"""
@@ -166,17 +212,18 @@ class Coupon(models.Model):
         if not self.is_active:
             return False, "Coupon is not active"
         
-        if timezone.now() < self.valid_from:
+        now = timezone.now()
+        if now < self.valid_from:
             return False, "Coupon is not yet valid"
         
-        if timezone.now() > self.valid_until:
+        if now > self.valid_until:
             return False, "Coupon has expired"
         
         if self.usage_limit and self.used_count >= self.usage_limit:
             return False, "Coupon usage limit reached"
         
         if cart_total < self.minimum_order_amount:
-            return False, f"Minimum order amount is ${self.minimum_order_amount}"
+            return False, f"Minimum order amount is ৳{self.minimum_order_amount}"
         
         if user:
             user_usage = CouponUsage.objects.filter(coupon=self, user=user).count()
@@ -189,7 +236,7 @@ class Coupon(models.Model):
         """Calculate discount amount"""
         if self.discount_type == 'percentage':
             discount = (self.discount_value / 100) * cart_total
-        elif self.discount_type == 'fixed_amount':
+        elif self.discount_type == 'flat':  # Changed from 'fixed_amount' to 'flat'
             discount = self.discount_value
         else:  # free_shipping
             discount = 0  # Shipping discount handled separately
@@ -199,18 +246,61 @@ class Coupon(models.Model):
             discount = min(discount, self.maximum_discount_amount)
         
         return min(discount, cart_total)  # Don't discount more than cart total
+    
+    @property
+    def discount_display(self):
+        """Get a user-friendly display of the discount"""
+        if self.discount_type == 'percentage':
+            return f"{self.discount_value}% off"
+        elif self.discount_type == 'flat':
+            return f"৳{self.discount_value} off"
+        else:
+            return "Free shipping"
+    
+    @property
+    def is_expired(self):
+        """Check if coupon has expired"""
+        from django.utils import timezone
+        return timezone.now() > self.valid_until
+    
+    @property
+    def days_until_expiry(self):
+        """Get number of days until expiry"""
+        from django.utils import timezone
+        if self.is_expired:
+            return 0
+        delta = self.valid_until - timezone.now()
+        return delta.days
+    
+    @property
+    def usage_percentage(self):
+        """Get usage percentage for analytics"""
+        if not self.usage_limit:
+            return 0
+        return min((self.used_count / self.usage_limit) * 100, 100)
 
 
 class CouponUsage(models.Model):
-    """Track coupon usage by users"""
+    """Track coupon usage by users and guests"""
     coupon = models.ForeignKey(Coupon, on_delete=models.CASCADE, related_name='usage_records')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='coupon_usage')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='coupon_usage', null=True, blank=True)
     order_id = models.CharField(max_length=100, blank=True)  # Link to order when used
+    
+    # For guest users, we can track additional info
+    guest_email = models.EmailField(blank=True, help_text="Email for guest coupon usage")
+    guest_phone = models.CharField(max_length=20, blank=True, help_text="Phone for guest coupon usage")
     
     used_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
-        unique_together = ['coupon', 'user', 'order_id']
+        # Remove unique_together constraint as it doesn't work well with nullable fields
+        indexes = [
+            models.Index(fields=['coupon', 'user', 'order_id']),
+            models.Index(fields=['coupon', 'guest_email', 'order_id']),
+        ]
     
     def __str__(self):
-        return f"{self.user.username} used {self.coupon.code}"
+        if self.user:
+            return f"{self.user.username} used {self.coupon.code}"
+        else:
+            return f"Guest ({self.guest_email}) used {self.coupon.code}"

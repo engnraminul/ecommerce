@@ -20,6 +20,7 @@ urlpatterns = [
     # Coupons
     path('apply-coupon/', views.apply_coupon, name='apply-coupon'),
     path('remove-coupon/', views.remove_coupon, name='remove-coupon'),
+    path('validate-coupon/', views.validate_coupon, name='validate-coupon'),
     
     # Cart summary
     path('summary/', views.cart_summary, name='cart-summary'),

@@ -80,6 +80,11 @@ urlpatterns = [
     path('api/hero-content/', views.hero_content_api, name='hero_content_api'),
     path('api/hero-content/<int:slide_id>/', views.hero_content_detail_api, name='hero_content_detail_api'),
     
+    # Coupon Management API
+    path('api/coupons/', views.coupon_list_api, name='coupon_list_api'),
+    path('api/coupons/<int:coupon_id>/', views.coupon_detail_api, name='coupon_detail_api'),
+    path('api/coupons/analytics/', views.coupon_analytics_api, name='coupon_analytics_api'),
+    
     # Frontend views for the dashboard SPA
     path('', views.dashboard_home, name='home'),
     path('login/', views.dashboard_login, name='login'),
@@ -101,6 +106,7 @@ urlpatterns = [
     path('pages/', views.dashboard_pages, name='pages'),
     path('blocklist/', views.dashboard_blocklist, name='blocklist'),
     path('contacts/', views.dashboard_contacts, name='contacts'),
+    path('coupons/', views.coupon_management, name='coupons'),
     
     # Invoice printing
     path('orders/<int:order_id>/invoice/', views.print_order_invoice, name='print_order_invoice'),

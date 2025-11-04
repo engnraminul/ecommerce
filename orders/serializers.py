@@ -334,6 +334,7 @@ class CreateOrderSerializer(serializers.Serializer):
             shipping_cost=shipping_cost,
             tax_amount=tax_amount,
             discount_amount=discount_amount,
+            coupon=coupon,  # Add coupon foreign key
             coupon_code=coupon.code if coupon else '',
             coupon_discount=coupon_discount,
             total_amount=total_amount,
@@ -373,11 +374,18 @@ class CreateOrderSerializer(serializers.Serializer):
         
         # Record coupon usage
         if coupon:
-            CouponUsage.objects.create(
-                coupon=coupon,
-                user=user,
-                order_id=order.order_number
-            )
+            usage_data = {
+                'coupon': coupon,
+                'user': user,
+                'order_id': order.order_number
+            }
+            
+            # For guest users, also store email and phone for tracking
+            if not user:
+                usage_data['guest_email'] = customer_email
+                usage_data['guest_phone'] = customer_phone
+            
+            CouponUsage.objects.create(**usage_data)
             coupon.used_count += 1
             coupon.save()
         

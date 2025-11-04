@@ -287,6 +287,31 @@
                                     <span id="order-tax">৳0.00</span>
                                 </div>
                                 
+                                <!-- Coupon Section -->
+                                <div class="coupon-section">
+                                    <div class="coupon-input-container" id="coupon-input-container">
+                                        <input type="text" id="coupon-code" placeholder="Enter coupon code" maxlength="50">
+                                        <button type="button" id="apply-coupon-btn" class="apply-coupon-btn">Apply</button>
+                                    </div>
+                                    
+                                    <div class="applied-coupon" id="applied-coupon" style="display: none;">
+                                        <div class="coupon-details">
+                                            <span class="coupon-name" id="applied-coupon-name"></span>
+                                            <span class="coupon-code-display" id="applied-coupon-code"></span>
+                                        </div>
+                                        <button type="button" id="remove-coupon-btn" class="remove-coupon-btn">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="coupon-message" id="coupon-message" style="display: none;"></div>
+                                </div>
+                                
+                                <div class="total-line discount" id="discount-line" style="display: none;">
+                                    <span>{{ checkout_customization.discount_label|default:"Discount:" }}</span>
+                                    <span id="order-discount">-৳0.00</span>
+                                </div>
+                                
                                 <div class="total-divider"></div>
                                 
                                 <div class="total-line grand-total">
@@ -983,6 +1008,141 @@
         border-radius: 1px;
     }
 
+    /* Coupon Section */
+    .coupon-section {
+        margin: 1rem 0;
+        padding: 1rem;
+        background: rgba(147, 0, 0, 0.02);
+        border-radius: 8px;
+        border: 1px solid rgba(147, 0, 0, 0.1);
+    }
+
+    .coupon-input-container {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .coupon-input-container input {
+        flex: 1;
+        padding: 0.75rem;
+        border: 1px solid rgba(147, 0, 0, 0.2);
+        border-radius: 6px;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        font-family: monospace;
+        font-weight: 600;
+    }
+
+    .coupon-input-container input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(147, 0, 0, 0.1);
+    }
+
+    .apply-coupon-btn {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+    }
+
+    .apply-coupon-btn:hover {
+        background: #b91c1c;
+        transform: translateY(-1px);
+    }
+
+    .apply-coupon-btn:disabled {
+        background: #6b7280;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .applied-coupon {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #dcfce7;
+        border: 1px solid #bbf7d0;
+        border-radius: 6px;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .coupon-details {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .coupon-name {
+        font-weight: 600;
+        color: #15803d;
+        font-size: 0.9rem;
+    }
+
+    .coupon-code-display {
+        font-family: monospace;
+        font-size: 0.8rem;
+        color: #374151;
+        background: rgba(255, 255, 255, 0.8);
+        padding: 0.2rem 0.4rem;
+        border-radius: 3px;
+        margin-top: 0.2rem;
+        display: inline-block;
+        width: fit-content;
+    }
+
+    .remove-coupon-btn {
+        background: none;
+        border: none;
+        color: #dc2626;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .remove-coupon-btn:hover {
+        background: rgba(220, 38, 38, 0.1);
+        transform: scale(1.1);
+    }
+
+    .coupon-message {
+        padding: 0.5rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        text-align: center;
+        margin-top: 0.5rem;
+    }
+
+    .coupon-message.success {
+        background: #dcfce7;
+        color: #15803d;
+        border: 1px solid #bbf7d0;
+    }
+
+    .coupon-message.error {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+    }
+
+    .total-line.discount {
+        color: #059669;
+        font-weight: 600;
+    }
+
     /* Checkout Actions */
     .checkout-actions {
         margin-top: 2rem;
@@ -1650,13 +1810,16 @@
             const locationRadio = document.querySelector('input[name="location"]:checked');
             const location = locationRadio ? locationRadio.value : 'dhaka';
             
-            fetch(`/api/v1/cart/?location=${location}`, {
+            fetch(`/api/v1/cart/summary/?location=${location}`, {
                 headers: {
                     'X-CSRFToken': getCookie('csrftoken')
                 }
             })
             .then(response => response.json())
             .then(cartData => {
+                // Store order summary data globally for order placement
+                window.orderSummaryData = cartData;
+                
                 displayOrderItems(cartData.items || []);
                 updateOrderTotals(cartData);
                 loadShippingOptions(location);
@@ -1801,13 +1964,42 @@
                 shipping = parseFloat(shippingMethod.dataset.cost);
             }
             
-            const tax = parseFloat(cartData.tax || 0);
-            const total = subtotal + shipping + tax;
+            const tax = parseFloat(cartData.tax_amount || cartData.tax || 0);
+            const discount = parseFloat(cartData.discount_amount || 0);
+            const couponDiscount = parseFloat(cartData.coupon_discount || 0);
+            const couponCode = cartData.coupon_code || '';
             
-            document.getElementById('order-subtotal').textContent = `$${subtotal.toFixed(2)}`;
-            document.getElementById('order-shipping').textContent = shipping === 0 ? 'FREE' : `${shipping}৳`;
-            document.getElementById('order-tax').textContent = `$${tax.toFixed(2)}`;
-            document.getElementById('order-total').textContent = `$${total.toFixed(2)}`;
+            const total = subtotal + shipping + tax - discount - couponDiscount;
+            
+            document.getElementById('order-subtotal').textContent = `৳${subtotal.toFixed(2)}`;
+            document.getElementById('order-shipping').textContent = shipping === 0 ? 'FREE' : `৳${shipping}`;
+            document.getElementById('order-tax').textContent = `৳${tax.toFixed(2)}`;
+            document.getElementById('order-total').textContent = `৳${total.toFixed(2)}`;
+            
+            // Handle coupon display
+            const discountLine = document.getElementById('discount-line');
+            const orderDiscount = document.getElementById('order-discount');
+            const appliedCoupon = document.getElementById('applied-coupon');
+            const couponInputContainer = document.getElementById('coupon-input-container');
+            
+            if (couponDiscount > 0 && couponCode) {
+                // Show applied coupon
+                discountLine.style.display = 'flex';
+                orderDiscount.textContent = `-৳${couponDiscount.toFixed(2)}`;
+                
+                // Show applied coupon details
+                appliedCoupon.style.display = 'flex';
+                document.getElementById('applied-coupon-name').textContent = `Coupon Applied`;
+                document.getElementById('applied-coupon-code').textContent = couponCode;
+                
+                // Hide coupon input
+                couponInputContainer.style.display = 'none';
+            } else {
+                // Hide discount line
+                discountLine.style.display = 'none';
+                appliedCoupon.style.display = 'none';
+                couponInputContainer.style.display = 'flex';
+            }
             
             // Update payment amounts
             updatePaymentAmount();
@@ -1861,7 +2053,7 @@
         
         function updateShippingCost() {
             const subtotalElement = document.getElementById('order-subtotal');
-            const subtotal = parseFloat(subtotalElement.textContent.replace('$', '')) || 0;
+            const subtotal = parseFloat(subtotalElement.textContent.replace('৳', '').replace(',', '')) || 0;
             
             const shippingMethod = document.querySelector('input[name="shipping_method"]:checked');
             let shipping = 0;
@@ -1871,10 +2063,19 @@
             }
             
             const tax = 0; // You can add tax calculation here
-            const total = subtotal + shipping + tax;
             
-            document.getElementById('order-shipping').textContent = shipping === 0 ? 'FREE' : `${shipping}৳`;
-            document.getElementById('order-total').textContent = `$${total.toFixed(2)}`;
+            // Check for applied coupon discount
+            const discountElement = document.getElementById('order-discount');
+            let couponDiscount = 0;
+            if (discountElement && discountElement.textContent) {
+                // Extract discount amount (remove -৳ and parse)
+                couponDiscount = parseFloat(discountElement.textContent.replace('-৳', '').replace(',', '')) || 0;
+            }
+            
+            const total = subtotal + shipping + tax - couponDiscount;
+            
+            document.getElementById('order-shipping').textContent = shipping === 0 ? 'FREE' : `৳${shipping}`;
+            document.getElementById('order-total').textContent = `৳${total.toFixed(2)}`;
             
             updatePaymentAmount();
         }
@@ -2239,6 +2440,17 @@
                 paymentMethodDisplayName = label ? label.textContent.trim() : '';
             }
             
+            // Get applied coupon from the current cart summary
+            let appliedCouponCode = '';
+            
+            // Check for coupon information in the order summary
+            const orderSummaryData = window.orderSummaryData || {};
+            if (orderSummaryData.coupon_code) {
+                appliedCouponCode = orderSummaryData.coupon_code;
+            }
+            
+            console.log('Applied coupon code:', appliedCouponCode);
+            
             // Prepare order data in the expected format for CreateOrderSerializer
             const orderData = {
                 shipping_address: {
@@ -2256,7 +2468,7 @@
                     delivery_instructions: formData.get('order_instruction') || ''
                 },
                 customer_notes: formData.get('order_instruction') || '',
-                coupon_code: '',
+                coupon_code: appliedCouponCode,
                 shipping_option: selectedShippingMethod ? selectedShippingMethod.value : '',
                 shipping_location: selectedLocation || 'dhaka',
                 // Include guest order fields
@@ -2526,6 +2738,165 @@
         });
         
         console.log('✅ Checkout abandonment tracking initialized');
+        
+        // Coupon functionality
+        function setupCouponHandlers() {
+            const applyCouponBtn = document.getElementById('apply-coupon-btn');
+            const removeCouponBtn = document.getElementById('remove-coupon-btn');
+            const couponCodeInput = document.getElementById('coupon-code');
+            
+            if (applyCouponBtn) {
+                applyCouponBtn.addEventListener('click', applyCoupon);
+            }
+            
+            if (removeCouponBtn) {
+                removeCouponBtn.addEventListener('click', removeCoupon);
+            }
+            
+            if (couponCodeInput) {
+                couponCodeInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        applyCoupon();
+                    }
+                });
+                
+                // Auto-uppercase coupon code
+                couponCodeInput.addEventListener('input', function(e) {
+                    e.target.value = e.target.value.toUpperCase();
+                });
+            }
+        }
+        
+        function applyCoupon() {
+            const couponCodeInput = document.getElementById('coupon-code');
+            const applyCouponBtn = document.getElementById('apply-coupon-btn');
+            const couponMessage = document.getElementById('coupon-message');
+            
+            const code = couponCodeInput.value.trim().toUpperCase();
+            
+            if (!code) {
+                showCouponMessage('Please enter a coupon code', 'error');
+                return;
+            }
+            
+            // Disable button and show loading
+            applyCouponBtn.disabled = true;
+            applyCouponBtn.textContent = 'Applying...';
+            
+            fetch('/api/v1/cart/apply-coupon/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ code: code })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    showCouponMessage(data.message, 'success');
+                    showNotification(data.message, 'success');
+                    
+                    // Clear input and reload order summary
+                    couponCodeInput.value = '';
+                    setTimeout(() => {
+                        loadOrderSummary();
+                    }, 500);
+                } else if (data.error) {
+                    showCouponMessage(data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error applying coupon:', error);
+                showCouponMessage('Error applying coupon. Please try again.', 'error');
+            })
+            .finally(() => {
+                // Re-enable button
+                applyCouponBtn.disabled = false;
+                applyCouponBtn.textContent = 'Apply';
+            });
+        }
+        
+        function removeCoupon() {
+            fetch('/api/v1/cart/remove-coupon/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    showNotification(data.message, 'success');
+                    loadOrderSummary();
+                } else if (data.error) {
+                    showNotification(data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error removing coupon:', error);
+                showNotification('Error removing coupon. Please try again.', 'error');
+            });
+        }
+        
+        function showCouponMessage(message, type) {
+            const couponMessage = document.getElementById('coupon-message');
+            couponMessage.textContent = message;
+            couponMessage.className = `coupon-message ${type}`;
+            couponMessage.style.display = 'block';
+            
+            // Hide message after 5 seconds
+            setTimeout(() => {
+                couponMessage.style.display = 'none';
+            }, 5000);
+        }
+        
+        function showNotification(message, type = 'success') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#28a745' : '#dc3545'};
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-weight: 600;
+                animation: slideIn 0.3s ease;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        // Initialize coupon handlers
+        setupCouponHandlers();
         
     });
 </script>

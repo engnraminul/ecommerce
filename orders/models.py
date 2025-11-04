@@ -53,8 +53,9 @@ class Order(models.Model):
     cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(0)])
     
     # Coupon information
-    coupon_code = models.CharField(max_length=50, blank=True)
-    coupon_discount = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    coupon = models.ForeignKey('cart.Coupon', on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
+    coupon_code = models.CharField(max_length=50, blank=True, help_text="Coupon code applied to this order")
+    coupon_discount = models.DecimalField(max_digits=8, decimal_places=2, default=0, help_text="Discount amount from coupon")
     
     # Payment method information
     PAYMENT_METHOD_CHOICES = [
@@ -164,6 +165,38 @@ class Order(models.Model):
         
         self.total_amount = self.subtotal + shipping_cost + tax_amount - discount_amount - coupon_discount
         self.save()
+    
+    def apply_coupon(self, coupon, user=None):
+        """Apply a coupon to this order"""
+        # Validate coupon
+        is_valid, message = coupon.is_valid(user, self.subtotal)
+        if not is_valid:
+            return False, message
+        
+        # Calculate discount
+        discount_amount = coupon.calculate_discount(self.subtotal)
+        
+        # Apply coupon
+        self.coupon = coupon
+        self.coupon_code = coupon.code
+        self.coupon_discount = discount_amount
+        
+        # Recalculate totals
+        self.calculate_totals()
+        
+        return True, f"Coupon applied successfully. You saved ৳{discount_amount}"
+    
+    def remove_coupon(self):
+        """Remove applied coupon from this order"""
+        self.coupon = None
+        self.coupon_code = ''
+        self.coupon_discount = 0
+        self.calculate_totals()
+    
+    @property
+    def has_coupon(self):
+        """Check if order has a coupon applied"""
+        return bool(self.coupon_code)
 
 
 class OrderItem(models.Model):

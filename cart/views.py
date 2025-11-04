@@ -342,18 +342,28 @@ def remove_saved_item(request, saved_item_id):
 
 
 @api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def apply_coupon(request):
-    """Apply coupon to cart"""
+    """Apply coupon to cart - supports both authenticated and guest users"""
     serializer = ApplyCouponSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     
     coupon_code = serializer.validated_data['code']
-    user = request.user
+    user = request.user if request.user.is_authenticated else None
     
-    # Get cart
+    # Get cart - support both authenticated and guest users
     try:
-        cart = Cart.objects.get(user=user)
+        if request.user.is_authenticated:
+            cart = Cart.objects.get(user=request.user)
+        else:
+            session_id = request.session.session_key
+            if not session_id:
+                request.session.create()
+                session_id = request.session.session_key
+            cart, created = Cart.objects.get_or_create(
+                session_id=session_id,
+                user=None
+            )
     except Cart.DoesNotExist:
         return Response({
             'error': 'Cart is empty'
@@ -384,29 +394,95 @@ def apply_coupon(request):
     # Calculate discount
     discount_amount = coupon.calculate_discount(cart_total)
     
-    # Store coupon in session (you might want to store this differently)
+    # Store coupon in session for both authenticated and guest users
     request.session['applied_coupon'] = {
         'code': coupon.code,
-        'discount_amount': str(discount_amount)
+        'discount_amount': str(discount_amount),
+        'discount_type': coupon.discount_type,
+        'name': coupon.name,
+        'description': coupon.description
     }
     
     return Response({
-        'message': 'Coupon applied successfully',
-        'coupon': CouponSerializer(coupon).data,
+        'message': f'Coupon applied successfully! You saved ৳{discount_amount}',
+        'coupon': {
+            'code': coupon.code,
+            'name': coupon.name,
+            'description': coupon.description,
+            'discount_type': coupon.discount_type,
+            'discount_display': coupon.discount_display
+        },
         'discount_amount': discount_amount
     })
 
 
 @api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def remove_coupon(request):
-    """Remove applied coupon"""
+    """Remove applied coupon - supports both authenticated and guest users"""
     if 'applied_coupon' in request.session:
         del request.session['applied_coupon']
     
     return Response({
         'message': 'Coupon removed successfully'
     })
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def validate_coupon(request):
+    """Validate coupon without applying it - supports both authenticated and guest users"""
+    serializer = ApplyCouponSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    
+    coupon_code = serializer.validated_data['code']
+    user = request.user if request.user.is_authenticated else None
+    
+    # Get cart total
+    try:
+        if request.user.is_authenticated:
+            cart = Cart.objects.get(user=request.user)
+        else:
+            session_id = request.session.session_key
+            if not session_id:
+                cart_total = 0
+            else:
+                cart = Cart.objects.get(session_id=session_id, user=None)
+                cart_total = cart.subtotal
+    except Cart.DoesNotExist:
+        cart_total = 0
+    
+    # Get coupon
+    try:
+        coupon = Coupon.objects.get(code=coupon_code, is_active=True)
+    except Coupon.DoesNotExist:
+        return Response({
+            'is_valid': False,
+            'message': 'Invalid coupon code'
+        })
+    
+    # Validate coupon
+    is_valid, message = coupon.is_valid(user, cart_total)
+    
+    response_data = {
+        'is_valid': is_valid,
+        'message': message
+    }
+    
+    if is_valid:
+        discount_amount = coupon.calculate_discount(cart_total)
+        response_data.update({
+            'discount_amount': discount_amount,
+            'coupon': {
+                'code': coupon.code,
+                'name': coupon.name,
+                'description': coupon.description,
+                'discount_type': coupon.discount_type,
+                'discount_display': coupon.discount_display
+            }
+        })
+    
+    return Response(response_data)
 
 
 @api_view(['GET'])
@@ -421,24 +497,28 @@ def cart_summary(request):
             if not session_id:
                 # Return empty cart summary for guests without session
                 return Response({
+                    'items': [],
                     'subtotal': '0.00',
                     'shipping_cost': '0.00',
                     'tax_amount': '0.00',
                     'discount_amount': '0.00',
                     'coupon_discount': '0.00',
                     'total_amount': '0.00',
+                    'coupon_code': '',
                     'total_items': 0,
                     'total_weight': '0.00'
                 })
             cart = Cart.objects.get(session_id=session_id, user=None)
     except Cart.DoesNotExist:
         return Response({
+            'items': [],
             'subtotal': '0.00',
             'shipping_cost': '0.00',
             'tax_amount': '0.00',
             'discount_amount': '0.00',
             'coupon_discount': '0.00',
             'total_amount': '0.00',
+            'coupon_code': '',
             'total_items': 0,
             'total_weight': '0.00'
         })
@@ -458,7 +538,36 @@ def cart_summary(request):
     
     total_amount = subtotal + shipping_cost + tax_amount - discount_amount - coupon_discount
     
+    # Get cart items data for checkout display
+    items_data = []
+    for item in cart.items.all():
+        # Get product image
+        product_image = None
+        primary_image = item.product.images.filter(is_primary=True).first()
+        if primary_image:
+            product_image = primary_image.image
+        elif item.product.images.exists():
+            product_image = item.product.images.first().image
+        
+        # Get variant information
+        variant_name = item.variant.name if item.variant else None
+        variant_color = item.variant.color if item.variant else None
+        variant_size = item.variant.size if item.variant else None
+        
+        items_data.append({
+            'id': item.id,
+            'product_name': item.product.name,
+            'product_image': product_image,
+            'variant_name': variant_name,
+            'variant_color': variant_color,
+            'variant_size': variant_size,
+            'quantity': item.quantity,
+            'price': str(item.unit_price),
+            'total_price': str(item.total_price)
+        })
+    
     summary = {
+        'items': items_data,
         'subtotal': subtotal,
         'shipping_cost': shipping_cost,
         'tax_amount': tax_amount,

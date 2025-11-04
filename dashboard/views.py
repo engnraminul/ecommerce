@@ -4701,3 +4701,305 @@ def hero_content_detail_api(request, slide_id):
             'success': False,
             'error': str(e)
         }, status=500)
+
+
+# ============================
+# COUPON MANAGEMENT VIEWS
+# ============================
+
+@staff_member_required
+def coupon_management(request):
+    """Coupon management dashboard page"""
+    return render(request, 'dashboard/coupon_management.html')
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsStaffUser])
+def coupon_list_api(request):
+    """API for listing and creating coupons"""
+    from cart.models import Coupon
+    from cart.serializers import CouponSerializer
+    from django.utils import timezone
+    from django.db.models import Q
+    
+    if request.method == 'GET':
+        # Get query parameters
+        search = request.GET.get('search', '')
+        status_filter = request.GET.get('status', '')
+        discount_type = request.GET.get('discount_type', '')
+        page = int(request.GET.get('page', 1))
+        per_page = int(request.GET.get('per_page', 20))
+        
+        # Build queryset
+        queryset = Coupon.objects.all()
+        
+        # Apply filters
+        if search:
+            queryset = queryset.filter(
+                Q(code__icontains=search) |
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
+        
+        if status_filter == 'active':
+            queryset = queryset.filter(is_active=True, valid_until__gt=timezone.now())
+        elif status_filter == 'expired':
+            queryset = queryset.filter(valid_until__lt=timezone.now())
+        elif status_filter == 'inactive':
+            queryset = queryset.filter(is_active=False)
+        
+        if discount_type:
+            queryset = queryset.filter(discount_type=discount_type)
+        
+        # Order by most recent
+        queryset = queryset.order_by('-created_at')
+        
+        # Pagination
+        total_count = queryset.count()
+        start_index = (page - 1) * per_page
+        end_index = start_index + per_page
+        coupons = queryset[start_index:end_index]
+        
+        # Serialize data
+        coupon_data = []
+        for coupon in coupons:
+            coupon_data.append({
+                'id': coupon.id,
+                'code': coupon.code,
+                'name': coupon.name,
+                'description': coupon.description,
+                'discount_type': coupon.discount_type,
+                'discount_value': str(coupon.discount_value),
+                'discount_display': coupon.discount_display,
+                'minimum_order_amount': str(coupon.minimum_order_amount),
+                'maximum_discount_amount': str(coupon.maximum_discount_amount) if coupon.maximum_discount_amount else None,
+                'usage_limit': coupon.usage_limit,
+                'usage_limit_per_user': coupon.usage_limit_per_user,
+                'used_count': coupon.used_count,
+                'usage_percentage': coupon.usage_percentage,
+                'valid_from': coupon.valid_from.isoformat(),
+                'valid_until': coupon.valid_until.isoformat(),
+                'is_active': coupon.is_active,
+                'is_expired': coupon.is_expired,
+                'days_until_expiry': coupon.days_until_expiry,
+                'created_at': coupon.created_at.isoformat(),
+                'created_by': coupon.created_by.username if coupon.created_by else None,
+            })
+        
+        return Response({
+            'coupons': coupon_data,
+            'total_count': total_count,
+            'page': page,
+            'per_page': per_page,
+            'total_pages': (total_count + per_page - 1) // per_page
+        })
+    
+    elif request.method == 'POST':
+        # Create new coupon
+        from cart.models import Coupon
+        from django.utils.dateparse import parse_datetime
+        
+        try:
+            data = request.data
+            
+            # Create coupon
+            coupon = Coupon.objects.create(
+                code=data.get('code', '').upper() or Coupon.generate_coupon_code(),
+                name=data['name'],
+                description=data.get('description', ''),
+                discount_type=data['discount_type'],
+                discount_value=data['discount_value'],
+                minimum_order_amount=data.get('minimum_order_amount', 0),
+                maximum_discount_amount=data.get('maximum_discount_amount') or None,
+                usage_limit=data.get('usage_limit') or None,
+                usage_limit_per_user=data.get('usage_limit_per_user', 1),
+                valid_from=parse_datetime(data['valid_from']),
+                valid_until=parse_datetime(data['valid_until']),
+                is_active=data.get('is_active', True),
+                created_by=request.user
+            )
+            
+            return Response({
+                'success': True,
+                'message': 'Coupon created successfully',
+                'coupon': {
+                    'id': coupon.id,
+                    'code': coupon.code,
+                    'name': coupon.name,
+                    'discount_display': coupon.discount_display
+                }
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([IsStaffUser])
+def coupon_detail_api(request, coupon_id):
+    """API for getting, updating, and deleting specific coupon"""
+    from cart.models import Coupon
+    from django.utils.dateparse import parse_datetime
+    
+    try:
+        coupon = Coupon.objects.get(id=coupon_id)
+    except Coupon.DoesNotExist:
+        return Response({
+            'success': False,
+            'error': 'Coupon not found'
+        }, status=status.HTTP_404_NOT_FOUND)
+    
+    if request.method == 'GET':
+        coupon_data = {
+            'id': coupon.id,
+            'code': coupon.code,
+            'name': coupon.name,
+            'description': coupon.description,
+            'discount_type': coupon.discount_type,
+            'discount_value': str(coupon.discount_value),
+            'discount_display': coupon.discount_display,
+            'minimum_order_amount': str(coupon.minimum_order_amount),
+            'maximum_discount_amount': str(coupon.maximum_discount_amount) if coupon.maximum_discount_amount else None,
+            'usage_limit': coupon.usage_limit,
+            'usage_limit_per_user': coupon.usage_limit_per_user,
+            'used_count': coupon.used_count,
+            'usage_percentage': coupon.usage_percentage,
+            'valid_from': coupon.valid_from.isoformat(),
+            'valid_until': coupon.valid_until.isoformat(),
+            'is_active': coupon.is_active,
+            'is_expired': coupon.is_expired,
+            'days_until_expiry': coupon.days_until_expiry,
+            'created_at': coupon.created_at.isoformat(),
+            'created_by': coupon.created_by.username if coupon.created_by else None,
+        }
+        
+        return Response({
+            'success': True,
+            'coupon': coupon_data
+        })
+    
+    elif request.method == 'PUT':
+        try:
+            data = request.data
+            
+            # Update coupon
+            coupon.code = data.get('code', coupon.code).upper()
+            coupon.name = data.get('name', coupon.name)
+            coupon.description = data.get('description', coupon.description)
+            coupon.discount_type = data.get('discount_type', coupon.discount_type)
+            coupon.discount_value = data.get('discount_value', coupon.discount_value)
+            coupon.minimum_order_amount = data.get('minimum_order_amount', coupon.minimum_order_amount)
+            coupon.maximum_discount_amount = data.get('maximum_discount_amount') or None
+            coupon.usage_limit = data.get('usage_limit') or None
+            coupon.usage_limit_per_user = data.get('usage_limit_per_user', coupon.usage_limit_per_user)
+            
+            if 'valid_from' in data:
+                coupon.valid_from = parse_datetime(data['valid_from'])
+            if 'valid_until' in data:
+                coupon.valid_until = parse_datetime(data['valid_until'])
+            
+            coupon.is_active = data.get('is_active', coupon.is_active)
+            
+            coupon.save()
+            
+            return Response({
+                'success': True,
+                'message': 'Coupon updated successfully'
+            })
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    elif request.method == 'DELETE':
+        try:
+            coupon.delete()
+            
+            return Response({
+                'success': True,
+                'message': 'Coupon deleted successfully'
+            })
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([IsStaffUser])
+def coupon_analytics_api(request):
+    """API for coupon usage analytics"""
+    from cart.models import Coupon, CouponUsage
+    from orders.models import Order
+    from django.db.models import Sum, Count, F, Case, When, Value, Q
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    try:
+        # Get date range
+        days = int(request.GET.get('days', 30))
+        start_date = timezone.now() - timedelta(days=days)
+        
+        # Overall stats
+        total_coupons = Coupon.objects.count()
+        active_coupons = Coupon.objects.filter(is_active=True, valid_until__gt=timezone.now()).count()
+        expired_coupons = Coupon.objects.filter(valid_until__lt=timezone.now()).count()
+        
+        # Usage stats
+        total_usage = CouponUsage.objects.filter(used_at__gte=start_date).count()
+        total_discount_given = Order.objects.filter(
+            created_at__gte=start_date,
+            coupon_discount__gt=0
+        ).aggregate(total=Sum('coupon_discount'))['total'] or 0
+        
+        # Top performing coupons
+        top_coupons = Coupon.objects.annotate(
+            recent_usage=Count('usage_records', filter=Q(usage_records__used_at__gte=start_date)),
+            recent_discount=Sum('orders__coupon_discount', filter=Q(orders__created_at__gte=start_date))
+        ).filter(recent_usage__gt=0).order_by('-recent_usage')[:10]
+        
+        top_coupons_data = []
+        for coupon in top_coupons:
+            top_coupons_data.append({
+                'code': coupon.code,
+                'name': coupon.name,
+                'usage_count': coupon.recent_usage,
+                'total_discount': str(coupon.recent_discount or 0),
+                'discount_type': coupon.discount_type
+            })
+        
+        # Daily usage trends
+        daily_usage = {}
+        for i in range(days):
+            date = (timezone.now() - timedelta(days=i)).date()
+            usage_count = CouponUsage.objects.filter(used_at__date=date).count()
+            daily_usage[date.isoformat()] = usage_count
+        
+        return Response({
+            'success': True,
+            'analytics': {
+                'overview': {
+                    'total_coupons': total_coupons,
+                    'active_coupons': active_coupons,
+                    'expired_coupons': expired_coupons,
+                    'total_usage': total_usage,
+                    'total_discount_given': str(total_discount_given)
+                },
+                'top_coupons': top_coupons_data,
+                'daily_usage': daily_usage,
+                'period_days': days
+            }
+        })
+        
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

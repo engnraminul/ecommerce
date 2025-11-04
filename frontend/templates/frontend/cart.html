@@ -85,6 +85,31 @@
                                 <span id="cart-tax">৳0.00</span>
                             </div>
                             
+                            <!-- Coupon Section -->
+                            <div class="coupon-section">
+                                <div class="coupon-input-container" id="coupon-input-container">
+                                    <input type="text" id="coupon-code" placeholder="Enter coupon code" maxlength="50">
+                                    <button id="apply-coupon-btn" class="apply-coupon-btn">Apply</button>
+                                </div>
+                                
+                                <div class="applied-coupon" id="applied-coupon" style="display: none;">
+                                    <div class="coupon-details">
+                                        <span class="coupon-name" id="applied-coupon-name"></span>
+                                        <span class="coupon-code-display" id="applied-coupon-code"></span>
+                                    </div>
+                                    <button id="remove-coupon-btn" class="remove-coupon-btn">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="coupon-message" id="coupon-message" style="display: none;"></div>
+                            </div>
+                            
+                            <div class="summary-line discount" id="discount-line" style="display: none;">
+                                <span>Discount:</span>
+                                <span id="cart-discount">-৳0.00</span>
+                            </div>
+                            
                             <div class="summary-divider"></div>
                             
                             <div class="summary-line total">
@@ -426,6 +451,118 @@
         height: 2px;
         background: var(--border-color);
         margin: 1rem 0;
+    }
+
+    /* Coupon Section */
+    .coupon-section {
+        margin: 1rem 0;
+    }
+
+    .coupon-input-container {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .coupon-input-container input {
+        flex: 1;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+    }
+
+    .apply-coupon-btn {
+        background: var(--primary-color);
+        color: var(--white);
+        border: none;
+        padding: 0.75rem 1rem;
+        border-radius: var(--border-radius);
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        white-space: nowrap;
+    }
+
+    .apply-coupon-btn:hover {
+        background: var(--primary-dark);
+    }
+
+    .apply-coupon-btn:disabled {
+        background: var(--secondary-color);
+        cursor: not-allowed;
+    }
+
+    .applied-coupon {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #e8f5e8;
+        border: 1px solid #d4edda;
+        border-radius: var(--border-radius);
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .coupon-details {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .coupon-name {
+        font-weight: 600;
+        color: #155724;
+        font-size: 0.9rem;
+    }
+
+    .coupon-code-display {
+        font-family: monospace;
+        font-size: 0.8rem;
+        color: #666;
+        background: rgba(255, 255, 255, 0.7);
+        padding: 0.2rem 0.4rem;
+        border-radius: 3px;
+        margin-top: 0.2rem;
+    }
+
+    .remove-coupon-btn {
+        background: none;
+        border: none;
+        color: #721c24;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 50%;
+        transition: var(--transition);
+    }
+
+    .remove-coupon-btn:hover {
+        background: rgba(114, 28, 36, 0.1);
+    }
+
+    .coupon-message {
+        padding: 0.5rem;
+        border-radius: var(--border-radius);
+        font-size: 0.85rem;
+        text-align: center;
+    }
+
+    .coupon-message.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .coupon-message.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .summary-line.discount {
+        color: #28a745;
+        font-weight: 600;
     }
 
     /* Checkout Section */
@@ -797,12 +934,40 @@
             const subtotal = cartData.subtotal || '0.00';
             const shipping = cartData.shipping_cost || cartData.shipping || '0.00';
             const tax = cartData.tax_amount || cartData.tax || '0.00';
+            const discount = cartData.discount_amount || '0.00';
+            const couponDiscount = cartData.coupon_discount || '0.00';
             const total = cartData.total_amount || cartData.total || '0.00';
+            const couponCode = cartData.coupon_code || '';
             
-            document.getElementById('cart-subtotal').textContent = `$${subtotal}`;
-            document.getElementById('cart-shipping').textContent = shipping > 0 ? `$${shipping}` : 'FREE';
-            document.getElementById('cart-tax').textContent = `$${tax}`;
-            document.getElementById('cart-total').textContent = `$${total}`;
+            document.getElementById('cart-subtotal').textContent = `৳${subtotal}`;
+            document.getElementById('cart-shipping').textContent = shipping > 0 ? `৳${shipping}` : 'FREE';
+            document.getElementById('cart-tax').textContent = `৳${tax}`;
+            document.getElementById('cart-total').textContent = `৳${total}`;
+            
+            // Handle coupon display
+            const discountLine = document.getElementById('discount-line');
+            const cartDiscount = document.getElementById('cart-discount');
+            const appliedCoupon = document.getElementById('applied-coupon');
+            const couponInputContainer = document.getElementById('coupon-input-container');
+            
+            if (couponDiscount > 0 && couponCode) {
+                // Show applied coupon
+                discountLine.style.display = 'flex';
+                cartDiscount.textContent = `-৳${couponDiscount}`;
+                
+                // Show applied coupon details
+                appliedCoupon.style.display = 'flex';
+                document.getElementById('applied-coupon-name').textContent = `Coupon Applied`;
+                document.getElementById('applied-coupon-code').textContent = couponCode;
+                
+                // Hide coupon input
+                couponInputContainer.style.display = 'none';
+            } else {
+                // Hide discount line
+                discountLine.style.display = 'none';
+                appliedCoupon.style.display = 'none';
+                couponInputContainer.style.display = 'flex';
+            }
         }
         
         // Cart actions
@@ -988,6 +1153,146 @@
                 }, 300);
             }, 3000);
         }
+        
+        // Coupon functionality
+        function setupCouponHandlers() {
+            const applyCouponBtn = document.getElementById('apply-coupon-btn');
+            const removeCouponBtn = document.getElementById('remove-coupon-btn');
+            const couponCodeInput = document.getElementById('coupon-code');
+            
+            if (applyCouponBtn) {
+                applyCouponBtn.addEventListener('click', applyCoupon);
+            }
+            
+            if (removeCouponBtn) {
+                removeCouponBtn.addEventListener('click', removeCoupon);
+            }
+            
+            if (couponCodeInput) {
+                couponCodeInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        applyCoupon();
+                    }
+                });
+                
+                // Auto-uppercase coupon code
+                couponCodeInput.addEventListener('input', function(e) {
+                    e.target.value = e.target.value.toUpperCase();
+                });
+            }
+        }
+        
+        function applyCoupon() {
+            const couponCodeInput = document.getElementById('coupon-code');
+            const applyCouponBtn = document.getElementById('apply-coupon-btn');
+            const couponMessage = document.getElementById('coupon-message');
+            
+            const code = couponCodeInput.value.trim().toUpperCase();
+            
+            if (!code) {
+                showCouponMessage('Please enter a coupon code', 'error');
+                return;
+            }
+            
+            // Disable button and show loading
+            applyCouponBtn.disabled = true;
+            applyCouponBtn.textContent = 'Applying...';
+            
+            fetch('/api/v1/cart/apply-coupon/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ code: code })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    showCouponMessage(data.message, 'success');
+                    showNotification(data.message, 'success');
+                    
+                    // Clear input and reload cart summary
+                    couponCodeInput.value = '';
+                    setTimeout(() => {
+                        loadCartSummary();
+                    }, 500);
+                } else if (data.error) {
+                    showCouponMessage(data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error applying coupon:', error);
+                showCouponMessage('Error applying coupon. Please try again.', 'error');
+            })
+            .finally(() => {
+                // Re-enable button
+                applyCouponBtn.disabled = false;
+                applyCouponBtn.textContent = 'Apply';
+            });
+        }
+        
+        function removeCoupon() {
+            const removeCouponBtn = document.getElementById('remove-coupon-btn');
+            
+            fetch('/api/v1/cart/remove-coupon/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    showNotification(data.message, 'success');
+                    loadCartSummary();
+                } else if (data.error) {
+                    showNotification(data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error removing coupon:', error);
+                showNotification('Error removing coupon. Please try again.', 'error');
+            });
+        }
+        
+        function showCouponMessage(message, type) {
+            const couponMessage = document.getElementById('coupon-message');
+            couponMessage.textContent = message;
+            couponMessage.className = `coupon-message ${type}`;
+            couponMessage.style.display = 'block';
+            
+            // Hide message after 5 seconds
+            setTimeout(() => {
+                couponMessage.style.display = 'none';
+            }, 5000);
+        }
+        
+        function loadCartSummary() {
+            fetch('/api/v1/cart/summary/', {
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                updateCartSummary(data);
+            })
+            .catch(error => {
+                console.error('Error loading cart summary:', error);
+            });
+        }
+        
+        // Initialize coupon handlers
+        setupCouponHandlers();
     });
 </script>
 {% endblock %}

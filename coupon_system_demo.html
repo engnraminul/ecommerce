@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coupon System Demo - Test Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .demo-section {
+            margin-bottom: 40px;
+            padding: 30px;
+            border: 2px solid #f0f0f0;
+            border-radius: 15px;
+            background: #fafafa;
+        }
+        
+        .demo-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .cart-simulator {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .cart-items {
+            margin-bottom: 20px;
+        }
+        
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #f9f9f9;
+        }
+        
+        .item-details {
+            flex: 1;
+        }
+        
+        .item-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .item-price {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .item-total {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+        
+        .coupon-section {
+            border-top: 2px dashed #ddd;
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+        
+        .coupon-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .coupon-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .coupon-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .apply-btn {
+            padding: 12px 25px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .apply-btn:hover {
+            background: #5a67d8;
+        }
+        
+        .applied-coupon {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .applied-coupon.show {
+            display: block;
+        }
+        
+        .coupon-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .coupon-details {
+            flex: 1;
+        }
+        
+        .coupon-code {
+            font-weight: 700;
+            color: #155724;
+            font-size: 1.1rem;
+        }
+        
+        .coupon-description {
+            color: #155724;
+            font-size: 0.9rem;
+            margin-top: 3px;
+        }
+        
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .remove-btn:hover {
+            background: #c82333;
+        }
+        
+        .cart-summary {
+            border-top: 2px solid #eee;
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 1rem;
+        }
+        
+        .summary-row.discount {
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .summary-row.total {
+            border-top: 2px solid #667eea;
+            margin-top: 10px;
+            padding-top: 15px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        .available-coupons {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .coupon-card {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .coupon-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .coupon-card.active {
+            border-color: #28a745;
+            background: #f8fff9;
+        }
+        
+        .coupon-card.expired {
+            opacity: 0.6;
+            background: #f8f9fa;
+            cursor: not-allowed;
+        }
+        
+        .coupon-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .coupon-code-display {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #667eea;
+            font-family: 'Courier New', monospace;
+            background: #f0f4ff;
+            padding: 5px 12px;
+            border-radius: 6px;
+        }
+        
+        .coupon-type {
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .coupon-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .coupon-desc {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        
+        .coupon-details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .coupon-detail {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .detail-value {
+            color: #333;
+            margin-top: 2px;
+        }
+        
+        .status-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-expired {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .message {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: 500;
+            display: none;
+        }
+        
+        .message.show {
+            display: block;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .test-scenarios {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .scenario-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: 600;
+        }
+        
+        .scenario-button:hover {
+            background: #5a67d8;
+        }
+        
+        @media (max-width: 768px) {
+            .coupon-details-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .coupon-input-group {
+                flex-direction: column;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎫 Coupon System Demo</h1>
+            <p>Professional E-commerce Coupon Testing Interface</p>
+        </div>
+        
+        <div class="content">
+            <!-- Cart Simulator Section -->
+            <div class="demo-section">
+                <h2>🛒 Cart Simulator</h2>
+                <div class="cart-simulator">
+                    <div class="cart-items">
+                        <div class="cart-item">
+                            <div class="item-details">
+                                <div class="item-name">Premium Smartphone</div>
+                                <div class="item-price">৳25,000 × 1</div>
+                            </div>
+                            <div class="item-total">৳25,000</div>
+                        </div>
+                        <div class="cart-item">
+                            <div class="item-details">
+                                <div class="item-name">Wireless Headphones</div>
+                                <div class="item-price">৳3,500 × 2</div>
+                            </div>
+                            <div class="item-total">৳7,000</div>
+                        </div>
+                        <div class="cart-item">
+                            <div class="item-details">
+                                <div class="item-name">Phone Case</div>
+                                <div class="item-price">৳800 × 1</div>
+                            </div>
+                            <div class="item-total">৳800</div>
+                        </div>
+                    </div>
+                    
+                    <div class="coupon-section">
+                        <div class="coupon-input-group">
+                            <input type="text" id="couponInput" class="coupon-input" placeholder="Enter coupon code (e.g., FLAT50, BIG25)">
+                            <button onclick="applyCoupon()" class="apply-btn">Apply Coupon</button>
+                        </div>
+                        
+                        <div id="appliedCoupon" class="applied-coupon">
+                            <div class="coupon-info">
+                                <div class="coupon-details">
+                                    <div class="coupon-code" id="appliedCouponCode"></div>
+                                    <div class="coupon-description" id="appliedCouponDesc"></div>
+                                </div>
+                                <button onclick="removeCoupon()" class="remove-btn">Remove</button>
+                            </div>
+                        </div>
+                        
+                        <div id="couponMessage" class="message"></div>
+                    </div>
+                    
+                    <div class="cart-summary">
+                        <div class="summary-row">
+                            <span>Subtotal:</span>
+                            <span id="subtotal">৳32,800</span>
+                        </div>
+                        <div class="summary-row discount" id="discountRow" style="display: none;">
+                            <span id="discountLabel">Discount:</span>
+                            <span id="discountAmount">-৳0</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Shipping:</span>
+                            <span id="shipping">৳100</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Total:</span>
+                            <span id="total">৳32,900</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Available Coupons Section -->
+            <div class="demo-section">
+                <h2>🎟️ Available Coupons</h2>
+                <div class="available-coupons">
+                    <div class="coupon-card" onclick="selectCoupon('FLAT50')">
+                        <div class="status-badge status-active">Active</div>
+                        <div class="coupon-header">
+                            <div class="coupon-code-display">FLAT50</div>
+                            <div class="coupon-type">Flat Discount</div>
+                        </div>
+                        <div class="coupon-name">Flat ৳50 Off</div>
+                        <div class="coupon-desc">Flat ৳50 discount on orders above ৳200</div>
+                        <div class="coupon-details-grid">
+                            <div class="coupon-detail">
+                                <div class="detail-label">Discount:</div>
+                                <div class="detail-value">৳50.00 off</div>
+                            </div>
+                            <div class="coupon-detail">
+                                <div class="detail-label">Min Order:</div>
+                                <div class="detail-value">৳200.00</div>
+                            </div>
+                            <div class="coupon-detail">
+                                <div class="detail-label">Usage Left:</div>
+                                <div class="detail-value">50/50</div>
+                            </div>
+                            <div class="coupon-detail">
+                                <div class="detail-label">Valid Until:</div>
+                                <div class="detail-value">Dec 4, 2025</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="coupon-card" onclick="selectCoupon('BIG25')">
+                        <div class="status-badge status-active">Active</div>
+                        <div class="coupon-header">
+                            <div class="coupon-code-display">BIG25</div>
+                            <div class="coupon-type">Percentage</div>
+                        </div>
+                        <div class="coupon-name">Big Sale 25% Off</div>
+                        <div class="coupon-desc">Special 25% discount for big purchases</div>
+                        <div class="coupon-details-grid">
+                            <div class="coupon-detail">
+                                <div class="detail-label">Discount:</div>
+                                <div class="detail-value">25.00% off</div>
+                            </div>
+                            <div class="coupon-detail">
+                                <div class="detail-label">Min Order:</div>
+                                <div class="detail-value">৳500.00</div>
+                            </div>
+                            <div class="coupon-detail">
+                                <div class="detail-label">Max Discount:</div>
+                                <div class="detail-value">৳200.00</div>
+                            </div>
+                            <div class="coupon-detail">
+                                <div class="detail-label">Usage Left:</div>
+                                <div class="detail-value">20/20</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="coupon-card" onclick="selectCoupon('FREESHIP')">
+                        <div class="status-badge status-active">Active</div>
+                        <div class="coupon-header">
+                            <div class="coupon-code-display">FREESHIP</div>
+                            <div class="coupon-type">Free Shipping</div>
+                        </div>
+                        <div class="coupon-name">Free Shipping</div>
+                        <div class="coupon-desc">Free shipping on all orders</div>
+                        <div class="coupon-details-grid">
+                            <div class="coupon-detail">
+                                <div class="detail-label">Discount:</div>
+                                <div class="detail-value">Free shipping</div>
+                            </div>
+                            <div class="coupon-detail">
+                                <div class="detail-label">Min Order:</div>
+                                <div class="detail-value">৳75.00</div>
+                            </div>
+                            <div class="coupon-detail">
+                                <div class="detail-label">Usage Left:</div>
+                                <div class="detail-value">200/200</div>
+                            </div>
+                            <div class="coupon-detail">
+                                <div class="detail-label">Valid Until:</div>
+                                <div class="detail-value">Jul 22, 2026</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="coupon-card expired">
+                        <div class="status-badge status-expired">Expired</div>
+                        <div class="coupon-header">
+                            <div class="coupon-code-display">EXPIRED10</div>
+                            <div class="coupon-type">Percentage</div>
+                        </div>
+                        <div class="coupon-name">Expired Coupon</div>
+                        <div class="coupon-desc">This coupon has expired (for testing)</div>
+                        <div class="coupon-details-grid">
+                            <div class="coupon-detail">
+                                <div class="detail-label">Discount:</div>
+                                <div class="detail-value">10.00% off</div>
+                            </div>
+                            <div class="coupon-detail">
+                                <div class="detail-label">Min Order:</div>
+                                <div class="detail-value">৳0.00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Test Scenarios Section -->
+            <div class="demo-section">
+                <h2>🧪 Test Scenarios</h2>
+                <div class="test-scenarios">
+                    <p style="margin-bottom: 20px; color: #666;">Click the buttons below to test different cart scenarios:</p>
+                    <button class="scenario-button" onclick="setCartTotal(150)">Low Value Cart (৳150)</button>
+                    <button class="scenario-button" onclick="setCartTotal(600)">Medium Value Cart (৳600)</button>
+                    <button class="scenario-button" onclick="setCartTotal(1200)">High Value Cart (৳1,200)</button>
+                    <button class="scenario-button" onclick="setCartTotal(32800)">Current Cart (৳32,800)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentSubtotal = 32800;
+        let appliedCouponData = null;
+        
+        // Coupon data for simulation
+        const coupons = {
+            'FLAT50': {
+                code: 'FLAT50',
+                name: 'Flat ৳50 Off',
+                description: 'Flat ৳50 discount on orders above ৳200',
+                type: 'flat',
+                value: 50,
+                minOrder: 200,
+                maxDiscount: null
+            },
+            'BIG25': {
+                code: 'BIG25',
+                name: 'Big Sale 25% Off',
+                description: 'Special 25% discount for big purchases',
+                type: 'percentage',
+                value: 25,
+                minOrder: 500,
+                maxDiscount: 200
+            },
+            'FREESHIP': {
+                code: 'FREESHIP',
+                name: 'Free Shipping',
+                description: 'Free shipping on all orders',
+                type: 'free_shipping',
+                value: 0,
+                minOrder: 75,
+                maxDiscount: null
+            },
+            'EXPIRED10': {
+                code: 'EXPIRED10',
+                name: 'Expired Coupon',
+                description: 'This coupon has expired (for testing)',
+                type: 'percentage',
+                value: 10,
+                minOrder: 0,
+                maxDiscount: null,
+                expired: true
+            }
+        };
+        
+        function applyCoupon() {
+            const couponInput = document.getElementById('couponInput');
+            const couponCode = couponInput.value.trim().toUpperCase();
+            
+            if (!couponCode) {
+                showMessage('Please enter a coupon code', 'error');
+                return;
+            }
+            
+            const coupon = coupons[couponCode];
+            
+            if (!coupon) {
+                showMessage('Invalid coupon code', 'error');
+                return;
+            }
+            
+            if (coupon.expired) {
+                showMessage('This coupon has expired', 'error');
+                return;
+            }
+            
+            if (currentSubtotal < coupon.minOrder) {
+                showMessage(`Minimum order amount is ৳${coupon.minOrder}`, 'error');
+                return;
+            }
+            
+            appliedCouponData = coupon;
+            updateCart();
+            showAppliedCoupon(coupon);
+            showMessage('Coupon applied successfully!', 'success');
+            couponInput.value = '';
+        }
+        
+        function removeCoupon() {
+            appliedCouponData = null;
+            updateCart();
+            hideAppliedCoupon();
+            showMessage('Coupon removed', 'success');
+        }
+        
+        function selectCoupon(code) {
+            if (coupons[code] && !coupons[code].expired) {
+                document.getElementById('couponInput').value = code;
+                applyCoupon();
+            }
+        }
+        
+        function calculateDiscount(subtotal, coupon) {
+            if (!coupon) return 0;
+            
+            let discount = 0;
+            
+            switch (coupon.type) {
+                case 'flat':
+                    discount = coupon.value;
+                    break;
+                case 'percentage':
+                    discount = (subtotal * coupon.value) / 100;
+                    if (coupon.maxDiscount && discount > coupon.maxDiscount) {
+                        discount = coupon.maxDiscount;
+                    }
+                    break;
+                case 'free_shipping':
+                    return 'free_shipping';
+                default:
+                    discount = 0;
+            }
+            
+            return Math.min(discount, subtotal);
+        }
+        
+        function updateCart() {
+            const subtotalElement = document.getElementById('subtotal');
+            const discountRow = document.getElementById('discountRow');
+            const discountLabel = document.getElementById('discountLabel');
+            const discountAmount = document.getElementById('discountAmount');
+            const shippingElement = document.getElementById('shipping');
+            const totalElement = document.getElementById('total');
+            
+            subtotalElement.textContent = `৳${currentSubtotal.toLocaleString()}`;
+            
+            let discount = 0;
+            let shipping = 100;
+            let total = currentSubtotal;
+            
+            if (appliedCouponData) {
+                const discountResult = calculateDiscount(currentSubtotal, appliedCouponData);
+                
+                if (discountResult === 'free_shipping') {
+                    shipping = 0;
+                    discountRow.style.display = 'flex';
+                    discountLabel.textContent = 'Free Shipping Discount:';
+                    discountAmount.textContent = '-৳100';
+                } else {
+                    discount = discountResult;
+                    total -= discount;
+                    discountRow.style.display = 'flex';
+                    discountLabel.textContent = 'Coupon Discount:';
+                    discountAmount.textContent = `-৳${discount.toLocaleString()}`;
+                }
+            } else {
+                discountRow.style.display = 'none';
+            }
+            
+            total += shipping;
+            
+            shippingElement.textContent = shipping === 0 ? 'FREE' : `৳${shipping}`;
+            totalElement.textContent = `৳${total.toLocaleString()}`;
+        }
+        
+        function showAppliedCoupon(coupon) {
+            const appliedCoupon = document.getElementById('appliedCoupon');
+            const appliedCouponCode = document.getElementById('appliedCouponCode');
+            const appliedCouponDesc = document.getElementById('appliedCouponDesc');
+            
+            appliedCouponCode.textContent = coupon.code;
+            appliedCouponDesc.textContent = coupon.description;
+            appliedCoupon.classList.add('show');
+        }
+        
+        function hideAppliedCoupon() {
+            const appliedCoupon = document.getElementById('appliedCoupon');
+            appliedCoupon.classList.remove('show');
+        }
+        
+        function showMessage(message, type) {
+            const messageElement = document.getElementById('couponMessage');
+            messageElement.textContent = message;
+            messageElement.className = `message ${type} show`;
+            
+            setTimeout(() => {
+                messageElement.classList.remove('show');
+            }, 3000);
+        }
+        
+        function setCartTotal(newTotal) {
+            currentSubtotal = newTotal;
+            
+            // Update cart items to match the new total
+            const cartItems = document.querySelectorAll('.cart-item');
+            if (newTotal === 150) {
+                cartItems[0].querySelector('.item-name').textContent = 'Basic Phone Case';
+                cartItems[0].querySelector('.item-price').textContent = '৳100 × 1';
+                cartItems[0].querySelector('.item-total').textContent = '৳100';
+                cartItems[1].querySelector('.item-name').textContent = 'Screen Protector';
+                cartItems[1].querySelector('.item-price').textContent = '৳50 × 1';
+                cartItems[1].querySelector('.item-total').textContent = '৳50';
+                cartItems[2].style.display = 'none';
+            } else if (newTotal === 600) {
+                cartItems[0].querySelector('.item-name').textContent = 'Bluetooth Speaker';
+                cartItems[0].querySelector('.item-price').textContent = '৳400 × 1';
+                cartItems[0].querySelector('.item-total').textContent = '৳400';
+                cartItems[1].querySelector('.item-name').textContent = 'Phone Stand';
+                cartItems[1].querySelector('.item-price').textContent = '৳200 × 1';
+                cartItems[1].querySelector('.item-total').textContent = '৳200';
+                cartItems[2].style.display = 'none';
+            } else if (newTotal === 1200) {
+                cartItems[0].querySelector('.item-name').textContent = 'Tablet';
+                cartItems[0].querySelector('.item-price').textContent = '৳800 × 1';
+                cartItems[0].querySelector('.item-total').textContent = '৳800';
+                cartItems[1].querySelector('.item-name').textContent = 'Keyboard';
+                cartItems[1].querySelector('.item-price').textContent = '৳300 × 1';
+                cartItems[1].querySelector('.item-total').textContent = '৳300';
+                cartItems[2].querySelector('.item-name').textContent = 'Mouse';
+                cartItems[2].querySelector('.item-price').textContent = '৳100 × 1';
+                cartItems[2].querySelector('.item-total').textContent = '৳100';
+                cartItems[2].style.display = 'flex';
+            } else {
+                // Reset to original
+                cartItems[0].querySelector('.item-name').textContent = 'Premium Smartphone';
+                cartItems[0].querySelector('.item-price').textContent = '৳25,000 × 1';
+                cartItems[0].querySelector('.item-total').textContent = '৳25,000';
+                cartItems[1].querySelector('.item-name').textContent = 'Wireless Headphones';
+                cartItems[1].querySelector('.item-price').textContent = '৳3,500 × 2';
+                cartItems[1].querySelector('.item-total').textContent = '৳7,000';
+                cartItems[2].querySelector('.item-name').textContent = 'Phone Case';
+                cartItems[2].querySelector('.item-price').textContent = '৳800 × 1';
+                cartItems[2].querySelector('.item-total').textContent = '৳800';
+                cartItems[2].style.display = 'flex';
+            }
+            
+            updateCart();
+            showMessage(`Cart updated to ৳${newTotal.toLocaleString()}`, 'success');
+        }
+        
+        // Initialize cart on page load
+        updateCart();
+    </script>
+</body>
+</html>

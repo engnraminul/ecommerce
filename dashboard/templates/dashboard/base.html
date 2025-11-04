@@ -255,6 +255,13 @@
                     </a>
                 </li>
                 {% endif %}
+                {% if user.is_superuser or user|has_dashboard_access:'coupons' %}
+                <li>
+                    <a href="{% url 'dashboard:coupons' %}" class="{% if active_page == 'coupons' %}active{% endif %}">
+                        <i class="fas fa-percent"></i> Coupons
+                    </a>
+                </li>
+                {% endif %}
                 {% if user.is_superuser or user|has_dashboard_access:'reviews' %}
                 <li>
                     <a href="{% url 'dashboard:reviews' %}" class="{% if active_page == 'reviews' %}active{% endif %}">

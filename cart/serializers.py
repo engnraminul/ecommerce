@@ -167,13 +167,21 @@ class SavedItemSerializer(serializers.ModelSerializer):
 
 class CouponSerializer(serializers.ModelSerializer):
     """Coupon serializer (for public use)"""
+    discount_display = serializers.ReadOnlyField()
+    is_expired = serializers.ReadOnlyField()
+    days_until_expiry = serializers.ReadOnlyField()
+    
     class Meta:
         model = Coupon
         fields = (
             'code', 'name', 'description', 'discount_type', 'discount_value',
+            'minimum_order_amount', 'valid_from', 'valid_until',
+            'discount_display', 'is_expired', 'days_until_expiry'
+        )
+        read_only_fields = (
+            'name', 'description', 'discount_type', 'discount_value', 
             'minimum_order_amount', 'valid_from', 'valid_until'
         )
-        read_only_fields = ('name', 'description', 'discount_type', 'discount_value', 'minimum_order_amount')
 
 
 class ApplyCouponSerializer(serializers.Serializer):

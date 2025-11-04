@@ -70,8 +70,8 @@ def get_client_ip(request):
     """
     Get the real IP address of the client making the request.
     This function handles cases where the request might come through proxies,
-    load balancers, or CDNs. If a private/local IP is detected, it will
-    attempt to get the public IP address.
+    load balancers, or CDNs. For development, it returns a simple IP without
+    external API calls.
     """
     # List of headers to check for IP addresses (in order of preference)
     ip_headers = [
@@ -105,29 +105,11 @@ def get_client_ip(request):
                 logger.warning(f"Invalid IP format in {header}: {ip_value}")
                 continue
     
-    # If we have a detected IP, check if it's private/local
+    # If we have a detected IP, return it (even if private)
     if detected_ip:
-        if is_private_ip(detected_ip):
-            logger.debug(f"Detected IP {detected_ip} is private, attempting to get public IP")
-            public_ip = get_public_ip()
-            if public_ip:
-                logger.info(f"Using public IP {public_ip} instead of private IP {detected_ip}")
-                return public_ip
-            else:
-                logger.warning(f"Could not get public IP, using private IP {detected_ip}")
-                return detected_ip
-        else:
-            # It's already a public IP
-            logger.info(f"Using public IP {detected_ip} from {source}")
-            return detected_ip
+        logger.info(f"Using detected IP {detected_ip} from {source}")
+        return detected_ip
     
-    # If no valid IP was found in headers, get public IP as fallback
-    logger.warning("No valid IP found in headers, attempting to get public IP")
-    public_ip = get_public_ip()
-    if public_ip:
-        logger.info(f"Using fallback public IP: {public_ip}")
-        return public_ip
-    
-    # Final fallback to localhost
-    logger.error("All IP detection methods failed, using localhost")
+    # For development, fallback to localhost instead of making external requests
+    logger.debug("No valid IP found in headers, using localhost for development")
     return '127.0.0.1'
