@@ -17,7 +17,9 @@ from django.urls import reverse
 from django.http import JsonResponse
 from decimal import Decimal
 from django.db import transaction
+from django.utils.text import slugify
 import json
+import uuid
 
 from .models import DashboardSetting, AdminActivity, Expense
 from .serializers import (
@@ -327,6 +329,170 @@ class ProductDashboardViewSet(viewsets.ModelViewSet):
         variants = ProductVariant.objects.filter(product=product, is_active=True)
         serializer = ProductVariantDashboardSerializer(variants, many=True)
         return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'])
+    def clone(self, request, pk=None):
+        """
+        Professional product cloning/duplication with all content
+        Creates a copy of the product with all variants, images, and metadata
+        """
+        try:
+            original_product = self.get_object()
+            
+            # Get clone options from request
+            clone_options = {
+                'name_suffix': request.data.get('name_suffix', ' (Copy)'),
+                'clone_images': request.data.get('clone_images', True),
+                'clone_variants': request.data.get('clone_variants', True),
+                'copy_stock': request.data.get('copy_stock', False),
+                'set_as_draft': request.data.get('set_as_draft', True),
+                'new_sku_prefix': request.data.get('new_sku_prefix', 'COPY-'),
+            }
+            
+            with transaction.atomic():
+                # Clone the main product
+                cloned_product = self._clone_product(original_product, clone_options)
+                
+                # Clone variants if requested
+                if clone_options['clone_variants']:
+                    self._clone_variants(original_product, cloned_product, clone_options)
+                
+                # Clone images if requested
+                if clone_options['clone_images']:
+                    self._clone_images(original_product, cloned_product)
+                
+                # Log the activity
+                try:
+                    self.log_activity('cloned', cloned_product)
+                except Exception as e:
+                    print(f"Error logging activity: {str(e)}")
+                
+                # Return cloned product data
+                serializer = self.get_serializer(cloned_product)
+                return Response({
+                    'success': True,
+                    'message': f'Product "{original_product.name}" successfully cloned as "{cloned_product.name}"',
+                    'original_id': original_product.id,
+                    'cloned_product': serializer.data
+                })
+                
+        except Exception as e:
+            print(f"Error cloning product: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response({
+                'success': False,
+                'error': f'Failed to clone product: {str(e)}'
+            }, status=500)
+    
+    def _clone_product(self, original, options):
+        """Clone the main product with new name, SKU, and slug"""
+        from copy import deepcopy
+        
+        # Create a copy of the original product
+        cloned = Product.objects.get(pk=original.pk)
+        cloned.pk = None  # This will create a new instance when saved
+        cloned.id = None
+        
+        # Update basic information
+        cloned.name = original.name + options['name_suffix']
+        cloned.slug = slugify(cloned.name)
+        
+        # Ensure unique slug
+        base_slug = cloned.slug
+        counter = 1
+        while Product.objects.filter(slug=cloned.slug).exists():
+            cloned.slug = f"{base_slug}-{counter}"
+            counter += 1
+        
+        # Update SKU
+        if original.sku:
+            cloned.sku = options['new_sku_prefix'] + original.sku
+            # Ensure unique SKU
+            base_sku = cloned.sku
+            counter = 1
+            while Product.objects.filter(sku=cloned.sku).exists():
+                cloned.sku = f"{base_sku}-{counter}"
+                counter += 1
+        else:
+            cloned.sku = f"{options['new_sku_prefix']}{uuid.uuid4().hex[:8].upper()}"
+        
+        # Reset barcode to avoid duplicates
+        cloned.barcode = ''
+        
+        # Handle stock and status
+        if not options['copy_stock']:
+            cloned.stock_quantity = 0
+            cloned.in_stock = False
+        
+        if options['set_as_draft']:
+            cloned.is_active = False
+        
+        # Update meta fields for SEO
+        if cloned.meta_title:
+            cloned.meta_title = cloned.meta_title + " (Copy)"
+        
+        cloned.save()
+        return cloned
+    
+    def _clone_variants(self, original_product, cloned_product, options):
+        """Clone all variants from original to cloned product"""
+        variants = original_product.variants.all()
+        variant_mapping = {}  # Track original to cloned variant mapping
+        
+        for original_variant in variants:
+            cloned_variant = ProductVariant.objects.get(pk=original_variant.pk)
+            cloned_variant.pk = None
+            cloned_variant.id = None
+            cloned_variant.product = cloned_product
+            
+            # Update variant name and SKU
+            cloned_variant.name = original_variant.name
+            if original_variant.sku:
+                cloned_variant.sku = options['new_sku_prefix'] + original_variant.sku
+                # Ensure unique variant SKU
+                base_sku = cloned_variant.sku
+                counter = 1
+                while ProductVariant.objects.filter(sku=cloned_variant.sku).exists():
+                    cloned_variant.sku = f"{base_sku}-{counter}"
+                    counter += 1
+            else:
+                cloned_variant.sku = f"{options['new_sku_prefix']}{uuid.uuid4().hex[:8].upper()}"
+            
+            # Handle stock
+            if not options['copy_stock']:
+                cloned_variant.stock_quantity = 0
+                cloned_variant.in_stock = False
+            
+            # Set all variants as non-default initially
+            cloned_variant.is_default = False
+            
+            cloned_variant.save()
+            variant_mapping[original_variant.id] = cloned_variant
+        
+        # Set the first variant as default if any variants exist
+        if variant_mapping:
+            first_variant = next(iter(variant_mapping.values()))
+            first_variant.is_default = True
+            first_variant.save()
+    
+    def _clone_images(self, original_product, cloned_product):
+        """Clone all product images from original to cloned product"""
+        images = original_product.images.all()
+        
+        for original_image in images:
+            cloned_image = ProductImage.objects.get(pk=original_image.pk)
+            cloned_image.pk = None
+            cloned_image.id = None
+            cloned_image.product = cloned_product
+            
+            # Update alt text to indicate it's a copy
+            if cloned_image.alt_text:
+                cloned_image.alt_text = cloned_image.alt_text + " (Copy)"
+            else:
+                cloned_image.alt_text = f"{cloned_product.name} Image (Copy)"
+            
+            cloned_image.save()
 
 class ProductVariantDashboardViewSet(viewsets.ModelViewSet):
     queryset = ProductVariant.objects.all()

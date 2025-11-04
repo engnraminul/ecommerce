@@ -1273,6 +1273,136 @@
         </div>
     </div>
 </div>
+
+<!-- Clone Product Modal -->
+<div class="modal fade" id="cloneProductModal" tabindex="-1" aria-labelledby="cloneProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cloneProductModalLabel">
+                    <i class="fas fa-copy me-2"></i>Clone Product
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Product Cloning:</strong> This will create a complete copy of the selected product including all variants, images, and metadata.
+                </div>
+                
+                <form id="cloneProductForm">
+                    <input type="hidden" id="cloneProductId">
+                    
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Original Product:</strong></label>
+                        <p id="cloneOriginalProductName" class="text-muted"></p>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="cloneNameSuffix" class="form-label">Name Suffix</label>
+                                <input type="text" class="form-control" id="cloneNameSuffix" value=" (Copy)" 
+                                       placeholder="e.g., (Copy), (Clone), (Duplicate)">
+                                <small class="form-text text-muted">This will be added to the original product name</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="cloneSkuPrefix" class="form-label">SKU Prefix</label>
+                                <input type="text" class="form-control" id="cloneSkuPrefix" value="COPY-" 
+                                       placeholder="e.g., COPY-, CLONE-, DUP-">
+                                <small class="form-text text-muted">This will be added to the original SKU</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-cog me-2"></i>Clone Options</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="cloneImages" checked>
+                                        <label class="form-check-label" for="cloneImages">
+                                            <strong>Clone Images</strong>
+                                            <small class="d-block text-muted">Copy all product images</small>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="cloneVariants" checked>
+                                        <label class="form-check-label" for="cloneVariants">
+                                            <strong>Clone Variants</strong>
+                                            <small class="d-block text-muted">Copy all product variants</small>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="copyStock">
+                                        <label class="form-check-label" for="copyStock">
+                                            <strong>Copy Stock Quantities</strong>
+                                            <small class="d-block text-muted">Maintain current stock levels</small>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="setAsDraft" checked>
+                                        <label class="form-check-label" for="setAsDraft">
+                                            <strong>Create as Draft</strong>
+                                            <small class="d-block text-muted">Set cloned product as inactive</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-list me-2"></i>What will be cloned?</h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled mb-0">
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success me-2"></i>Product information (name, description, price)
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success me-2"></i>Category and metadata
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success me-2"></i>SEO settings
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success me-2"></i>Shipping configuration
+                                        </li>
+                                        <li class="mb-2" id="cloneImagesIndicator">
+                                            <i class="fas fa-check text-success me-2"></i>Product images
+                                        </li>
+                                        <li class="mb-0" id="cloneVariantsIndicator">
+                                            <i class="fas fa-check text-success me-2"></i>Product variants
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-success" id="confirmCloneBtn">
+                    <i class="fas fa-copy me-1"></i> Clone Product
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_css %}
@@ -1287,6 +1417,37 @@ input[readonly] {
 input[readonly]:focus {
     box-shadow: none;
     border-color: #dee2e6;
+}
+
+/* Clone button styling */
+.clone-product-btn {
+    transition: all 0.2s ease;
+}
+
+.clone-product-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+}
+
+/* Clone modal enhancements */
+.clone-modal-feature-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.clone-option-card {
+    border: 1px solid #e9ecef;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.clone-option-card:hover {
+    border-color: #dee2e6;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.form-check-input:checked ~ .form-check-label strong {
+    color: #28a745;
 }
 
 /* Modal styling improvements */
@@ -1457,6 +1618,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('updateProductBtn').addEventListener('click', updateProduct);
     document.getElementById('saveVariantBtn').addEventListener('click', saveVariant);
     document.getElementById('updateVariantBtn').addEventListener('click', updateVariant);
+    document.getElementById('confirmCloneBtn').addEventListener('click', cloneProduct);
     
     // Initialize TinyMCE when Add Product Modal is shown
     document.getElementById('addProductModal').addEventListener('shown.bs.modal', function() {
@@ -1585,6 +1747,34 @@ document.addEventListener('DOMContentLoaded', function() {
         const slug = generateSlug(this.value);
         document.getElementById('editProductSlug').value = slug;
     });
+    
+    // Clone modal event listeners
+    document.getElementById('cloneImages').addEventListener('change', updateCloneIndicators);
+    document.getElementById('cloneVariants').addEventListener('change', updateCloneIndicators);
+    
+    function updateCloneIndicators() {
+        const cloneImages = document.getElementById('cloneImages').checked;
+        const cloneVariants = document.getElementById('cloneVariants').checked;
+        
+        const imagesIndicator = document.getElementById('cloneImagesIndicator');
+        const variantsIndicator = document.getElementById('cloneVariantsIndicator');
+        
+        // Update images indicator
+        const imagesIcon = imagesIndicator.querySelector('i');
+        if (cloneImages) {
+            imagesIcon.className = 'fas fa-check text-success me-2';
+        } else {
+            imagesIcon.className = 'fas fa-times text-muted me-2';
+        }
+        
+        // Update variants indicator
+        const variantsIcon = variantsIndicator.querySelector('i');
+        if (cloneVariants) {
+            variantsIcon.className = 'fas fa-check text-success me-2';
+        } else {
+            variantsIcon.className = 'fas fa-times text-muted me-2';
+        }
+    }
     
     // Load categories for dropdowns
     function loadCategories() {
@@ -1720,6 +1910,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         <button type="button" class="btn btn-outline-primary edit-product-btn" data-product-id="${product.id}">
                             <i class="fas fa-edit"></i>
                         </button>
+                        <button type="button" class="btn btn-outline-success clone-product-btn" data-product-id="${product.id}" data-product-name="${product.name}" title="Clone Product">
+                            <i class="fas fa-copy"></i>
+                        </button>
                         <button type="button" class="btn btn-outline-danger delete-product-btn" data-product-id="${product.id}">
                             <i class="fas fa-trash-alt"></i>
                         </button>
@@ -1741,6 +1934,14 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.addEventListener('click', function() {
                 const productId = this.dataset.productId;
                 loadProductDetails(productId);
+            });
+        });
+        
+        document.querySelectorAll('.clone-product-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const productId = this.dataset.productId;
+                const productName = this.dataset.productName;
+                openCloneModal(productId, productName);
             });
         });
         
@@ -1812,6 +2013,95 @@ document.addEventListener('DOMContentLoaded', function() {
                 const page = parseInt(this.dataset.page);
                 loadProducts(page);
             });
+        });
+    }
+    
+    // Product Clone Functions
+    function openCloneModal(productId, productName) {
+        // Set the product details in the modal
+        document.getElementById('cloneProductId').value = productId;
+        document.getElementById('cloneOriginalProductName').textContent = productName;
+        
+        // Reset form to defaults
+        document.getElementById('cloneNameSuffix').value = ' (Copy)';
+        document.getElementById('cloneSkuPrefix').value = 'COPY-';
+        document.getElementById('cloneImages').checked = true;
+        document.getElementById('cloneVariants').checked = true;
+        document.getElementById('copyStock').checked = false;
+        document.getElementById('setAsDraft').checked = true;
+        
+        // Update indicators
+        updateCloneIndicators();
+        
+        // Show the modal
+        const modal = new bootstrap.Modal(document.getElementById('cloneProductModal'));
+        modal.show();
+    }
+    
+    function cloneProduct() {
+        const productId = document.getElementById('cloneProductId').value;
+        const confirmBtn = document.getElementById('confirmCloneBtn');
+        
+        // Disable button and show loading state
+        const originalText = confirmBtn.innerHTML;
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Cloning...';
+        
+        // Prepare clone options
+        const cloneOptions = {
+            name_suffix: document.getElementById('cloneNameSuffix').value,
+            new_sku_prefix: document.getElementById('cloneSkuPrefix').value,
+            clone_images: document.getElementById('cloneImages').checked,
+            clone_variants: document.getElementById('cloneVariants').checked,
+            copy_stock: document.getElementById('copyStock').checked,
+            set_as_draft: document.getElementById('setAsDraft').checked
+        };
+        
+        // Send clone request
+        fetch(`/mb-admin/api/products/${productId}/clone/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(cloneOptions)
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.error || 'Failed to clone product');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('cloneProductModal'));
+                modal.hide();
+                
+                // Refresh product list
+                loadProducts();
+                
+                // Show success message
+                showAlert(data.message, 'success');
+                
+                // Optional: Navigate to edit the cloned product
+                if (confirm('Product cloned successfully! Would you like to edit the cloned product now?')) {
+                    loadProductDetails(data.cloned_product.id);
+                }
+            } else {
+                throw new Error(data.error || 'Unknown error occurred');
+            }
+        })
+        .catch(error => {
+            console.error('Error cloning product:', error);
+            showAlert(`Failed to clone product: ${error.message}`, 'danger');
+        })
+        .finally(() => {
+            // Restore button
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = originalText;
         });
     }
     
