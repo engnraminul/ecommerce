@@ -17,6 +17,7 @@ from django.urls import reverse
 from django.http import JsonResponse
 from decimal import Decimal
 from django.db import transaction
+import json
 
 from .models import DashboardSetting, AdminActivity, Expense
 from .serializers import (
@@ -4376,7 +4377,6 @@ def print_order_invoice(request, order_id):
 
 
 # Hero Content API Endpoints
-import json
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAdminUser])
@@ -4393,8 +4393,8 @@ def hero_content_api(request):
                     'id': slide.id,
                     'title': slide.title,
                     'subtitle': slide.subtitle,
-                    'desktop_image': slide.desktop_image.url if slide.desktop_image else None,
-                    'mobile_image': slide.mobile_image.url if slide.mobile_image else None,
+                    'desktop_image': slide.desktop_image if slide.desktop_image else None,
+                    'mobile_image': slide.mobile_image if slide.mobile_image else None,
                     'primary_button_text': slide.primary_button_text,
                     'primary_button_url': slide.primary_button_url,
                     'secondary_button_text': slide.secondary_button_text,
@@ -4469,8 +4469,8 @@ def hero_content_detail_api(request, slide_id):
                 'id': hero_slide.id,
                 'title': hero_slide.title,
                 'subtitle': hero_slide.subtitle,
-                'desktop_image': hero_slide.desktop_image.url if hero_slide.desktop_image else None,
-                'mobile_image': hero_slide.mobile_image.url if hero_slide.mobile_image else None,
+                'desktop_image': hero_slide.desktop_image if hero_slide.desktop_image else None,
+                'mobile_image': hero_slide.mobile_image if hero_slide.mobile_image else None,
                 'primary_button_text': hero_slide.primary_button_text,
                 'primary_button_url': hero_slide.primary_button_url,
                 'secondary_button_text': hero_slide.secondary_button_text,

@@ -1,4 +1,4 @@
-﻿{% extends 'dashboard/base.html' %}
+{% extends 'dashboard/base.html' %}
 
 {% block title %}Settings - MB Admin{% endblock %}
 
@@ -3319,99 +3319,50 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 100);
             return;
         }
-
-        let slidesHtml = '<div class="list-group">';
         
-        heroSlides.forEach((slide, index) => {
+        let slidesHtml = '<div class="row g-3">';
+        
+        heroSlides.forEach(slide => {
             const desktopImage = slide.desktop_image || 'media/images/placeholder-hero.jpg';
-            const mobileImage = slide.mobile_image || 'media/images/placeholder-hero-mobile.jpg';
             const statusBadge = slide.is_active ? 
                 '<span class="badge bg-success">Active</span>' : 
                 '<span class="badge bg-secondary">Inactive</span>';
             
             slidesHtml += `
-                <div class="list-group-item list-group-item-action">
-                    <div class="row align-items-center">
-                        <!-- Desktop Image Preview -->
-                        <div class="col-md-2">
-                            <div class="position-relative">
-                                <img src="${desktopImage}" 
-                                     class="img-fluid rounded" 
-                                     style="height: 80px; width: 120px; object-fit: cover;" 
-                                     alt="${slide.title}" 
-                                     onerror="this.src='data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" width=\\"120\\" height=\\"80\\"><rect width=\\"100%\\" height=\\"100%\\" fill=\\"%23e9ecef\\"/><text x=\\"50%\\" y=\\"50%\\" text-anchor=\\"middle\\" dy=\\".35em\\" fill=\\"%236c757d\\" font-size=\\"12\\">Desktop</text></svg>'">
-                                <div class="position-absolute top-0 start-0">
-                                    <small class="badge bg-primary text-white" style="font-size: 0.6rem;">Desktop</small>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Mobile Image Preview -->
-                        <div class="col-md-2">
-                            <div class="position-relative">
-                                <img src="${mobileImage}" 
-                                     class="img-fluid rounded" 
-                                     style="height: 80px; width: 60px; object-fit: cover;" 
-                                     alt="${slide.title} Mobile" 
-                                     onerror="this.src='data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" width=\\"60\\" height=\\"80\\"><rect width=\\"100%\\" height=\\"100%\\" fill=\\"%23e9ecef\\"/><text x=\\"50%\\" y=\\"50%\\" text-anchor=\\"middle\\" dy=\\".35em\\" fill=\\"%236c757d\\" font-size=\\"10\\">Mobile</text></svg>'">
-                                <div class="position-absolute top-0 start-0">
-                                    <small class="badge bg-info text-white" style="font-size: 0.6rem;">Mobile</small>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Slide Information -->
-                        <div class="col-md-5">
-                            <div class="d-flex justify-content-between align-items-start mb-1">
-                                <h6 class="mb-1 fw-bold">${slide.title}</h6>
+                <div class="col-lg-6 col-xl-4">
+                    <div class="card h-100">
+                        <div class="position-relative">
+                            <img src="/${desktopImage}" class="card-img-top" style="height: 150px; object-fit: cover;" 
+                                 alt="${slide.title}" onerror="this.src='data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" width=\\"300\\" height=\\"150\\"><rect width=\\"100%\\" height=\\"100%\\" fill=\\"%23e9ecef\\"/><text x=\\"50%\\" y=\\"50%\\" text-anchor=\\"middle\\" dy=\\".35em\\" fill=\\"%236c757d\\">No Image</text></svg>'">
+                            <div class="position-absolute top-0 end-0 p-2">
                                 ${statusBadge}
                             </div>
-                            <p class="mb-1 text-muted small">${slide.subtitle || 'No subtitle'}</p>
-                            <div class="d-flex gap-2 text-muted small">
-                                <span><i class="fas fa-sort me-1"></i>Order: ${slide.display_order}</span>
-                                <span><i class="fas fa-desktop me-1"></i>${slide.desktop_image ? '✓' : '✗'}</span>
-                                <span><i class="fas fa-mobile me-1"></i>${slide.mobile_image ? '✓' : '✗'}</span>
-                            </div>
-                            <div class="d-flex gap-2 mt-1">
-                                ${slide.primary_button_text ? `<small class="badge bg-light text-dark">BTN: ${slide.primary_button_text}</small>` : ''}
-                                ${slide.secondary_button_text ? `<small class="badge bg-light text-dark">BTN: ${slide.secondary_button_text}</small>` : ''}
-                            </div>
                         </div>
-                        
-                        <!-- Slide Details -->
-                        <div class="col-md-2">
-                            <div class="text-center small text-muted">
-                                <div class="mb-1">
-                                    <span class="badge" style="background-color: ${slide.text_color}; color: ${slide.background_color};">Text</span>
-                                    <span class="badge" style="background-color: ${slide.background_color}; color: ${slide.text_color};">BG</span>
-                                </div>
-                                <div class="mb-1">
-                                    <i class="fas fa-${slide.text_shadow ? 'check-circle text-success' : 'times-circle text-muted'}" title="Text Shadow"></i>
-                                    <span class="ms-1">Shadow</span>
-                                </div>
-                                ${slide.background_gradient ? '<div><small class="text-info"><i class="fas fa-palette"></i> Gradient</small></div>' : ''}
-                            </div>
-                        </div>
-                        
-                        <!-- Action Buttons -->
-                        <div class="col-md-1">
-                            <div class="btn-group-vertical btn-group-sm" role="group">
-                                <button class="btn btn-outline-primary btn-sm" 
-                                        onclick="editHeroSlide(${slide.id})" 
-                                        title="Edit Slide">
+                        <div class="card-body">
+                            <h6 class="card-title mb-2">${slide.title}</h6>
+                            <p class="card-text text-muted small mb-3">${slide.subtitle}</p>
+                            <div class="d-flex gap-1">
+                                <button class="btn btn-sm btn-outline-primary" onclick="editHeroSlide(${slide.id})" title="Edit Slide">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button class="btn btn-outline-${slide.is_active ? 'warning' : 'success'} btn-sm" 
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteHeroSlide(${slide.id})" title="Delete Slide">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <button class="btn btn-sm ${slide.is_active ? 'btn-outline-warning' : 'btn-outline-success'}" 
                                         onclick="toggleSlideStatus(${slide.id})" 
                                         title="${slide.is_active ? 'Deactivate' : 'Activate'} Slide">
                                     <i class="fas fa-${slide.is_active ? 'eye-slash' : 'eye'}"></i>
                                 </button>
-                                <button class="btn btn-outline-danger btn-sm" 
-                                        onclick="deleteHeroSlide(${slide.id})" 
-                                        title="Delete Slide">
-                                    <i class="fas fa-trash"></i>
-                                </button>
                             </div>
+                        </div>
+                        <div class="card-footer bg-light">
+                            <small class="text-muted">
+                                <i class="fas fa-sort me-1"></i>Order: ${slide.display_order}
+                                <span class="ms-2">
+                                    <i class="fas fa-desktop me-1"></i>${slide.desktop_image ? 'Desktop ✓' : 'Desktop ✗'}
+                                    <i class="fas fa-mobile ms-2 me-1"></i>${slide.mobile_image ? 'Mobile ✓' : 'Mobile ✗'}
+                                </span>
+                            </small>
                         </div>
                     </div>
                 </div>
