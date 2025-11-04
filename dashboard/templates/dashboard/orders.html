@@ -1126,9 +1126,9 @@
                                         <td colspan="5" class="text-end">Shipping:</td>
                                         <td class="text-end" id="orderDetailShipping"></td>
                                     </tr>
-                                    <tr>
-                                        <td colspan="5" class="text-end">Tax:</td>
-                                        <td class="text-end" id="orderDetailTax"></td>
+                                    <tr id="orderDetailCouponRow" style="display: none;">
+                                        <td colspan="5" class="text-end text-success">Coupon Discount (<span id="orderDetailCouponCode"></span>):</td>
+                                        <td class="text-end text-success" id="orderDetailCouponDiscount"></td>
                                     </tr>
                                     <tr>
                                         <td colspan="5" class="text-end fw-bold">Total:</td>
@@ -3309,14 +3309,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         ${variantSku ? `<br><small class="text-muted">SKU: ${variantSku}</small>` : ''}
                     </td>
                     <td class="text-center align-middle">${quantity}</td>
-                    <td class="text-end align-middle">$${formattedPrice}</td>
-                    <td class="text-end align-middle">$${formattedTotal}</td>
+                    <td class="text-end align-middle">৳${formattedPrice}</td>
+                    <td class="text-end align-middle">৳${formattedTotal}</td>
                 `;
                 tbody.appendChild(tr);
                 
                 // Add to subtotal
                 subtotal += itemTotal;
-                console.log(`Added $${itemTotal} to subtotal, now: $${subtotal}`);
+                console.log(`Added ৳${itemTotal} to subtotal, now: ৳${subtotal}`);
                 
             } catch (error) {
                 console.error(`Error rendering order item ${index}:`, error, item);
@@ -3347,21 +3347,37 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // Set subtotal
-        document.getElementById('orderDetailSubtotal').textContent = `$${subtotal.toFixed(2)}`;
+        document.getElementById('orderDetailSubtotal').textContent = `৳${subtotal.toFixed(2)}`;
         
         // Get current order for shipping and tax info
         const currentOrder = window.currentOrderData;
         console.log('Current order for totals:', currentOrder);
         
-        // Set shipping, tax, and grand total using order data
+        // Set shipping, tax, coupon discount, and grand total using order data
         const shipping = currentOrder && currentOrder.shipping_cost ? Number(currentOrder.shipping_cost) : 0;
         const tax = currentOrder && currentOrder.tax_amount ? Number(currentOrder.tax_amount) : 0;
+        const couponDiscount = currentOrder && currentOrder.coupon_discount ? Number(currentOrder.coupon_discount) : 0;
         
-        console.log(`Shipping: $${shipping}, Tax: $${tax}, Subtotal: $${subtotal}`);
+        console.log(`Shipping: ৳${shipping}, Tax: ৳${tax}, Subtotal: ৳${subtotal}, Coupon Discount: ৳${couponDiscount}`);
         
-        document.getElementById('orderDetailShipping').textContent = `$${shipping.toFixed(2)}`;
-        document.getElementById('orderDetailTax').textContent = `$${tax.toFixed(2)}`;
-        document.getElementById('orderDetailGrandTotal').textContent = `$${(subtotal + shipping + tax).toFixed(2)}`;
+        document.getElementById('orderDetailShipping').textContent = `৳${shipping.toFixed(2)}`;
+        
+        // Handle coupon discount display
+        const couponRow = document.getElementById('orderDetailCouponRow');
+        const couponCodeElement = document.getElementById('orderDetailCouponCode');
+        const couponDiscountElement = document.getElementById('orderDetailCouponDiscount');
+        
+        if (couponDiscount > 0 && currentOrder.coupon_code) {
+            couponRow.style.display = 'table-row';
+            couponCodeElement.textContent = currentOrder.coupon_code;
+            couponDiscountElement.textContent = `-৳${couponDiscount.toFixed(2)}`;
+        } else {
+            couponRow.style.display = 'none';
+        }
+        
+        // Calculate and display grand total (subtotal + shipping + tax - coupon_discount)
+        const grandTotal = subtotal + shipping + tax - couponDiscount;
+        document.getElementById('orderDetailGrandTotal').textContent = `৳${grandTotal.toFixed(2)}`;
         
         // Update products list in the shipping address section
         const productsListElement = document.getElementById('orderProductsText');
