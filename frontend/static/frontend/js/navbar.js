@@ -3,7 +3,16 @@
 class NavbarManager {
     constructor() {
         this.searchTimeout = null; // Initialize search timeout
+        this.scrollPosition = 0; // Store scroll position for mobile menu
+        this.preventScroll = this.preventScroll.bind(this); // Bind the method
         this.init();
+    }
+
+    // Prevent scroll events when mobile menu is open
+    preventScroll(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
     }
 
     init() {
@@ -120,12 +129,37 @@ class NavbarManager {
         const overlay = document.querySelector('#mobileMenuOverlay');
         const menuToggle = document.querySelector('#mobileMenuToggle');
         const body = document.body;
+        const html = document.documentElement;
         
         if (overlay && menuToggle) {
             console.log('Adding active class to overlay');
+            
+            // Store current scroll position
+            this.scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+            
+            // Add classes and styles
             overlay.classList.add('active');
             menuToggle.classList.add('active');
+            body.classList.add('mobile-menu-active');
+            html.classList.add('mobile-menu-active');
+            
+            // Prevent scrolling with multiple methods
             body.style.overflow = 'hidden';
+            body.style.position = 'fixed';
+            body.style.top = `-${this.scrollPosition}px`;
+            body.style.width = '100%';
+            body.style.height = '100%';
+            
+            html.style.overflow = 'hidden';
+            html.style.height = '100%';
+            
+            // Force the overlay to the highest z-index
+            overlay.style.zIndex = '999999';
+            overlay.style.position = 'fixed';
+            
+            // Disable touch events on body to prevent scroll
+            body.addEventListener('touchmove', this.preventScroll, { passive: false });
+            body.addEventListener('scroll', this.preventScroll, { passive: false });
             
             // Update cart count in mobile menu
             this.updateMobileCartCount();
@@ -147,12 +181,38 @@ class NavbarManager {
         const overlay = document.querySelector('#mobileMenuOverlay');
         const menuToggle = document.querySelector('#mobileMenuToggle');
         const body = document.body;
+        const html = document.documentElement;
         
         if (overlay && menuToggle) {
             console.log('Removing active class from overlay');
             overlay.classList.remove('active');
             menuToggle.classList.remove('active');
+            body.classList.remove('mobile-menu-active');
+            html.classList.remove('mobile-menu-active');
+            
+            // Restore scrolling
             body.style.overflow = '';
+            body.style.position = '';
+            body.style.top = '';
+            body.style.width = '';
+            body.style.height = '';
+            
+            html.style.overflow = '';
+            html.style.height = '';
+            
+            // Restore scroll position
+            if (this.scrollPosition !== undefined) {
+                window.scrollTo(0, this.scrollPosition);
+                this.scrollPosition = undefined;
+            }
+            
+            // Reset z-index and position
+            overlay.style.zIndex = '';
+            overlay.style.position = '';
+            
+            // Remove touch event listeners
+            body.removeEventListener('touchmove', this.preventScroll);
+            body.removeEventListener('scroll', this.preventScroll);
         } else {
             console.error('Could not find overlay or menu toggle elements');
         }
