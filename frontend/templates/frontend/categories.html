@@ -74,7 +74,7 @@
                     <div class="subcategory-grid">
                         {% for subcategory in category.subcategories.all|slice:":4" %}
                         <a href="{% url 'frontend:category_products' subcategory.slug %}" class="subcategory-chip">
-                            <span>{{ subcategory.name }}</span>
+                            <span>{{ subcategory.name }} ({{ subcategory.products.count }}{{ subcategory.products.count|pluralize }})</span>
                             <i class="fas fa-chevron-right"></i>
                         </a>
                         {% endfor %}
