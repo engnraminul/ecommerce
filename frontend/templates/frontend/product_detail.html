@@ -321,7 +321,7 @@
                     <div class="description-content">
                         <h3>Product Description</h3>
                         <div class="description-text">
-                            {{ product.description|linebreaks }}
+                            {{ product.description|safe }}
                         </div>
                         {% if product.features %}
                         <h4>Key Features</h4>
@@ -588,22 +588,16 @@
                         <h3>Shipping & Returns</h3>
                         <div class="shipping-info">
                             <div class="info-section">
-                                <h4><i class="fas fa-truck"></i> Shipping Information</h4>
-                                <ul>
-                                    <li>Free standard shipping on orders over $50</li>
-                                    <li>Express shipping available for $9.99</li>
-                                    <li>Orders processed within 1-2 business days</li>
-                                    <li>Delivery time: 3-7 business days</li>
-                                </ul>
+                                <h4><i class="fas fa-truck"></i> {{ site_settings.shipping_info_title|default:"Shipping Information" }}</h4>
+                                <div class="shipping-policy-content">
+                                    {{ site_settings.shipping_info_content|safe }}
+                                </div>
                             </div>
                             <div class="info-section">
-                                <h4><i class="fas fa-undo"></i> Return Policy</h4>
-                                <ul>
-                                    <li>30-day return window from delivery date</li>
-                                    <li>Items must be in original condition</li>
-                                    <li>Free return shipping on defective items</li>
-                                    <li>Refunds processed within 5-10 business days</li>
-                                </ul>
+                                <h4><i class="fas fa-undo"></i> {{ site_settings.return_policy_title|default:"Return Policy" }}</h4>
+                                <div class="return-policy-content">
+                                    {{ site_settings.return_policy_content|safe }}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1635,6 +1629,153 @@
         line-height: 1.8;
         color: var(--secondary-color);
         margin-bottom: 2rem;
+    }
+
+    /* TinyMCE Content Styling */
+    .description-text table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.5rem 0;
+        font-size: 0.95rem;
+        background: var(--white);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border-radius: var(--border-radius);
+        overflow: hidden;
+    }
+
+    .description-text table th,
+    .description-text table td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+        vertical-align: top;
+    }
+
+    .description-text table th {
+        background: var(--primary-color);
+        color: var(--white);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+    }
+
+    .description-text table tr:nth-child(even) {
+        background: #f8f9fa;
+    }
+
+    .description-text table tr:hover {
+        background: var(--light-color);
+    }
+
+    .description-text table td:first-child {
+        font-weight: 600;
+        color: var(--dark-color);
+        background: rgba(147, 0, 0, 0.05);
+        border-right: 1px solid var(--border-color);
+        min-width: 120px;
+    }
+
+    .description-text table td:last-child {
+        color: var(--text-color);
+    }
+
+    /* Handle empty cells in specifications */
+    .description-text table td:empty {
+        background: transparent;
+        border: none;
+    }
+
+    .description-text table td:empty + td {
+        padding-left: 2rem;
+        position: relative;
+    }
+
+    .description-text table td:empty + td::before {
+        content: '•';
+        position: absolute;
+        left: 0.75rem;
+        color: var(--primary-color);
+        font-weight: bold;
+    }
+
+    /* Additional TinyMCE content styling */
+    .description-text p {
+        margin-bottom: 1rem;
+        line-height: 1.6;
+    }
+
+    .description-text ul,
+    .description-text ol {
+        margin: 1rem 0;
+        padding-left: 2rem;
+    }
+
+    .description-text ul li,
+    .description-text ol li {
+        margin-bottom: 0.5rem;
+        line-height: 1.6;
+    }
+
+    .description-text h1,
+    .description-text h2,
+    .description-text h3,
+    .description-text h4,
+    .description-text h5,
+    .description-text h6 {
+        margin: 1.5rem 0 1rem 0;
+        color: var(--dark-color);
+        font-weight: 600;
+    }
+
+    .description-text h1 { font-size: 2rem; }
+    .description-text h2 { font-size: 1.75rem; }
+    .description-text h3 { font-size: 1.5rem; }
+    .description-text h4 { font-size: 1.25rem; }
+    .description-text h5 { font-size: 1.1rem; }
+    .description-text h6 { font-size: 1rem; }
+
+    .description-text strong,
+    .description-text b {
+        font-weight: 600;
+        color: var(--dark-color);
+    }
+
+    .description-text em,
+    .description-text i {
+        font-style: italic;
+    }
+
+    .description-text blockquote {
+        margin: 1.5rem 0;
+        padding: 1rem 1.5rem;
+        border-left: 4px solid var(--primary-color);
+        background: var(--light-color);
+        border-radius: 0 var(--border-radius) var(--border-radius) 0;
+        font-style: italic;
+        color: var(--secondary-color);
+    }
+
+    .description-text code {
+        background: var(--light-color);
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+        color: var(--primary-color);
+    }
+
+    .description-text pre {
+        background: var(--light-color);
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        overflow-x: auto;
+        margin: 1rem 0;
+    }
+
+    .description-text pre code {
+        background: none;
+        padding: 0;
     }
 
     .features-list {
@@ -2783,6 +2924,80 @@
         transition: all 0.3s ease;
     }
 
+    /* Responsive table styles for mobile */
+    @media (max-width: 768px) {
+        .description-text table {
+            font-size: 0.9rem;
+            margin: 1rem 0;
+        }
+
+        .description-text table th,
+        .description-text table td {
+            padding: 0.5rem 0.75rem;
+        }
+
+        .description-text table td:first-child {
+            min-width: 100px;
+            font-size: 0.85rem;
+        }
+
+        /* Stack table for very small screens */
+        @media (max-width: 480px) {
+            .description-text table,
+            .description-text table tbody,
+            .description-text table tr,
+            .description-text table td {
+                display: block;
+                width: 100%;
+            }
+
+            .description-text table {
+                box-shadow: none;
+                background: transparent;
+            }
+
+            .description-text table tr {
+                background: var(--white);
+                border-radius: var(--border-radius);
+                margin-bottom: 1rem;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+            }
+
+            .description-text table td {
+                border-bottom: none;
+                border-right: none;
+                padding: 0.75rem 1rem;
+                text-align: left;
+            }
+
+            .description-text table td:first-child {
+                background: var(--primary-color);
+                color: var(--white);
+                font-weight: 600;
+                min-width: auto;
+                border-radius: 0;
+            }
+
+            .description-text table td:last-child {
+                background: var(--white);
+                border-top: 1px solid var(--border-color);
+            }
+
+            .description-text table td:empty {
+                display: none;
+            }
+
+            .description-text table td:empty + td {
+                padding-left: 1rem;
+            }
+
+            .description-text table td:empty + td::before {
+                left: 0.5rem;
+            }
+        }
+    }
+
     /* Responsive Design */
     @media (max-width: 1024px) {
         .product-detail-grid {
@@ -2936,7 +3151,6 @@
         }
 
         .action-buttons {
-            flex-direction: column;
             gap: 0.75rem;
         }
 

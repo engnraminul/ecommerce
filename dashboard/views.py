@@ -2454,6 +2454,14 @@ def handle_general_settings_update(request):
         site_settings.feature4_title = request.POST.get('feature4_title', site_settings.feature4_title)
         site_settings.feature4_subtitle = request.POST.get('feature4_subtitle', site_settings.feature4_subtitle)
         
+        # Update shipping and return policy content
+        site_settings.shipping_info_title = request.POST.get('shipping_info_title', site_settings.shipping_info_title)
+        site_settings.shipping_info_content = request.POST.get('shipping_info_content', site_settings.shipping_info_content)
+        site_settings.return_policy_title = request.POST.get('return_policy_title', site_settings.return_policy_title)
+        site_settings.return_policy_content = request.POST.get('return_policy_content', site_settings.return_policy_content)
+        
+
+        
         # Set as active and save
         site_settings.is_active = True
         site_settings.save()

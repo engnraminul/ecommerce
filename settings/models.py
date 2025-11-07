@@ -203,6 +203,37 @@ class SiteSettings(models.Model):
     feature4_title = models.CharField(max_length=100, default="Secure Payment")
     feature4_subtitle = models.CharField(max_length=200, default="Safe & secure transactions")
     
+    # Shipping & Returns Content Management
+    shipping_info_title = models.CharField(
+        max_length=200, 
+        default="Shipping Information",
+        help_text="Title for shipping information section"
+    )
+    shipping_info_content = models.TextField(
+        default="""• Free standard shipping on orders over $50
+• Express shipping available for $9.99
+• Orders processed within 1-2 business days
+• Delivery time: 3-7 business days
+• Free shipping on all orders within Bangladesh
+• International shipping available to select countries""",
+        help_text="Shipping information content (supports HTML and line breaks)"
+    )
+    
+    return_policy_title = models.CharField(
+        max_length=200, 
+        default="Return Policy",
+        help_text="Title for return policy section"
+    )
+    return_policy_content = models.TextField(
+        default="""• 30-day return window from delivery date
+• Items must be in original condition
+• Free return shipping on defective items
+• Refunds processed within 5-10 business days
+• Original packaging required for returns
+• Contact customer service to initiate returns""",
+        help_text="Return policy content (supports HTML and line breaks)"
+    )
+    
     # Metadata
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
