@@ -124,6 +124,7 @@
                         </div>
                     </div>
 
+
                                         <!-- Product Variants -->
                     {% if product.variants.exists %}
                     <div class="product-variants">
@@ -267,9 +268,50 @@
                         {% endif %}
                     </div>
 
-
-
-                    
+                    <!-- Estimated Delivery Date -->
+                    <div class="estimated-delivery-section">
+                        <h3 class="delivery-title">
+                            <i class="fas fa-shipping-fast"></i>
+                            সম্ভাব্য ডেলিভারি তারিখ
+                        </h3>
+                        {% if delivery_estimates.settings.custom_date_set %}
+                            <div class="note-item" style="color: #f59e0b; font-weight: 600;">
+                                <i class="fas fa-calendar-check"></i>
+                                <span>আমাদের কার্যক্রম বন্ধ আছে। কার্যক্রম শুরু হবে {{ delivery_estimates.settings.today_date|date:"F j, Y" }}</span>
+                            </div>
+                        {% endif %}
+                        <div class="delivery-areas">
+                            <!-- Dhaka City Delivery -->
+                            <div class="delivery-area dhaka-area">
+                                <div class="delivery-area-header">
+                                    <i class="fas fa-city"></i>
+                                    <span class="area-name">{{ delivery_estimates.dhaka.area_label }}</span>
+                                </div>
+                                <div class="delivery-date">
+                                    <span class="date-range">{{ delivery_estimates.dhaka.date_range }}</span>
+                                </div>
+                                <!-- <div class="delivery-note">
+                                    <i class="fas fa-truck-fast"></i>
+                                    <span>Fast delivery within city ({{ delivery_estimates.dhaka.days_range }} day{{ delivery_estimates.dhaka.days_range|pluralize }})</span>
+                                </div> -->
+                            </div>
+                            
+                            <!-- Outside Dhaka Delivery -->
+                            <div class="delivery-area outside-area">
+                                <div class="delivery-area-header">
+                                    <i class="fas fa-map"></i>
+                                    <span class="area-name">{{ delivery_estimates.outside.area_label }}</span>
+                                </div>
+                                <div class="delivery-date">
+                                    <span class="date-range">{{ delivery_estimates.outside.date_range }}</span>
+                                </div>
+                                <!-- <div class="delivery-note">
+                                    <i class="fas fa-truck"></i>
+                                    <span>Standard nationwide delivery ({{ delivery_estimates.outside.days_range }} day{{ delivery_estimates.outside.days_range|pluralize }})</span>
+                                </div> -->
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Share Options -->
                     <div class="share-section">
@@ -1470,6 +1512,202 @@
     .feature-item span {
         color: var(--secondary-color);
         font-size: 0.9rem;
+    }
+
+    /* Estimated Delivery Section */
+    .estimated-delivery-section {
+        margin-bottom: 2rem;
+        padding: 2rem;
+        background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(147, 0, 0, 0.1);
+    }
+
+    .delivery-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .delivery-title i {
+        color: var(--primary-color);
+        font-size: 1.3rem;
+    }
+
+    .delivery-areas {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .delivery-area {
+        padding: 1.5rem;
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .delivery-area:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .dhaka-area {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: 2px solid #10b981;
+    }
+
+    .dhaka-area::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20px;
+        width: 100px;
+        height: 100px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+
+    .outside-area {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        border: 2px solid #f59e0b;
+    }
+
+    .outside-area::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20px;
+        width: 100px;
+        height: 100px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+
+    .delivery-area-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .delivery-area-header i {
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+
+    .area-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .delivery-date {
+        margin-bottom: 0.75rem;
+    }
+
+    .date-range {
+        font-size: 1.4rem;
+        font-weight: 700;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .delivery-note {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+
+    .delivery-info {
+        padding: 1.5rem;
+        background: rgba(147, 0, 0, 0.05);
+        border-radius: 12px;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .current-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        font-size: 0.95rem;
+        color: var(--secondary-color);
+    }
+
+    .current-info i {
+        color: var(--primary-color);
+    }
+
+    .separator {
+        color: var(--border-color);
+        font-weight: 300;
+    }
+
+    .cutoff-status {
+        font-weight: 600;
+        color: var(--dark-color);
+    }
+
+    .delivery-notes {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .note-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--secondary-color);
+    }
+
+    .note-item i {
+        color: var(--primary-color);
+        margin-top: 0.1rem;
+        flex-shrink: 0;
+    }
+
+    /* Responsive Design for Delivery Section */
+    @media (max-width: 768px) {
+        .delivery-areas {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .delivery-area {
+            padding: 1.25rem;
+        }
+
+        .current-info {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .separator {
+            display: none;
+        }
+
+        .estimated-delivery-section {
+            padding: 1.5rem;
+        }
+
+        .delivery-title {
+            font-size: 1.3rem;
+        }
     }
 
     /* Share Section */

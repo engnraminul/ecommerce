@@ -763,6 +763,133 @@
                                 </div>
                             </div>
                             
+                            <!-- Estimated Delivery Settings -->
+                            <div class="card mb-4">
+                                <div class="card-header text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                    <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Estimated Delivery Settings</h5>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Custom Today Date Setting -->
+                                    <div class="mb-4">
+                                        <h6 class="text-primary mb-3"><i class="fas fa-calendar-check me-2"></i>Today Date Configuration</h6>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label for="customTodayDate" class="form-label fw-medium">Custom Today Date (Optional)</label>
+                                                <input type="date" class="form-control" id="customTodayDate" name="custom_today_date" 
+                                                       value="{{ site_settings.custom_today_date|date:'Y-m-d' }}" >
+                                                <div class="form-text text-muted mt-2">
+                                                    <i class="fas fa-info-circle me-1"></i>
+                                                    Leave empty to use current date. Use this when your office is closed to set a future date as "today".
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="deliveryCutoffTime" class="form-label fw-medium">Daily Cutoff Time</label>
+                                                <input type="time" class="form-control" id="deliveryCutoffTime" name="delivery_cutoff_time" 
+                                                       value="{{ site_settings.delivery_cutoff_time|time:'H:i' }}" >
+                                                <div class="form-text text-muted mt-2">
+                                                    <i class="fas fa-clock me-1"></i>
+                                                    Orders placed after this time will be processed the next day (Default: 4:00 PM).
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <hr class="my-4">
+                                    
+                                    <!-- Delivery Areas Configuration -->
+                                    <div class="mb-4">
+                                        <h6 class="text-success mb-3"><i class="fas fa-map-marker-alt me-2"></i>Delivery Areas & Time</h6>
+                                        
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="deliveryAreaDhakaLabel" class="form-label fw-medium">Dhaka Area Label</label>
+                                                <input type="text" class="form-control" id="deliveryAreaDhakaLabel" name="delivery_area_dhaka_label" 
+                                                       value="{{ site_settings.delivery_area_dhaka_label|default:'Inside Dhaka City' }}" 
+                                                       placeholder="Inside Dhaka City">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="deliveryAreaOutsideLabel" class="form-label fw-medium">Outside Dhaka Area Label</label>
+                                                <input type="text" class="form-control" id="deliveryAreaOutsideLabel" name="delivery_area_outside_label" 
+                                                       value="{{ site_settings.delivery_area_outside_label|default:'Outside Dhaka City' }}" 
+                                                       placeholder="Outside Dhaka City">
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="card border-success">
+                                                    <div class="card-header bg-success text-white">
+                                                        <h6 class="mb-0"><i class="fas fa-city me-2"></i>Dhaka City Delivery</h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="row">
+                                                            <div class="col-6">
+                                                                <label for="dhakaDeliveryDaysMin" class="form-label fw-medium">Min Days</label>
+                                                                <input type="number" class="form-control" id="dhakaDeliveryDaysMin" 
+                                                                       name="dhaka_delivery_days_min" min="0" max="30"
+                                                                       value="{{ site_settings.dhaka_delivery_days_min|default:'1' }}" 
+                                                                       placeholder="1">
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <label for="dhakaDeliveryDaysMax" class="form-label fw-medium">Max Days</label>
+                                                                <input type="number" class="form-control" id="dhakaDeliveryDaysMax" 
+                                                                       name="dhaka_delivery_days_max" min="1" max="30"
+                                                                       value="{{ site_settings.dhaka_delivery_days_max|default:'2' }}" 
+                                                                       placeholder="2">
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-text text-muted mt-2">
+                                                            <i class="fas fa-truck-fast me-1"></i>
+                                                            Days added to processing date for Dhaka delivery.
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="card border-warning">
+                                                    <div class="card-header bg-warning text-dark">
+                                                        <h6 class="mb-0"><i class="fas fa-map me-2"></i>Outside Dhaka Delivery</h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="row">
+                                                            <div class="col-6">
+                                                                <label for="outsideDhakaDeliveryDaysMin" class="form-label fw-medium">Min Days</label>
+                                                                <input type="number" class="form-control" id="outsideDhakaDeliveryDaysMin" 
+                                                                       name="outside_dhaka_delivery_days_min" min="0" max="30"
+                                                                       value="{{ site_settings.outside_dhaka_delivery_days_min|default:'1' }}" 
+                                                                       placeholder="1">
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <label for="outsideDhakaDeliveryDaysMax" class="form-label fw-medium">Max Days</label>
+                                                                <input type="number" class="form-control" id="outsideDhakaDeliveryDaysMax" 
+                                                                       name="outside_dhaka_delivery_days_max" min="1" max="30"
+                                                                       value="{{ site_settings.outside_dhaka_delivery_days_max|default:'3' }}" 
+                                                                       placeholder="3">
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-text text-muted mt-2">
+                                                            <i class="fas fa-truck me-1"></i>
+                                                            Days added to processing date for outside Dhaka delivery.
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-lightbulb me-2"></i>
+                                        <strong>How it works:</strong> 
+                                        <ul class="mb-0 mt-2">
+                                            <li>If current time is before cutoff time: Delivery starts from tomorrow</li>
+                                            <li>If current time is after cutoff time: Delivery starts from day after tomorrow</li>
+                                            <li>Custom today date overrides current date for delivery calculations</li>
+                                            <li>Example: Today Nov 8, cutoff 4 PM, order at 3 PM → Dhaka: Nov 9-10, Outside: Nov 9-11</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <button type="button" class="btn btn-primary" id="saveGeneralSettingsBtn">
                                 <i class="fas fa-save me-1"></i> Save General Settings
                             </button>

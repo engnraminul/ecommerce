@@ -197,6 +197,10 @@ def product_detail(request, slug):
     else:
         one_star_percentage = two_star_percentage = three_star_percentage = four_star_percentage = five_star_percentage = 0
     
+    # Get delivery estimates
+    from settings.utils import get_formatted_delivery_estimates
+    delivery_estimates = get_formatted_delivery_estimates()
+    
     context = {
         'product': product,
         'related_products': related_products,
@@ -213,6 +217,8 @@ def product_detail(request, slug):
         'three_star_percentage': three_star_percentage,
         'four_star_percentage': four_star_percentage,
         'five_star_percentage': five_star_percentage,
+        # Add delivery estimates
+        'delivery_estimates': delivery_estimates,
     }
     return render(request, 'frontend/product_detail.html', context)
 

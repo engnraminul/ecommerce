@@ -234,6 +234,43 @@ class SiteSettings(models.Model):
         help_text="Return policy content (supports HTML and line breaks)"
     )
     
+    # Estimated Delivery Settings
+    custom_today_date = models.DateField(
+        blank=True,
+        null=True,
+        help_text="Custom date to use as 'today' for delivery calculations. Leave empty to use current date."
+    )
+    delivery_cutoff_time = models.TimeField(
+        default="16:00",  # 4 PM
+        help_text="Orders placed after this time will be processed the next day (24-hour format)"
+    )
+    dhaka_delivery_days_min = models.PositiveIntegerField(
+        default=1,
+        help_text="Minimum delivery days for Dhaka City (days added to processing date)"
+    )
+    dhaka_delivery_days_max = models.PositiveIntegerField(
+        default=2,
+        help_text="Maximum delivery days for Dhaka City (days added to processing date)"
+    )
+    outside_dhaka_delivery_days_min = models.PositiveIntegerField(
+        default=1,
+        help_text="Minimum delivery days for Outside Dhaka (days added to processing date)"
+    )
+    outside_dhaka_delivery_days_max = models.PositiveIntegerField(
+        default=3,
+        help_text="Maximum delivery days for Outside Dhaka (days added to processing date)"
+    )
+    delivery_area_dhaka_label = models.CharField(
+        max_length=100,
+        default="Inside Dhaka City",
+        help_text="Label for Dhaka city delivery area"
+    )
+    delivery_area_outside_label = models.CharField(
+        max_length=100,
+        default="Outside Dhaka City", 
+        help_text="Label for outside Dhaka delivery area"
+    )
+    
     # Metadata
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -2460,7 +2460,36 @@ def handle_general_settings_update(request):
         site_settings.return_policy_title = request.POST.get('return_policy_title', site_settings.return_policy_title)
         site_settings.return_policy_content = request.POST.get('return_policy_content', site_settings.return_policy_content)
         
-
+        # Update estimated delivery settings
+        custom_today_date = request.POST.get('custom_today_date', '').strip()
+        if custom_today_date:
+            from datetime import datetime
+            try:
+                site_settings.custom_today_date = datetime.strptime(custom_today_date, '%Y-%m-%d').date()
+            except:
+                site_settings.custom_today_date = None
+        else:
+            site_settings.custom_today_date = None
+            
+        delivery_cutoff_time = request.POST.get('delivery_cutoff_time', '').strip()
+        if delivery_cutoff_time:
+            try:
+                site_settings.delivery_cutoff_time = datetime.strptime(delivery_cutoff_time, '%H:%M').time()
+            except:
+                pass  # Keep existing value if invalid
+                
+        # Update delivery area labels
+        site_settings.delivery_area_dhaka_label = request.POST.get('delivery_area_dhaka_label', site_settings.delivery_area_dhaka_label)
+        site_settings.delivery_area_outside_label = request.POST.get('delivery_area_outside_label', site_settings.delivery_area_outside_label)
+        
+        # Update delivery days
+        try:
+            site_settings.dhaka_delivery_days_min = int(request.POST.get('dhaka_delivery_days_min', site_settings.dhaka_delivery_days_min))
+            site_settings.dhaka_delivery_days_max = int(request.POST.get('dhaka_delivery_days_max', site_settings.dhaka_delivery_days_max))
+            site_settings.outside_dhaka_delivery_days_min = int(request.POST.get('outside_dhaka_delivery_days_min', site_settings.outside_dhaka_delivery_days_min))
+            site_settings.outside_dhaka_delivery_days_max = int(request.POST.get('outside_dhaka_delivery_days_max', site_settings.outside_dhaka_delivery_days_max))
+        except:
+            pass  # Keep existing values if invalid
         
         # Set as active and save
         site_settings.is_active = True

@@ -1,8 +1,10 @@
 import requests
 import json
 import logging
+from datetime import datetime, date, timedelta
+from django.utils import timezone
 from django.conf import settings
-from .models import Curier
+from .models import Curier, SiteSettings
 
 logger = logging.getLogger(__name__)
 
@@ -145,3 +147,217 @@ def send_order_to_curier(order):
         logger.error(f"Exception while sending order to SteadFast: {str(e)}")
         logger.error(f"Traceback: {traceback.format_exc()}")
         return False, {"error": str(e)}
+
+
+# ===== DELIVERY DATE CALCULATION UTILITIES =====
+
+class DeliveryCalculator:
+    """
+    A utility class for calculating estimated delivery dates based on
+    order placement time, custom settings, and delivery areas.
+    """
+    
+    def __init__(self):
+        self.settings = SiteSettings.get_active_settings()
+        # Bangladesh Standard Time is UTC+6
+        self.bst_offset = timedelta(hours=6)
+    
+    def get_bangladesh_now(self):
+        """Get current datetime in Bangladesh Standard Time (UTC+6)."""
+        utc_now = timezone.now()
+        # Convert UTC to Bangladesh time (UTC+6)
+        if timezone.is_aware(utc_now):
+            # Convert to naive UTC, then add BST offset
+            utc_naive = utc_now.replace(tzinfo=None)
+            bst_naive = utc_naive + self.bst_offset
+        else:
+            # Already naive, assume it's UTC and add offset
+            bst_naive = utc_now + self.bst_offset
+        
+        return bst_naive
+    
+    def get_today_date(self):
+        """
+        Get the effective 'today' date considering custom today date setting.
+        Returns either the custom date (if set) or current date in BST.
+        """
+        if self.settings and self.settings.custom_today_date:
+            return self.settings.custom_today_date
+        return self.get_bangladesh_now().date()
+    
+    def get_current_time(self):
+        """Get current time in Bangladesh Standard Time."""
+        return self.get_bangladesh_now().time()
+    
+    def get_cutoff_time(self):
+        """Get the daily cutoff time for order processing."""
+        if self.settings and self.settings.delivery_cutoff_time:
+            return self.settings.delivery_cutoff_time
+        return datetime.strptime("16:00", "%H:%M").time()  # Default 4 PM
+    
+    def is_after_cutoff(self, order_time=None):
+        """
+        Check if the given time (or current time) is after the cutoff time.
+        
+        Args:
+            order_time: Time to check. If None, uses current time.
+        
+        Returns:
+            bool: True if after cutoff time, False otherwise.
+        """
+        if order_time is None:
+            order_time = self.get_current_time()
+        
+        cutoff = self.get_cutoff_time()
+        return order_time > cutoff
+    
+    def get_processing_start_date(self, order_time=None):
+        """
+        Get the date when order processing will start based on order time.
+        
+        Args:
+            order_time: Time when order was placed. If None, uses current time.
+        
+        Returns:
+            date: The date when order processing starts.
+        """
+        today = self.get_today_date()
+        
+        if self.is_after_cutoff(order_time):
+            # Order placed after cutoff, processing starts day after tomorrow
+            return today + timedelta(days=2)
+        else:
+            # Order placed before cutoff, processing starts tomorrow
+            return today + timedelta(days=1)
+    
+    def get_delivery_dates(self, area='dhaka', order_time=None):
+        """
+        Calculate estimated delivery date range for the given area.
+        
+        Args:
+            area: 'dhaka' or 'outside' for delivery area
+            order_time: Time when order was placed. If None, uses current time.
+        
+        Returns:
+            dict: Contains 'min_date', 'max_date', 'area_label' and 'days_range'
+        """
+        processing_start = self.get_processing_start_date(order_time)
+        
+        if area.lower() == 'dhaka':
+            min_days = self.settings.dhaka_delivery_days_min if self.settings else 1
+            max_days = self.settings.dhaka_delivery_days_max if self.settings else 2
+            area_label = self.settings.delivery_area_dhaka_label if self.settings else "Inside Dhaka City"
+        else:
+            min_days = self.settings.outside_dhaka_delivery_days_min if self.settings else 1
+            max_days = self.settings.outside_dhaka_delivery_days_max if self.settings else 3
+            area_label = self.settings.delivery_area_outside_label if self.settings else "Outside Dhaka City"
+        
+        # Delivery starts from processing date itself, not after processing
+        # For min_days=1, delivery starts on processing day
+        # For min_days=2, delivery starts one day after processing
+        min_date = processing_start + timedelta(days=min_days - 1)
+        max_date = processing_start + timedelta(days=max_days - 1)
+        
+        return {
+            'min_date': min_date,
+            'max_date': max_date,
+            'area_label': area_label,
+            'days_range': f"{min_days}-{max_days}" if min_days != max_days else str(min_days),
+            'processing_start': processing_start
+        }
+    
+    def get_all_delivery_estimates(self, order_time=None):
+        """
+        Get delivery estimates for both Dhaka and outside Dhaka areas.
+        
+        Args:
+            order_time: Time when order was placed. If None, uses current time.
+        
+        Returns:
+            dict: Contains delivery estimates for both areas
+        """
+        return {
+            'dhaka': self.get_delivery_dates('dhaka', order_time),
+            'outside': self.get_delivery_dates('outside', order_time),
+            'today_date': self.get_today_date(),
+            'current_time': self.get_current_time(),
+            'cutoff_time': self.get_cutoff_time(),
+            'is_after_cutoff': self.is_after_cutoff(order_time),
+        }
+    
+    def format_date_range(self, min_date, max_date):
+        """
+        Format date range for display.
+        
+        Args:
+            min_date: Start date
+            max_date: End date
+        
+        Returns:
+            str: Formatted date range (e.g., "10-11 November" or "10 November")
+        """
+        if min_date == max_date:
+            return min_date.strftime("%d %B")
+        
+        if min_date.month == max_date.month:
+            return f"{min_date.strftime('%d')}-{max_date.strftime('%d')} {min_date.strftime('%B')}"
+        else:
+            return f"{min_date.strftime('%d %B')} - {max_date.strftime('%d %B')}"
+    
+    def get_formatted_delivery_info(self, area='dhaka', order_time=None):
+        """
+        Get formatted delivery information ready for display.
+        
+        Args:
+            area: 'dhaka' or 'outside' for delivery area
+            order_time: Time when order was placed. If None, uses current time.
+        
+        Returns:
+            dict: Formatted delivery information
+        """
+        delivery_data = self.get_delivery_dates(area, order_time)
+        
+        return {
+            'area_label': delivery_data['area_label'],
+            'date_range': self.format_date_range(
+                delivery_data['min_date'], 
+                delivery_data['max_date']
+            ),
+            'days_range': delivery_data['days_range'],
+            'min_date': delivery_data['min_date'],
+            'max_date': delivery_data['max_date'],
+            'processing_start': delivery_data['processing_start']
+        }
+
+
+def get_delivery_estimates():
+    """
+    Convenience function to get delivery estimates for both areas.
+    
+    Returns:
+        dict: Contains delivery estimates for both Dhaka and outside Dhaka
+    """
+    calculator = DeliveryCalculator()
+    return calculator.get_all_delivery_estimates()
+
+
+def get_formatted_delivery_estimates():
+    """
+    Get delivery estimates formatted for display in templates.
+    
+    Returns:
+        dict: Formatted delivery estimates for both areas
+    """
+    calculator = DeliveryCalculator()
+    
+    return {
+        'dhaka': calculator.get_formatted_delivery_info('dhaka'),
+        'outside': calculator.get_formatted_delivery_info('outside'),
+        'settings': {
+            'today_date': calculator.get_today_date(),
+            'current_time': calculator.get_current_time().strftime('%I:%M %p'),
+            'cutoff_time': calculator.get_cutoff_time().strftime('%I:%M %p'),
+            'is_after_cutoff': calculator.is_after_cutoff(),
+            'custom_date_set': bool(calculator.settings and calculator.settings.custom_today_date)
+        }
+    }
