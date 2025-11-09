@@ -504,7 +504,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function loadAnalytics() {
-    fetch('/dashboard/api/coupons/analytics/', {
+    fetch('/mb-admin/api/coupons/analytics/', {
         headers: {
             'X-CSRFToken': getCookie('csrftoken')
         }
@@ -538,7 +538,7 @@ function loadCoupons() {
     document.getElementById('coupon-table').style.display = 'none';
     document.getElementById('error-message').style.display = 'none';
     
-    fetch(`/dashboard/api/coupons/?${params}`, {
+    fetch(`/mb-admin/api/coupons/?${params}`, {
         headers: {
             'X-CSRFToken': getCookie('csrftoken')
         }
@@ -691,7 +691,7 @@ function editCoupon(couponId) {
     
     clearModalMessages();
     
-    fetch(`/dashboard/api/coupons/${couponId}/`, {
+    fetch(`/mb-admin/api/coupons/${couponId}/`, {
         headers: {
             'X-CSRFToken': getCookie('csrftoken')
         }
@@ -741,7 +741,7 @@ function saveCoupon(event) {
         }
     });
     
-    const url = currentCouponId ? `/dashboard/api/coupons/${currentCouponId}/` : '/dashboard/api/coupons/';
+    const url = currentCouponId ? `/mb-admin/api/coupons/${currentCouponId}/` : '/mb-admin/api/coupons/';
     const method = currentCouponId ? 'PUT' : 'POST';
     
     fetch(url, {
@@ -776,7 +776,7 @@ function deleteCoupon(couponId, couponCode) {
         return;
     }
     
-    fetch(`/dashboard/api/coupons/${couponId}/`, {
+    fetch(`/mb-admin/api/coupons/${couponId}/`, {
         method: 'DELETE',
         headers: {
             'X-CSRFToken': getCookie('csrftoken')
