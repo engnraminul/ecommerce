@@ -319,7 +319,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{% url 'frontend:about' %}" class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">
+                            <a href="/page/about-us" class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">
                                 About
                             </a>
                         </li>
@@ -335,7 +335,7 @@
                 <div class="promo-banner">
                     <div class="promo-content">
                         <i class="fas fa-shipping-fast"></i>
-                        <span>FREE SHIPPING on orders over ৳2000</span>
+                        <a style="color: white; text-decoration: none;" href="{% url 'frontend:order_tracking' %}">Track Your Order</a>
                     </div>
                 </div>
             </div>
