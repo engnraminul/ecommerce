@@ -365,3 +365,12 @@ AUTHENTICATION_BACKENDS = [
     'users.authentication.EmailVerificationBackend',
     # Removed ModelBackend fallback to enforce email verification
 ]
+
+# reCAPTCHA Settings
+# For demonstration purposes - you should replace these with your actual reCAPTCHA keys
+# Get your keys from: https://www.google.com/recaptcha/admin/create
+RECAPTCHA_SITE_KEY = config('RECAPTCHA_SITE_KEY', default='6LfaffsrAAAAAFD2-bNrYWkEp2D2esUfmDf1l4TA')
+RECAPTCHA_SECRET_KEY = config('RECAPTCHA_SECRET_KEY', default=None)  # Set this in your .env file for production
+
+# For development/demonstration - bypass reCAPTCHA verification if no secret key is set
+RECAPTCHA_BYPASS_FOR_DEMO = config('RECAPTCHA_BYPASS_FOR_DEMO', default=True, cast=bool)

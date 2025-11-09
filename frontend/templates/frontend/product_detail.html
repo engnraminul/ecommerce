@@ -518,10 +518,10 @@
                                 <!-- reCAPTCHA -->
                                 <div class="form-group">
                                     <div class="recaptcha-container">
-                                        <div class="g-recaptcha" data-sitekey="6LfaffsrAAAAAFD2-bNrYWkEp2D2esUfmDf1l4TA" id="reviewRecaptcha"></div>
+                                        <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}" id="reviewRecaptcha"></div>
                                     </div>
                                     <div class="invalid-feedback" id="reviewRecaptchaError" style="display: none; color: #dc3545; margin-top: 0.5rem;"></div>
-                                    <small class="text-muted">Note: For demonstration purposes, you can use any reCAPTCHA site key or complete the challenge.</small>
+                                    <small class="text-muted">Note: For demonstration purposes, reCAPTCHA verification is bypassed. In production, configure proper reCAPTCHA keys.</small>
                                 </div>
                                 
                                 <!-- Submit button -->
@@ -698,7 +698,7 @@
                                     <i class="fas fa-star {% if i|add:0 <= related_product.average_rating %}filled{% endif %}"></i>
                                 {% endfor %}
                             </div>
-                            <span class="rating-count">({{ related_product.total_reviews|default:0 }})</span>
+                            <span class="rating-count">({{ related_product.review_count|default:0 }})</span>
                         </div>
                         
                         <div class="product-price">

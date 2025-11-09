@@ -201,6 +201,10 @@ def product_detail(request, slug):
     from settings.utils import get_formatted_delivery_estimates
     delivery_estimates = get_formatted_delivery_estimates()
     
+    # Get reCAPTCHA site key from settings
+    from django.conf import settings
+    recaptcha_site_key = getattr(settings, 'RECAPTCHA_SITE_KEY', '6LfaffsrAAAAAFD2-bNrYWkEp2D2esUfmDf1l4TA')
+    
     context = {
         'product': product,
         'related_products': related_products,
@@ -219,6 +223,8 @@ def product_detail(request, slug):
         'five_star_percentage': five_star_percentage,
         # Add delivery estimates
         'delivery_estimates': delivery_estimates,
+        # Add reCAPTCHA site key
+        'recaptcha_site_key': recaptcha_site_key,
     }
     return render(request, 'frontend/product_detail.html', context)
 
@@ -1504,25 +1510,36 @@ def submit_review(request, product_id):
         
         # Verify reCAPTCHA with Google
         import requests
-        recaptcha_secret = '6LfafvsrAAAAABFPZ6_your_secret_key_here'  # Replace with your actual secret key
-        recaptcha_verify_url = 'https://www.google.com/recaptcha/api/siteverify'
+        from django.conf import settings
         
-        recaptcha_data = {
-            'secret': recaptcha_secret,
-            'response': recaptcha_response
-        }
+        # Get reCAPTCHA secret key and bypass setting from settings
+        recaptcha_secret = getattr(settings, 'RECAPTCHA_SECRET_KEY', None)
+        bypass_for_demo = getattr(settings, 'RECAPTCHA_BYPASS_FOR_DEMO', True)
         
-        try:
-            recaptcha_result = requests.post(recaptcha_verify_url, data=recaptcha_data, timeout=5)
-            recaptcha_json = recaptcha_result.json()
+        # Check if we should bypass reCAPTCHA verification for demonstration
+        if bypass_for_demo or not recaptcha_secret:
+            # For demonstration purposes - bypass reCAPTCHA verification
+            print("Note: reCAPTCHA verification bypassed for demonstration purposes")
+        else:
+            # Perform actual reCAPTCHA verification
+            recaptcha_verify_url = 'https://www.google.com/recaptcha/api/siteverify'
             
-            if not recaptcha_json.get('success'):
-                return JsonResponse({'success': False, 'errors': {'recaptcha': 'reCAPTCHA verification failed. Please try again.'}}, status=400)
-        except Exception as recaptcha_error:
-            print(f"reCAPTCHA verification error: {recaptcha_error}")
-            # In development, you might want to allow this to pass
-            # For production, uncomment the line below:
-            # return JsonResponse({'success': False, 'errors': {'recaptcha': 'reCAPTCHA verification failed'}}, status=400)
+            recaptcha_data = {
+                'secret': recaptcha_secret,
+                'response': recaptcha_response
+            }
+            
+            try:
+                recaptcha_result = requests.post(recaptcha_verify_url, data=recaptcha_data, timeout=5)
+                recaptcha_json = recaptcha_result.json()
+                
+                if not recaptcha_json.get('success'):
+                    error_codes = recaptcha_json.get('error-codes', [])
+                    print(f"reCAPTCHA verification failed. Error codes: {error_codes}")
+                    return JsonResponse({'success': False, 'errors': {'recaptcha': 'reCAPTCHA verification failed. Please try again.'}}, status=400)
+            except Exception as recaptcha_error:
+                print(f"reCAPTCHA verification error: {recaptcha_error}")
+                return JsonResponse({'success': False, 'errors': {'recaptcha': 'reCAPTCHA verification service temporarily unavailable'}}, status=400)
         
         # Check if authenticated user has already reviewed this product
         if request.user.is_authenticated:
