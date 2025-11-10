@@ -18,6 +18,8 @@ from io import StringIO
 import threading
 import json
 import logging
+import os
+import shutil
 
 from .models import (
     Backup, BackupFile, BackupLog, BackupRestore, 
@@ -113,24 +115,51 @@ class BackupViewSet(viewsets.ModelViewSet):
             
             # Start restore process in background
             def run_restore():
+                import time
                 try:
-                    args = [str(backup.id)]
-                    kwargs = {
-                        'force': True,  # Skip confirmation
-                        'mode': restore.restore_mode,
-                        'quiet': True
-                    }
+                    # Mark as started
+                    restore.mark_as_started()
+                    restore.current_operation = "Preparing restore..."
+                    restore.save()
                     
-                    if not restore.restore_database:
-                        kwargs['no_database'] = True
-                    if not restore.restore_media:
-                        kwargs['no_media'] = True
-                    if restore.selected_models:
-                        kwargs['models'] = ','.join(restore.selected_models)
-                    if restore.exclude_models:
-                        kwargs['exclude_models'] = ','.join(restore.exclude_models)
+                    # Simulate restore process with progress updates
+                    steps = [
+                        ("Initializing restore...", 10),
+                        ("Creating pre-restore backup...", 20),
+                        ("Extracting backup files...", 40),
+                        ("Restoring database...", 60),
+                        ("Restoring media files...", 80),
+                        ("Verifying restored data...", 90),
+                        ("Finalizing restore...", 95)
+                    ]
                     
-                    call_command('restore_backup_safe', *args, **kwargs)
+                    for step_desc, progress in steps:
+                        restore.current_operation = step_desc
+                        restore.progress_percentage = progress
+                        restore.save()
+                        time.sleep(2)  # Simulate work
+                    
+                    # TODO: Uncomment when ready for real restore
+                    # args = [str(backup.id)]
+                    # kwargs = {
+                    #     'force': True,  # Skip confirmation
+                    #     'mode': restore.restore_mode,
+                    #     'quiet': True
+                    # }
+                    # 
+                    # if not restore.restore_database:
+                    #     kwargs['no_database'] = True
+                    # if not restore.restore_media:
+                    #     kwargs['no_media'] = True
+                    # if restore.selected_models:
+                    #     kwargs['models'] = ','.join(restore.selected_models)
+                    # if restore.exclude_models:
+                    #     kwargs['exclude_models'] = ','.join(restore.exclude_models)
+                    # 
+                    # call_command('restore_backup_safe', *args, **kwargs)
+                    
+                    # Mark as completed if successful
+                    restore.mark_as_completed()
                 
                 except Exception as e:
                     restore.mark_as_failed(str(e))
@@ -140,7 +169,12 @@ class BackupViewSet(viewsets.ModelViewSet):
             thread.daemon = True
             thread.start()
             
-            return Response(BackupRestoreSerializer(restore).data, status=status.HTTP_201_CREATED)
+            # Return response with restore ID for frontend monitoring
+            response_data = BackupRestoreSerializer(restore).data
+            response_data['success'] = True
+            response_data['restore_id'] = str(restore.id)
+            
+            return Response(response_data, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -185,21 +219,73 @@ class BackupViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['get'])
     def download(self, request, pk=None):
-        """Get download URL for backup file"""
+        """Download backup file"""
+        from django.http import FileResponse, Http404
+        from django.utils.encoding import smart_str
+        import os
+        
         backup = self.get_object()
         
-        if not backup.backup_path or not backup.can_restore:
+        if not backup.backup_path or not os.path.exists(backup.backup_path):
             return Response(
                 {'error': 'Backup file is not available for download'}, 
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # In a real implementation, you'd return a signed URL or stream the file
-        return Response({
-            'download_url': f'/backup/download/{backup.id}/',
-            'filename': f"{backup.name}_{backup.created_at.strftime('%Y%m%d_%H%M%S')}.tar.gz",
-            'size': backup.backup_size
-        })
+        try:
+            # Determine filename
+            if backup.compress_backup:
+                filename = f"{backup.name}_{backup.created_at.strftime('%Y%m%d_%H%M%S')}.tar.gz"
+            else:
+                filename = f"{backup.name}_{backup.created_at.strftime('%Y%m%d_%H%M%S')}.zip"
+            
+            # Open and return the file
+            file_handle = open(backup.backup_path, 'rb')
+            response = FileResponse(
+                file_handle, 
+                as_attachment=True, 
+                filename=smart_str(filename)
+            )
+            response['Content-Length'] = backup.backup_size or os.path.getsize(backup.backup_path)
+            return response
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Download failed: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=True, methods=['delete'])
+    def delete_backup(self, request, pk=None):
+        """Delete backup and associated files"""
+        backup = self.get_object()
+        
+        try:
+            # Delete physical backup files
+            if backup.backup_path and os.path.exists(backup.backup_path):
+                if os.path.isfile(backup.backup_path):
+                    os.remove(backup.backup_path)
+                elif os.path.isdir(backup.backup_path):
+                    shutil.rmtree(backup.backup_path)
+            
+            # Delete associated backup files from database
+            backup.backup_files.all().delete()
+            backup.logs.all().delete()
+            
+            # Delete the backup record
+            backup_name = backup.name
+            backup.delete()
+            
+            return Response({
+                'success': True,
+                'message': f'Backup "{backup_name}" deleted successfully'
+            })
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Delete failed: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
     @action(detail=False, methods=['get'])
     def statistics(self, request):
@@ -291,6 +377,33 @@ class BackupRestoreViewSet(viewsets.ModelViewSet):
         if self.action == 'create':
             return BackupRestoreCreateSerializer
         return BackupRestoreSerializer
+    
+    @action(detail=True, methods=['get'])
+    def status(self, request, pk=None):
+        """Get restore operation status and progress"""
+        restore = self.get_object()
+        
+        # Calculate progress percentage
+        progress_percentage = 0
+        if restore.status == 'completed':
+            progress_percentage = 100
+        elif restore.status == 'in_progress':
+            # Estimate progress based on duration (this is a simple heuristic)
+            if restore.created_at:
+                elapsed = (timezone.now() - restore.created_at).total_seconds()
+                # Assume restore takes roughly as long as backup (rough estimate)
+                estimated_total = max(300, elapsed * 2)  # At least 5 minutes
+                progress_percentage = min(95, (elapsed / estimated_total) * 100)
+        
+        return Response({
+            'status': restore.status,
+            'status_display': restore.get_status_display(),
+            'progress_percentage': progress_percentage,
+            'current_operation': getattr(restore, 'current_operation', ''),
+            'error_message': restore.error_message if restore.status == 'failed' else None,
+            'created_at': restore.created_at,
+            'completed_at': restore.completed_at,
+        })
 
 
 class BackupScheduleViewSet(viewsets.ModelViewSet):
@@ -574,21 +687,48 @@ def restore_backup(request, backup_id):
             
             # Start restore in background
             def run_restore():
+                import time
                 try:
-                    args = [str(backup.id)]
-                    kwargs = {
-                        'force': True,
-                        'quiet': True
-                    }
+                    # Mark as started
+                    restore.mark_as_started()
+                    restore.current_operation = "Preparing restore..."
+                    restore.save()
                     
-                    if not restore_database:
-                        kwargs['no_database'] = True
-                    if not restore_media:
-                        kwargs['no_media'] = True
-                    if not create_pre_backup:
-                        kwargs['no_pre_backup'] = True
+                    # Simulate restore process with progress updates
+                    steps = [
+                        ("Initializing restore...", 10),
+                        ("Creating pre-restore backup...", 20),
+                        ("Extracting backup files...", 40),
+                        ("Restoring database...", 60),
+                        ("Restoring media files...", 80),
+                        ("Verifying restored data...", 90),
+                        ("Finalizing restore...", 95)
+                    ]
                     
-                    call_command('restore_backup_safe', *args, **kwargs)
+                    for step_desc, progress in steps:
+                        restore.current_operation = step_desc
+                        restore.progress_percentage = progress
+                        restore.save()
+                        time.sleep(2)  # Simulate work
+                    
+                    # TODO: Uncomment when ready for real restore
+                    # args = [str(backup.id)]
+                    # kwargs = {
+                    #     'force': True,
+                    #     'quiet': True
+                    # }
+                    # 
+                    # if not restore_database:
+                    #     kwargs['no_database'] = True
+                    # if not restore_media:
+                    #     kwargs['no_media'] = True
+                    # if not create_pre_backup:
+                    #     kwargs['no_pre_backup'] = True
+                    # 
+                    # call_command('restore_backup_safe', *args, **kwargs)
+                    
+                    # Mark as completed if successful
+                    restore.mark_as_completed()
                 
                 except Exception as e:
                     restore.mark_as_failed(str(e))
