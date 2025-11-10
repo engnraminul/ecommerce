@@ -1,0 +1,30 @@
+[
+{
+  "model": "users.userprofile",
+  "pk": 1,
+  "fields": {
+    "user": 6,
+    "newsletter_subscription": true,
+    "email_notifications": true,
+    "sms_notifications": false,
+    "preferred_currency": "USD",
+    "preferred_language": "en",
+    "created_at": "2025-08-22T06:40:24.613Z",
+    "updated_at": "2025-08-22T06:40:24.613Z"
+  }
+},
+{
+  "model": "users.userprofile",
+  "pk": 2,
+  "fields": {
+    "user": 7,
+    "newsletter_subscription": true,
+    "email_notifications": true,
+    "sms_notifications": false,
+    "preferred_currency": "USD",
+    "preferred_language": "en",
+    "created_at": "2025-08-22T06:42:52.132Z",
+    "updated_at": "2025-08-22T06:42:52.132Z"
+  }
+}
+]

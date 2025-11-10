@@ -1,0 +1,19 @@
+[
+{
+  "model": "users.address",
+  "pk": 1,
+  "fields": {
+    "user": 1,
+    "address_type": "shipping",
+    "address_line_1": "Mirpur 1, Dhaka",
+    "address_line_2": "",
+    "city": "Dhaka",
+    "state": "Bangladesh",
+    "postal_code": "1216",
+    "country": "Bangladesh",
+    "is_default": true,
+    "created_at": "2025-08-22T20:08:58.667Z",
+    "updated_at": "2025-08-22T20:08:58.668Z"
+  }
+}
+]

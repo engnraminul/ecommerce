@@ -1,0 +1,212 @@
+[
+{
+  "model": "contact.contact",
+  "pk": 11,
+  "fields": {
+    "name": "MD AMINUL ISLAM",
+    "phone": "01744773065",
+    "email": "adss.aminul@gmail.com",
+    "subject": "Product Support",
+    "message": "safasfsfafafafsasf|\r\nSda",
+    "attachment": "",
+    "status": "new",
+    "priority": "medium",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+    "admin_notes": "",
+    "assigned_to": null,
+    "submitted_at": "2025-10-29T18:44:55.912Z",
+    "updated_at": "2025-10-29T18:44:55.912Z",
+    "replied_at": null
+  }
+},
+{
+  "model": "contact.contact",
+  "pk": 10,
+  "fields": {
+    "name": "MD AMINUL ISLAM",
+    "phone": "01744773065",
+    "email": "adss.aminul@gmail.com",
+    "subject": "Order Issue",
+    "message": "aaaaaaaaaa",
+    "attachment": "contact_attachments/2025/10/27f45893-682d-47b3-8076-9012f2bbc6bd.png",
+    "status": "read",
+    "priority": "medium",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+    "admin_notes": "",
+    "assigned_to": 1,
+    "submitted_at": "2025-10-29T18:34:49.723Z",
+    "updated_at": "2025-10-29T18:36:10.340Z",
+    "replied_at": null
+  }
+},
+{
+  "model": "contact.contact",
+  "pk": 1,
+  "fields": {
+    "name": "MD AMINUL ISLAM",
+    "phone": "01744773065",
+    "email": "adss.aminul@gmail.com",
+    "subject": "Order Cancelled",
+    "message": "afafaf",
+    "attachment": "contact_attachments/2025/10/pngtree-3d-leather-belt-of-men-on-transparent-background-png_4vmMOwb.png",
+    "status": "new",
+    "priority": "urgent",
+    "ip_address": null,
+    "user_agent": "",
+    "admin_notes": "",
+    "assigned_to": null,
+    "submitted_at": "2025-10-29T17:51:24.170Z",
+    "updated_at": "2025-10-29T18:36:27.550Z",
+    "replied_at": null
+  }
+},
+{
+  "model": "contact.contact",
+  "pk": 2,
+  "fields": {
+    "name": "John Smith",
+    "phone": "+1234567890",
+    "email": "john.smith@example.com",
+    "subject": "Product Inquiry",
+    "message": "Hi, I am interested in your latest product range. Could you please send me more information about pricing and availability?",
+    "attachment": "",
+    "status": "new",
+    "priority": "medium",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Test Browser",
+    "admin_notes": "",
+    "assigned_to": null,
+    "submitted_at": "2025-10-29T15:56:08.438Z",
+    "updated_at": "2025-10-29T17:56:08.488Z",
+    "replied_at": null
+  }
+},
+{
+  "model": "contact.contact",
+  "pk": 3,
+  "fields": {
+    "name": "Sarah Johnson",
+    "phone": "+1987654321",
+    "email": "sarah.j@example.com",
+    "subject": "Support Request",
+    "message": "I am having trouble with my recent order. The product seems to be damaged during shipping. Please help me with a replacement.",
+    "attachment": "",
+    "status": "new",
+    "priority": "high",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Test Browser",
+    "admin_notes": "",
+    "assigned_to": null,
+    "submitted_at": "2025-10-29T12:56:08.438Z",
+    "updated_at": "2025-10-29T17:56:08.513Z",
+    "replied_at": null
+  }
+},
+{
+  "model": "contact.contact",
+  "pk": 5,
+  "fields": {
+    "name": "Lisa Anderson",
+    "phone": "+1777888999",
+    "email": "lisa@example.org",
+    "subject": "Return Request",
+    "message": "I need to return a product I purchased last week. It doesn't meet my requirements. What is your return policy?",
+    "attachment": "",
+    "status": "replied",
+    "priority": "low",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Test Browser",
+    "admin_notes": "",
+    "assigned_to": null,
+    "submitted_at": "2025-10-28T17:56:08.438Z",
+    "updated_at": "2025-10-29T17:56:08.553Z",
+    "replied_at": "2025-10-29T05:56:08.438Z"
+  }
+},
+{
+  "model": "contact.contact",
+  "pk": 6,
+  "fields": {
+    "name": "Robert Wilson",
+    "phone": "+1333444555",
+    "email": "rwilson@email.com",
+    "subject": "Technical Support",
+    "message": "The product manual is not clear about the installation process. Could you provide more detailed instructions or a video tutorial?",
+    "attachment": "",
+    "status": "new",
+    "priority": "medium",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Test Browser",
+    "admin_notes": "",
+    "assigned_to": null,
+    "submitted_at": "2025-10-27T17:56:08.438Z",
+    "updated_at": "2025-10-29T17:56:08.573Z",
+    "replied_at": null
+  }
+},
+{
+  "model": "contact.contact",
+  "pk": 7,
+  "fields": {
+    "name": "Emma Thompson",
+    "phone": "+1666777888",
+    "email": "emma.t@example.net",
+    "subject": "Partnership Proposal",
+    "message": "We are a marketing agency and would like to discuss potential partnership opportunities. Please let us know if you are interested.",
+    "attachment": "",
+    "status": "resolved",
+    "priority": "high",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Test Browser",
+    "admin_notes": "",
+    "assigned_to": null,
+    "submitted_at": "2025-10-26T17:56:08.438Z",
+    "updated_at": "2025-10-29T17:56:08.593Z",
+    "replied_at": "2025-10-27T17:56:08.438Z"
+  }
+},
+{
+  "model": "contact.contact",
+  "pk": 8,
+  "fields": {
+    "name": "David Brown",
+    "phone": "+1999000111",
+    "email": "david.brown@test.com",
+    "subject": "Website Feedback",
+    "message": "Your website is very user-friendly, but I noticed some pages load slowly. Thought you might want to know.",
+    "attachment": "",
+    "status": "new",
+    "priority": "low",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Test Browser",
+    "admin_notes": "",
+    "assigned_to": null,
+    "submitted_at": "2025-10-25T17:56:08.438Z",
+    "updated_at": "2025-10-29T17:56:08.611Z",
+    "replied_at": null
+  }
+},
+{
+  "model": "contact.contact",
+  "pk": 9,
+  "fields": {
+    "name": "Jennifer Lee",
+    "phone": "+1444555666",
+    "email": "jen.lee@domain.com",
+    "subject": "Career Inquiry",
+    "message": "Are you currently hiring? I am interested in joining your team and would like to know about available positions.",
+    "attachment": "",
+    "status": "read",
+    "priority": "medium",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Test Browser",
+    "admin_notes": "",
+    "assigned_to": null,
+    "submitted_at": "2025-10-24T17:56:08.438Z",
+    "updated_at": "2025-10-29T17:56:08.630Z",
+    "replied_at": null
+  }
+}
+]

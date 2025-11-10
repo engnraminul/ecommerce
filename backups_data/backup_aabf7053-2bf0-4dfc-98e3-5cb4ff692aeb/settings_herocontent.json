@@ -1,0 +1,68 @@
+[
+{
+  "model": "settings.herocontent",
+  "pk": 4,
+  "fields": {
+    "title": "Welcome to Our Amazing Store",
+    "subtitle": "Discover premium quality products at unbeatable prices with fast shipping",
+    "desktop_image": "/media/products/Screenshot.png",
+    "mobile_image": "/media/products/Screenshot.png",
+    "primary_button_text": "Shop Now",
+    "primary_button_url": "/products/",
+    "secondary_button_text": "",
+    "secondary_button_url": "",
+    "text_color": "#ffffff",
+    "text_shadow": true,
+    "background_color": "#930000",
+    "background_gradient": "linear-gradient(135deg, #930000, #7a0000)",
+    "display_order": 1,
+    "is_active": true,
+    "created_at": "2025-11-04T13:26:54.436Z",
+    "updated_at": "2025-11-04T13:54:24.919Z"
+  }
+},
+{
+  "model": "settings.herocontent",
+  "pk": 5,
+  "fields": {
+    "title": "Special Winter Collection",
+    "subtitle": "Stay warm and stylish with our exclusive winter collection. Limited time offers!",
+    "desktop_image": "media/hero/desktop-hero-2.jpg",
+    "mobile_image": "media/hero/mobile-hero-2.jpg",
+    "primary_button_text": "Explore Collection",
+    "primary_button_url": "/products/?category=winter",
+    "secondary_button_text": "View Deals",
+    "secondary_button_url": "/products/?sale=true",
+    "text_color": "#ffffff",
+    "text_shadow": true,
+    "background_color": "#930000",
+    "background_gradient": "linear-gradient(135deg, #1e3a8a, #1e40af)",
+    "display_order": 2,
+    "is_active": false,
+    "created_at": "2025-11-04T13:26:54.449Z",
+    "updated_at": "2025-11-04T13:54:44.693Z"
+  }
+},
+{
+  "model": "settings.herocontent",
+  "pk": 6,
+  "fields": {
+    "title": "Free Shipping on Orders Over $50",
+    "subtitle": "Get your favorite products delivered to your doorstep with our fast and reliable shipping",
+    "desktop_image": "media/hero/desktop-hero-3.jpg",
+    "mobile_image": "media/hero/mobile-hero-3.jpg",
+    "primary_button_text": "Start Shopping",
+    "primary_button_url": "/products/",
+    "secondary_button_text": "Learn More",
+    "secondary_button_url": "/shipping-info/",
+    "text_color": "#ffffff",
+    "text_shadow": true,
+    "background_color": "#930000",
+    "background_gradient": "linear-gradient(135deg, #059669, #047857)",
+    "display_order": 3,
+    "is_active": false,
+    "created_at": "2025-11-04T13:26:54.462Z",
+    "updated_at": "2025-11-04T13:54:46.076Z"
+  }
+}
+]

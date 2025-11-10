@@ -1,0 +1,478 @@
+[
+{
+  "model": "products.review",
+  "pk": 63,
+  "fields": {
+    "product": 36,
+    "user": 1,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 5,
+    "title": "",
+    "comment": "Good Product",
+    "is_approved": true,
+    "is_verified_purchase": false,
+    "created_at": "2025-11-09T17:38:14.324Z",
+    "updated_at": "2025-11-09T17:38:30.685Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 62,
+  "fields": {
+    "product": 37,
+    "user": 1,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 5,
+    "title": "",
+    "comment": "best",
+    "is_approved": true,
+    "is_verified_purchase": false,
+    "created_at": "2025-11-09T17:36:52.335Z",
+    "updated_at": "2025-11-09T17:38:27.813Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 61,
+  "fields": {
+    "product": 31,
+    "user": 6,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 5,
+    "title": "Amazing quality",
+    "comment": "Great product! Fast delivery and excellent packaging.",
+    "is_approved": true,
+    "is_verified_purchase": true,
+    "created_at": "2025-10-28T07:23:19.744Z",
+    "updated_at": "2025-10-28T07:23:19.744Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 60,
+  "fields": {
+    "product": 1,
+    "user": 4,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 5,
+    "title": "Disappointed",
+    "comment": "Excellent product! Fast shipping and great packaging.",
+    "is_approved": false,
+    "is_verified_purchase": true,
+    "created_at": "2025-10-28T07:23:19.730Z",
+    "updated_at": "2025-10-28T07:23:19.730Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 59,
+  "fields": {
+    "product": 22,
+    "user": 6,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 5,
+    "title": "Poor quality",
+    "comment": "Not satisfied with this purchase. Quality is below expectations.",
+    "is_approved": false,
+    "is_verified_purchase": false,
+    "created_at": "2025-10-28T07:23:19.715Z",
+    "updated_at": "2025-10-28T12:42:30.526Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 58,
+  "fields": {
+    "product": 10,
+    "user": 43,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 3,
+    "title": "Good value for money",
+    "comment": "This product exceeded my expectations. Would definitely buy again.",
+    "is_approved": false,
+    "is_verified_purchase": true,
+    "created_at": "2025-10-28T07:23:19.705Z",
+    "updated_at": "2025-10-28T07:23:19.705Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 57,
+  "fields": {
+    "product": 1,
+    "user": 43,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 1,
+    "title": "Fast shipping",
+    "comment": "Fantastic product! Highly recommend to everyone.",
+    "is_approved": false,
+    "is_verified_purchase": true,
+    "created_at": "2025-10-28T07:23:19.694Z",
+    "updated_at": "2025-10-28T07:23:19.694Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 56,
+  "fields": {
+    "product": 10,
+    "user": 6,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 3,
+    "title": "Waste of money",
+    "comment": "The product is decent but nothing special. Average quality.",
+    "is_approved": true,
+    "is_verified_purchase": false,
+    "created_at": "2025-10-28T07:23:19.684Z",
+    "updated_at": "2025-10-28T07:23:19.684Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 55,
+  "fields": {
+    "product": 22,
+    "user": 43,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 4,
+    "title": "Durable and reliable",
+    "comment": "Love this! Great quality and exactly as described.",
+    "is_approved": true,
+    "is_verified_purchase": true,
+    "created_at": "2025-10-28T07:23:19.672Z",
+    "updated_at": "2025-10-28T07:23:19.672Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 54,
+  "fields": {
+    "product": 2,
+    "user": 6,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 4,
+    "title": "Excellent service",
+    "comment": "Perfect product! Exactly what I needed.",
+    "is_approved": false,
+    "is_verified_purchase": false,
+    "created_at": "2025-10-28T07:23:19.659Z",
+    "updated_at": "2025-10-28T07:23:19.659Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 53,
+  "fields": {
+    "product": 22,
+    "user": 4,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 4,
+    "title": "Waste of money",
+    "comment": "Fantastic product! Highly recommend to everyone.",
+    "is_approved": true,
+    "is_verified_purchase": false,
+    "created_at": "2025-10-28T07:23:19.649Z",
+    "updated_at": "2025-10-28T07:23:19.649Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 52,
+  "fields": {
+    "product": 4,
+    "user": 6,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 1,
+    "title": "Not satisfied",
+    "comment": "Love this! Great quality and exactly as described.",
+    "is_approved": true,
+    "is_verified_purchase": true,
+    "created_at": "2025-10-28T07:23:19.636Z",
+    "updated_at": "2025-10-28T07:23:19.636Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 51,
+  "fields": {
+    "product": 22,
+    "user": 3,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 4,
+    "title": "Perfect fit",
+    "comment": "Perfect! Exactly as described and arrived quickly.",
+    "is_approved": true,
+    "is_verified_purchase": true,
+    "created_at": "2025-10-28T07:23:19.625Z",
+    "updated_at": "2025-10-28T07:23:19.625Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 50,
+  "fields": {
+    "product": 1,
+    "user": 42,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 5,
+    "title": "Fast shipping",
+    "comment": "Great product with excellent build quality. Very satisfied.",
+    "is_approved": true,
+    "is_verified_purchase": false,
+    "created_at": "2025-10-28T07:23:19.614Z",
+    "updated_at": "2025-10-28T07:23:19.614Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 49,
+  "fields": {
+    "product": 19,
+    "user": 3,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 5,
+    "title": "Waste of money",
+    "comment": "Excellent product! Fast shipping and great packaging.",
+    "is_approved": false,
+    "is_verified_purchase": true,
+    "created_at": "2025-10-28T07:23:19.601Z",
+    "updated_at": "2025-10-28T07:23:19.601Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 48,
+  "fields": {
+    "product": 31,
+    "user": 7,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 1,
+    "title": "Good purchase",
+    "comment": "Really happy with this purchase. The quality is excellent and shipping was fast.",
+    "is_approved": true,
+    "is_verified_purchase": false,
+    "created_at": "2025-10-28T07:23:19.585Z",
+    "updated_at": "2025-10-28T07:23:19.585Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 47,
+  "fields": {
+    "product": 7,
+    "user": 6,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 4,
+    "title": "Love it!",
+    "comment": "Great product with excellent build quality. Very satisfied.",
+    "is_approved": true,
+    "is_verified_purchase": true,
+    "created_at": "2025-10-28T07:23:19.575Z",
+    "updated_at": "2025-10-28T07:23:19.575Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 46,
+  "fields": {
+    "product": 7,
+    "user": 4,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 1,
+    "title": "Decent quality",
+    "comment": "Excellent product! Fast shipping and great packaging.",
+    "is_approved": true,
+    "is_verified_purchase": true,
+    "created_at": "2025-10-28T07:23:19.563Z",
+    "updated_at": "2025-10-28T07:23:19.563Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 45,
+  "fields": {
+    "product": 19,
+    "user": 1,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 3,
+    "title": "Love it!",
+    "comment": "Good value for the price. Works as advertised.",
+    "is_approved": true,
+    "is_verified_purchase": true,
+    "created_at": "2025-10-28T07:23:19.547Z",
+    "updated_at": "2025-10-28T07:23:19.547Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 44,
+  "fields": {
+    "product": 2,
+    "user": 42,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 4,
+    "title": "Exceeded expectations",
+    "comment": "Really happy with this purchase. The quality is excellent and shipping was fast.",
+    "is_approved": false,
+    "is_verified_purchase": false,
+    "created_at": "2025-10-28T07:23:19.533Z",
+    "updated_at": "2025-10-28T07:23:19.533Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 43,
+  "fields": {
+    "product": 10,
+    "user": 4,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 1,
+    "title": "Fair enough",
+    "comment": "Not worth the money. Quality is below average.",
+    "is_approved": false,
+    "is_verified_purchase": true,
+    "created_at": "2025-10-28T07:23:19.524Z",
+    "updated_at": "2025-10-28T07:23:19.524Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 42,
+  "fields": {
+    "product": 19,
+    "user": 43,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 1,
+    "title": "Disappointed",
+    "comment": "Good value for the price. Works as advertised.",
+    "is_approved": false,
+    "is_verified_purchase": false,
+    "created_at": "2025-10-28T07:23:19.513Z",
+    "updated_at": "2025-10-28T07:23:19.513Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 41,
+  "fields": {
+    "product": 31,
+    "user": 1,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 5,
+    "title": "Test Review with Image",
+    "comment": "This is a test review to verify that images are displayed correctly.",
+    "is_approved": true,
+    "is_verified_purchase": true,
+    "created_at": "2025-10-28T06:06:35.208Z",
+    "updated_at": "2025-10-28T08:22:44.727Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 40,
+  "fields": {
+    "product": 31,
+    "user": null,
+    "guest_name": "তানিম",
+    "guest_email": "tanim@gmial.com",
+    "rating": 4,
+    "title": "",
+    "comment": "Dam aktu beshi",
+    "is_approved": true,
+    "is_verified_purchase": true,
+    "created_at": "2025-10-28T06:00:37.300Z",
+    "updated_at": "2025-10-28T06:00:57.605Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 39,
+  "fields": {
+    "product": 31,
+    "user": null,
+    "guest_name": "Anonymous Guest",
+    "guest_email": "guest@example.com",
+    "rating": 3,
+    "title": "Guest Review",
+    "comment": "This is a guest review.",
+    "is_approved": false,
+    "is_verified_purchase": false,
+    "created_at": "2025-10-28T05:55:19.517Z",
+    "updated_at": "2025-10-28T05:55:19.517Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 38,
+  "fields": {
+    "product": 31,
+    "user": 1,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 5,
+    "title": "Test Review with Images",
+    "comment": "This is a test review with uploaded images.",
+    "is_approved": false,
+    "is_verified_purchase": false,
+    "created_at": "2025-10-28T05:55:19.395Z",
+    "updated_at": "2025-10-28T05:55:19.395Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 33,
+  "fields": {
+    "product": 31,
+    "user": null,
+    "guest_name": "আমিনুল",
+    "guest_email": "aminul@gmail.com",
+    "rating": 5,
+    "title": "",
+    "comment": "Good",
+    "is_approved": true,
+    "is_verified_purchase": false,
+    "created_at": "2025-10-28T05:41:53.756Z",
+    "updated_at": "2025-10-28T07:04:40.481Z"
+  }
+},
+{
+  "model": "products.review",
+  "pk": 32,
+  "fields": {
+    "product": 10,
+    "user": 1,
+    "guest_name": "",
+    "guest_email": "",
+    "rating": 5,
+    "title": "",
+    "comment": "Good Product",
+    "is_approved": true,
+    "is_verified_purchase": false,
+    "created_at": "2025-10-28T04:57:39.962Z",
+    "updated_at": "2025-10-28T04:59:51.457Z"
+  }
+}
+]

@@ -1,0 +1,2052 @@
+[
+{
+  "model": "cart.cart",
+  "pk": 20,
+  "fields": {
+    "user": 1,
+    "session_id": null,
+    "created_at": "2025-08-20T18:56:44.208Z",
+    "updated_at": "2025-08-20T18:56:44.208Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 21,
+  "fields": {
+    "user": null,
+    "session_id": "dnd5odvlvzcefke57q5u0rrembe8ndp6",
+    "created_at": "2025-08-20T19:51:50.374Z",
+    "updated_at": "2025-08-20T19:51:50.374Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 22,
+  "fields": {
+    "user": null,
+    "session_id": "1wex8jzurwh2yh0zv6ij3cg0fcg1rbc2",
+    "created_at": "2025-08-21T16:49:50.425Z",
+    "updated_at": "2025-08-21T16:49:50.425Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 23,
+  "fields": {
+    "user": null,
+    "session_id": "yy8fh1wwc5eg663g04jmh1xriary6ukw",
+    "created_at": "2025-08-21T16:57:42.700Z",
+    "updated_at": "2025-08-21T16:57:42.700Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 24,
+  "fields": {
+    "user": null,
+    "session_id": "pmic45pe7rral7f1vzxw2181yl0fqey1",
+    "created_at": "2025-08-21T18:11:06.230Z",
+    "updated_at": "2025-08-21T18:11:06.230Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 25,
+  "fields": {
+    "user": null,
+    "session_id": "q3pv6yv51duyy8elngynni035f9sv1gr",
+    "created_at": "2025-08-21T19:13:04.626Z",
+    "updated_at": "2025-08-21T19:13:04.627Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 26,
+  "fields": {
+    "user": null,
+    "session_id": "0p1rop643krx4ipta4ejkgto7wagis4a",
+    "created_at": "2025-08-21T19:18:11.938Z",
+    "updated_at": "2025-08-21T19:18:11.938Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 27,
+  "fields": {
+    "user": null,
+    "session_id": "v5n03ifgx75p7dp50btiasr5d9ktfeta",
+    "created_at": "2025-08-21T19:18:11.956Z",
+    "updated_at": "2025-08-21T19:18:11.956Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 28,
+  "fields": {
+    "user": null,
+    "session_id": "ckdsfk51bjmhabk3md1hgcaka8yzeh63",
+    "created_at": "2025-08-22T06:05:57.988Z",
+    "updated_at": "2025-08-22T06:05:57.988Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 29,
+  "fields": {
+    "user": null,
+    "session_id": "vc7d8z6emstp9vxbvbym1rojiodwopv8",
+    "created_at": "2025-08-22T06:44:17.735Z",
+    "updated_at": "2025-08-22T06:44:17.735Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 30,
+  "fields": {
+    "user": null,
+    "session_id": "wnf4jxpi091xlh4wmmifz1zfeieuzu47",
+    "created_at": "2025-08-22T06:44:17.745Z",
+    "updated_at": "2025-08-22T06:44:17.746Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 31,
+  "fields": {
+    "user": null,
+    "session_id": "k23ik52ap0vov6gwf4erlwsiq1088xfq",
+    "created_at": "2025-08-22T12:14:57.440Z",
+    "updated_at": "2025-08-22T12:14:57.440Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 32,
+  "fields": {
+    "user": null,
+    "session_id": "t8m4kb8r1jfc9mmc9n0yieqx8b96hyv1",
+    "created_at": "2025-08-22T12:14:57.413Z",
+    "updated_at": "2025-08-22T12:14:57.413Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 33,
+  "fields": {
+    "user": null,
+    "session_id": "lr5hjrm8wzubckw2ctfq2mwho7f7cm9a",
+    "created_at": "2025-08-22T12:14:57.588Z",
+    "updated_at": "2025-08-22T12:14:57.588Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 34,
+  "fields": {
+    "user": null,
+    "session_id": "9efctzdl0xn1jstsuzawnwu24rukwmai",
+    "created_at": "2025-08-22T12:21:53.037Z",
+    "updated_at": "2025-08-22T12:21:53.037Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 35,
+  "fields": {
+    "user": null,
+    "session_id": "1wlwlhzjqn2y0eb98w3ys1r9gwcl3rnq",
+    "created_at": "2025-08-22T12:21:53.047Z",
+    "updated_at": "2025-08-22T12:21:53.047Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 36,
+  "fields": {
+    "user": null,
+    "session_id": "6omluzzyi8ah76d43a2tyo3wfl1c1skz",
+    "created_at": "2025-08-22T12:24:47.137Z",
+    "updated_at": "2025-08-22T12:24:47.137Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 37,
+  "fields": {
+    "user": null,
+    "session_id": "d8z5x8wy1ch2xvgqpg8dzi98oezmhydz",
+    "created_at": "2025-08-22T12:24:47.146Z",
+    "updated_at": "2025-08-22T12:24:47.146Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 38,
+  "fields": {
+    "user": 7,
+    "session_id": null,
+    "created_at": "2025-08-22T12:25:06.593Z",
+    "updated_at": "2025-08-22T12:25:06.593Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 39,
+  "fields": {
+    "user": null,
+    "session_id": "hah79iykwy1x410nqsw2ne75jolclkhu",
+    "created_at": "2025-08-22T12:26:04.200Z",
+    "updated_at": "2025-08-22T12:26:04.200Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 40,
+  "fields": {
+    "user": null,
+    "session_id": "lduz4grah5j7z7wfzw0el3znc2psz0mw",
+    "created_at": "2025-08-22T12:26:04.232Z",
+    "updated_at": "2025-08-22T12:26:04.232Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 41,
+  "fields": {
+    "user": null,
+    "session_id": "ua8fbvd7rdmwitludtmchhnqbtwv9iy0",
+    "created_at": "2025-08-22T12:31:04.961Z",
+    "updated_at": "2025-08-22T12:31:04.961Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 42,
+  "fields": {
+    "user": null,
+    "session_id": "015w1ftmbn6zesvy8akfu6ert7uwv9hq",
+    "created_at": "2025-08-22T12:31:04.997Z",
+    "updated_at": "2025-08-22T12:31:04.997Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 43,
+  "fields": {
+    "user": null,
+    "session_id": "qem1u7o3166tyqmwqhidagtmtim3obxk",
+    "created_at": "2025-08-22T12:32:49.624Z",
+    "updated_at": "2025-08-22T12:32:49.624Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 44,
+  "fields": {
+    "user": null,
+    "session_id": "yx65ot25h9qbwsh267zttbso1iqgcmgg",
+    "created_at": "2025-08-22T12:32:49.616Z",
+    "updated_at": "2025-08-22T12:32:49.616Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 45,
+  "fields": {
+    "user": null,
+    "session_id": "2rpekak38k4s5ce25roke8mml48mi9yy",
+    "created_at": "2025-08-22T18:27:14.569Z",
+    "updated_at": "2025-08-22T18:27:14.569Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 46,
+  "fields": {
+    "user": null,
+    "session_id": "x7u3dylbs7cjcaivnood42x0cttlm96m",
+    "created_at": "2025-08-22T18:27:14.601Z",
+    "updated_at": "2025-08-22T18:27:14.602Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 47,
+  "fields": {
+    "user": null,
+    "session_id": "66t3cry4gfk928gctiq3kym4uquy0wpz",
+    "created_at": "2025-08-22T18:27:14.589Z",
+    "updated_at": "2025-08-22T18:27:14.589Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 48,
+  "fields": {
+    "user": null,
+    "session_id": "rrelf48h5bynqfsnjbnqb1lmi1zokqsf",
+    "created_at": "2025-08-22T18:32:32.257Z",
+    "updated_at": "2025-08-22T18:32:32.257Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 49,
+  "fields": {
+    "user": null,
+    "session_id": "o079p89b8zz5xovu3ktn5tx2wahehpfo",
+    "created_at": "2025-08-22T18:32:32.265Z",
+    "updated_at": "2025-08-22T18:32:32.265Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 50,
+  "fields": {
+    "user": null,
+    "session_id": "wnljzvuc61oi5xpn3nls8y0ijoax4t88",
+    "created_at": "2025-08-22T18:42:25.056Z",
+    "updated_at": "2025-08-22T18:42:25.056Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 51,
+  "fields": {
+    "user": null,
+    "session_id": "iq1k1gfqhkinwz71rh2ulkkg4jyu379i",
+    "created_at": "2025-08-22T18:44:53.821Z",
+    "updated_at": "2025-08-22T18:44:53.821Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 52,
+  "fields": {
+    "user": null,
+    "session_id": "reiiv8stgwpd0m7ey21r1hmmqg34qua8",
+    "created_at": "2025-08-22T18:44:53.810Z",
+    "updated_at": "2025-08-22T18:44:53.810Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 53,
+  "fields": {
+    "user": null,
+    "session_id": "houertxa9cggw99je113qj8r3uv3gil3",
+    "created_at": "2025-08-22T18:45:11.804Z",
+    "updated_at": "2025-08-22T18:45:11.804Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 54,
+  "fields": {
+    "user": null,
+    "session_id": "ehyvwzwn05qsgrrgr83g2sle68ti1p3n",
+    "created_at": "2025-08-22T18:45:11.825Z",
+    "updated_at": "2025-08-22T18:45:11.825Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 55,
+  "fields": {
+    "user": 6,
+    "session_id": null,
+    "created_at": "2025-08-22T18:45:27.632Z",
+    "updated_at": "2025-08-22T18:45:27.632Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 56,
+  "fields": {
+    "user": null,
+    "session_id": "gw5l24209n7dah0oi04cru7q42ahgt36",
+    "created_at": "2025-08-22T19:00:04.942Z",
+    "updated_at": "2025-08-22T19:00:04.942Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 57,
+  "fields": {
+    "user": null,
+    "session_id": "zjo88b27j28lxh8q6m8i1rt3p9phtiii",
+    "created_at": "2025-08-22T19:00:04.953Z",
+    "updated_at": "2025-08-22T19:00:04.953Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 58,
+  "fields": {
+    "user": null,
+    "session_id": "bamkg9w948qc84u0uozhb2tk82vuudx9",
+    "created_at": "2025-08-24T18:01:23.539Z",
+    "updated_at": "2025-08-24T18:01:23.539Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 59,
+  "fields": {
+    "user": null,
+    "session_id": "c8mxbuusnn5osp0lm0ruxrya27ty0u4v",
+    "created_at": "2025-08-24T18:01:23.570Z",
+    "updated_at": "2025-08-24T18:01:23.570Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 60,
+  "fields": {
+    "user": null,
+    "session_id": "rxc868rzjtfzjqat5m0s6x8lff6hepol",
+    "created_at": "2025-08-24T18:04:13.189Z",
+    "updated_at": "2025-08-24T18:04:13.189Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 61,
+  "fields": {
+    "user": null,
+    "session_id": "e4rj054nwtk86gxx4norp6h2jy46yrwj",
+    "created_at": "2025-08-24T18:04:13.217Z",
+    "updated_at": "2025-08-24T18:04:13.217Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 62,
+  "fields": {
+    "user": null,
+    "session_id": "8jv873ieiadwm4c643v1je8qsjqu6103",
+    "created_at": "2025-08-24T18:04:24.207Z",
+    "updated_at": "2025-08-24T18:04:24.207Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 63,
+  "fields": {
+    "user": null,
+    "session_id": "fz8zgpmmncapofqqvvusf0gqn4b2s7v2",
+    "created_at": "2025-08-24T18:04:24.219Z",
+    "updated_at": "2025-08-24T18:04:24.219Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 64,
+  "fields": {
+    "user": null,
+    "session_id": "24sr3kzjj1dw7kvvepbrekj9ssjv5mck",
+    "created_at": "2025-08-26T18:16:17.234Z",
+    "updated_at": "2025-08-26T18:16:17.234Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 65,
+  "fields": {
+    "user": null,
+    "session_id": "22003colszv8c9htkqs1ozx1kyl0mfwr",
+    "created_at": "2025-08-26T18:16:17.257Z",
+    "updated_at": "2025-08-26T18:16:17.257Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 66,
+  "fields": {
+    "user": null,
+    "session_id": "2a9xxqsffwsfbtv5mhi0y3x0u3y2iwhd",
+    "created_at": "2025-08-26T18:17:34.821Z",
+    "updated_at": "2025-08-26T18:17:34.821Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 67,
+  "fields": {
+    "user": null,
+    "session_id": "r0yd99dfm3k68cmqv4ts7olelimkfj53",
+    "created_at": "2025-08-26T18:17:34.832Z",
+    "updated_at": "2025-08-26T18:17:34.832Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 68,
+  "fields": {
+    "user": null,
+    "session_id": "tndwj4048gmvpxmlvsm8mhwxilyh8lpk",
+    "created_at": "2025-08-28T18:42:04.716Z",
+    "updated_at": "2025-08-28T18:42:04.716Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 69,
+  "fields": {
+    "user": null,
+    "session_id": "ifpp6rf5e20mye64sa4sejjkqxvukxj0",
+    "created_at": "2025-08-28T18:42:04.741Z",
+    "updated_at": "2025-08-28T18:42:04.741Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 70,
+  "fields": {
+    "user": null,
+    "session_id": "zb7oj8r7eus0ndumsbkie1zlzz43de2m",
+    "created_at": "2025-08-29T06:16:35.418Z",
+    "updated_at": "2025-08-29T06:16:35.418Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 71,
+  "fields": {
+    "user": null,
+    "session_id": "65zolkxujk80hlj53l06jl6ghfo2519b",
+    "created_at": "2025-08-29T06:16:35.470Z",
+    "updated_at": "2025-08-29T06:16:35.470Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 72,
+  "fields": {
+    "user": null,
+    "session_id": "db1qusp8xouivmjk2bz17uyu8rw6cwos",
+    "created_at": "2025-08-30T16:57:48.211Z",
+    "updated_at": "2025-08-30T16:57:48.211Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 73,
+  "fields": {
+    "user": null,
+    "session_id": "9aembgqtsr5qyw0g0u1bz7br49jvefr0",
+    "created_at": "2025-08-30T16:57:48.238Z",
+    "updated_at": "2025-08-30T16:57:48.238Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 74,
+  "fields": {
+    "user": null,
+    "session_id": "3388suclpgibuwxtsmtie0h3pnwulw7v",
+    "created_at": "2025-09-09T16:06:27.087Z",
+    "updated_at": "2025-09-09T16:06:27.087Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 75,
+  "fields": {
+    "user": null,
+    "session_id": "epuuc7t5kbu6koceect6pyjxbkmaqhbc",
+    "created_at": "2025-09-09T16:06:27.138Z",
+    "updated_at": "2025-09-09T16:06:27.138Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 76,
+  "fields": {
+    "user": null,
+    "session_id": "jabjekzs3yzn23ptoj6of961yufn1sk3",
+    "created_at": "2025-09-12T17:52:29.034Z",
+    "updated_at": "2025-09-12T17:52:29.034Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 77,
+  "fields": {
+    "user": null,
+    "session_id": "zsfgztx3fmanorwvtxlp6xhwnd27uc23",
+    "created_at": "2025-09-12T17:52:29.055Z",
+    "updated_at": "2025-09-12T17:52:29.055Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 78,
+  "fields": {
+    "user": null,
+    "session_id": "leoq23ldl6wkk84xebdo4tpv9lcrfnkv",
+    "created_at": "2025-09-17T18:11:22.754Z",
+    "updated_at": "2025-09-17T18:11:22.754Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 79,
+  "fields": {
+    "user": null,
+    "session_id": "ymtbs6tf1jf3fykno78hvz95u332icgm",
+    "created_at": "2025-09-17T18:11:22.782Z",
+    "updated_at": "2025-09-17T18:11:22.782Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 80,
+  "fields": {
+    "user": null,
+    "session_id": "pkzk35j10htfnwteoljw9p07c72g2xm7",
+    "created_at": "2025-09-17T18:17:13.678Z",
+    "updated_at": "2025-09-17T18:17:13.678Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 81,
+  "fields": {
+    "user": null,
+    "session_id": "ahx50dht2d1e7tyxkvl9p37tzso3v2l8",
+    "created_at": "2025-09-17T18:17:13.688Z",
+    "updated_at": "2025-09-17T18:17:13.688Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 82,
+  "fields": {
+    "user": null,
+    "session_id": "vzgwrht6t8biw4sygrhcykfl198d3h5e",
+    "created_at": "2025-09-22T20:08:33.565Z",
+    "updated_at": "2025-09-22T20:08:33.565Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 83,
+  "fields": {
+    "user": null,
+    "session_id": "hlpdon0nk91d1dasrpgvce2yngz4kbv1",
+    "created_at": "2025-09-22T20:08:33.553Z",
+    "updated_at": "2025-09-22T20:08:33.553Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 84,
+  "fields": {
+    "user": null,
+    "session_id": "4r5i41sx97jylh77427s4l6rtbfycok0",
+    "created_at": "2025-09-26T20:04:45.483Z",
+    "updated_at": "2025-09-26T20:04:45.483Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 85,
+  "fields": {
+    "user": null,
+    "session_id": "cri36ymws9phyo3ux4svvhdv6kyhbbhv",
+    "created_at": "2025-09-26T20:04:45.491Z",
+    "updated_at": "2025-09-26T20:04:45.491Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 86,
+  "fields": {
+    "user": null,
+    "session_id": "mq3okzvh0pc4eccxuubzxzoe6gyfamav",
+    "created_at": "2025-09-27T17:03:15.132Z",
+    "updated_at": "2025-09-27T17:03:15.132Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 87,
+  "fields": {
+    "user": null,
+    "session_id": "hvmzf5x79xoj1who9a9gnu2oe3584c1x",
+    "created_at": "2025-09-27T17:03:15.193Z",
+    "updated_at": "2025-09-27T17:03:15.193Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 88,
+  "fields": {
+    "user": null,
+    "session_id": "e0rzzcb69b3ew1nbgufvi35conzmce7z",
+    "created_at": "2025-09-28T20:27:50.845Z",
+    "updated_at": "2025-09-28T20:27:50.845Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 89,
+  "fields": {
+    "user": null,
+    "session_id": "agssd5cqumfqi1emcfear1sqndfvx62c",
+    "created_at": "2025-09-28T20:27:50.856Z",
+    "updated_at": "2025-09-28T20:27:50.856Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 90,
+  "fields": {
+    "user": null,
+    "session_id": "16phg69ckso5kxshshjet5zjg0kptuyj",
+    "created_at": "2025-09-30T17:47:49.969Z",
+    "updated_at": "2025-09-30T17:47:49.969Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 91,
+  "fields": {
+    "user": null,
+    "session_id": "a10ypsd43bphs9azqftzxzu7in2us4mx",
+    "created_at": "2025-09-30T17:47:50.019Z",
+    "updated_at": "2025-09-30T17:47:50.019Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 92,
+  "fields": {
+    "user": null,
+    "session_id": "9du6li1tc5sqe36nwvmimuvmuwl91vfr",
+    "created_at": "2025-09-30T18:42:24.216Z",
+    "updated_at": "2025-09-30T18:42:24.216Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 93,
+  "fields": {
+    "user": null,
+    "session_id": "m6ek14k2npr270p89ndu7mxndikynszc",
+    "created_at": "2025-09-30T18:42:24.193Z",
+    "updated_at": "2025-09-30T18:42:24.193Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 94,
+  "fields": {
+    "user": null,
+    "session_id": "zsv4luo05nuxfqnooldaq8qaif4z6du6",
+    "created_at": "2025-09-30T18:42:24.332Z",
+    "updated_at": "2025-09-30T18:42:24.332Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 95,
+  "fields": {
+    "user": null,
+    "session_id": "kt8ippkuv92d7888t6ce7hifuvtl9a65",
+    "created_at": "2025-09-30T18:42:24.492Z",
+    "updated_at": "2025-09-30T18:42:24.492Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 96,
+  "fields": {
+    "user": null,
+    "session_id": "ordy9wkdwtvqvik35knmvreo9c5djn4a",
+    "created_at": "2025-10-01T20:49:07.260Z",
+    "updated_at": "2025-10-01T20:49:07.260Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 97,
+  "fields": {
+    "user": null,
+    "session_id": "1omoeky3msvvomsctqkuot8gz09hdz07",
+    "created_at": "2025-10-01T20:49:07.286Z",
+    "updated_at": "2025-10-01T20:49:07.286Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 98,
+  "fields": {
+    "user": null,
+    "session_id": "i66c5843xbmlw6zd2404m436ixqv1dqj",
+    "created_at": "2025-10-02T19:21:19.368Z",
+    "updated_at": "2025-10-02T19:21:19.368Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 99,
+  "fields": {
+    "user": null,
+    "session_id": "wbp5z7fr7lshydit3lfgqpgwn9i73m9b",
+    "created_at": "2025-10-02T19:22:28.766Z",
+    "updated_at": "2025-10-02T19:22:28.766Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 100,
+  "fields": {
+    "user": null,
+    "session_id": "jo5b36ptaqk5p7dd5ddgoqewldwld9zt",
+    "created_at": "2025-10-02T19:22:28.777Z",
+    "updated_at": "2025-10-02T19:22:28.777Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 101,
+  "fields": {
+    "user": null,
+    "session_id": "ygi1t0g1h9pgztqs55tehsp3ap8whrh0",
+    "created_at": "2025-10-02T19:23:06.804Z",
+    "updated_at": "2025-10-02T19:23:06.805Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 102,
+  "fields": {
+    "user": null,
+    "session_id": "p9h1n2i89ccm08culi3mqawak51d8lui",
+    "created_at": "2025-10-02T19:25:10.247Z",
+    "updated_at": "2025-10-02T19:25:10.247Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 103,
+  "fields": {
+    "user": null,
+    "session_id": "3olsr5odwgcwk102n7l75pg1p5zrsry6",
+    "created_at": "2025-10-02T19:29:48.464Z",
+    "updated_at": "2025-10-02T19:29:48.464Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 104,
+  "fields": {
+    "user": null,
+    "session_id": "wnwtctit0ud2x96vgil26qbmxd69mcl6",
+    "created_at": "2025-10-02T19:33:27.897Z",
+    "updated_at": "2025-10-02T19:33:27.897Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 105,
+  "fields": {
+    "user": null,
+    "session_id": "td546e8tu53a30gqnaeydaffon6kjlt7",
+    "created_at": "2025-10-02T19:34:42.527Z",
+    "updated_at": "2025-10-02T19:34:42.527Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 106,
+  "fields": {
+    "user": null,
+    "session_id": "onnsm13hworfqgkuy6yz43ib2ssxa9gj",
+    "created_at": "2025-10-02T19:34:59.922Z",
+    "updated_at": "2025-10-02T19:34:59.922Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 107,
+  "fields": {
+    "user": null,
+    "session_id": "02mudrsximrnclwhyucj0rz96c9gp9ql",
+    "created_at": "2025-10-02T19:36:21.352Z",
+    "updated_at": "2025-10-02T19:36:21.352Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 108,
+  "fields": {
+    "user": null,
+    "session_id": "xvv9u3ay7b05n594fm3yn9bm2epa63yy",
+    "created_at": "2025-10-02T19:47:40.242Z",
+    "updated_at": "2025-10-02T19:47:40.242Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 109,
+  "fields": {
+    "user": null,
+    "session_id": "ibizb47aem0xy9dtmtvk07hqwh9gvo7t",
+    "created_at": "2025-10-02T19:54:02.068Z",
+    "updated_at": "2025-10-02T19:54:02.068Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 110,
+  "fields": {
+    "user": null,
+    "session_id": "mcdqqi5rxpol6277eq6wtt0kiqtu08oi",
+    "created_at": "2025-10-02T19:55:48.744Z",
+    "updated_at": "2025-10-02T19:55:48.744Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 111,
+  "fields": {
+    "user": null,
+    "session_id": "jo1ukd6fzjztz1xtd3rmt3eoij8be6qb",
+    "created_at": "2025-10-03T19:42:53.639Z",
+    "updated_at": "2025-10-03T19:42:53.639Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 112,
+  "fields": {
+    "user": null,
+    "session_id": "npvhnh5yhricvmi79e88fvndkq0gcu6q",
+    "created_at": "2025-10-03T19:42:53.649Z",
+    "updated_at": "2025-10-03T19:42:53.649Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 113,
+  "fields": {
+    "user": null,
+    "session_id": "i5ccaxab0qr45s2c49s57kreclhgip71",
+    "created_at": "2025-10-05T15:15:37.839Z",
+    "updated_at": "2025-10-05T15:15:37.839Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 114,
+  "fields": {
+    "user": null,
+    "session_id": "b9uorck08bwllhyjxjh13zfuezn61lm0",
+    "created_at": "2025-10-05T15:15:37.825Z",
+    "updated_at": "2025-10-05T15:15:37.825Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 115,
+  "fields": {
+    "user": null,
+    "session_id": "k1wjrlhpzv1dkmgre2fgeuigzet84yzc",
+    "created_at": "2025-10-05T15:24:16.345Z",
+    "updated_at": "2025-10-05T15:24:16.345Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 116,
+  "fields": {
+    "user": null,
+    "session_id": "3a37g9xy61p4a5lb8m6kgdm4dqhy0wp3",
+    "created_at": "2025-10-05T15:24:16.327Z",
+    "updated_at": "2025-10-05T15:24:16.327Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 117,
+  "fields": {
+    "user": null,
+    "session_id": "uuciab672k3h272pl7ry3t4yjdcsuz0x",
+    "created_at": "2025-10-05T15:36:02.038Z",
+    "updated_at": "2025-10-05T15:36:02.038Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 118,
+  "fields": {
+    "user": null,
+    "session_id": "liv284cay78thc3mlwwx373md5qkx645",
+    "created_at": "2025-10-05T15:36:02.068Z",
+    "updated_at": "2025-10-05T15:36:02.068Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 119,
+  "fields": {
+    "user": null,
+    "session_id": "o2uo1tck4mgqw96yz6fmgr0i7m9q3b1m",
+    "created_at": "2025-10-05T20:39:25.843Z",
+    "updated_at": "2025-10-05T20:39:25.843Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 120,
+  "fields": {
+    "user": null,
+    "session_id": "gywu02tqgcdvcx4z1it6t9b9ug1bmbr7",
+    "created_at": "2025-10-05T20:39:47.141Z",
+    "updated_at": "2025-10-05T20:39:47.141Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 121,
+  "fields": {
+    "user": null,
+    "session_id": "6ggmxtyakv9gw62507aclqniu9p458jq",
+    "created_at": "2025-10-05T20:42:55.049Z",
+    "updated_at": "2025-10-05T20:42:55.049Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 122,
+  "fields": {
+    "user": null,
+    "session_id": "d9c3aj9f8kj5hoe7lzq0omyy4sw4nr57",
+    "created_at": "2025-10-05T20:47:07.479Z",
+    "updated_at": "2025-10-05T20:47:07.479Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 123,
+  "fields": {
+    "user": null,
+    "session_id": "wl0b86h8syy9y2gfyumswfnoijinn9ab",
+    "created_at": "2025-10-05T20:47:07.515Z",
+    "updated_at": "2025-10-05T20:47:07.515Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 124,
+  "fields": {
+    "user": null,
+    "session_id": "5b87mirtqujfndjrlz9fs3nd9jjq2zmc",
+    "created_at": "2025-10-05T20:47:57.808Z",
+    "updated_at": "2025-10-05T20:47:57.808Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 125,
+  "fields": {
+    "user": null,
+    "session_id": "6x56cxcvumm4qiumun66i6n5x84gxda1",
+    "created_at": "2025-10-05T20:48:03.728Z",
+    "updated_at": "2025-10-05T20:48:03.728Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 126,
+  "fields": {
+    "user": null,
+    "session_id": "urhp56bgrlhfx9ii2udz4x4zdls5ft18",
+    "created_at": "2025-10-05T20:48:37.116Z",
+    "updated_at": "2025-10-05T20:48:37.116Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 127,
+  "fields": {
+    "user": null,
+    "session_id": "p0x2nk0ns7xwdan1h5w2yfe191xrqayn",
+    "created_at": "2025-10-05T20:48:37.164Z",
+    "updated_at": "2025-10-05T20:48:37.164Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 128,
+  "fields": {
+    "user": null,
+    "session_id": "eide9g7rjtv147pt3nma8c0q5nskkwtc",
+    "created_at": "2025-10-06T18:28:38.151Z",
+    "updated_at": "2025-10-06T18:28:38.151Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 129,
+  "fields": {
+    "user": null,
+    "session_id": "l8d2ub2gw2lulp99jq3ej3hn7pxdwju8",
+    "created_at": "2025-10-06T18:28:38.182Z",
+    "updated_at": "2025-10-06T18:28:38.182Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 130,
+  "fields": {
+    "user": null,
+    "session_id": "c9o0klhq3teueqf7p22rz2aunws7kear",
+    "created_at": "2025-10-06T18:34:38.513Z",
+    "updated_at": "2025-10-06T18:34:38.514Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 131,
+  "fields": {
+    "user": null,
+    "session_id": "7cgte8zvxd3qz1y6buw9ulph5coxdc7b",
+    "created_at": "2025-10-06T18:34:38.604Z",
+    "updated_at": "2025-10-06T18:34:38.604Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 132,
+  "fields": {
+    "user": null,
+    "session_id": "isvz72ciy47ph9njtrvk3i75imycmpzf",
+    "created_at": "2025-10-06T19:06:13.373Z",
+    "updated_at": "2025-10-06T19:06:13.373Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 133,
+  "fields": {
+    "user": null,
+    "session_id": "bfqduqlgpmo8vs6j1fs8z618fy9a36n0",
+    "created_at": "2025-10-06T19:06:13.383Z",
+    "updated_at": "2025-10-06T19:06:13.383Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 134,
+  "fields": {
+    "user": null,
+    "session_id": "z8zfnt7hiewhxdff5nhokz27l638z470",
+    "created_at": "2025-10-12T18:48:24.182Z",
+    "updated_at": "2025-10-12T18:48:24.182Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 135,
+  "fields": {
+    "user": null,
+    "session_id": "mcr4o5lnfiuluyhkdbz8xsxgdkqljp32",
+    "created_at": "2025-10-12T18:48:24.190Z",
+    "updated_at": "2025-10-12T18:48:24.190Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 136,
+  "fields": {
+    "user": null,
+    "session_id": "69oep6deqw3ob4w5iank6jpzw57uisaz",
+    "created_at": "2025-10-12T19:12:54.773Z",
+    "updated_at": "2025-10-12T19:12:54.773Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 137,
+  "fields": {
+    "user": null,
+    "session_id": "fq3piwhty5eaxx1l6x8nrc4y9o577g86",
+    "created_at": "2025-10-12T19:12:54.776Z",
+    "updated_at": "2025-10-12T19:12:54.776Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 138,
+  "fields": {
+    "user": null,
+    "session_id": "04n97q2fzc76zeljnsxcglc5pgwwdljw",
+    "created_at": "2025-10-24T19:25:06.053Z",
+    "updated_at": "2025-10-24T19:25:06.053Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 139,
+  "fields": {
+    "user": null,
+    "session_id": "r9dhdd9tm4mt87cxdrym707m4k1tvc2f",
+    "created_at": "2025-10-24T19:25:06.052Z",
+    "updated_at": "2025-10-24T19:25:06.052Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 140,
+  "fields": {
+    "user": null,
+    "session_id": "2bx8nnhik0fnmtevbb04lpzql2379qwe",
+    "created_at": "2025-10-25T12:48:28.544Z",
+    "updated_at": "2025-10-25T12:48:28.544Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 141,
+  "fields": {
+    "user": null,
+    "session_id": "k1e7kxnchb5qb0vticuno1ga1qablseu",
+    "created_at": "2025-10-25T12:48:28.555Z",
+    "updated_at": "2025-10-25T12:48:28.555Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 142,
+  "fields": {
+    "user": null,
+    "session_id": "3ug59p7n5wji0k63h0kbuu4xaz74ugey",
+    "created_at": "2025-10-25T13:20:04.158Z",
+    "updated_at": "2025-10-25T13:20:04.158Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 143,
+  "fields": {
+    "user": null,
+    "session_id": "cv0ls7q5y0ozv2a5to5305mv44t5wke7",
+    "created_at": "2025-10-25T13:20:04.189Z",
+    "updated_at": "2025-10-25T13:20:04.189Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 145,
+  "fields": {
+    "user": null,
+    "session_id": "70toylzxmg4bsg7tjp7lkpxf7xk8nmhz",
+    "created_at": "2025-10-25T15:07:32.754Z",
+    "updated_at": "2025-10-25T15:07:32.754Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 146,
+  "fields": {
+    "user": null,
+    "session_id": "89ejeyx4wpnvburokq6mwnkry1f00oqf",
+    "created_at": "2025-10-25T15:07:32.780Z",
+    "updated_at": "2025-10-25T15:07:32.780Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 147,
+  "fields": {
+    "user": null,
+    "session_id": "yo00zh0zgvgnxpbgk6cvpi4sue07u9ej",
+    "created_at": "2025-10-25T15:39:06.983Z",
+    "updated_at": "2025-10-25T15:39:06.983Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 148,
+  "fields": {
+    "user": null,
+    "session_id": "yo00zh0zgvgnxpbgk6cvpi4sue07u9ej",
+    "created_at": "2025-10-25T15:39:06.988Z",
+    "updated_at": "2025-10-25T15:39:06.988Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 150,
+  "fields": {
+    "user": null,
+    "session_id": "tzozd4vhwue7jv48pmes8u4a01mqqux3",
+    "created_at": "2025-10-25T16:33:12.663Z",
+    "updated_at": "2025-10-25T16:33:12.663Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 151,
+  "fields": {
+    "user": null,
+    "session_id": "xm8t9mye0mpm7v626d3lhbwgdhp0c0ya",
+    "created_at": "2025-10-25T16:33:12.672Z",
+    "updated_at": "2025-10-25T16:33:12.672Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 152,
+  "fields": {
+    "user": null,
+    "session_id": "muj111mj3c47y78zcci6dipf7c4jnr1l",
+    "created_at": "2025-10-25T16:33:41.236Z",
+    "updated_at": "2025-10-25T16:33:41.236Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 153,
+  "fields": {
+    "user": null,
+    "session_id": "muj111mj3c47y78zcci6dipf7c4jnr1l",
+    "created_at": "2025-10-25T16:33:41.236Z",
+    "updated_at": "2025-10-25T16:33:41.236Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 155,
+  "fields": {
+    "user": null,
+    "session_id": "m0o9kfl8dnpm4ub0vln2ttmj0bd2w6cx",
+    "created_at": "2025-10-25T16:50:09.451Z",
+    "updated_at": "2025-10-25T16:50:09.451Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 156,
+  "fields": {
+    "user": null,
+    "session_id": "m0o9kfl8dnpm4ub0vln2ttmj0bd2w6cx",
+    "created_at": "2025-10-25T16:50:09.454Z",
+    "updated_at": "2025-10-25T16:50:09.454Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 157,
+  "fields": {
+    "user": null,
+    "session_id": "fm2e10f68zd753194k78tl3ngmu3p1jk",
+    "created_at": "2025-10-25T16:54:00.333Z",
+    "updated_at": "2025-10-25T16:54:00.333Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 158,
+  "fields": {
+    "user": null,
+    "session_id": "fm2e10f68zd753194k78tl3ngmu3p1jk",
+    "created_at": "2025-10-25T16:54:00.336Z",
+    "updated_at": "2025-10-25T16:54:00.336Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 159,
+  "fields": {
+    "user": null,
+    "session_id": "9nmx4luwpt6z3mgepfidmqunmmfdz0tb",
+    "created_at": "2025-10-25T17:08:46.102Z",
+    "updated_at": "2025-10-25T17:08:46.102Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 160,
+  "fields": {
+    "user": null,
+    "session_id": "kyl6lgvg5el5dkswjppn2bpk2b10v9xx",
+    "created_at": "2025-10-25T17:08:46.137Z",
+    "updated_at": "2025-10-25T17:08:46.137Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 161,
+  "fields": {
+    "user": null,
+    "session_id": "3ldr0y2kxp137w040dzriscu6misqitv",
+    "created_at": "2025-10-25T17:15:58.582Z",
+    "updated_at": "2025-10-25T17:15:58.582Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 162,
+  "fields": {
+    "user": null,
+    "session_id": "yhgr0st2i74fc736d4g8ptv7tvuzd3sp",
+    "created_at": "2025-10-25T17:15:58.594Z",
+    "updated_at": "2025-10-25T17:15:58.594Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 163,
+  "fields": {
+    "user": null,
+    "session_id": "flh31fwwyapqc4u4yqa387xssw59sp57",
+    "created_at": "2025-10-25T17:43:12.170Z",
+    "updated_at": "2025-10-25T17:43:12.170Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 164,
+  "fields": {
+    "user": null,
+    "session_id": "cgdjqgikoeij0yy27v3v9wjbv7zjfrf4",
+    "created_at": "2025-10-25T17:43:12.205Z",
+    "updated_at": "2025-10-25T17:43:12.205Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 165,
+  "fields": {
+    "user": null,
+    "session_id": "iu08zh3uwwtj1fj1g7ffnnyo6u1xhct1",
+    "created_at": "2025-10-25T17:43:32.939Z",
+    "updated_at": "2025-10-25T17:43:32.939Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 166,
+  "fields": {
+    "user": null,
+    "session_id": "nmj5xinzplsofzgxxa8h633gx6v2nifq",
+    "created_at": "2025-10-25T17:43:32.928Z",
+    "updated_at": "2025-10-25T17:43:32.928Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 168,
+  "fields": {
+    "user": null,
+    "session_id": "76ia836ce25xgoojs537x1qvzw0sfv0f",
+    "created_at": "2025-10-25T18:15:34.309Z",
+    "updated_at": "2025-10-25T18:15:34.309Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 169,
+  "fields": {
+    "user": null,
+    "session_id": "76ia836ce25xgoojs537x1qvzw0sfv0f",
+    "created_at": "2025-10-25T18:15:34.311Z",
+    "updated_at": "2025-10-25T18:15:34.311Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 170,
+  "fields": {
+    "user": null,
+    "session_id": "jy1sck1otupk38vylqf67yaju7ejaigz",
+    "created_at": "2025-10-25T18:53:09.707Z",
+    "updated_at": "2025-10-25T18:53:09.707Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 171,
+  "fields": {
+    "user": null,
+    "session_id": "cdz9fpc64pmxdp5uexz6g61f3wu0wsv8",
+    "created_at": "2025-10-25T18:53:09.693Z",
+    "updated_at": "2025-10-25T18:53:09.693Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 174,
+  "fields": {
+    "user": null,
+    "session_id": "mkh1e706zs9iwvnetf6herp4snjo60ni",
+    "created_at": "2025-10-26T05:38:01.744Z",
+    "updated_at": "2025-10-26T05:38:01.744Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 175,
+  "fields": {
+    "user": null,
+    "session_id": "ycoaoo38nk9l1lreeiftnykzusrp2t3p",
+    "created_at": "2025-10-26T05:38:01.759Z",
+    "updated_at": "2025-10-26T05:38:01.759Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 176,
+  "fields": {
+    "user": null,
+    "session_id": "6nwgafao8z3uhj9t7lurihl1gmtkpgaq",
+    "created_at": "2025-10-28T20:10:37.764Z",
+    "updated_at": "2025-10-28T20:10:37.764Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 177,
+  "fields": {
+    "user": null,
+    "session_id": "23fcsomwvi7lp0dv4pafx92nrtu2n1vg",
+    "created_at": "2025-10-28T20:10:37.752Z",
+    "updated_at": "2025-10-28T20:10:37.752Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 178,
+  "fields": {
+    "user": null,
+    "session_id": "tlrw8m0i78v7ykl8v8h24xhkd0ek46rg",
+    "created_at": "2025-10-29T07:59:41.626Z",
+    "updated_at": "2025-10-29T07:59:41.626Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 179,
+  "fields": {
+    "user": null,
+    "session_id": "3jivx18felvt8azxu3yzc37g9jhb6uxg",
+    "created_at": "2025-10-29T07:59:41.612Z",
+    "updated_at": "2025-10-29T07:59:41.612Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 180,
+  "fields": {
+    "user": null,
+    "session_id": "muraw2cluu5q8wz0ooiqbayim3uq5xkn",
+    "created_at": "2025-10-29T13:22:47.823Z",
+    "updated_at": "2025-10-29T13:22:47.823Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 181,
+  "fields": {
+    "user": null,
+    "session_id": "1snexgdiqpkqdvl87ftgs9fzdseo2dh4",
+    "created_at": "2025-10-29T13:22:47.813Z",
+    "updated_at": "2025-10-29T13:22:47.813Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 182,
+  "fields": {
+    "user": null,
+    "session_id": "cxf5zbbl2dlqsj2uoec5e8xxyiwbsm21",
+    "created_at": "2025-10-29T13:27:45.987Z",
+    "updated_at": "2025-10-29T13:27:45.987Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 183,
+  "fields": {
+    "user": null,
+    "session_id": "0upb4225d3wvba4wsqnro224qprope68",
+    "created_at": "2025-10-29T13:27:46.012Z",
+    "updated_at": "2025-10-29T13:27:46.012Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 184,
+  "fields": {
+    "user": null,
+    "session_id": "a1235s4li97van599iha9fa0i8ripkqc",
+    "created_at": "2025-10-29T13:31:10.458Z",
+    "updated_at": "2025-10-29T13:31:10.458Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 185,
+  "fields": {
+    "user": null,
+    "session_id": "zxlavpt932ttp0vzvj6kipfznredpb8k",
+    "created_at": "2025-10-29T13:31:10.469Z",
+    "updated_at": "2025-10-29T13:31:10.469Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 186,
+  "fields": {
+    "user": 42,
+    "session_id": null,
+    "created_at": "2025-10-30T17:31:33.126Z",
+    "updated_at": "2025-10-30T17:31:33.126Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 187,
+  "fields": {
+    "user": null,
+    "session_id": "yaadj3prikpjkv29w75x7zvvit1wvml4",
+    "created_at": "2025-10-31T17:06:56.448Z",
+    "updated_at": "2025-10-31T17:06:56.448Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 188,
+  "fields": {
+    "user": null,
+    "session_id": "ujb9s3it6bc7z98h0thz82his4jg8vv7",
+    "created_at": "2025-10-31T17:06:56.429Z",
+    "updated_at": "2025-10-31T17:06:56.429Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 189,
+  "fields": {
+    "user": null,
+    "session_id": "nqqgjebe3o5bya1w8joewol0bickkih1",
+    "created_at": "2025-11-01T16:11:20.995Z",
+    "updated_at": "2025-11-01T16:11:20.995Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 190,
+  "fields": {
+    "user": null,
+    "session_id": "hed10qhgnogoy5s5oak4g0wyqrl8g1z1",
+    "created_at": "2025-11-01T16:11:21.003Z",
+    "updated_at": "2025-11-01T16:11:21.003Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 191,
+  "fields": {
+    "user": null,
+    "session_id": "h6fsrbv2ibuulfy40odmfw5hq2ggyeoj",
+    "created_at": "2025-11-01T17:03:26.156Z",
+    "updated_at": "2025-11-01T17:03:26.156Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 192,
+  "fields": {
+    "user": null,
+    "session_id": "qgwqfsp4cru73xun6i7iw36m2ig0k7go",
+    "created_at": "2025-11-01T17:03:26.171Z",
+    "updated_at": "2025-11-01T17:03:26.171Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 193,
+  "fields": {
+    "user": null,
+    "session_id": "uygpg0b6wsyc0s8b6jtaff4y7my71qcs",
+    "created_at": "2025-11-01T18:09:57.328Z",
+    "updated_at": "2025-11-01T18:09:57.328Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 194,
+  "fields": {
+    "user": null,
+    "session_id": "pqmctafzck3g2k83xyof2fhztmqhsen7",
+    "created_at": "2025-11-01T18:09:57.357Z",
+    "updated_at": "2025-11-01T18:09:57.357Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 195,
+  "fields": {
+    "user": null,
+    "session_id": "gm6ozppy2wlfkcgke1d9nky5xwq1uhzi",
+    "created_at": "2025-11-01T19:48:24.692Z",
+    "updated_at": "2025-11-01T19:48:24.692Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 196,
+  "fields": {
+    "user": null,
+    "session_id": "7i192i6hn85ezl9m9suiiz78jwn6kmq5",
+    "created_at": "2025-11-01T19:48:24.717Z",
+    "updated_at": "2025-11-01T19:48:24.717Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 197,
+  "fields": {
+    "user": null,
+    "session_id": "p3o26ugl2ndttunaobcmos8fczi70kvm",
+    "created_at": "2025-11-01T20:36:30.232Z",
+    "updated_at": "2025-11-01T20:36:30.232Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 198,
+  "fields": {
+    "user": null,
+    "session_id": "7whg8gc21dojyv8pd541yhb7z229xg8q",
+    "created_at": "2025-11-01T20:36:30.287Z",
+    "updated_at": "2025-11-01T20:36:30.287Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 199,
+  "fields": {
+    "user": null,
+    "session_id": "syst192k8jxnxq43esr0u2cn7nekhywp",
+    "created_at": "2025-11-02T18:17:20.977Z",
+    "updated_at": "2025-11-02T18:17:20.977Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 200,
+  "fields": {
+    "user": null,
+    "session_id": "3f5k7sy8yljl05a4kenoctb1xng8v585",
+    "created_at": "2025-11-02T18:17:20.990Z",
+    "updated_at": "2025-11-02T18:17:20.990Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 201,
+  "fields": {
+    "user": null,
+    "session_id": "k9ab673lr8ai35dzqn0i4y24uzeyrnm3",
+    "created_at": "2025-11-04T18:56:37.806Z",
+    "updated_at": "2025-11-04T18:56:37.806Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 202,
+  "fields": {
+    "user": null,
+    "session_id": "m66wbvqhn3pswynmxi3mam5al69tj6jm",
+    "created_at": "2025-11-04T18:56:37.857Z",
+    "updated_at": "2025-11-04T18:56:37.857Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 203,
+  "fields": {
+    "user": null,
+    "session_id": "test_checkout_session_1762282723602896",
+    "created_at": "2025-11-04T18:58:43.618Z",
+    "updated_at": "2025-11-04T18:58:43.741Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 204,
+  "fields": {
+    "user": null,
+    "session_id": "test_checkout_session_176228277044451",
+    "created_at": "2025-11-04T18:59:30.460Z",
+    "updated_at": "2025-11-04T18:59:30.506Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 205,
+  "fields": {
+    "user": null,
+    "session_id": "lzwnsf2s1gb51iw33k08o0svk2rba8fg",
+    "created_at": "2025-11-04T19:07:45.326Z",
+    "updated_at": "2025-11-04T19:07:45.326Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 206,
+  "fields": {
+    "user": null,
+    "session_id": "qnuhm1iklgmnofm2744soevt2p5jhvx9",
+    "created_at": "2025-11-04T19:09:35.068Z",
+    "updated_at": "2025-11-04T19:09:35.068Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 207,
+  "fields": {
+    "user": null,
+    "session_id": "i7ab6rnvjq1dekwhy4xy3vqlmmdwy8go",
+    "created_at": "2025-11-04T19:10:20.346Z",
+    "updated_at": "2025-11-04T19:10:20.346Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 208,
+  "fields": {
+    "user": null,
+    "session_id": "h5rkg2r1bqlv7ryalik17t69w6qht0fw",
+    "created_at": "2025-11-04T19:10:54.869Z",
+    "updated_at": "2025-11-04T19:10:54.869Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 209,
+  "fields": {
+    "user": null,
+    "session_id": "kl39gwklvuwt82apx870kmo6ybqzfdsz",
+    "created_at": "2025-11-04T19:11:38.849Z",
+    "updated_at": "2025-11-04T19:11:38.849Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 210,
+  "fields": {
+    "user": null,
+    "session_id": "strgs6z2vwm0xs0jrqu3q9t59f0e6p8y",
+    "created_at": "2025-11-04T19:12:25.079Z",
+    "updated_at": "2025-11-04T19:12:25.079Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 211,
+  "fields": {
+    "user": null,
+    "session_id": "o21za7m7jzc54fg271n5d54fwb7o39y4",
+    "created_at": "2025-11-04T19:17:45.284Z",
+    "updated_at": "2025-11-04T19:17:45.284Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 212,
+  "fields": {
+    "user": null,
+    "session_id": "voxlq88l1357hp5k329yn0wk7d78o8qi",
+    "created_at": "2025-11-04T19:39:24.777Z",
+    "updated_at": "2025-11-04T19:39:24.777Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 213,
+  "fields": {
+    "user": null,
+    "session_id": "test_session_123",
+    "created_at": "2025-11-04T19:44:16.598Z",
+    "updated_at": "2025-11-04T19:44:16.598Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 214,
+  "fields": {
+    "user": null,
+    "session_id": "1hypulxy8czb1isqhg6syd7yy9ezrx89",
+    "created_at": "2025-11-04T19:46:12.767Z",
+    "updated_at": "2025-11-04T19:46:12.767Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 215,
+  "fields": {
+    "user": null,
+    "session_id": "cychrvp9hlqitlgdwhkaz0zhabtgvho9",
+    "created_at": "2025-11-04T19:47:14.585Z",
+    "updated_at": "2025-11-04T19:47:14.585Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 216,
+  "fields": {
+    "user": null,
+    "session_id": "myccg8mm0how6ah5is93ojuk2ek97ddk",
+    "created_at": "2025-11-04T19:49:18.182Z",
+    "updated_at": "2025-11-04T19:49:18.182Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 217,
+  "fields": {
+    "user": null,
+    "session_id": "vsh8vu26p9v38zcqe3z0sm51qlxj2idw",
+    "created_at": "2025-11-07T18:16:32.777Z",
+    "updated_at": "2025-11-07T18:16:32.777Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 218,
+  "fields": {
+    "user": null,
+    "session_id": "lmwh8so5nvlb9ith6congh1y7elqjnb4",
+    "created_at": "2025-11-07T18:16:32.758Z",
+    "updated_at": "2025-11-07T18:16:32.759Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 219,
+  "fields": {
+    "user": null,
+    "session_id": "qnmn7eshwgx1kwwni5zwuy439xokdhzh",
+    "created_at": "2025-11-07T20:07:10.156Z",
+    "updated_at": "2025-11-07T20:07:10.156Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 220,
+  "fields": {
+    "user": null,
+    "session_id": "uvbfeclp65te6kj7x7gmdwth1xauiqq7",
+    "created_at": "2025-11-07T20:07:10.146Z",
+    "updated_at": "2025-11-07T20:07:10.147Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 221,
+  "fields": {
+    "user": null,
+    "session_id": "c18zfrv8kkmlnlsratqxnwxhcf0igxpp",
+    "created_at": "2025-11-07T20:08:52.396Z",
+    "updated_at": "2025-11-07T20:08:52.396Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 222,
+  "fields": {
+    "user": null,
+    "session_id": "mgob1mu63g7zt5en2kpp8z4h4f52f3b7",
+    "created_at": "2025-11-07T20:08:52.423Z",
+    "updated_at": "2025-11-07T20:08:52.423Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 223,
+  "fields": {
+    "user": null,
+    "session_id": "lsmcntamy5f2sn7w9lo34jvtqqnkmxy8",
+    "created_at": "2025-11-07T20:15:39.220Z",
+    "updated_at": "2025-11-07T20:15:39.220Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 224,
+  "fields": {
+    "user": null,
+    "session_id": "xloye4o1nl9sjbztk44kzruled1yichr",
+    "created_at": "2025-11-07T20:15:39.230Z",
+    "updated_at": "2025-11-07T20:15:39.230Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 225,
+  "fields": {
+    "user": null,
+    "session_id": "n3184ozmwgl3lzuzofpn7zg38kqqqgzs",
+    "created_at": "2025-11-08T16:21:29.907Z",
+    "updated_at": "2025-11-08T16:21:29.907Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 226,
+  "fields": {
+    "user": null,
+    "session_id": "tv2n4haoinpo430uxw57csdrjf98p4mj",
+    "created_at": "2025-11-08T16:21:29.880Z",
+    "updated_at": "2025-11-08T16:21:29.880Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 227,
+  "fields": {
+    "user": null,
+    "session_id": "gjog805r5egokv6z9du383oxp9rtv7g0",
+    "created_at": "2025-11-08T16:21:30.439Z",
+    "updated_at": "2025-11-08T16:21:30.439Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 228,
+  "fields": {
+    "user": null,
+    "session_id": "wgr0cpe3k27fzi1jhsgn3y3iboucd7aq",
+    "created_at": "2025-11-08T16:21:30.452Z",
+    "updated_at": "2025-11-08T16:21:30.453Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 229,
+  "fields": {
+    "user": null,
+    "session_id": "yguwdyi0njd0032cisjqrgb8hjvz2nd8",
+    "created_at": "2025-11-08T16:21:30.499Z",
+    "updated_at": "2025-11-08T16:21:30.499Z"
+  }
+},
+{
+  "model": "cart.cart",
+  "pk": 230,
+  "fields": {
+    "user": null,
+    "session_id": "6vj5ohw9s5m3alvjmc5tww5mr0bppagg",
+    "created_at": "2025-11-09T18:38:17.631Z",
+    "updated_at": "2025-11-09T18:38:17.631Z"
+  }
+}
+]

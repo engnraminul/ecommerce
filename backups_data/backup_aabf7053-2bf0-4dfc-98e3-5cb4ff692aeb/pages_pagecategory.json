@@ -1,0 +1,50 @@
+[
+{
+  "model": "pages.pagecategory",
+  "pk": 4,
+  "fields": {
+    "name": "Blog",
+    "slug": "blog",
+    "description": "Blog posts and articles",
+    "is_active": true,
+    "created_at": "2025-10-11T19:10:53.984Z",
+    "updated_at": "2025-10-11T19:10:53.984Z"
+  }
+},
+{
+  "model": "pages.pagecategory",
+  "pk": 1,
+  "fields": {
+    "name": "Company",
+    "slug": "company",
+    "description": "Pages about the company",
+    "is_active": true,
+    "created_at": "2025-10-11T19:10:53.956Z",
+    "updated_at": "2025-10-11T19:10:53.956Z"
+  }
+},
+{
+  "model": "pages.pagecategory",
+  "pk": 3,
+  "fields": {
+    "name": "Legal",
+    "slug": "legal",
+    "description": "Legal documents and policies",
+    "is_active": true,
+    "created_at": "2025-10-11T19:10:53.974Z",
+    "updated_at": "2025-10-11T19:10:53.974Z"
+  }
+},
+{
+  "model": "pages.pagecategory",
+  "pk": 2,
+  "fields": {
+    "name": "Support",
+    "slug": "support",
+    "description": "Support and help pages",
+    "is_active": true,
+    "created_at": "2025-10-11T19:10:53.966Z",
+    "updated_at": "2025-10-11T19:10:53.966Z"
+  }
+}
+]

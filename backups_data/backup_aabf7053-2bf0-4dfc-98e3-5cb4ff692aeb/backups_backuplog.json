@@ -1,0 +1,62 @@
+[
+{
+  "model": "backups.backuplog",
+  "pk": 1,
+  "fields": {
+    "backup": "15c245da-9eef-46a9-88fd-2dc2d9e87891",
+    "level": "info",
+    "message": "Backup process started",
+    "operation": "",
+    "step_number": 0,
+    "total_steps": 0,
+    "extra_data": {},
+    "exception_info": "",
+    "created_at": "2025-11-10T16:24:57.446Z"
+  }
+},
+{
+  "model": "backups.backuplog",
+  "pk": 2,
+  "fields": {
+    "backup": "15c245da-9eef-46a9-88fd-2dc2d9e87891",
+    "level": "error",
+    "message": "Backup verification failed",
+    "operation": "Backing up order status history...",
+    "step_number": 0,
+    "total_steps": 0,
+    "extra_data": {},
+    "exception_info": "",
+    "created_at": "2025-11-10T16:25:01.080Z"
+  }
+},
+{
+  "model": "backups.backuplog",
+  "pk": 3,
+  "fields": {
+    "backup": "15c245da-9eef-46a9-88fd-2dc2d9e87891",
+    "level": "error",
+    "message": "Backup failed: Backup verification failed",
+    "operation": "Backing up order status history...",
+    "step_number": 0,
+    "total_steps": 0,
+    "extra_data": {},
+    "exception_info": "Backup verification failed",
+    "created_at": "2025-11-10T16:25:01.112Z"
+  }
+},
+{
+  "model": "backups.backuplog",
+  "pk": 4,
+  "fields": {
+    "backup": "aabf7053-2bf0-4dfc-98e3-5cb4ff692aeb",
+    "level": "info",
+    "message": "Backup process started",
+    "operation": "",
+    "step_number": 0,
+    "total_steps": 0,
+    "extra_data": {},
+    "exception_info": "",
+    "created_at": "2025-11-10T16:29:38.267Z"
+  }
+}
+]

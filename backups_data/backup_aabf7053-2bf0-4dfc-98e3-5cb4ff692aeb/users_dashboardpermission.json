@@ -1,0 +1,172 @@
+[
+{
+  "model": "users.dashboardpermission",
+  "pk": 1,
+  "fields": {
+    "user": 1,
+    "allowed_tabs": [
+      "home",
+      "products",
+      "categories",
+      "media",
+      "stock",
+      "orders",
+      "incomplete_orders",
+      "reviews",
+      "contacts",
+      "pages",
+      "blocklist",
+      "users",
+      "expenses",
+      "statistics"
+    ],
+    "created_at": "2025-10-30T17:58:18.151Z",
+    "updated_at": "2025-10-30T18:30:47.599Z"
+  }
+},
+{
+  "model": "users.dashboardpermission",
+  "pk": 2,
+  "fields": {
+    "user": 5,
+    "allowed_tabs": [
+      "home",
+      "orders",
+      "products",
+      "statistics"
+    ],
+    "created_at": "2025-10-30T17:58:18.171Z",
+    "updated_at": "2025-10-30T17:58:18.179Z"
+  }
+},
+{
+  "model": "users.dashboardpermission",
+  "pk": 3,
+  "fields": {
+    "user": 6,
+    "allowed_tabs": [
+      "home",
+      "orders",
+      "products",
+      "statistics"
+    ],
+    "created_at": "2025-10-30T17:58:18.191Z",
+    "updated_at": "2025-10-30T17:58:18.199Z"
+  }
+},
+{
+  "model": "users.dashboardpermission",
+  "pk": 4,
+  "fields": {
+    "user": 7,
+    "allowed_tabs": [
+      "home",
+      "products",
+      "categories",
+      "media",
+      "stock",
+      "orders",
+      "incomplete_orders",
+      "reviews",
+      "contacts",
+      "pages",
+      "blocklist",
+      "users",
+      "expenses",
+      "statistics",
+      "email_settings",
+      "settings",
+      "api_docs"
+    ],
+    "created_at": "2025-10-30T17:58:18.207Z",
+    "updated_at": "2025-10-30T17:58:18.216Z"
+  }
+},
+{
+  "model": "users.dashboardpermission",
+  "pk": 5,
+  "fields": {
+    "user": 42,
+    "allowed_tabs": [
+      "expenses",
+      "orders",
+      "incomplete_orders",
+      "home",
+      "products"
+    ],
+    "created_at": "2025-10-30T17:58:18.224Z",
+    "updated_at": "2025-10-30T19:09:06.108Z"
+  }
+},
+{
+  "model": "users.dashboardpermission",
+  "pk": 6,
+  "fields": {
+    "user": 43,
+    "allowed_tabs": [
+      "home",
+      "products",
+      "categories",
+      "media",
+      "stock",
+      "orders",
+      "incomplete_orders",
+      "reviews",
+      "contacts",
+      "pages",
+      "blocklist",
+      "users",
+      "expenses",
+      "statistics",
+      "email_settings",
+      "settings",
+      "api_docs"
+    ],
+    "created_at": "2025-10-30T17:58:18.241Z",
+    "updated_at": "2025-10-30T17:58:18.249Z"
+  }
+},
+{
+  "model": "users.dashboardpermission",
+  "pk": 7,
+  "fields": {
+    "user": 44,
+    "allowed_tabs": [
+      "home",
+      "orders",
+      "products",
+      "statistics"
+    ],
+    "created_at": "2025-10-30T17:58:18.258Z",
+    "updated_at": "2025-10-30T17:58:18.267Z"
+  }
+},
+{
+  "model": "users.dashboardpermission",
+  "pk": 8,
+  "fields": {
+    "user": 46,
+    "allowed_tabs": [
+      "home",
+      "products",
+      "categories",
+      "media",
+      "stock",
+      "orders",
+      "incomplete_orders",
+      "reviews",
+      "contacts",
+      "pages",
+      "blocklist",
+      "users",
+      "expenses",
+      "statistics",
+      "email_settings",
+      "settings",
+      "api_docs"
+    ],
+    "created_at": "2025-10-30T17:58:18.276Z",
+    "updated_at": "2025-10-30T17:58:18.330Z"
+  }
+}
+]

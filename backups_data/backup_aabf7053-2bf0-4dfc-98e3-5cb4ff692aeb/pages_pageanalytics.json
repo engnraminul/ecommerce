@@ -1,0 +1,74 @@
+[
+{
+  "model": "pages.pageanalytics",
+  "pk": 6,
+  "fields": {
+    "page": 9,
+    "date": "2025-10-12",
+    "views": 0,
+    "unique_views": 0,
+    "bounce_rate": "0.00",
+    "avg_time_on_page": null
+  }
+},
+{
+  "model": "pages.pageanalytics",
+  "pk": 1,
+  "fields": {
+    "page": 1,
+    "date": "2025-10-11",
+    "views": 0,
+    "unique_views": 0,
+    "bounce_rate": "0.00",
+    "avg_time_on_page": null
+  }
+},
+{
+  "model": "pages.pageanalytics",
+  "pk": 2,
+  "fields": {
+    "page": 2,
+    "date": "2025-10-11",
+    "views": 0,
+    "unique_views": 0,
+    "bounce_rate": "0.00",
+    "avg_time_on_page": null
+  }
+},
+{
+  "model": "pages.pageanalytics",
+  "pk": 3,
+  "fields": {
+    "page": 3,
+    "date": "2025-10-11",
+    "views": 0,
+    "unique_views": 0,
+    "bounce_rate": "0.00",
+    "avg_time_on_page": null
+  }
+},
+{
+  "model": "pages.pageanalytics",
+  "pk": 4,
+  "fields": {
+    "page": 4,
+    "date": "2025-10-11",
+    "views": 0,
+    "unique_views": 0,
+    "bounce_rate": "0.00",
+    "avg_time_on_page": null
+  }
+},
+{
+  "model": "pages.pageanalytics",
+  "pk": 5,
+  "fields": {
+    "page": 5,
+    "date": "2025-10-11",
+    "views": 0,
+    "unique_views": 0,
+    "bounce_rate": "0.00",
+    "avg_time_on_page": null
+  }
+}
+]

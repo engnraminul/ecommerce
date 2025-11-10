@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'inventory.apps.InventoryConfig',
     'pages.apps.PagesConfig',
     'contact.apps.ContactConfig',
+    'backups.apps.BackupsConfig',
 ]
 
 MIDDLEWARE = [
@@ -374,3 +375,25 @@ RECAPTCHA_SECRET_KEY = config('RECAPTCHA_SECRET_KEY', default=None)  # Set this 
 
 # For development/demonstration - bypass reCAPTCHA verification if no secret key is set
 RECAPTCHA_BYPASS_FOR_DEMO = config('RECAPTCHA_BYPASS_FOR_DEMO', default=True, cast=bool)
+
+# Backup System Settings
+BACKUP_ROOT = os.path.join(BASE_DIR, 'backups_data')
+BACKUP_MEDIA_ROOT = os.path.join(BACKUP_ROOT, 'media')
+BACKUP_DATABASE_ROOT = os.path.join(BACKUP_ROOT, 'database')
+BACKUP_ARCHIVE_ROOT = os.path.join(BACKUP_ROOT, 'archives')
+
+# Backup retention (days)
+BACKUP_RETENTION_DAYS = config('BACKUP_RETENTION_DAYS', default=30, cast=int)
+
+# Maximum backup file size (bytes) - 10GB default
+BACKUP_MAX_FILE_SIZE = config('BACKUP_MAX_FILE_SIZE', default=10*1024*1024*1024, cast=int)
+
+# Enable/disable backup compression
+BACKUP_USE_COMPRESSION = config('BACKUP_USE_COMPRESSION', default=True, cast=bool)
+
+# Backup file permissions (octal)
+BACKUP_FILE_PERMISSIONS = 0o600
+
+# Enable backup encryption (requires cryptography package)
+BACKUP_USE_ENCRYPTION = config('BACKUP_USE_ENCRYPTION', default=False, cast=bool)
+BACKUP_ENCRYPTION_KEY = config('BACKUP_ENCRYPTION_KEY', default=None)

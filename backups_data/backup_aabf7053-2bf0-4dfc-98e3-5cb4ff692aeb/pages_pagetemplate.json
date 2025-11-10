@@ -1,0 +1,47 @@
+[
+{
+  "model": "pages.pagetemplate",
+  "pk": 3,
+  "fields": {
+    "name": "Article Template",
+    "slug": "article-template",
+    "template_type": "article",
+    "template_file": "page_detail.html",
+    "description": "Template for blog articles",
+    "preview_image": "",
+    "is_active": true,
+    "created_at": "2025-10-11T19:10:54.009Z",
+    "updated_at": "2025-10-11T19:10:54.009Z"
+  }
+},
+{
+  "model": "pages.pagetemplate",
+  "pk": 1,
+  "fields": {
+    "name": "Default Template",
+    "slug": "default-template",
+    "template_type": "default",
+    "template_file": "page_detail.html",
+    "description": "Standard page template",
+    "preview_image": "",
+    "is_active": true,
+    "created_at": "2025-10-11T19:10:53.992Z",
+    "updated_at": "2025-10-11T19:10:53.992Z"
+  }
+},
+{
+  "model": "pages.pagetemplate",
+  "pk": 2,
+  "fields": {
+    "name": "Landing Page Template",
+    "slug": "landing-page-template",
+    "template_type": "landing",
+    "template_file": "landing.html",
+    "description": "Hero section with call-to-action",
+    "preview_image": "",
+    "is_active": true,
+    "created_at": "2025-10-11T19:10:54.001Z",
+    "updated_at": "2025-10-11T19:10:54.001Z"
+  }
+}
+]

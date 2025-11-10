@@ -1,0 +1,26 @@
+[
+{
+  "model": "dashboard.expense",
+  "pk": 2,
+  "fields": {
+    "expense_type": "courier_poly",
+    "amount": "170.00",
+    "description": "100 PCS",
+    "created_by": 1,
+    "created_at": "2025-09-26T06:53:06.258Z",
+    "updated_at": "2025-09-26T20:11:00.968Z"
+  }
+},
+{
+  "model": "dashboard.expense",
+  "pk": 1,
+  "fields": {
+    "expense_type": "ads",
+    "amount": "1000.00",
+    "description": "70 Dollar",
+    "created_by": 1,
+    "created_at": "2025-09-26T06:52:32.277Z",
+    "updated_at": "2025-09-26T19:57:39.707Z"
+  }
+}
+]

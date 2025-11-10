@@ -1,0 +1,249 @@
+[
+{
+  "model": "cart.cartitem",
+  "pk": 95,
+  "fields": {
+    "cart": 23,
+    "product": 4,
+    "variant": 26,
+    "quantity": 1,
+    "unit_price": "24.99",
+    "created_at": "2025-08-21T16:58:03.438Z",
+    "updated_at": "2025-08-21T16:58:03.439Z"
+  }
+},
+{
+  "model": "cart.cartitem",
+  "pk": 113,
+  "fields": {
+    "cart": 24,
+    "product": 10,
+    "variant": 46,
+    "quantity": 1,
+    "unit_price": "254.99",
+    "created_at": "2025-08-21T18:58:56.173Z",
+    "updated_at": "2025-08-21T18:58:56.173Z"
+  }
+},
+{
+  "model": "cart.cartitem",
+  "pk": 119,
+  "fields": {
+    "cart": 27,
+    "product": 10,
+    "variant": 46,
+    "quantity": 1,
+    "unit_price": "254.99",
+    "created_at": "2025-08-21T19:18:23.821Z",
+    "updated_at": "2025-08-21T19:18:23.821Z"
+  }
+},
+{
+  "model": "cart.cartitem",
+  "pk": 191,
+  "fields": {
+    "cart": 38,
+    "product": 1,
+    "variant": null,
+    "quantity": 1,
+    "unit_price": "999.99",
+    "created_at": "2025-10-05T14:57:51.289Z",
+    "updated_at": "2025-10-05T14:57:51.289Z"
+  }
+},
+{
+  "model": "cart.cartitem",
+  "pk": 192,
+  "fields": {
+    "cart": 114,
+    "product": 22,
+    "variant": 59,
+    "quantity": 1,
+    "unit_price": "650.00",
+    "created_at": "2025-10-05T15:16:13.887Z",
+    "updated_at": "2025-10-05T15:16:13.887Z"
+  }
+},
+{
+  "model": "cart.cartitem",
+  "pk": 232,
+  "fields": {
+    "cart": 181,
+    "product": 10,
+    "variant": 46,
+    "quantity": 1,
+    "unit_price": "254.99",
+    "created_at": "2025-10-29T21:06:39.376Z",
+    "updated_at": "2025-10-29T21:06:39.376Z"
+  }
+},
+{
+  "model": "cart.cartitem",
+  "pk": 236,
+  "fields": {
+    "cart": 187,
+    "product": 31,
+    "variant": 76,
+    "quantity": 2,
+    "unit_price": "850.00",
+    "created_at": "2025-10-31T17:52:34.475Z",
+    "updated_at": "2025-11-01T20:56:53.566Z"
+  }
+},
+{
+  "model": "cart.cartitem",
+  "pk": 248,
+  "fields": {
+    "cart": 203,
+    "product": 33,
+    "variant": 79,
+    "quantity": 2,
+    "unit_price": "850.00",
+    "created_at": "2025-11-04T18:58:43.634Z",
+    "updated_at": "2025-11-04T18:58:43.634Z"
+  }
+},
+{
+  "model": "cart.cartitem",
+  "pk": 249,
+  "fields": {
+    "cart": 203,
+    "product": 31,
+    "variant": 75,
+    "quantity": 1,
+    "unit_price": "850.00",
+    "created_at": "2025-11-04T18:58:43.646Z",
+    "updated_at": "2025-11-04T18:58:43.646Z"
+  }
+},
+{
+  "model": "cart.cartitem",
+  "pk": 250,
+  "fields": {
+    "cart": 203,
+    "product": 22,
+    "variant": 58,
+    "quantity": 1,
+    "unit_price": "650.00",
+    "created_at": "2025-11-04T18:58:43.657Z",
+    "updated_at": "2025-11-04T18:58:43.657Z"
+  }
+},
+{
+  "model": "cart.cartitem",
+  "pk": 251,
+  "fields": {
+    "cart": 204,
+    "product": 33,
+    "variant": 79,
+    "quantity": 2,
+    "unit_price": "850.00",
+    "created_at": "2025-11-04T18:59:30.474Z",
+    "updated_at": "2025-11-04T18:59:30.474Z"
+  }
+},
+{
+  "model": "cart.cartitem",
+  "pk": 252,
+  "fields": {
+    "cart": 204,
+    "product": 31,
+    "variant": 75,
+    "quantity": 1,
+    "unit_price": "850.00",
+    "created_at": "2025-11-04T18:59:30.485Z",
+    "updated_at": "2025-11-04T18:59:30.485Z"
+  }
+},
+{
+  "model": "cart.cartitem",
+  "pk": 253,
+  "fields": {
+    "cart": 204,
+    "product": 22,
+    "variant": 58,
+    "quantity": 1,
+    "unit_price": "650.00",
+    "created_at": "2025-11-04T18:59:30.496Z",
+    "updated_at": "2025-11-04T18:59:30.496Z"
+  }
+},
+{
+  "model": "cart.cartitem",
+  "pk": 254,
+  "fields": {
+    "cart": 208,
+    "product": 37,
+    "variant": null,
+    "quantity": 2,
+    "unit_price": "850.00",
+    "created_at": "2025-11-04T19:10:54.879Z",
+    "updated_at": "2025-11-04T19:10:54.879Z"
+  }
+},
+{
+  "model": "cart.cartitem",
+  "pk": 255,
+  "fields": {
+    "cart": 209,
+    "product": 37,
+    "variant": null,
+    "quantity": 2,
+    "unit_price": "850.00",
+    "created_at": "2025-11-04T19:11:38.860Z",
+    "updated_at": "2025-11-04T19:11:38.860Z"
+  }
+},
+{
+  "model": "cart.cartitem",
+  "pk": 256,
+  "fields": {
+    "cart": 210,
+    "product": 37,
+    "variant": null,
+    "quantity": 2,
+    "unit_price": "850.00",
+    "created_at": "2025-11-04T19:12:25.091Z",
+    "updated_at": "2025-11-04T19:12:25.091Z"
+  }
+},
+{
+  "model": "cart.cartitem",
+  "pk": 257,
+  "fields": {
+    "cart": 211,
+    "product": 37,
+    "variant": null,
+    "quantity": 2,
+    "unit_price": "850.00",
+    "created_at": "2025-11-04T19:17:45.295Z",
+    "updated_at": "2025-11-04T19:17:45.295Z"
+  }
+},
+{
+  "model": "cart.cartitem",
+  "pk": 260,
+  "fields": {
+    "cart": 213,
+    "product": 37,
+    "variant": null,
+    "quantity": 2,
+    "unit_price": "850.00",
+    "created_at": "2025-11-04T19:45:14.726Z",
+    "updated_at": "2025-11-04T19:45:14.726Z"
+  }
+},
+{
+  "model": "cart.cartitem",
+  "pk": 262,
+  "fields": {
+    "cart": 215,
+    "product": 37,
+    "variant": null,
+    "quantity": 2,
+    "unit_price": "850.00",
+    "created_at": "2025-11-04T19:47:14.595Z",
+    "updated_at": "2025-11-04T19:47:14.595Z"
+  }
+}
+]
