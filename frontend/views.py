@@ -20,6 +20,18 @@ from pages.models import Page
 logger = logging.getLogger(__name__)
 
 
+def get_product_image_url(product):
+    """Get product image URL safely"""
+    if product.images.exists():
+        first_image = product.images.first()
+        if hasattr(first_image, 'image') and hasattr(first_image.image, 'url'):
+            try:
+                return first_image.image.url
+            except (ValueError, AttributeError):
+                pass
+    return None
+
+
 def get_image_url(image_path, request=None):
     """
     Utility function to get proper image URL from image path
@@ -1354,21 +1366,27 @@ def load_more_reviews(request, product_id):
     return render(request, 'frontend/partials/review_items.html', context)
 
 
+@csrf_exempt
 def find_orders_by_phone(request):
     """API endpoint to find orders by phone number."""
     if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         try:
             import json
+            from orders.phone_utils import normalize_bangladeshi_phone
+            
             data = json.loads(request.body)
             phone_number = data.get('phone_number', '').strip()
             
             if not phone_number:
                 return JsonResponse({'error': 'Phone number is required'}, status=400)
             
-            # Search in both customer_phone and guest phone fields
+            # Normalize the phone number for search
+            normalized_phone = normalize_bangladeshi_phone(phone_number)
+            
+            # Search in both customer_phone and guest phone fields using normalized number
             orders = Order.objects.filter(
-                Q(customer_phone=phone_number) | 
-                Q(shipping_address__phone=phone_number)
+                Q(customer_phone=normalized_phone) | 
+                Q(shipping_address__phone=normalized_phone)
             ).select_related(
                 'shipping_address'
             ).prefetch_related(
@@ -1387,7 +1405,7 @@ def find_orders_by_phone(request):
                     'items': [{
                         'product': {
                             'name': item.product.name,
-                            'image_url': item.product.images.first().image.url if item.product.images.exists() else None
+                            'image_url': get_product_image_url(item.product)
                         },
                         'quantity': item.quantity,
                     } for item in order.items.all()]

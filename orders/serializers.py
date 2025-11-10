@@ -482,7 +482,7 @@ class OrderTrackingSerializer(serializers.ModelSerializer):
         return [{
             'product': {
                 'name': item.product.name,
-                'image_url': item.product.images.first().image.url if item.product.images.exists() else None
+                'image_url': self.get_product_image_url(item.product)
             },
             'variant': {
                 'color': item.variant.color if item.variant else None,
@@ -491,6 +491,17 @@ class OrderTrackingSerializer(serializers.ModelSerializer):
             'quantity': item.quantity,
             'total_price': float(item.total_price)
         } for item in obj.items.all()]
+    
+    def get_product_image_url(self, product):
+        """Get product image URL safely"""
+        if product.images.exists():
+            first_image = product.images.first()
+            if hasattr(first_image, 'image') and hasattr(first_image.image, 'url'):
+                try:
+                    return first_image.image.url
+                except (ValueError, AttributeError):
+                    pass
+        return None
     
     def get_status_history(self, obj):
         # Get all visible status history entries
