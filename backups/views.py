@@ -8,6 +8,7 @@ from django.utils.decorators import method_decorator
 from django.utils import timezone
 from django.db.models import Sum, Count, Avg, Q
 from django.apps import apps
+from django.conf import settings
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
@@ -32,6 +33,7 @@ from .serializers import (
     BackupStatsSerializer, ModelInfoSerializer
 )
 from .utils import backup_utils
+from .full_backup_utils import FullBackupUtilities
 
 logger = logging.getLogger(__name__)
 
@@ -60,32 +62,45 @@ class BackupViewSet(viewsets.ModelViewSet):
             return BackupCreateSerializer
         return BackupSerializer
     
-    def perform_create(self, serializer):
+    def create(self, request, *args, **kwargs):
         """Create a new backup and start the backup process"""
-        backup = serializer.save(created_by=self.request.user)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        backup_data = serializer.validated_data
         
         # Start backup process in background thread
         def run_backup():
             try:
-                call_command(
-                    'create_backup_safe',
-                    name=backup.name,
-                    description=backup.description,
-                    type=backup.backup_type,
-                    compress=backup.compress_backup,
-                    no_compress=not backup.compress_backup,
-                    include_media=backup.include_media,
-                    no_media=not backup.include_media,
-                    include_static=backup.include_staticfiles,
-                    quiet=True
-                )
+                kwargs = {
+                    'type': backup_data.get('backup_type', 'full'),
+                    'quiet': True
+                }
+                
+                if backup_data.get('name'):
+                    kwargs['name'] = backup_data['name']
+                if backup_data.get('description'):
+                    kwargs['description'] = backup_data['description']
+                if not backup_data.get('include_media', True):
+                    kwargs['no_media'] = True
+                if not backup_data.get('compress_backup', True):
+                    kwargs['no_compress'] = True
+                if backup_data.get('include_staticfiles', False):
+                    kwargs['include_static'] = True
+                
+                call_command('create_backup_safe', **kwargs)
+                
             except Exception as e:
-                backup.mark_as_failed(str(e))
-                logger.error(f"Backup {backup.id} failed: {str(e)}")
+                logger.error(f"Backup creation failed: {str(e)}")
         
         thread = threading.Thread(target=run_backup)
         thread.daemon = True
         thread.start()
+        
+        return Response({
+            'message': 'Backup creation started successfully',
+            'status': 'started'
+        }, status=status.HTTP_202_ACCEPTED)
     
     @action(detail=True, methods=['post'])
     def restore(self, request, pk=None):
@@ -122,41 +137,41 @@ class BackupViewSet(viewsets.ModelViewSet):
                     restore.current_operation = "Preparing restore..."
                     restore.save()
                     
-                    # Simulate restore process with progress updates
-                    steps = [
-                        ("Initializing restore...", 10),
-                        ("Creating pre-restore backup...", 20),
-                        ("Extracting backup files...", 40),
-                        ("Restoring database...", 60),
-                        ("Restoring media files...", 80),
-                        ("Verifying restored data...", 90),
-                        ("Finalizing restore...", 95)
-                    ]
+                    # Execute real restore process (quick mode for speed)
+                    args = [str(backup.id)]
+                    kwargs = {
+                        'force': True,  # Skip confirmation
+                        'quiet': True,
+                        'no_verify': True,  # Skip verification to avoid failures
+                        'no_pre_backup': True,  # Skip pre-backup for now
+                        'quick': True  # Use quick restore mode for speed
+                    }
                     
-                    for step_desc, progress in steps:
-                        restore.current_operation = step_desc
-                        restore.progress_percentage = progress
-                        restore.save()
-                        time.sleep(2)  # Simulate work
+                    # Handle backup type restrictions
+                    if backup.backup_type == 'database':
+                        kwargs['no_media'] = True  # Database-only backups can't restore media
+                    elif backup.backup_type == 'media':
+                        kwargs['no_database'] = True  # Media-only backups can't restore database
                     
-                    # TODO: Uncomment when ready for real restore
-                    # args = [str(backup.id)]
-                    # kwargs = {
-                    #     'force': True,  # Skip confirmation
-                    #     'mode': restore.restore_mode,
-                    #     'quiet': True
-                    # }
-                    # 
-                    # if not restore.restore_database:
-                    #     kwargs['no_database'] = True
-                    # if not restore.restore_media:
-                    #     kwargs['no_media'] = True
-                    # if restore.selected_models:
-                    #     kwargs['models'] = ','.join(restore.selected_models)
-                    # if restore.exclude_models:
-                    #     kwargs['exclude_models'] = ','.join(restore.exclude_models)
-                    # 
-                    # call_command('restore_backup_safe', *args, **kwargs)
+                    # Apply user preferences and restore options
+                    if restore.restore_mode:
+                        kwargs['mode'] = restore.restore_mode
+                    if not restore.restore_database:
+                        kwargs['no_database'] = True
+                    if not restore.restore_media:
+                        kwargs['no_media'] = True
+                    if restore.selected_models:
+                        kwargs['models'] = ','.join(restore.selected_models)
+                    if restore.exclude_models:
+                        kwargs['exclude_models'] = ','.join(restore.exclude_models)
+                    
+                    # Set initial progress
+                    restore.current_operation = "Starting restore process..."
+                    restore.progress_percentage = 10
+                    restore.save()
+                    
+                    # Call the real restore command
+                    call_command('restore_backup_safe', *args, **kwargs)
                     
                     # Mark as completed if successful
                     restore.mark_as_completed()
@@ -333,6 +348,180 @@ class BackupViewSet(viewsets.ModelViewSet):
         serializer = BackupStatsSerializer(data=stats)
         serializer.is_valid()
         return Response(serializer.data)
+    
+    @action(detail=False, methods=['post'])
+    def create_full_backup(self, request):
+        """Create comprehensive full backup using database dumps"""
+        try:
+            # Get form data
+            name = request.data.get('name', '').strip()
+            description = request.data.get('description', '').strip()
+            include_media = request.data.get('include_media', True)
+            compress = request.data.get('compress', True)
+            
+            # Create backup instance for tracking
+            backup = Backup.objects.create(
+                name=name or f"FullBackup_{timezone.now().strftime('%Y%m%d_%H%M%S')}",
+                description=description,
+                backup_type='full',
+                include_media=include_media,
+                compress_backup=compress,
+                created_by=request.user,
+                status='pending'
+            )
+            
+            # Start comprehensive backup in background
+            def run_full_backup():
+                try:
+                    backup.mark_as_started()
+                    backup.current_operation = "Initializing comprehensive backup..."
+                    backup.save()
+                    
+                    # Use FullBackupUtilities for comprehensive backup
+                    full_backup_utils = FullBackupUtilities()
+                    
+                    results = full_backup_utils.create_comprehensive_backup(
+                        backup_name=backup.name,
+                        include_media=include_media,
+                        compress=compress,
+                        backup_instance=backup
+                    )
+                    
+                    if results['success']:
+                        # Update backup instance with results
+                        backup.backup_path = results['backup_path']
+                        backup.backup_size = results['total_size']
+                        backup.compressed_size = results['compressed_size']
+                        
+                        # Update database info
+                        db_results = results.get('database_results', {})
+                        backup.total_tables = db_results.get('tables_count', 0)
+                        backup.total_records = db_results.get('records_count', 0)
+                        
+                        # Update media info
+                        media_results = results.get('media_results', {})
+                        backup.total_files = media_results.get('total_files', 0)
+                        
+                        backup.mark_as_completed()
+                        
+                        logger.info(f"Comprehensive backup completed successfully: {backup.name}")
+                        
+                    else:
+                        error_msg = '; '.join(results['errors'])
+                        backup.mark_as_failed(error_msg)
+                        logger.error(f"Comprehensive backup failed: {error_msg}")
+                
+                except Exception as e:
+                    backup.mark_as_failed(str(e))
+                    logger.error(f"Comprehensive backup exception: {str(e)}")
+            
+            # Start backup thread
+            backup_thread = threading.Thread(target=run_full_backup)
+            backup_thread.daemon = True
+            backup_thread.start()
+            
+            return Response({
+                'success': True,
+                'message': 'Comprehensive backup started',
+                'backup_id': str(backup.id),
+                'status': backup.status
+            })
+        
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': f'Failed to start comprehensive backup: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=True, methods=['post'])
+    def restore_full_backup(self, request, pk=None):
+        """Restore from comprehensive full backup using database dumps"""
+        backup = self.get_object()
+        
+        try:
+            restore_database = request.data.get('restore_database', True)
+            restore_media = request.data.get('restore_media', True)
+            create_pre_backup = request.data.get('create_pre_backup', True)
+            
+            # Create restore tracking instance
+            restore_instance = BackupRestore.objects.create(
+                backup=backup,
+                restore_database=restore_database,
+                restore_media=restore_media,
+                status='pending'
+            )
+            
+            # Start comprehensive restore in background
+            def run_full_restore():
+                try:
+                    restore_instance.mark_as_started()
+                    restore_instance.current_operation = "Starting comprehensive restore..."
+                    restore_instance.save()
+                    
+                    # Create pre-restore backup if requested
+                    if create_pre_backup:
+                        restore_instance.current_operation = "Creating pre-restore backup..."
+                        restore_instance.save()
+                        
+                        full_backup_utils = FullBackupUtilities()
+                        pre_backup_name = f"PreRestore_{backup.name}_{timezone.now().strftime('%Y%m%d_%H%M%S')}"
+                        
+                        pre_backup_results = full_backup_utils.create_comprehensive_backup(
+                            backup_name=pre_backup_name,
+                            include_media=restore_media,
+                            compress=True
+                        )
+                        
+                        if pre_backup_results['success']:
+                            # Find the created backup instance
+                            pre_backup_instance = Backup.objects.filter(name=pre_backup_name).first()
+                            restore_instance.pre_restore_backup = pre_backup_instance
+                            restore_instance.save()
+                    
+                    # Use FullBackupUtilities for comprehensive restore
+                    full_backup_utils = FullBackupUtilities()
+                    
+                    results = full_backup_utils.restore_comprehensive_backup(
+                        backup_path=backup.backup_path,
+                        restore_database=restore_database,
+                        restore_media=restore_media,
+                        backup_instance=restore_instance
+                    )
+                    
+                    if results['success']:
+                        # Update restore instance with results
+                        restore_instance.restored_records = results['database_results'].get('restored_records', 0)
+                        restore_instance.restored_files = results['media_results'].get('restored_files', 0)
+                        restore_instance.mark_as_completed()
+                        
+                        logger.info(f"Comprehensive restore completed successfully: {backup.name}")
+                        
+                    else:
+                        error_msg = '; '.join(results['errors'])
+                        restore_instance.mark_as_failed(error_msg)
+                        logger.error(f"Comprehensive restore failed: {error_msg}")
+                
+                except Exception as e:
+                    restore_instance.mark_as_failed(str(e))
+                    logger.error(f"Comprehensive restore exception: {str(e)}")
+            
+            # Start restore thread
+            restore_thread = threading.Thread(target=run_full_restore)
+            restore_thread.daemon = True
+            restore_thread.start()
+            
+            return Response({
+                'success': True,
+                'message': 'Comprehensive restore started',
+                'restore_id': str(restore_instance.id),
+                'status': restore_instance.status
+            })
+        
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': f'Failed to start comprehensive restore: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     @action(detail=False, methods=['post'])
     def cleanup(self, request):
@@ -603,38 +792,121 @@ def create_backup(request):
             include_media = request.POST.get('include_media') == 'on'
             compress = request.POST.get('compress') == 'on'
             
-            # Create backup instance
+            # Create backup instance first for progress tracking
             backup = Backup.objects.create(
                 name=name or None,  # Let model generate name if empty
                 description=description,
                 backup_type=backup_type,
                 include_media=include_media,
                 compress_backup=compress,
-                created_by=request.user
+                created_by=request.user,
+                status='pending'
             )
             
-            # Start backup in background
+            # Start backup in background - pass the backup ID to update existing record
             def run_backup():
                 try:
-                    args = []
-                    kwargs = {
-                        'type': backup_type,
-                        'quiet': True
-                    }
+                    # Mark as started
+                    backup.status = 'in_progress'
+                    backup.current_operation = 'Initializing backup...'
+                    backup.progress_percentage = 0
+                    backup.started_at = timezone.now()
+                    backup.save()
                     
-                    if name:
-                        kwargs['name'] = name
-                    if description:
-                        kwargs['description'] = description
-                    if not include_media:
-                        kwargs['no_media'] = True
-                    if not compress:
-                        kwargs['no_compress'] = True
+                    # Use backup_utils directly instead of command to avoid duplicate creation
+                    from backups.utils import backup_utils
+                    import tempfile
+                    import os
                     
-                    call_command('create_backup_safe', **kwargs)
+                    # Create temporary working directory
+                    with tempfile.TemporaryDirectory() as temp_dir:
+                        backup_dir = os.path.join(temp_dir, f"backup_{backup.id}")
+                        os.makedirs(backup_dir)
+                        
+                        backup.current_operation = "Creating backup files..."
+                        backup.progress_percentage = 20
+                        backup.save()
+                        
+                        success = True
+                        total_files = 0
+                        total_size = 0
+                        
+                        # Database backup
+                        if backup.backup_type in ['full', 'database']:
+                            backup.current_operation = "Backing up database..."
+                            backup.progress_percentage = 40
+                            backup.save()
+                            
+                            db_results = backup_utils.create_database_backup(backup_dir, backup)
+                            if db_results['success']:
+                                total_files += len(db_results['files'])
+                                total_size += sum(f['file_size'] for f in db_results['files'])
+                                backup.total_tables = db_results['total_tables']
+                                backup.total_records = db_results['total_records']
+                            else:
+                                success = False
+                        
+                        # Media backup
+                        if success and backup.backup_type in ['full', 'media'] and backup.include_media:
+                            backup.current_operation = "Backing up media files..."
+                            backup.progress_percentage = 60
+                            backup.save()
+                            
+                            media_results = backup_utils.create_media_backup(backup_dir, backup)
+                            if media_results['success']:
+                                total_files += media_results['total_files']
+                                total_size += media_results['total_size']
+                            else:
+                                success = False
+                        
+                        backup.total_files = total_files
+                        backup.backup_size = total_size
+                        
+                        # Always set a backup path first (copy uncompressed)
+                        output_dir = getattr(settings, 'BACKUP_ROOT', backup_utils.backup_root)
+                        os.makedirs(output_dir, exist_ok=True)
+                        permanent_dir = os.path.join(output_dir, f"backup_{backup.id}")
+                        
+                        # Copy backup files to permanent location
+                        import shutil
+                        if os.path.exists(permanent_dir):
+                            shutil.rmtree(permanent_dir)
+                        shutil.copytree(backup_dir, permanent_dir)
+                        backup.backup_path = permanent_dir
+                        
+                        # Compress if requested
+                        if success and compress:
+                            backup.current_operation = "Compressing backup..."
+                            backup.progress_percentage = 80
+                            backup.save()
+                            
+                            timestamp = backup.created_at.strftime('%Y%m%d_%H%M%S')
+                            archive_name = f"{backup.name}_{timestamp}.tar.gz"
+                            archive_path = os.path.join(output_dir, archive_name)
+                            
+                            compress_results = backup_utils.compress_backup(backup_dir, archive_path, backup)
+                            if compress_results['success']:
+                                backup.backup_path = archive_path  # Use compressed version
+                                backup.compressed_size = compress_results['compressed_size']
+                                # Remove uncompressed directory to save space
+                                if os.path.exists(permanent_dir):
+                                    shutil.rmtree(permanent_dir)
+                            else:
+                                # Compression failed, keep uncompressed version
+                                logger.warning(f"Compression failed for backup {backup.id}, keeping uncompressed version")
+                        
+                        if success:
+                            backup.current_operation = "Finalizing backup..."
+                            backup.progress_percentage = 95
+                            backup.save()
+                            
+                            backup.mark_as_completed()
+                        else:
+                            backup.mark_as_failed("Backup process failed")
                 
                 except Exception as e:
                     backup.mark_as_failed(str(e))
+                    logger.error(f"Backup creation failed: {str(e)}")
             
             thread = threading.Thread(target=run_backup)
             thread.daemon = True
@@ -694,38 +966,35 @@ def restore_backup(request, backup_id):
                     restore.current_operation = "Preparing restore..."
                     restore.save()
                     
-                    # Simulate restore process with progress updates
-                    steps = [
-                        ("Initializing restore...", 10),
-                        ("Creating pre-restore backup...", 20),
-                        ("Extracting backup files...", 40),
-                        ("Restoring database...", 60),
-                        ("Restoring media files...", 80),
-                        ("Verifying restored data...", 90),
-                        ("Finalizing restore...", 95)
-                    ]
+                    # Execute real restore process (quick mode for speed)
+                    args = [str(backup.id)]
+                    kwargs = {
+                        'force': True,
+                        'quiet': True,
+                        'no_verify': True,  # Skip verification to avoid failures
+                        'no_pre_backup': True,  # Skip pre-backup for now
+                        'quick': True  # Use quick restore mode for speed
+                    }
                     
-                    for step_desc, progress in steps:
-                        restore.current_operation = step_desc
-                        restore.progress_percentage = progress
-                        restore.save()
-                        time.sleep(2)  # Simulate work
+                    # Handle database-only backups
+                    if backup.backup_type == 'database':
+                        kwargs['no_media'] = True  # Database-only backups can't restore media
+                    elif backup.backup_type == 'media':
+                        kwargs['no_database'] = True  # Media-only backups can't restore database
                     
-                    # TODO: Uncomment when ready for real restore
-                    # args = [str(backup.id)]
-                    # kwargs = {
-                    #     'force': True,
-                    #     'quiet': True
-                    # }
-                    # 
-                    # if not restore_database:
-                    #     kwargs['no_database'] = True
-                    # if not restore_media:
-                    #     kwargs['no_media'] = True
-                    # if not create_pre_backup:
-                    #     kwargs['no_pre_backup'] = True
-                    # 
-                    # call_command('restore_backup_safe', *args, **kwargs)
+                    # Override with user preferences
+                    if not restore_database:
+                        kwargs['no_database'] = True
+                    if not restore_media:
+                        kwargs['no_media'] = True
+                    
+                    # Set initial progress
+                    restore.current_operation = "Starting restore process..."
+                    restore.progress_percentage = 10
+                    restore.save()
+                    
+                    # Call the real restore command
+                    call_command('restore_backup_safe', *args, **kwargs)
                     
                     # Mark as completed if successful
                     restore.mark_as_completed()

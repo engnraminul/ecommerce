@@ -21,10 +21,15 @@
     
     <div class="btn-group" role="group">
         {% if backup.status == 'completed' and backup.can_restore %}
-            <a href="{% url 'backups:restore_backup' backup.id %}" 
-               class="btn btn-success">
-                <i class="fas fa-undo me-2"></i>Restore
-            </a>
+            <div class="btn-group" role="group">
+                <a href="{% url 'backups:restore_backup' backup.id %}" 
+                   class="btn btn-success">
+                    <i class="fas fa-undo me-2"></i>Restore
+                </a>
+                <button type="button" class="btn btn-outline-success" onclick="fullRestore('{{ backup.id }}', '{{ backup.name }}')">
+                    <i class="fas fa-database me-2"></i>Full Restore
+                </button>
+            </div>
         {% endif %}
         
         {% if backup.status == 'completed' %}
@@ -563,6 +568,39 @@
         }, 2000);
     }
     
+    function fullRestore(backupId, backupName) {
+        // Show comprehensive confirmation dialog
+        if (confirm(`WARNING: Full restore will completely replace your current database and media files with data from "${backupName}". This action cannot be undone without a backup.\n\nA pre-restore backup will be created for safety.\n\nContinue with full restore?`)) {
+            
+            // Make AJAX request to start full restore
+            $.ajax({
+                url: `/api/backups/${backupId}/restore_full_backup/`,
+                type: 'POST',
+                headers: {
+                    'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify({
+                    'restore_database': true,
+                    'restore_media': true,
+                    'create_pre_backup': true
+                }),
+                success: function(response) {
+                    showAlert('success', 'Full restore started successfully! A pre-restore backup is being created for safety. Check the restore progress in the restore operations section.');
+                    // Refresh the page to show restore progress
+                    setTimeout(function() {
+                        location.reload();
+                    }, 2000);
+                },
+                error: function(xhr) {
+                    const response = xhr.responseJSON || {};
+                    const message = response.message || 'Failed to start full restore';
+                    showAlert('danger', message);
+                }
+            });
+        }
+    }
+
     function deleteBackup(backupId, backupName) {
         backupToDelete = backupId;
         $('#deleteBackupName').text(backupName);

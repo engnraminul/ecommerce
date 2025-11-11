@@ -412,10 +412,13 @@ class BackupUtilities:
                 backup_instance.save()
             
             with transaction.atomic():
-                # Disable foreign key checks temporarily
-                if 'postgresql' in settings.DATABASES['default']['ENGINE']:
-                    with connection.cursor() as cursor:
+                # Disable foreign key checks temporarily for different database engines
+                db_engine = settings.DATABASES['default']['ENGINE']
+                with connection.cursor() as cursor:
+                    if 'postgresql' in db_engine:
                         cursor.execute("SET foreign_key_checks = 0;")
+                    elif 'sqlite' in db_engine:
+                        cursor.execute("PRAGMA foreign_keys = OFF;")
                 
                 for i, model_path in enumerate(restore_order):
                     try:
@@ -433,23 +436,58 @@ class BackupUtilities:
                             backup_instance.progress_percentage = int((i / len(restore_order)) * 80)  # 80% for database restore
                             backup_instance.save()
                         
-                        # Clear existing data for this model
+                        # Clear existing data for this model (with foreign key constraints disabled)
                         if not selective_models:  # Only clear if full restore
-                            deleted_count = model.objects.all().delete()[0]
-                            if deleted_count > 0:
-                                results['warnings'].append(f"Deleted {deleted_count} existing records from {model_path}")
+                            try:
+                                # Fast truncate for better performance
+                                table_name = model._meta.db_table
+                                with connection.cursor() as cursor:
+                                    if 'sqlite' in db_engine:
+                                        cursor.execute(f"DELETE FROM {table_name};")
+                                        cursor.execute(f"DELETE FROM sqlite_sequence WHERE name='{table_name}';")
+                                    elif 'postgresql' in db_engine:
+                                        cursor.execute(f"TRUNCATE TABLE {table_name} RESTART IDENTITY CASCADE;")
+                                    else:
+                                        # Fallback to regular deletion
+                                        deleted_count = model.objects.all().delete()[0]
+                                        if deleted_count > 0:
+                                            results['warnings'].append(f"Deleted {deleted_count} existing records from {model_path}")
+                            except Exception as delete_error:
+                                # If truncate fails, try regular deletion
+                                try:
+                                    deleted_count = model.objects.all().delete()[0]
+                                    if deleted_count > 0:
+                                        results['warnings'].append(f"Deleted {deleted_count} existing records from {model_path}")
+                                except Exception as fallback_error:
+                                    results['warnings'].append(f"Could not clear existing records from {model_path}: {str(fallback_error)}")
                         
                         # Load fixture data
                         with open(fixture_file, 'r', encoding='utf-8') as f:
                             fixture_data = json.load(f)
                         
-                        # Deserialize and save objects
+                        # Deserialize and save objects (optimized for speed)
+                        objects_to_create = []
                         objects = serializers.deserialize('json', json.dumps(fixture_data))
-                        restored_count = 0
                         
                         for obj in objects:
-                            obj.save()
-                            restored_count += 1
+                            objects_to_create.append(obj.object)
+                        
+                        # Use bulk_create for much faster insertion
+                        if objects_to_create:
+                            try:
+                                model.objects.bulk_create(objects_to_create, batch_size=1000, ignore_conflicts=True)
+                                restored_count = len(objects_to_create)
+                            except Exception as bulk_error:
+                                # Fallback to individual saves if bulk fails
+                                restored_count = 0
+                                for obj_instance in objects_to_create:
+                                    try:
+                                        obj_instance.save()
+                                        restored_count += 1
+                                    except Exception as save_error:
+                                        results['warnings'].append(f"Could not save {model_path} record: {str(save_error)}")
+                        else:
+                            restored_count = 0
                         
                         results['restored_models'].append({
                             'model': model_path,
@@ -463,9 +501,11 @@ class BackupUtilities:
                         logger.error(error_msg)
                 
                 # Re-enable foreign key checks
-                if 'postgresql' in settings.DATABASES['default']['ENGINE']:
-                    with connection.cursor() as cursor:
+                with connection.cursor() as cursor:
+                    if 'postgresql' in db_engine:
                         cursor.execute("SET foreign_key_checks = 1;")
+                    elif 'sqlite' in db_engine:
+                        cursor.execute("PRAGMA foreign_keys = ON;")
         
         except Exception as e:
             results['success'] = False

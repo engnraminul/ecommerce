@@ -115,6 +115,12 @@ class Command(BaseCommand):
         )
         
         parser.add_argument(
+            '--quick',
+            action='store_true',
+            help='Quick restore mode (faster but skips some safety checks)'
+        )
+        
+        parser.add_argument(
             '--verbose',
             action='store_true',
             help='Verbose output'
