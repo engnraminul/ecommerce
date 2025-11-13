@@ -1,1 +1,0 @@
-# Backups app for comprehensive Django backup and restore functionality

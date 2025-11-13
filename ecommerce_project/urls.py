@@ -64,9 +64,6 @@ urlpatterns = [
     
     # Contact URLs
     path('contact/', include(('contact.urls', 'contact'), namespace='contact_app')),
-    
-    # Backups URLs
-    path('backups/', include(('backups.urls', 'backups'), namespace='backups')),
 
     path('mb-admin/', include('dashboard.urls')),  # Dashboard URLs
 ]
