@@ -421,11 +421,18 @@
                     'compress': true
                 }),
                 success: function(response) {
-                    showAlert('success', 'Full backup started successfully! Check the backup status below.');
-                    // Refresh the page to show the new backup
-                    setTimeout(function() {
-                        location.reload();
-                    }, 2000);
+                    showAlert('success', 'Full backup started successfully! Redirecting to backup details...');
+                    // Redirect to backup detail page to monitor progress
+                    if (response.backup_id) {
+                        setTimeout(function() {
+                            window.location.href = `/backups/${response.backup_id}/`;
+                        }, 1500);
+                    } else {
+                        // Fallback to reload if no backup ID
+                        setTimeout(function() {
+                            location.reload();
+                        }, 2000);
+                    }
                 },
                 error: function(xhr) {
                     const response = xhr.responseJSON || {};

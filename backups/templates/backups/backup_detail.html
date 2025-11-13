@@ -586,11 +586,9 @@
                     'create_pre_backup': true
                 }),
                 success: function(response) {
-                    showAlert('success', 'Full restore started successfully! A pre-restore backup is being created for safety. Check the restore progress in the restore operations section.');
-                    // Refresh the page to show restore progress
-                    setTimeout(function() {
-                        location.reload();
-                    }, 2000);
+                    showAlert('success', 'Full restore started successfully! A pre-restore backup is being created for safety.');
+                    // Start polling for status updates instead of simple reload
+                    startStatusPolling();
                 },
                 error: function(xhr) {
                     const response = xhr.responseJSON || {};
@@ -606,5 +604,79 @@
         $('#deleteBackupName').text(backupName);
         $('#deleteModal').modal('show');
     }
+
+    // Status polling for backup progress
+    let statusPollingInterval = null;
+    
+    function startStatusPolling() {
+        // Clear any existing polling
+        if (statusPollingInterval) {
+            clearInterval(statusPollingInterval);
+        }
+        
+        // Start polling every 2 seconds
+        statusPollingInterval = setInterval(function() {
+            updateBackupStatus();
+        }, 2000);
+        
+        // Also update immediately
+        updateBackupStatus();
+    }
+    
+    function stopStatusPolling() {
+        if (statusPollingInterval) {
+            clearInterval(statusPollingInterval);
+            statusPollingInterval = null;
+        }
+    }
+    
+    function updateBackupStatus() {
+        $.ajax({
+            url: `/api/backups/{{ backup.id }}/`,
+            type: 'GET',
+            headers: {
+                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(data) {
+                const currentStatus = data.status;
+                const currentOperation = data.current_operation || '';
+                const progressPercentage = data.progress_percentage || 0;
+                
+                // Update status badge
+                const statusBadge = $('.status-badge');
+                statusBadge.removeClass('status-pending status-in_progress status-completed status-failed')
+                          .addClass('status-' + currentStatus)
+                          .text(data.status_display || currentStatus);
+                
+                // Update progress bar and current operation if in progress
+                if (currentStatus === 'in_progress') {
+                    // Show progress section if not visible
+                    if (!$('.alert-info').length) {
+                        location.reload(); // Reload to show progress section
+                        return;
+                    }
+                    
+                    $('#progress-bar').css('width', progressPercentage + '%');
+                    $('#current-operation').text(currentOperation);
+                } else if (currentStatus === 'completed' || currentStatus === 'failed') {
+                    // Stop polling and reload page to show final state
+                    stopStatusPolling();
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                }
+            },
+            error: function(xhr) {
+                console.error('Failed to update backup status:', xhr);
+            }
+        });
+    }
+    
+    // Auto-start polling if backup is in progress
+    $(document).ready(function() {
+        {% if backup.status == 'in_progress' %}
+            startStatusPolling();
+        {% endif %}
+    });
 </script>
 {% endblock %}

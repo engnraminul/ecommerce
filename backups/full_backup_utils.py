@@ -110,13 +110,11 @@ class FullBackupUtilities:
                 with open(backup_file, 'w', encoding='utf-8') as dump_file:
                     # Add SQLite specific commands for full restoration
                     dump_file.write("PRAGMA foreign_keys=OFF;\n")
-                    dump_file.write("BEGIN TRANSACTION;\n")
                     
-                    # Dump the entire database
+                    # Dump the entire database (iterdump() already includes BEGIN/COMMIT)
                     for line in source_conn.iterdump():
                         dump_file.write(f"{line}\n")
                     
-                    dump_file.write("COMMIT;\n")
                     dump_file.write("PRAGMA foreign_keys=ON;\n")
             
             # Get database statistics

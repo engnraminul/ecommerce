@@ -176,6 +176,38 @@ class Backup(models.Model):
         if error_message:
             self.error_message = error_message
         self.save()
+    
+    def is_stuck(self, timeout_minutes=30):
+        """Check if this backup operation is stuck (timeout)"""
+        if self.status != 'in_progress':
+            return False
+        
+        if not self.started_at:
+            return False
+        
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        timeout_threshold = timezone.now() - timedelta(minutes=timeout_minutes)
+        return self.started_at < timeout_threshold
+    
+    def auto_fix_if_stuck(self, timeout_minutes=30):
+        """Automatically fix this backup if it's stuck"""
+        if not self.is_stuck(timeout_minutes):
+            return False
+        
+        if self.backup_path and os.path.exists(self.backup_path):
+            self.status = 'completed'
+            self.progress_percentage = 100
+            self.current_operation = "Backup completed (auto-fixed)"
+            self.completed_at = timezone.now()
+        else:
+            self.status = 'failed'
+            self.current_operation = "Backup failed (timeout)"
+            self.error_message = f"Backup operation timed out after {timeout_minutes} minutes"
+        
+        self.save()
+        return True
 
 
 class BackupFile(models.Model):
@@ -409,6 +441,31 @@ class BackupRestore(models.Model):
         if error_message:
             self.error_message = error_message
         self.save()
+    
+    def is_stuck(self, timeout_minutes=60):
+        """Check if this restore operation is stuck (timeout)"""
+        if self.status != 'in_progress':
+            return False
+        
+        if not self.started_at:
+            return False
+        
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        timeout_threshold = timezone.now() - timedelta(minutes=timeout_minutes)
+        return self.started_at < timeout_threshold
+    
+    def auto_fix_if_stuck(self, timeout_minutes=60):
+        """Automatically fix this restore if it's stuck"""
+        if not self.is_stuck(timeout_minutes):
+            return False
+        
+        self.status = 'failed'
+        self.current_operation = "Restore failed (timeout)"
+        self.error_message = f"Restore operation timed out after {timeout_minutes} minutes"
+        self.save()
+        return True
 
 
 class BackupSchedule(models.Model):

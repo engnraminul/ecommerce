@@ -62,6 +62,19 @@ class BackupViewSet(viewsets.ModelViewSet):
             return BackupCreateSerializer
         return BackupSerializer
     
+    def list(self, request, *args, **kwargs):
+        """List backups with automatic stuck operation cleanup"""
+        # Auto-cleanup stuck operations (30-minute timeout) when listing backups
+        auto_cleanup = request.GET.get('auto_cleanup', 'true').lower() == 'true'
+        
+        if auto_cleanup:
+            # Quick cleanup of very stuck operations (> 30 minutes)
+            stuck_backups = Backup.objects.filter(status='in_progress')
+            for backup in stuck_backups:
+                backup.auto_fix_if_stuck(30)  # 30-minute timeout
+        
+        return super().list(request, *args, **kwargs)
+    
     def create(self, request, *args, **kwargs):
         """Create a new backup and start the backup process"""
         serializer = self.get_serializer(data=request.data)
@@ -301,6 +314,38 @@ class BackupViewSet(viewsets.ModelViewSet):
                 {'error': f'Delete failed: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+    
+    @action(detail=False, methods=['post'])
+    def cleanup_stuck(self, request):
+        """Cleanup stuck backup operations"""
+        timeout_minutes = request.data.get('timeout_minutes', 30)
+        
+        # Auto-fix stuck backups
+        stuck_backups = Backup.objects.filter(status='in_progress')
+        fixed_backups = 0
+        
+        for backup in stuck_backups:
+            if backup.auto_fix_if_stuck(timeout_minutes):
+                fixed_backups += 1
+        
+        # Auto-fix stuck restores
+        stuck_restores = BackupRestore.objects.filter(status='in_progress')
+        fixed_restores = 0
+        
+        for restore in stuck_restores:
+            if restore.auto_fix_if_stuck(timeout_minutes * 2):  # Double timeout for restores
+                fixed_restores += 1
+        
+        return Response({
+            'success': True,
+            'fixed_backups': fixed_backups,
+            'fixed_restores': fixed_restores,
+            'timeout_minutes': timeout_minutes,
+            'current_in_progress': {
+                'backups': Backup.objects.filter(status='in_progress').count(),
+                'restores': BackupRestore.objects.filter(status='in_progress').count()
+            }
+        })
     
     @action(detail=False, methods=['get'])
     def statistics(self, request):
