@@ -1,6 +1,39 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 import uuid
+
+
+class UserManager(BaseUserManager):
+    """Custom manager for User model with email as USERNAME_FIELD"""
+    
+    def create_user(self, email, password=None, **extra_fields):
+        """Create and return a regular user with email and password."""
+        if not email:
+            raise ValueError('The Email field must be set')
+        
+        email = self.normalize_email(email)
+        
+        # Generate username from email if not provided
+        if 'username' not in extra_fields:
+            extra_fields['username'] = email.split('@')[0]
+        
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+    
+    def create_superuser(self, email, password=None, **extra_fields):
+        """Create and return a superuser with email and password."""
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_email_verified', True)
+        
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+            
+        return self.create_user(email, password, **extra_fields)
 
 
 class User(AbstractUser):
@@ -32,8 +65,10 @@ class User(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    objects = UserManager()
+    
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []  # Removed username from required fields
+    REQUIRED_FIELDS = []  # Only email and password needed for superuser creation
     
     def __str__(self):
         return f"{self.username} ({self.email})"

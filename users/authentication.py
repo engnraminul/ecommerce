@@ -36,7 +36,11 @@ class EmailVerificationBackend(ModelBackend):
             # User doesn't exist or password is wrong
             return None
         
-        # Check if email is verified
+        # Superusers bypass email verification requirement
+        if user.is_superuser:
+            return user
+        
+        # Check if email is verified for regular users
         if not user.is_email_verified:
             # User exists and password is correct, but email is not verified
             return None
@@ -55,6 +59,9 @@ class EmailVerificationBackend(ModelBackend):
         """
         try:
             user = User.objects.get(pk=user_id)
+            # Superusers bypass email verification requirement
+            if user.is_superuser:
+                return user
             # Only return the user if their email is verified
             if user.is_email_verified:
                 return user
