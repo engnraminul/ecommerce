@@ -281,16 +281,19 @@ class SiteSettings(models.Model):
         verbose_name_plural = "Site Settings"
 
     def __str__(self):
-        return f"Site Settings - {self.site_name} (Updated: {self.updated_at.strftime('%Y-%m-%d %H:%M')})"
+        if self.updated_at:
+            return f"Site Settings - {self.site_name} (Updated: {self.updated_at.strftime('%Y-%m-%d %H:%M')})"
+        else:
+            return f"Site Settings - {self.site_name} (New)"
 
     @classmethod
     def get_active_settings(cls):
         """Get the active site settings"""
-        try:
-            return cls.objects.filter(is_active=True).first()
-        except cls.DoesNotExist:
+        active_settings = cls.objects.filter(is_active=True).first()
+        if active_settings is None:
             # Return default settings if none exist
             return cls()
+        return active_settings
 
     def get_current_year(self):
         """Get current year for copyright text"""
@@ -472,16 +475,19 @@ class CheckoutCustomization(models.Model):
         verbose_name_plural = "Checkout Customizations"
 
     def __str__(self):
-        return f"Checkout Customization (Updated: {self.updated_at.strftime('%Y-%m-%d %H:%M')})"
+        if self.updated_at:
+            return f"Checkout Customization (Updated: {self.updated_at.strftime('%Y-%m-%d %H:%M')})"
+        else:
+            return "Checkout Customization (New)"
 
     @classmethod
     def get_active_settings(cls):
         """Get the active checkout customization settings"""
-        try:
-            return cls.objects.filter(is_active=True).first()
-        except cls.DoesNotExist:
+        active_settings = cls.objects.filter(is_active=True).first()
+        if active_settings is None:
             # Return default settings if none exist
             return cls()
+        return active_settings
 
 
 class IntegrationSettings(models.Model):
@@ -574,16 +580,19 @@ class IntegrationSettings(models.Model):
         verbose_name_plural = "Integration Settings"
     
     def __str__(self):
-        return f"Integration Settings (Updated: {self.updated_at.strftime('%Y-%m-%d %H:%M')})"
+        if self.updated_at:
+            return f"Integration Settings (Updated: {self.updated_at.strftime('%Y-%m-%d %H:%M')})"
+        else:
+            return "Integration Settings (New)"
     
     @classmethod
     def get_active_settings(cls):
         """Get the active integration settings"""
-        try:
-            return cls.objects.filter(is_active=True).first()
-        except cls.DoesNotExist:
+        active_settings = cls.objects.filter(is_active=True).first()
+        if active_settings is None:
             # Return default settings if none exist
             return cls()
+        return active_settings
     
     def get_meta_pixel_script(self):
         """Generate Meta Pixel script tag"""

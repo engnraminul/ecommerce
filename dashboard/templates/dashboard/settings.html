@@ -2485,7 +2485,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add event listeners for saving settings with popup alerts
         const saveButtons = [
             { id: 'saveGeneralSettingsBtn', message: 'General settings saved successfully!', formId: 'generalSettingsForm', endpoint: '/mb-admin/settings/' },
-            { id: 'saveCheckoutCustomizationBtn', message: 'Checkout settings saved successfully!', formId: 'checkoutCustomizationForm', endpoint: '/mb-admin/settings/' },
             { id: 'saveIntegrationSettingsBtn', message: 'Integration settings saved successfully!', formId: 'integrationSettingsForm', endpoint: '/mb-admin/api/integration-settings/bulk_update/' }
         ];
 
@@ -2744,6 +2743,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
         });
+        
+        // Checkout customization button handler
+        const saveCheckoutCustomizationBtn = document.getElementById('saveCheckoutCustomizationBtn');
+        if (saveCheckoutCustomizationBtn) {
+            saveCheckoutCustomizationBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                saveCheckoutCustomization();
+            });
+        }
         
         // Other button handlers
         const resetCheckoutBtn = document.getElementById('resetCheckoutToDefaultsBtn');
@@ -3274,6 +3282,11 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Saving checkout customization...');
         
         const form = document.getElementById('checkoutCustomizationForm');
+        if (!form) {
+            showAlert('Checkout customization form not found!', 'danger');
+            return;
+        }
+        
         const formData = new FormData(form);
         
         // Convert FormData to object
@@ -3287,6 +3300,8 @@ document.addEventListener('DOMContentLoaded', function() {
         checkboxes.forEach(checkbox => {
             settings[checkbox.name] = checkbox.checked;
         });
+        
+        console.log('Sending checkout customization data:', settings);
         
         // Make API call to save settings
         fetch('/mb-admin/api/checkout-customization/bulk_update/', {
@@ -3518,7 +3533,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <i class="fas fa-desktop me-1"></i>Desktop
                                     </small>
                                     <div class="border rounded overflow-hidden shadow-sm">
-                                        <img src="${desktopImage}" 
+                                        <img src="/${desktopImage}" 
                                              class="img-fluid" 
                                              style="height: 80px; width: 120px; object-fit: cover; display: block;" 
                                              alt="${slide.title}" 
@@ -3534,7 +3549,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <i class="fas fa-mobile-alt me-1"></i>Mobile
                                     </small>
                                     <div class="border rounded overflow-hidden shadow-sm mx-auto" style="width: 60px;">
-                                        <img src="${mobileImage}" 
+                                        <img src="/${mobileImage}" 
                                              class="img-fluid" 
                                              style="height: 80px; width: 60px; object-fit: cover; display: block;" 
                                              alt="${slide.title} Mobile" 

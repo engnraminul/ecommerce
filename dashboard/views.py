@@ -2382,7 +2382,7 @@ def handle_general_settings_update(request):
     try:
         # Get or create site settings instance
         site_settings = SiteSettings.get_active_settings()
-        if not site_settings.pk:
+        if not site_settings or not site_settings.pk:
             site_settings = SiteSettings()
         
         # Update site identity fields
@@ -2495,8 +2495,9 @@ def handle_general_settings_update(request):
         site_settings.is_active = True
         site_settings.save()
         
-        # Deactivate other settings
-        SiteSettings.objects.exclude(pk=site_settings.pk).update(is_active=False)
+        # Deactivate other settings (only if this instance has a pk)
+        if site_settings.pk:
+            SiteSettings.objects.exclude(pk=site_settings.pk).update(is_active=False)
         
         return JsonResponse({
             'success': True, 
@@ -3502,7 +3503,7 @@ def export_products_performance(request):
 class CheckoutCustomizationViewSet(viewsets.ModelViewSet):
     """ViewSet for managing checkout page customization settings"""
     queryset = CheckoutCustomization.objects.all()
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsStaffUser]
     
     def get_permissions(self):
         """Override permissions for specific actions"""
@@ -3525,6 +3526,13 @@ class CheckoutCustomizationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Get checkout customization settings, prioritizing active ones"""
         return CheckoutCustomization.objects.all().order_by('-is_active', '-updated_at')
+    
+    def get_client_ip(self, request):
+        """Get client IP address"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            return x_forwarded_for.split(',')[0]
+        return request.META.get('REMOTE_ADDR')
     
     @action(detail=False, methods=['get'])
     def active_settings(self, request):
@@ -4582,7 +4590,7 @@ def print_order_invoice(request, order_id):
 # Hero Content API Endpoints
 
 @api_view(['GET', 'POST'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsStaffUser])
 def hero_content_api(request):
     """Hero Content API - List and Create"""
     
@@ -4626,7 +4634,7 @@ def hero_content_api(request):
     
     elif request.method == 'POST':
         try:
-            data = json.loads(request.body)
+            data = request.data
             
             # Create new hero slide
             hero_slide = HeroContent.objects.create(
@@ -4653,6 +4661,9 @@ def hero_content_api(request):
             })
             
         except Exception as e:
+            import traceback
+            print(f"Hero Content API POST Error: {str(e)}")
+            print(f"POST Traceback: {traceback.format_exc()}")
             return JsonResponse({
                 'success': False,
                 'error': str(e)
@@ -4660,7 +4671,7 @@ def hero_content_api(request):
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsStaffUser])
 def hero_content_detail_api(request, slide_id):
     """Hero Content Detail API - Get, Update, Delete"""
     
@@ -4694,7 +4705,7 @@ def hero_content_detail_api(request, slide_id):
             })
         
         elif request.method == 'PUT':
-            data = json.loads(request.body)
+            data = request.data
             
             # Update hero slide
             hero_slide.title = data.get('title', hero_slide.title)
@@ -4734,6 +4745,9 @@ def hero_content_detail_api(request, slide_id):
         }, status=404)
     
     except Exception as e:
+        import traceback
+        print(f"Hero Content Detail API Error: {str(e)}")
+        print(f"Detail Traceback: {traceback.format_exc()}")
         return JsonResponse({
             'success': False,
             'error': str(e)
