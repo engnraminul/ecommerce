@@ -1,0 +1,392 @@
+<!-- Create Backup Modal -->
+<div class="modal fade" id="createBackupModal" tabindex="-1" aria-labelledby="createBackupModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createBackupModalLabel">
+                    <i class="fas fa-database me-2"></i>Create New Backup
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createBackupForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="backupName" class="form-label">Backup Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="backupName" name="name" required>
+                        <div class="form-text">Enter a descriptive name for this backup</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="backupType" class="form-label">Backup Type <span class="text-danger">*</span></label>
+                        <select class="form-select" id="backupType" name="backup_type" required>
+                            <option value="full">Database + Media Files</option>
+                            <option value="database">Database Only</option>
+                            <option value="media">Media Files Only</option>
+                        </select>
+                        <div class="form-text">Choose what to include in the backup</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="backupDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="backupDescription" name="description" rows="3" placeholder="Optional backup description..."></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="compressBackup" name="compress" checked>
+                                <label class="form-check-label" for="compressBackup">
+                                    Compress Files
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="excludeLogs" name="exclude_logs" checked>
+                                <label class="form-check-label" for="excludeLogs">
+                                    Exclude Log Files
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-play me-2"></i>Start Backup
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Restore from Backup Modal -->
+<div class="modal fade" id="restoreFromBackupModal" tabindex="-1" aria-labelledby="restoreFromBackupModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="restoreFromBackupModalLabel">
+                    <i class="fas fa-history me-2"></i>Restore from Backup
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="restoreFromBackupForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="restoreName" class="form-label">Restore Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="restoreName" name="name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="selectBackup" class="form-label">Select Backup <span class="text-danger">*</span></label>
+                        <select class="form-select" id="selectBackup" name="backup_record" required>
+                            <option value="">Loading backups...</option>
+                        </select>
+                        <div class="form-text">Choose a backup to restore from</div>
+                    </div>
+                    
+                    <div class="mb-3" id="backupDetails" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Backup Details</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>Type:</strong> <span id="backupTypeDetail"></span><br>
+                                        <strong>Size:</strong> <span id="backupSizeDetail"></span><br>
+                                        <strong>Created:</strong> <span id="backupDateDetail"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Files:</strong>
+                                        <ul id="backupFilesList" class="mb-0"></ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="restoreType" class="form-label">Restore Type <span class="text-danger">*</span></label>
+                        <select class="form-select" id="restoreType" name="restore_type" required>
+                            <option value="full">Restore Everything</option>
+                            <option value="database">Database Only</option>
+                            <option value="media">Media Files Only</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="restoreDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="restoreDescription" name="description" rows="3" placeholder="Optional restore description..."></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="backupBeforeRestore" name="backup_before_restore" checked>
+                                <label class="form-check-label" for="backupBeforeRestore">
+                                    Backup Before Restore
+                                </label>
+                                <div class="form-text">Recommended for safety</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="overwriteExisting" name="overwrite_existing">
+                                <label class="form-check-label" for="overwriteExisting">
+                                    Overwrite Existing Data
+                                </label>
+                                <div class="form-text text-warning">Use with caution</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-undo me-2"></i>Start Restore
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Upload & Restore Modal -->
+<div class="modal fade" id="uploadRestoreModal" tabindex="-1" aria-labelledby="uploadRestoreModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadRestoreModalLabel">
+                    <i class="fas fa-upload me-2"></i>Upload & Restore
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="uploadRestoreForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="uploadRestoreName" class="form-label">Restore Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="uploadRestoreName" name="name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="uploadRestoreType" class="form-label">Restore Type <span class="text-danger">*</span></label>
+                        <select class="form-select" id="uploadRestoreType" name="restore_type" required>
+                            <option value="full">Database + Media Files</option>
+                            <option value="database">Database Only</option>
+                            <option value="media">Media Files Only</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Database Upload -->
+                    <div class="mb-3" id="databaseUploadSection">
+                        <label class="form-label">Database File (.sql or .sql.gz)</label>
+                        <div class="upload-zone" id="databaseUploadZone">
+                            <i class="fas fa-database fa-3x text-muted mb-3"></i>
+                            <p class="mb-2">Click to select database file or drag & drop</p>
+                            <p class="text-muted small">Supported formats: .sql, .sql.gz</p>
+                            <input type="file" class="form-control" id="databaseFile" name="database_file" accept=".sql,.gz" style="display: none;">
+                        </div>
+                        <div class="mt-2" id="databaseFileInfo" style="display: none;">
+                            <div class="alert alert-info">
+                                <i class="fas fa-file me-2"></i>
+                                <span id="databaseFileName"></span> (<span id="databaseFileSize"></span>)
+                                <button type="button" class="btn btn-sm btn-outline-danger float-end" id="removeDatabaseFile">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Media Upload -->
+                    <div class="mb-3" id="mediaUploadSection">
+                        <label class="form-label">Media Archive (.tar.gz, .zip)</label>
+                        <div class="upload-zone" id="mediaUploadZone">
+                            <i class="fas fa-images fa-3x text-muted mb-3"></i>
+                            <p class="mb-2">Click to select media archive or drag & drop</p>
+                            <p class="text-muted small">Supported formats: .tar.gz, .zip</p>
+                            <input type="file" class="form-control" id="mediaFile" name="media_file" accept=".tar.gz,.zip,.tar" style="display: none;">
+                        </div>
+                        <div class="mt-2" id="mediaFileInfo" style="display: none;">
+                            <div class="alert alert-info">
+                                <i class="fas fa-file-archive me-2"></i>
+                                <span id="mediaFileName"></span> (<span id="mediaFileSize"></span>)
+                                <button type="button" class="btn btn-sm btn-outline-danger float-end" id="removeMediaFile">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="uploadRestoreDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="uploadRestoreDescription" name="description" rows="3" placeholder="Optional restore description..."></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="uploadBackupBeforeRestore" name="backup_before_restore" checked>
+                                <label class="form-check-label" for="uploadBackupBeforeRestore">
+                                    Backup Before Restore
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="uploadOverwriteExisting" name="overwrite_existing">
+                                <label class="form-check-label" for="uploadOverwriteExisting">
+                                    Overwrite Existing Data
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="uploadRestoreBtn">
+                        <i class="fas fa-upload me-2"></i>Upload & Restore
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Create Schedule Modal -->
+<div class="modal fade" id="createScheduleModal" tabindex="-1" aria-labelledby="createScheduleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createScheduleModalLabel">
+                    <i class="fas fa-clock me-2"></i>Create Backup Schedule
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createScheduleForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="scheduleName" class="form-label">Schedule Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="scheduleName" name="name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="scheduleBackupType" class="form-label">Backup Type <span class="text-danger">*</span></label>
+                        <select class="form-select" id="scheduleBackupType" name="backup_type" required>
+                            <option value="full">Database + Media Files</option>
+                            <option value="database">Database Only</option>
+                            <option value="media">Media Files Only</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="scheduleType" class="form-label">Schedule Type <span class="text-danger">*</span></label>
+                        <select class="form-select" id="scheduleType" name="schedule_type" required>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="scheduleHour" class="form-label">Hour (0-23)</label>
+                                <input type="number" class="form-control" id="scheduleHour" name="hour" min="0" max="23" value="2">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="scheduleMinute" class="form-label">Minute (0-59)</label>
+                                <input type="number" class="form-control" id="scheduleMinute" name="minute" min="0" max="59" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3" id="dayOfWeekSection" style="display: none;">
+                        <label for="dayOfWeek" class="form-label">Day of Week</label>
+                        <select class="form-select" id="dayOfWeek" name="day_of_week">
+                            <option value="0">Monday</option>
+                            <option value="1">Tuesday</option>
+                            <option value="2">Wednesday</option>
+                            <option value="3">Thursday</option>
+                            <option value="4">Friday</option>
+                            <option value="5">Saturday</option>
+                            <option value="6">Sunday</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3" id="dayOfMonthSection" style="display: none;">
+                        <label for="dayOfMonth" class="form-label">Day of Month (1-31)</label>
+                        <input type="number" class="form-control" id="dayOfMonth" name="day_of_month" min="1" max="31" value="1">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="retentionDaysSchedule" class="form-label">Retention Days</label>
+                        <input type="number" class="form-control" id="retentionDaysSchedule" name="retention_days" value="30" min="0">
+                        <div class="form-text">Number of days to keep scheduled backups (0 = forever)</div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="scheduleActive" name="is_active" checked>
+                                <label class="form-check-label" for="scheduleActive">
+                                    Active
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="scheduleCompress" name="compress" checked>
+                                <label class="form-check-label" for="scheduleCompress">
+                                    Compress
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="scheduleExcludeLogs" name="exclude_logs" checked>
+                                <label class="form-check-label" for="scheduleExcludeLogs">
+                                    Exclude Logs
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Create Schedule
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Modal -->
+<div class="modal fade" id="progressModal" tabindex="-1" aria-labelledby="progressModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="progressModalLabel">
+                    <i class="fas fa-spinner fa-spin me-2"></i>Processing...
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                    </div>
+                </div>
+                <p id="progressMessage" class="mb-0">Please wait while the operation is being processed...</p>
+            </div>
+        </div>
+    </div>
+</div>

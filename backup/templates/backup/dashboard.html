@@ -1,0 +1,446 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Backup Management - MB Admin Dashboard{% endblock %}
+{% block page_title %}Backup Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .backup-card {
+        transition: transform 0.2s ease;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .backup-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .status-badge {
+        font-size: 0.8em;
+        padding: 0.25em 0.6em;
+    }
+    
+    .backup-type-badge {
+        font-size: 0.75em;
+    }
+    
+    .file-size {
+        color: #6c757d;
+        font-size: 0.9em;
+    }
+    
+    .backup-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .backup-progress {
+        height: 6px;
+        border-radius: 3px;
+        overflow: hidden;
+        background-color: #e9ecef;
+    }
+    
+    .backup-progress .progress-bar {
+        transition: width 0.3s ease;
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+    }
+    
+    .stats-card.success {
+        background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+    }
+    
+    .stats-card.danger {
+        background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+    }
+    
+    .stats-card.warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .nav-tabs .nav-link {
+        border: none;
+        color: #6c757d;
+    }
+    
+    .nav-tabs .nav-link.active {
+        background-color: var(--primary-color);
+        color: white;
+        border-radius: 0.25rem;
+    }
+    
+    .table-actions {
+        white-space: nowrap;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .upload-zone {
+        border: 2px dashed #dee2e6;
+        border-radius: 0.5rem;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .upload-zone:hover {
+        border-color: var(--primary-color);
+        background-color: #f8f9fa;
+    }
+    
+    .upload-zone.dragover {
+        border-color: var(--primary-color);
+        background-color: #e3f2fd;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <!-- Statistics Cards -->
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-database fa-2x mb-2"></i>
+                <h4 class="card-title" id="totalBackups">{{ backup_stats.total_backups }}</h4>
+                <p class="card-text">Total Backups</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card success">
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                <h4 class="card-title" id="completedBackups">{{ backup_stats.completed_backups }}</h4>
+                <p class="card-text">Completed</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card danger">
+            <div class="card-body text-center">
+                <i class="fas fa-exclamation-circle fa-2x mb-2"></i>
+                <h4 class="card-title" id="failedBackups">{{ backup_stats.failed_backups }}</h4>
+                <p class="card-text">Failed</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card warning">
+            <div class="card-body text-center">
+                <i class="fas fa-undo fa-2x mb-2"></i>
+                <h4 class="card-title" id="totalRestores">{{ backup_stats.total_restores }}</h4>
+                <p class="card-text">Total Restores</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Tabs -->
+<div class="card">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs" id="backupTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="backups-tab" data-bs-toggle="tab" data-bs-target="#backups" type="button" role="tab">
+                    <i class="fas fa-database me-2"></i>Backups
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="restores-tab" data-bs-toggle="tab" data-bs-target="#restores" type="button" role="tab">
+                    <i class="fas fa-undo me-2"></i>Restores
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="schedules-tab" data-bs-toggle="tab" data-bs-target="#schedules" type="button" role="tab">
+                    <i class="fas fa-clock me-2"></i>Schedules
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab">
+                    <i class="fas fa-cog me-2"></i>Settings
+                </button>
+            </li>
+        </ul>
+    </div>
+    
+    <div class="card-body">
+        <div class="tab-content" id="backupTabsContent">
+            <!-- Backups Tab -->
+            <div class="tab-pane fade show active" id="backups" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Backup Management</h5>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createBackupModal">
+                        <i class="fas fa-plus me-2"></i>Create Backup
+                    </button>
+                </div>
+                
+                <!-- Backup Filters -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <select class="form-select" id="backupTypeFilter">
+                            <option value="">All Types</option>
+                            <option value="database">Database Only</option>
+                            <option value="media">Media Only</option>
+                            <option value="full">Full Backup</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="backupStatusFilter">
+                            <option value="">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                            <option value="failed">Failed</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" id="backupSearch" placeholder="Search backups...">
+                    </div>
+                </div>
+                
+                <!-- Backups Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover" id="backupsTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Size</th>
+                                <th>Created</th>
+                                <th>Duration</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="backupsTableBody">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <nav aria-label="Backup pagination">
+                    <ul class="pagination justify-content-center" id="backupsPagination">
+                        <!-- Populated by JavaScript -->
+                    </ul>
+                </nav>
+            </div>
+            
+            <!-- Restores Tab -->
+            <div class="tab-pane fade" id="restores" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Restore Management</h5>
+                    <div>
+                        <button class="btn btn-secondary me-2" data-bs-toggle="modal" data-bs-target="#restoreFromBackupModal">
+                            <i class="fas fa-history me-2"></i>Restore from Backup
+                        </button>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadRestoreModal">
+                            <i class="fas fa-upload me-2"></i>Upload & Restore
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Restores Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover" id="restoresTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Source</th>
+                                <th>Created</th>
+                                <th>Duration</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="restoresTableBody">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Schedules Tab -->
+            <div class="tab-pane fade" id="schedules" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Backup Schedules</h5>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createScheduleModal">
+                        <i class="fas fa-plus me-2"></i>Create Schedule
+                    </button>
+                </div>
+                
+                <!-- Schedules Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover" id="schedulesTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Schedule</th>
+                                <th>Status</th>
+                                <th>Last Run</th>
+                                <th>Next Run</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="schedulesTableBody">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Settings Tab -->
+            <div class="tab-pane fade" id="settings" role="tabpanel">
+                <h5 class="mb-3">Backup Settings</h5>
+                
+                <form id="settingsForm">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Storage Settings</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="backupDirectory" class="form-label">Backup Directory</label>
+                                        <input type="text" class="form-control" id="backupDirectory" name="backup_directory">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="maxBackupSize" class="form-label">Max Backup Size (bytes)</label>
+                                        <input type="number" class="form-control" id="maxBackupSize" name="max_backup_size">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="compressionLevel" class="form-label">Compression Level (1-9)</label>
+                                        <input type="range" class="form-range" id="compressionLevel" name="compression_level" min="1" max="9" value="6">
+                                        <div class="d-flex justify-content-between">
+                                            <small>Fast</small>
+                                            <small>Best</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Database Settings</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="mysqlPath" class="form-label">MySQL Dump Path</label>
+                                        <input type="text" class="form-control" id="mysqlPath" name="mysql_path">
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <div class="mb-3">
+                                                <label for="mysqlHost" class="form-label">MySQL Host</label>
+                                                <input type="text" class="form-control" id="mysqlHost" name="mysql_host">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label for="mysqlPort" class="form-label">Port</label>
+                                                <input type="number" class="form-control" id="mysqlPort" name="mysql_port">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="mysqlUser" class="form-label">MySQL User</label>
+                                        <input type="text" class="form-control" id="mysqlUser" name="mysql_user">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="mysqlPassword" class="form-label">MySQL Password</label>
+                                        <input type="password" class="form-control" id="mysqlPassword" name="mysql_password">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Retention Settings</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="retentionDays" class="form-label">Default Retention (days)</label>
+                                        <input type="number" class="form-control" id="retentionDays" name="default_retention_days" min="0">
+                                        <div class="form-text">Set to 0 to keep backups forever</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="autoCleanup" name="auto_cleanup">
+                                            <label class="form-check-label" for="autoCleanup">
+                                                Auto Cleanup Old Backups
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Notification Settings</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="emailNotifications" name="email_notifications">
+                                            <label class="form-check-label" for="emailNotifications">
+                                                Enable Email Notifications
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="notificationEmail" class="form-label">Notification Email</label>
+                                        <input type="email" class="form-control" id="notificationEmail" name="notification_email">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-save me-2"></i>Save Settings
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="testSettingsBtn">
+                            <i class="fas fa-test-tube me-2"></i>Test Settings
+                        </button>
+                        <button type="button" class="btn btn-warning ms-2" id="cleanupBtn">
+                            <i class="fas fa-broom me-2"></i>Cleanup Old Backups
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals will be included here -->
+{% include 'backup/modals.html' %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'backup/js/backup-dashboard.js' %}"></script>
+{% endblock %}

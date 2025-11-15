@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'inventory.apps.InventoryConfig',
     'pages.apps.PagesConfig',
     'contact.apps.ContactConfig',
+    'backup.apps.BackupConfig',
 ]
 
 MIDDLEWARE = [
@@ -103,18 +104,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'ecommerce_project.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
-# Use PostgreSQL for production, SQLite for development
-
-# DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.sqlite3',
-#             'NAME': BASE_DIR / 'db.sqlite3',
-#         }
-#     }
-
+# MySQL configuration (commented out - install mysqlclient to use)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -376,5 +366,25 @@ RECAPTCHA_SECRET_KEY = config('RECAPTCHA_SECRET_KEY', default=None)  # Set this 
 
 # For development/demonstration - bypass reCAPTCHA verification if no secret key is set
 RECAPTCHA_BYPASS_FOR_DEMO = config('RECAPTCHA_BYPASS_FOR_DEMO', default=True, cast=bool)
+
+# Backup System Settings
+BACKUP_DIRECTORY = config('BACKUP_DIRECTORY', default='backups/')
+BACKUP_RETENTION_DAYS = config('BACKUP_RETENTION_DAYS', default=30, cast=int)
+BACKUP_AUTO_CLEANUP = config('BACKUP_AUTO_CLEANUP', default=True, cast=bool)
+
+# MySQL Backup Settings
+BACKUP_MYSQL_PATH = config('BACKUP_MYSQL_PATH', default='mysqldump')
+BACKUP_MYSQL_HOST = config('BACKUP_MYSQL_HOST', default='127.0.0.1')
+BACKUP_MYSQL_PORT = config('BACKUP_MYSQL_PORT', default=3306, cast=int)
+BACKUP_MYSQL_USER = config('BACKUP_MYSQL_USER', default='root')
+BACKUP_MYSQL_PASSWORD = config('BACKUP_MYSQL_PASSWORD', default='aminul3065')
+BACKUP_MYSQL_DATABASE = config('BACKUP_MYSQL_DATABASE', default='manob_bazar')
+
+# Backup Compression Settings
+BACKUP_COMPRESSION_LEVEL = config('BACKUP_COMPRESSION_LEVEL', default=6, cast=int)
+
+# Backup Notification Settings
+BACKUP_EMAIL_NOTIFICATIONS = config('BACKUP_EMAIL_NOTIFICATIONS', default=False, cast=bool)
+BACKUP_NOTIFICATION_EMAIL = config('BACKUP_NOTIFICATION_EMAIL', default='')
 
 
