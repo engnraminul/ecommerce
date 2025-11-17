@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'inventory.apps.InventoryConfig',
     'pages.apps.PagesConfig',
     'contact.apps.ContactConfig',
+    'backups.apps.BackupsConfig',
 ]
 
 MIDDLEWARE = [
@@ -367,7 +368,7 @@ RECAPTCHA_SECRET_KEY = config('RECAPTCHA_SECRET_KEY', default=None)  # Set this 
 RECAPTCHA_BYPASS_FOR_DEMO = config('RECAPTCHA_BYPASS_FOR_DEMO', default=True, cast=bool)
 
 # Backup System Settings
-BACKUP_DIRECTORY = config('BACKUP_DIRECTORY', default='backups/')
+BACKUP_DIRECTORY = config('BACKUP_DIRECTORY', default='backups_storage/')
 BACKUP_RETENTION_DAYS = config('BACKUP_RETENTION_DAYS', default=30, cast=int)
 BACKUP_AUTO_CLEANUP = config('BACKUP_AUTO_CLEANUP', default=True, cast=bool)
 

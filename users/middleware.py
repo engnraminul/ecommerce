@@ -32,6 +32,7 @@ class DashboardPermissionMiddleware:
             '/mb-admin/email-settings/': 'email_settings',
             '/mb-admin/settings/': 'settings',
             '/mb-admin/api-docs/': 'api_docs',
+            '/mb-admin/backups/': 'backups',
         }
         
         # API endpoints that should also be checked
@@ -47,6 +48,7 @@ class DashboardPermissionMiddleware:
             '/mb-admin/api/settings/': 'settings',
             '/mb-admin/api/blocklist/': 'blocklist',
             '/mb-admin/api/media/': 'media',
+            '/backups/api/': 'backups',
         }
 
     def __call__(self, request):

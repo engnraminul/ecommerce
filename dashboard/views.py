@@ -5054,3 +5054,14 @@ def coupon_analytics_api(request):
             'success': False,
             'error': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@login_required
+@staff_member_required
+def dashboard_backups(request):
+    """Dashboard view for backup management"""
+    context = {
+        'active_page': 'backups',
+        'page_title': 'Backup Management'
+    }
+    return render(request, 'backups/dashboard.html', context)

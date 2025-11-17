@@ -318,6 +318,13 @@
                     </a>
                 </li>
                 {% endif %}
+                {% if user.is_superuser or user|has_dashboard_access:'backups' %}
+                <li>
+                    <a href="{% url 'backups:dashboard' %}" class="{% if active_page == 'backups' %}active{% endif %}">
+                        <i class="fas fa-database"></i> Backups
+                    </a>
+                </li>
+                {% endif %}
                 {% if user.is_superuser or user|has_dashboard_access:'settings' %}
                 <li>
                     <a href="{% url 'dashboard:settings' %}" class="{% if active_page == 'settings' %}active{% endif %}">

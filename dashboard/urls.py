@@ -107,6 +107,7 @@ urlpatterns = [
     path('blocklist/', views.dashboard_blocklist, name='blocklist'),
     path('contacts/', views.dashboard_contacts, name='contacts'),
     path('coupons/', views.coupon_management, name='coupons'),
+    path('backups/', views.dashboard_backups, name='backups'),
     
     # Invoice printing
     path('orders/<int:order_id>/invoice/', views.print_order_invoice, name='print_order_invoice'),
