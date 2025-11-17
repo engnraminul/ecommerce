@@ -270,13 +270,20 @@ class RestoreService:
         
         # Check file existence
         if restore_type in ['database', 'full']:
-            if not backup.database_file or not os.path.exists(backup.database_file):
-                return {'valid': False, 'notes': 'Database backup file not found'}
+            if not backup.database_file:
+                error_msg = 'Database backup file path not set'
+                if backup.backup_type == 'full' and backup.media_file:
+                    error_msg += '. This may be an uploaded backup that needs reprocessing.'
+                return {'valid': False, 'notes': error_msg}
+            elif not os.path.exists(backup.database_file):
+                return {'valid': False, 'notes': f'Database backup file not found: {backup.database_file}'}
             notes.append(f"Database file: {backup.database_file} ({backup.database_size} bytes)")
         
         if restore_type in ['media', 'full']:
-            if not backup.media_file or not os.path.exists(backup.media_file):
-                return {'valid': False, 'notes': 'Media backup file not found'}
+            if not backup.media_file:
+                return {'valid': False, 'notes': 'Media backup file path not set'}
+            elif not os.path.exists(backup.media_file):
+                return {'valid': False, 'notes': f'Media backup file not found: {backup.media_file}'}
             notes.append(f"Media file: {backup.media_file} ({backup.media_size} bytes)")
         
         # Check database connection
@@ -332,8 +339,8 @@ class RestoreService:
                 model_name = model.__name__
                 app_label = model._meta.app_label
                 
-                # Only clear models from your custom apps, preserve Django system apps
-                if (app_label not in ['auth', 'contenttypes', 'sessions', 'admin', 'django'] and 
+                # Only clear models from your custom apps, preserve Django system apps and backup system
+                if (app_label not in ['auth', 'contenttypes', 'sessions', 'admin', 'django', 'backups'] and 
                     model_name not in preserve_models):
                     app_models_to_clear.append(model)
             
@@ -468,7 +475,7 @@ class BackupUploadService:
         
         # Check file extension based on backup type
         valid_extensions = {
-            'database': ['.sql', '.sql.gz', '.dump'],
+            'database': ['.sql', '.sql.gz', '.dump', '.json.gz'],
             'media': ['.zip', '.tar.gz', '.tar'],
             'full': ['.zip', '.tar.gz', '.tar']
         }
@@ -479,6 +486,29 @@ class BackupUploadService:
                 'valid': False, 
                 'error': f'Invalid file extension for {backup_type} backup. Expected: {valid_extensions.get(backup_type, [])}'
             }
+        
+        # Additional validation for full backups - check if it's a valid zip
+        if backup_type == 'full' and file_ext == '.zip':
+            try:
+                import zipfile
+                with zipfile.ZipFile(uploaded_file, 'r') as zipf:
+                    file_list = zipf.namelist()
+                    # Check if it contains both database and media components
+                    has_db = any('db_backup' in f.lower() or f.lower().endswith(('.sql', '.json.gz', '.dump')) 
+                              for f in file_list)
+                    has_media = any('media' in f.lower() and f.lower().endswith('.zip') 
+                                  for f in file_list)
+                    
+                    if not (has_db or has_media):
+                        return {
+                            'valid': False, 
+                            'error': 'Full backup zip file must contain database and/or media backup files'
+                        }
+            except zipfile.BadZipFile:
+                return {'valid': False, 'error': 'Uploaded file is not a valid zip archive'}
+            except Exception as e:
+                logger.warning(f"Could not validate zip contents: {e}")
+                # Don't fail validation for other errors, just log them
         
         return {'valid': True, 'error': None}
     
@@ -496,29 +526,61 @@ class BackupUploadService:
     
     def _process_full_backup_upload(self, backup, file_path):
         """Process uploaded full backup (containing both database and media)"""
-        # This is a simplified version - you might need to enhance based on your backup format
-        # For now, assume it's a zip file containing separate database and media files
-        
         temp_dir = Path(tempfile.mkdtemp())
         try:
             with zipfile.ZipFile(file_path, 'r') as zipf:
+                # List all files in the zip
+                file_list = zipf.namelist()
+                logger.info(f"Processing full backup upload with files: {file_list}")
+                
                 zipf.extractall(temp_dir)
             
-            # Look for database and media files
-            db_files = list(temp_dir.glob('**/*.sql*'))
-            media_files = list(temp_dir.glob('**/*media*'))
+            # Look for database and media files with more flexible patterns
+            db_files = []
+            media_files = []
+            
+            # Check all extracted files
+            for extracted_file in temp_dir.rglob('*'):
+                if extracted_file.is_file():
+                    file_name = extracted_file.name.lower()
+                    
+                    # Database files: .json.gz, .sql, .sql.gz, or files containing 'db_backup'
+                    if (file_name.endswith(('.json.gz', '.sql', '.sql.gz', '.dump')) or 
+                        'db_backup' in file_name or 'database' in file_name):
+                        db_files.append(extracted_file)
+                    
+                    # Media files: .zip files or files containing 'media'
+                    elif (file_name.endswith('.zip') and 'media' in file_name) or 'media_backup' in file_name:
+                        media_files.append(extracted_file)
+            
+            logger.info(f"Found database files: {[f.name for f in db_files]}")
+            logger.info(f"Found media files: {[f.name for f in media_files]}")
             
             if db_files:
-                # Move database file to backup directory
-                db_file = self.backup_dir / f"db_{datetime.now().strftime('%Y%m%d_%H%M%S')}.sql.gz"
+                # Move the first database file to backup directory
+                db_file = self.backup_dir / f"db_uploaded_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json.gz"
                 shutil.move(str(db_files[0]), str(db_file))
                 backup.database_file = str(db_file)
                 backup.database_size = db_file.stat().st_size
+                logger.info(f"Processed database file: {backup.database_file}")
             
             if media_files:
-                # Keep media file as is (the uploaded zip)
+                # Move the first media file to backup directory
+                media_file = self.backup_dir / f"media_uploaded_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+                shutil.move(str(media_files[0]), str(media_file))
+                backup.media_file = str(media_file)
+                backup.media_size = media_file.stat().st_size
+                logger.info(f"Processed media file: {backup.media_file}")
+            
+            # If no separate files found, this might be a different format
+            if not db_files and not media_files:
+                logger.warning(f"No database or media files found in uploaded backup. Available files: {file_list}")
+                # Fallback: treat the entire zip as media for now
                 backup.media_file = str(file_path)
                 backup.media_size = file_path.stat().st_size
             
+        except zipfile.BadZipFile:
+            logger.error(f"Invalid zip file uploaded: {file_path}")
+            raise Exception("Uploaded file is not a valid zip archive")
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
