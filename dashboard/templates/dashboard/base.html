@@ -332,13 +332,6 @@
                     </a>
                 </li>
                 {% endif %}
-                {% if user.is_superuser %}
-                <li>
-                    <a href="{% url 'backup:dashboard' %}" class="{% if active_page == 'backup' %}active{% endif %}">
-                        <i class="fas fa-database"></i> Backup
-                    </a>
-                </li>
-                {% endif %}
                 <li>
                     <a href="/" target="_blank">
                         <i class="fas fa-store"></i> Visit Store

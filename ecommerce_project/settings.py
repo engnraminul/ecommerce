@@ -61,7 +61,6 @@ INSTALLED_APPS = [
     'inventory.apps.InventoryConfig',
     'pages.apps.PagesConfig',
     'contact.apps.ContactConfig',
-    'backup.apps.BackupConfig',
 ]
 
 MIDDLEWARE = [
