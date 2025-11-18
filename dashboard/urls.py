@@ -22,6 +22,7 @@ router.register(r'incomplete-orders', views.IncompleteOrderDashboardViewSet)
 router.register(r'expenses', views.ExpenseDashboardViewSet)
 router.register(r'checkout-customization', views.CheckoutCustomizationViewSet)
 router.register(r'integration-settings', views.IntegrationSettingsViewSet, basename='integration-settings')
+router.register(r'couriers', views.CurierViewSet, basename='couriers')
 router.register(r'blocklist', views.BlockListViewSet)
 
 # Pages management router

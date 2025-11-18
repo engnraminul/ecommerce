@@ -302,6 +302,9 @@
                     <button class="nav-link text-start" id="integration-tab" data-bs-toggle="pill" data-bs-target="#integration" type="button" role="tab" aria-selected="false">
                         <i class="fas fa-plug fa-fw me-2"></i> Integration Settings
                     </button>
+                    <button class="nav-link text-start" id="courier-setup-tab" data-bs-toggle="pill" data-bs-target="#courier-setup" type="button" role="tab" aria-selected="false">
+                        <i class="fas fa-shipping-fast fa-fw me-2"></i> Courier Setup
+                    </button>
                 </div>
             </div>
         </div>
@@ -1888,6 +1891,29 @@
                             </div>
                         </form>
                     </div>
+                    
+                    <!-- Courier Setup -->
+                    <div class="tab-pane fade" id="courier-setup" role="tabpanel" aria-labelledby="courier-setup-tab">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="mb-0">Courier Setup</h5>
+                            <button type="button" class="btn btn-primary" id="addCourierBtn">
+                                <i class="fas fa-plus me-1"></i> Add New Courier
+                            </button>
+                        </div>
+                        
+                        <p class="text-muted mb-4">
+                            Manage courier API configurations for shipping and delivery services. Configure your courier providers like SteadFast and other delivery partners.
+                        </p>
+                        
+                        <!-- Courier List -->
+                        <div id="courierList">
+                            <!-- Couriers will be loaded here via AJAX -->
+                            <div class="text-center py-5" id="courierLoadingIndicator">
+                                <i class="fas fa-spinner fa-spin fa-2x text-muted mb-3"></i>
+                                <p class="text-muted">Loading courier configurations...</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2198,6 +2224,128 @@
                 </button>
                 <button type="button" class="btn btn-primary" id="saveHeroSlideBtn">
                     <i class="fas fa-save me-1"></i> Save Slide
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Courier Modal -->
+<div class="modal fade" id="courierModal" tabindex="-1" aria-labelledby="courierModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient" style="background: linear-gradient(135deg, #930000, #d32f2f);">
+                <h5 class="modal-title text-white" id="courierModalLabel">
+                    <i class="fas fa-shipping-fast me-2"></i>Add Courier Configuration
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="courierForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="courierId" name="courier_id">
+                    
+                    <!-- Basic Information -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-info-circle me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                            <h6 class="mb-0">Basic Information</h6>
+                        </div>
+                        
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                <h6 class="mb-0"><i class="fas fa-tag me-2" style="color: var(--primary-color, #930000);"></i>Courier Details</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="courierName" class="form-label fw-medium">Courier Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="courierName" name="name" placeholder="SteadFast" required>
+                                        <div class="form-text">Display name for the courier service</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check form-switch mt-4">
+                                            <input class="form-check-input" type="checkbox" id="courierActive" name="is_active" checked>
+                                            <label class="form-check-label fw-medium" for="courierActive">
+                                                <i class="fas fa-toggle-on me-1 text-success"></i>Active
+                                            </label>
+                                            <div class="form-text">Enable this courier for shipping</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- API Configuration -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-code me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                            <h6 class="mb-0">API Configuration</h6>
+                        </div>
+                        
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                <h6 class="mb-0"><i class="fas fa-link me-2" style="color: var(--primary-color, #930000);"></i>API Credentials</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="courierApiUrl" class="form-label fw-medium">API URL <span class="text-danger">*</span></label>
+                                    <input type="url" class="form-control" id="courierApiUrl" name="api_url" placeholder="https://portal.steadfast.com.bd/api/v1/" required>
+                                    <div class="form-text">Base URL for the courier API</div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="courierApiKey" class="form-label fw-medium">API Key <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control" id="courierApiKey" name="api_key" placeholder="Enter API key" required>
+                                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('courierApiKey')">
+                                                <i class="fas fa-eye" id="courierApiKeyToggle"></i>
+                                            </button>
+                                        </div>
+                                        <div class="form-text">API key provided by courier service</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="courierSecretKey" class="form-label fw-medium">Secret Key <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control" id="courierSecretKey" name="secret_key" placeholder="Enter secret key" required>
+                                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('courierSecretKey')">
+                                                <i class="fas fa-eye" id="courierSecretKeyToggle"></i>
+                                            </button>
+                                        </div>
+                                        <div class="form-text">Secret key provided by courier service</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Test API Connection -->
+                                <div class="mt-3">
+                                    <button type="button" class="btn btn-outline-info btn-sm" id="testApiConnectionBtn">
+                                        <i class="fas fa-plug me-1"></i> Test API Connection
+                                    </button>
+                                    <div id="apiTestResult" class="mt-2" style="display: none;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Information Section -->
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Configuration Help:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li><strong>SteadFast:</strong> Get your API credentials from your SteadFast merchant dashboard</li>
+                            <li><strong>Other Couriers:</strong> Contact your courier provider for API documentation</li>
+                            <li>Make sure to test the API connection before saving</li>
+                        </ul>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="saveCourierBtn">
+                    <i class="fas fa-save me-1"></i> Save Courier
                 </button>
             </div>
         </div>
@@ -4015,6 +4163,389 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('beforeunload', function() {
         tinymce.remove();
     });
+    
+    // Courier Management JavaScript
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load couriers when the courier setup tab is activated
+        const courierSetupTab = document.getElementById('courier-setup-tab');
+        if (courierSetupTab) {
+            courierSetupTab.addEventListener('shown.bs.tab', function() {
+                loadCouriers();
+            });
+            
+            // Also load if it's the active tab on page load
+            if (courierSetupTab.classList.contains('active')) {
+                loadCouriers();
+            }
+        }
+        
+        // Add courier button
+        const addCourierBtn = document.getElementById('addCourierBtn');
+        if (addCourierBtn) {
+            addCourierBtn.addEventListener('click', function() {
+                openCourierModal();
+            });
+        }
+        
+        // Save courier button
+        const saveCourierBtn = document.getElementById('saveCourierBtn');
+        if (saveCourierBtn) {
+            saveCourierBtn.addEventListener('click', function() {
+                saveCourier();
+            });
+        }
+        
+        // Test API connection button
+        const testApiConnectionBtn = document.getElementById('testApiConnectionBtn');
+        if (testApiConnectionBtn) {
+            testApiConnectionBtn.addEventListener('click', function() {
+                testApiConnection();
+            });
+        }
+    });
+    
+    // Load couriers from API
+    function loadCouriers() {
+        const courierList = document.getElementById('courierList');
+        const loadingIndicator = document.getElementById('courierLoadingIndicator');
+        
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'block';
+        }
+        
+        fetch('/mb-admin/api/couriers/', {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+            
+            if (data.results) {
+                displayCouriers(data.results);
+            } else {
+                showAlert('Error loading couriers', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading couriers:', error);
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+            showAlert('Error loading couriers: ' + error.message, 'error');
+        });
+    }
+    
+    // Display couriers in the list
+    function displayCouriers(couriers) {
+        const courierList = document.getElementById('courierList');
+        
+        if (couriers.length === 0) {
+            courierList.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-shipping-fast fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No courier configurations found</h5>
+                    <p class="text-muted">Click "Add New Courier" to set up your first courier integration.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '';
+        couriers.forEach(courier => {
+            const statusBadge = courier.is_active 
+                ? '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Active</span>'
+                : '<span class="badge bg-secondary"><i class="fas fa-times me-1"></i>Inactive</span>';
+                
+            const createdDate = new Date(courier.created_at).toLocaleDateString();
+            const updatedDate = new Date(courier.updated_at).toLocaleDateString();
+            
+            html += `
+                <div class="card mb-3 border-0 shadow-sm" id="courier-${courier.id}">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-shipping-fast me-2 text-primary"></i>
+                            <h6 style="color: black;" class="mb-0 fw-bold">${escapeHtml(courier.name)}</h6>
+                            <span class="ms-2">${statusBadge}</span>
+                        </div>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" onclick="editCourier(${courier.id})" title="Edit Courier">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="deleteCourier(${courier.id}, '${escapeHtml(courier.name)}')" title="Delete Courier">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-3 text-muted">API URL:</dt>
+                                    <dd class="col-sm-9"><code>${escapeHtml(courier.api_url)}</code></dd>
+                                    
+                                    <dt class="col-sm-3 text-muted">API Key:</dt>
+                                    <dd class="col-sm-9"><span class="text-muted">••••••••••••${courier.api_key.slice(-4)}</span></dd>
+                                    
+                                    <dt class="col-sm-3 text-muted">Created:</dt>
+                                    <dd class="col-sm-9">${createdDate}</dd>
+                                </dl>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <div class="mb-2">
+                                    <button class="btn btn-sm btn-outline-info" onclick="testCourierConnection(${courier.id})" title="Test API Connection">
+                                        <i class="fas fa-plug me-1"></i> Test Connection
+                                    </button>
+                                </div>
+                                <small class="text-muted">Last updated: ${updatedDate}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        courierList.innerHTML = html;
+    }
+    
+    // Open courier modal for adding new or editing existing
+    function openCourierModal(courierId = null) {
+        const modal = new bootstrap.Modal(document.getElementById('courierModal'));
+        const modalTitle = document.getElementById('courierModalLabel');
+        const form = document.getElementById('courierForm');
+        
+        // Reset form
+        form.reset();
+        document.getElementById('courierId').value = '';
+        
+        if (courierId) {
+            // Edit mode
+            modalTitle.innerHTML = '<i class="fas fa-edit me-2"></i>Edit Courier Configuration';
+            loadCourierForEdit(courierId);
+        } else {
+            // Add mode
+            modalTitle.innerHTML = '<i class="fas fa-plus me-2"></i>Add Courier Configuration';
+        }
+        
+        modal.show();
+    }
+    
+    // Load courier data for editing
+    function loadCourierForEdit(courierId) {
+        fetch(`/mb-admin/api/couriers/${courierId}/`, {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(courier => {
+            document.getElementById('courierId').value = courier.id;
+            document.getElementById('courierName').value = courier.name;
+            document.getElementById('courierApiUrl').value = courier.api_url;
+            document.getElementById('courierApiKey').value = courier.api_key;
+            document.getElementById('courierSecretKey').value = courier.secret_key;
+            document.getElementById('courierActive').checked = courier.is_active;
+        })
+        .catch(error => {
+            console.error('Error loading courier:', error);
+            showAlert('Error loading courier data', 'error');
+        });
+    }
+    
+    // Save courier (add or update)
+    function saveCourier() {
+        const form = document.getElementById('courierForm');
+        const formData = new FormData(form);
+        const courierId = document.getElementById('courierId').value;
+        
+        const courierData = {
+            name: formData.get('name'),
+            api_url: formData.get('api_url'),
+            api_key: formData.get('api_key'),
+            secret_key: formData.get('secret_key'),
+            is_active: document.getElementById('courierActive').checked
+        };
+        
+        // Validation
+        if (!courierData.name || !courierData.api_url || !courierData.api_key || !courierData.secret_key) {
+            showAlert('Please fill in all required fields', 'error');
+            return;
+        }
+        
+        const saveBtn = document.getElementById('saveCourierBtn');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
+        
+        const url = courierId ? `/mb-admin/api/couriers/${courierId}/` : '/mb-admin/api/couriers/';
+        const method = courierId ? 'PUT' : 'POST';
+        
+        fetch(url, {
+            method: method,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(courierData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalText;
+            
+            if (data.id) {
+                showAlert(courierId ? 'Courier updated successfully!' : 'Courier added successfully!', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('courierModal')).hide();
+                loadCouriers(); // Reload the courier list
+            } else {
+                showAlert('Error saving courier: ' + (data.message || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error saving courier:', error);
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalText;
+            showAlert('Error saving courier: ' + error.message, 'error');
+        });
+    }
+    
+    // Edit courier
+    function editCourier(courierId) {
+        openCourierModal(courierId);
+    }
+    
+    // Delete courier
+    function deleteCourier(courierId, courierName) {
+        if (confirm(`Are you sure you want to delete the courier configuration for "${courierName}"?`)) {
+            fetch(`/mb-admin/api/couriers/${courierId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    showAlert(`Courier "${courierName}" deleted successfully!`, 'success');
+                    loadCouriers(); // Reload the courier list
+                } else {
+                    showAlert('Error deleting courier', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting courier:', error);
+                showAlert('Error deleting courier: ' + error.message, 'error');
+            });
+        }
+    }
+    
+    // Test API connection
+    function testApiConnection() {
+        const apiUrl = document.getElementById('courierApiUrl').value;
+        const apiKey = document.getElementById('courierApiKey').value;
+        const secretKey = document.getElementById('courierSecretKey').value;
+        
+        if (!apiUrl || !apiKey || !secretKey) {
+            showAlert('Please fill in API URL, API Key, and Secret Key before testing', 'warning');
+            return;
+        }
+        
+        const testBtn = document.getElementById('testApiConnectionBtn');
+        const resultDiv = document.getElementById('apiTestResult');
+        
+        testBtn.disabled = true;
+        testBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Testing...';
+        
+        fetch('/mb-admin/api/couriers/test_connection/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                api_url: apiUrl,
+                api_key: apiKey,
+                secret_key: secretKey
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            testBtn.disabled = false;
+            testBtn.innerHTML = '<i class="fas fa-plug me-1"></i> Test API Connection';
+            
+            resultDiv.style.display = 'block';
+            if (data.success) {
+                resultDiv.innerHTML = '<div class="alert alert-success mb-0"><i class="fas fa-check me-2"></i>API connection successful!</div>';
+            } else {
+                resultDiv.innerHTML = `<div class="alert alert-danger mb-0"><i class="fas fa-times me-2"></i>API connection failed: ${data.message || 'Unknown error'}</div>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error testing API connection:', error);
+            testBtn.disabled = false;
+            testBtn.innerHTML = '<i class="fas fa-plug me-1"></i> Test API Connection';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `<div class="alert alert-danger mb-0"><i class="fas fa-times me-2"></i>Connection test failed: ${error.message}</div>`;
+        });
+    }
+    
+    // Test individual courier connection
+    function testCourierConnection(courierId) {
+        fetch(`/mb-admin/api/couriers/${courierId}/test_connection_existing/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('API connection successful!', 'success');
+            } else {
+                showAlert('API connection failed: ' + (data.message || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error testing courier connection:', error);
+            showAlert('Connection test failed: ' + error.message, 'error');
+        });
+    }
+    
+    // Toggle password visibility
+    function togglePassword(fieldId) {
+        const field = document.getElementById(fieldId);
+        const toggle = document.getElementById(fieldId + 'Toggle');
+        
+        if (field.type === 'password') {
+            field.type = 'text';
+            toggle.classList.remove('fa-eye');
+            toggle.classList.add('fa-eye-slash');
+        } else {
+            field.type = 'password';
+            toggle.classList.remove('fa-eye-slash');
+            toggle.classList.add('fa-eye');
+        }
+    }
+    
+    // Utility function to escape HTML
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
 </script>
 
 {% endblock %}

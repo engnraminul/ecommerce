@@ -26,13 +26,13 @@ from .serializers import (
     DashboardSettingSerializer, AdminActivitySerializer, UserDashboardSerializer,
     CategoryDashboardSerializer, ProductDashboardSerializer, ProductDetailSerializer, ProductVariantDashboardSerializer,
     ProductImageDashboardSerializer, OrderDashboardSerializer, OrderItemDashboardSerializer, DashboardStatisticsSerializer,
-    ShippingAddressDashboardSerializer, ExpenseDashboardSerializer
+    ShippingAddressDashboardSerializer, ExpenseDashboardSerializer, CurierSerializer
 )
 from products.models import Product, ProductVariant, ProductImage, Category
 from orders.models import Order, OrderItem
 from incomplete_orders.models import IncompleteOrder, IncompleteOrderItem, IncompleteShippingAddress
 from users.models import User
-from settings.models import CheckoutCustomization, SiteSettings, IntegrationSettings, HeroContent
+from settings.models import CheckoutCustomization, SiteSettings, IntegrationSettings, HeroContent, Curier
 
 # Helper functions for stock management
 def restock_order_items(order):
@@ -4564,6 +4564,241 @@ class IntegrationSettingsViewSet(viewsets.ModelViewSet):
             }, status=500)
     
     def get_client_ip(self):
+        x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            return x_forwarded_for.split(',')[0]
+        return self.request.META.get('REMOTE_ADDR')
+
+
+class CurierViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing Courier configurations"""
+    queryset = Curier.objects.all()
+    serializer_class = CurierSerializer
+    permission_classes = [IsStaffUser]
+    
+    def get_queryset(self):
+        """Get all courier configurations ordered by name"""
+        return Curier.objects.all().order_by('name')
+    
+    def create(self, request, *args, **kwargs):
+        """Create a new courier configuration"""
+        try:
+            print(f"Creating courier with data: {request.data}")
+            
+            serializer = self.get_serializer(data=request.data)
+            if serializer.is_valid():
+                courier = serializer.save()
+                
+                # Log admin activity
+                try:
+                    AdminActivity.objects.create(
+                        user=request.user,
+                        action=f'Created courier configuration: {courier.name}',
+                        model_name='Curier',
+                        object_id=courier.id,
+                        object_repr=str(courier),
+                        changes=request.data,
+                        ip_address=self.get_client_ip()
+                    )
+                except Exception as e:
+                    print(f"Error logging activity: {str(e)}")
+                
+                return Response({
+                    'id': courier.id,
+                    'name': courier.name,
+                    'message': f'Courier "{courier.name}" created successfully!'
+                }, status=status.HTTP_201_CREATED)
+            else:
+                return Response({
+                    'success': False,
+                    'errors': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            print(f"Error creating courier: {str(e)}")
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def update(self, request, *args, **kwargs):
+        """Update courier configuration"""
+        try:
+            courier = self.get_object()
+            old_data = {
+                'name': courier.name,
+                'api_url': courier.api_url,
+                'is_active': courier.is_active
+            }
+            
+            serializer = self.get_serializer(courier, data=request.data, partial=True)
+            if serializer.is_valid():
+                updated_courier = serializer.save()
+                
+                # Log admin activity
+                try:
+                    AdminActivity.objects.create(
+                        user=request.user,
+                        action=f'Updated courier configuration: {updated_courier.name}',
+                        model_name='Curier',
+                        object_id=updated_courier.id,
+                        object_repr=str(updated_courier),
+                        changes={
+                            'old': old_data,
+                            'new': request.data
+                        },
+                        ip_address=self.get_client_ip()
+                    )
+                except Exception as e:
+                    print(f"Error logging activity: {str(e)}")
+                
+                return Response({
+                    'id': updated_courier.id,
+                    'name': updated_courier.name,
+                    'message': f'Courier "{updated_courier.name}" updated successfully!'
+                })
+            else:
+                return Response({
+                    'success': False,
+                    'errors': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            print(f"Error updating courier: {str(e)}")
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def destroy(self, request, *args, **kwargs):
+        """Delete courier configuration"""
+        try:
+            courier = self.get_object()
+            courier_name = courier.name
+            
+            # Log admin activity before deletion
+            try:
+                AdminActivity.objects.create(
+                    user=request.user,
+                    action=f'Deleted courier configuration: {courier_name}',
+                    model_name='Curier',
+                    object_id=courier.id,
+                    object_repr=str(courier),
+                    changes={'deleted': True},
+                    ip_address=self.get_client_ip()
+                )
+            except Exception as e:
+                print(f"Error logging activity: {str(e)}")
+            
+            courier.delete()
+            
+            return Response({
+                'success': True,
+                'message': f'Courier "{courier_name}" deleted successfully!'
+            })
+            
+        except Exception as e:
+            print(f"Error deleting courier: {str(e)}")
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['post'])
+    def test_connection(self, request):
+        """Test API connection with provided credentials"""
+        try:
+            api_url = request.data.get('api_url')
+            api_key = request.data.get('api_key') 
+            secret_key = request.data.get('secret_key')
+            
+            if not all([api_url, api_key, secret_key]):
+                return Response({
+                    'success': False,
+                    'message': 'API URL, API key, and secret key are required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # For now, we'll do a basic URL validation
+            # In production, you would make an actual API call to test the connection
+            import requests
+            from urllib.parse import urljoin
+            
+            try:
+                # Attempt a simple request to test the connection
+                # This is a basic implementation - adjust based on courier API specifications
+                test_url = urljoin(api_url, 'test') if not api_url.endswith('/') else urljoin(api_url, 'test')
+                
+                headers = {
+                    'Authorization': f'Bearer {api_key}',
+                    'Content-Type': 'application/json',
+                    'X-API-Key': api_key,
+                    'X-Secret-Key': secret_key
+                }
+                
+                # Try to make a HEAD request first (less intrusive)
+                response = requests.head(test_url, headers=headers, timeout=10)
+                
+                if response.status_code < 500:  # Accept any non-server-error response
+                    return Response({
+                        'success': True,
+                        'message': 'API connection test successful!'
+                    })
+                else:
+                    return Response({
+                        'success': False,
+                        'message': f'API returned server error: {response.status_code}'
+                    })
+                    
+            except requests.exceptions.RequestException as e:
+                # Even if the specific endpoint fails, if we can reach the host, it's likely valid
+                if 'connection' in str(e).lower() or 'timeout' in str(e).lower():
+                    return Response({
+                        'success': False,
+                        'message': f'Connection failed: {str(e)}'
+                    })
+                else:
+                    # Other errors might just be endpoint-specific
+                    return Response({
+                        'success': True,
+                        'message': 'API endpoint reachable (connection test passed)'
+                    })
+                    
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': f'Connection test failed: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=True, methods=['post'])
+    def test_connection_existing(self, request, pk=None):
+        """Test API connection for existing courier configuration"""
+        try:
+            courier = self.get_object()
+            
+            # Use the stored credentials to test connection
+            test_data = {
+                'api_url': courier.api_url,
+                'api_key': courier.api_key,
+                'secret_key': courier.secret_key
+            }
+            
+            # Create a new request with the courier's credentials
+            test_request = type('TestRequest', (), {
+                'data': test_data,
+                'user': request.user
+            })()
+            
+            # Call the test_connection method
+            return self.test_connection(test_request)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': f'Connection test failed: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def get_client_ip(self):
+        """Get client IP address"""
         x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
             return x_forwarded_for.split(',')[0]

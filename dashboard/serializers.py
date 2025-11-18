@@ -3,6 +3,7 @@ from .models import DashboardSetting, AdminActivity, Expense, BlockList
 from products.models import Product, ProductVariant, ProductImage, Category
 from orders.models import Order, OrderItem, ShippingAddress
 from users.models import User, DashboardPermission
+from settings.models import Curier
 
 class DashboardSettingSerializer(serializers.ModelSerializer):
     class Meta:
@@ -880,3 +881,54 @@ class IntegrationSettingsSerializer(serializers.ModelSerializer):
                 "Hotjar Site ID should be a numeric value"
             )
         return value
+
+
+class CurierSerializer(serializers.ModelSerializer):
+    """Serializer for Courier configurations"""
+    
+    class Meta:
+        model = Curier
+        fields = ['id', 'name', 'api_url', 'api_key', 'secret_key', 'is_active', 'created_at', 'updated_at']
+        
+    def validate_name(self, value):
+        """Validate courier name"""
+        if not value or not value.strip():
+            raise serializers.ValidationError("Courier name is required")
+        return value.strip()
+    
+    def validate_api_url(self, value):
+        """Validate API URL format"""
+        if not value or not value.strip():
+            raise serializers.ValidationError("API URL is required")
+        
+        # Basic URL validation
+        if not (value.startswith('http://') or value.startswith('https://')):
+            raise serializers.ValidationError("API URL must start with http:// or https://")
+        
+        return value.strip()
+    
+    def validate_api_key(self, value):
+        """Validate API key"""
+        if not value or not value.strip():
+            raise serializers.ValidationError("API key is required")
+        return value.strip()
+    
+    def validate_secret_key(self, value):
+        """Validate secret key"""
+        if not value or not value.strip():
+            raise serializers.ValidationError("Secret key is required")
+        return value.strip()
+    
+    def create(self, validated_data):
+        """Create a new courier configuration"""
+        return Curier.objects.create(**validated_data)
+    
+    def update(self, instance, validated_data):
+        """Update courier configuration"""
+        instance.name = validated_data.get('name', instance.name)
+        instance.api_url = validated_data.get('api_url', instance.api_url)
+        instance.api_key = validated_data.get('api_key', instance.api_key)
+        instance.secret_key = validated_data.get('secret_key', instance.secret_key)
+        instance.is_active = validated_data.get('is_active', instance.is_active)
+        instance.save()
+        return instance

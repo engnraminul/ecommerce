@@ -323,6 +323,196 @@ class Curier(models.Model):
         return f"{self.name} ({self.api_url})"
 
 
+class CourierSettings(models.Model):
+    """Model for storing comprehensive courier service configurations"""
+    
+    # Steadfast Courier Configuration
+    steadfast_enabled = models.BooleanField(default=True, help_text="Enable Steadfast courier service")
+    steadfast_base_url = models.URLField(
+        max_length=500, 
+        default="https://portal.steadfast.com.bd/api/v1",
+        help_text="Steadfast API base URL"
+    )
+    steadfast_api_key = models.CharField(
+        max_length=255, 
+        blank=True, 
+        null=True,
+        help_text="Steadfast API key from merchant panel"
+    )
+    steadfast_secret_key = models.CharField(
+        max_length=255, 
+        blank=True, 
+        null=True,
+        help_text="Steadfast secret key for API authentication"
+    )
+    steadfast_merchant_id = models.CharField(
+        max_length=100, 
+        blank=True, 
+        null=True,
+        help_text="Steadfast merchant identifier"
+    )
+    steadfast_dhaka_rate = models.DecimalField(
+        max_digits=8, 
+        decimal_places=2, 
+        default=60.00,
+        help_text="Delivery charge for Dhaka city"
+    )
+    steadfast_outside_rate = models.DecimalField(
+        max_digits=8, 
+        decimal_places=2, 
+        default=100.00,
+        help_text="Delivery charge for outside Dhaka"
+    )
+    
+    # Pathao Courier Configuration
+    pathao_enabled = models.BooleanField(default=False, help_text="Enable Pathao courier service")
+    pathao_base_url = models.URLField(
+        max_length=500, 
+        default="https://courier-api-sandbox.pathao.com/api/v1",
+        help_text="Pathao API base URL (sandbox or production)"
+    )
+    pathao_client_id = models.CharField(
+        max_length=255, 
+        blank=True, 
+        null=True,
+        help_text="OAuth client ID from Pathao"
+    )
+    pathao_client_secret = models.CharField(
+        max_length=255, 
+        blank=True, 
+        null=True,
+        help_text="OAuth client secret from Pathao"
+    )
+    pathao_username = models.CharField(
+        max_length=100, 
+        blank=True, 
+        null=True,
+        help_text="Pathao merchant username"
+    )
+    pathao_password = models.CharField(
+        max_length=255, 
+        blank=True, 
+        null=True,
+        help_text="Pathao merchant password"
+    )
+    pathao_store_id = models.CharField(
+        max_length=100, 
+        blank=True, 
+        null=True,
+        help_text="Pathao store identifier"
+    )
+    
+    # RedX Courier Configuration
+    redx_enabled = models.BooleanField(default=False, help_text="Enable RedX courier service")
+    redx_base_url = models.URLField(
+        max_length=500, 
+        default="https://openapi.redx.com.bd/v1.0.0-beta",
+        help_text="RedX API base URL"
+    )
+    redx_api_token = models.CharField(
+        max_length=255, 
+        blank=True, 
+        null=True,
+        help_text="RedX API token from merchant panel"
+    )
+    
+    # Global Courier Settings
+    default_courier = models.CharField(
+        max_length=20,
+        choices=[
+            ('steadfast', 'Steadfast'),
+            ('pathao', 'Pathao'),
+            ('redx', 'RedX'),
+        ],
+        default='steadfast',
+        help_text="Primary courier service for new orders"
+    )
+    courier_timeout = models.PositiveIntegerField(
+        default=30,
+        help_text="Maximum time to wait for courier API response (seconds)"
+    )
+    auto_create_parcel = models.BooleanField(
+        default=False,
+        help_text="Automatically create courier parcels when orders are confirmed"
+    )
+    enable_tracking = models.BooleanField(
+        default=True,
+        help_text="Allow customers to track their orders via courier API"
+    )
+    
+    # Metadata
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Courier Settings"
+        verbose_name_plural = "Courier Settings"
+    
+    def __str__(self):
+        if self.updated_at:
+            return f"Courier Settings (Updated: {self.updated_at.strftime('%Y-%m-%d %H:%M')})"
+        else:
+            return "Courier Settings (New)"
+    
+    @classmethod
+    def get_active_settings(cls):
+        """Get the active courier settings"""
+        active_settings = cls.objects.filter(is_active=True).first()
+        if active_settings is None:
+            # Return default settings if none exist
+            return cls()
+        return active_settings
+    
+    def get_enabled_couriers(self):
+        """Get list of enabled courier services"""
+        enabled = []
+        if self.steadfast_enabled and self.steadfast_api_key:
+            enabled.append('steadfast')
+        if self.pathao_enabled and self.pathao_client_id:
+            enabled.append('pathao')
+        if self.redx_enabled and self.redx_api_token:
+            enabled.append('redx')
+        return enabled
+    
+    def is_courier_configured(self, courier_name):
+        """Check if a specific courier is properly configured"""
+        if courier_name == 'steadfast':
+            return self.steadfast_enabled and bool(self.steadfast_api_key and self.steadfast_secret_key)
+        elif courier_name == 'pathao':
+            return self.pathao_enabled and bool(self.pathao_client_id and self.pathao_client_secret)
+        elif courier_name == 'redx':
+            return self.redx_enabled and bool(self.redx_api_token)
+        return False
+    
+    def get_courier_config(self, courier_name):
+        """Get configuration dictionary for a specific courier"""
+        if courier_name == 'steadfast':
+            return {
+                'base_url': self.steadfast_base_url,
+                'api_key': self.steadfast_api_key,
+                'secret_key': self.steadfast_secret_key,
+                'merchant_id': self.steadfast_merchant_id,
+                'dhaka_rate': self.steadfast_dhaka_rate,
+                'outside_rate': self.steadfast_outside_rate,
+            }
+        elif courier_name == 'pathao':
+            return {
+                'base_url': self.pathao_base_url,
+                'client_id': self.pathao_client_id,
+                'client_secret': self.pathao_client_secret,
+                'username': self.pathao_username,
+                'password': self.pathao_password,
+                'store_id': self.pathao_store_id,
+            }
+        elif courier_name == 'redx':
+            return {
+                'base_url': self.redx_base_url,
+                'api_token': self.redx_api_token,
+            }
+        return {}
+
+
 class CheckoutCustomization(models.Model):
     """Model for storing checkout page customization settings"""
     
