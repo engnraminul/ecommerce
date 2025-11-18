@@ -120,6 +120,14 @@ class Backup(models.Model):
                 pass
         
         return files_deleted
+    
+    def delete(self, *args, **kwargs):
+        """Override delete method to remove backup files before deleting record"""
+        # Delete backup files from filesystem first
+        self.delete_backup_files()
+        
+        # Then delete the database record
+        super().delete(*args, **kwargs)
 
 
 class BackupSchedule(models.Model):

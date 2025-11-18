@@ -183,7 +183,7 @@ class BackupService:
         deleted_count = 0
         for backup in old_backups:
             try:
-                backup.delete_backup_files()
+                # The delete() method now automatically handles file deletion via signals
                 backup.delete()
                 deleted_count += 1
             except Exception as e:

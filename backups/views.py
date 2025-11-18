@@ -66,6 +66,29 @@ class BackupViewSet(viewsets.ModelViewSet):
         
         return queryset.order_by('-created_at')
     
+    def destroy(self, request, *args, **kwargs):
+        """Override destroy method to provide better logging for backup deletion"""
+        backup = self.get_object()
+        backup_name = backup.name
+        backup_id = backup.id
+        
+        try:
+            # Log the deletion attempt
+            logger.info(f"User {request.user} is deleting backup '{backup_name}' (ID: {backup_id})")
+            
+            # Perform the deletion (files will be automatically deleted via signals)
+            self.perform_destroy(backup)
+            
+            logger.info(f"Successfully deleted backup '{backup_name}' (ID: {backup_id})")
+            return Response(status=status.HTTP_204_NO_CONTENT)
+            
+        except Exception as e:
+            logger.error(f"Failed to delete backup '{backup_name}' (ID: {backup_id}): {str(e)}")
+            return Response(
+                {'error': f'Failed to delete backup: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
     @action(detail=False, methods=['post'])
     def create_backup(self, request):
         """Create a new backup"""
