@@ -585,3 +585,70 @@ def update_courier_info(request, order_id):
             {'error': f'Failed to update courier information: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+@transaction.atomic
+def update_shipping_cost(request, order_id):
+    """Update shipping cost for an order"""
+    try:
+        print(f"Updating shipping cost for order {order_id}")
+        print(f"Request data: {request.data}")
+        
+        order = get_object_or_404(Order, id=order_id)
+        print(f"Found order: {order.order_number}")
+        
+        shipping_cost = request.data.get('shipping_cost')
+        
+        if shipping_cost is None:
+            return Response(
+                {'error': 'shipping_cost is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            from decimal import Decimal
+            shipping_cost = Decimal(str(shipping_cost))
+            if shipping_cost < 0:
+                return Response(
+                    {'error': 'Shipping cost cannot be negative'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except (ValueError, TypeError, Decimal.InvalidOperation):
+            return Response(
+                {'error': 'Invalid shipping cost value'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        print(f"Updating shipping cost to: {shipping_cost}")
+        
+        # Update shipping cost
+        order.shipping_cost = shipping_cost
+        order.save()
+        
+        # Recalculate order totals
+        order.calculate_totals()
+        
+        print("Order saved and totals recalculated successfully")
+        
+        # Prepare response data
+        response_data = {
+            'success': True,
+            'message': 'Shipping cost updated successfully',
+            'shipping_cost': str(order.shipping_cost),
+            'total_amount': str(order.total_amount)
+        }
+        print(f"Response data: {response_data}")
+        
+        return Response(response_data)
+        
+    except Exception as e:
+        print(f"Error updating shipping cost: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        return Response(
+            {'error': f'Failed to update shipping cost: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

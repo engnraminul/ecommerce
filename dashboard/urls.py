@@ -46,6 +46,7 @@ urlpatterns = [
     path('api/orders/<int:order_id>/edit/delete-item/', order_edit_views.delete_order_item, name='delete_order_item'),
     path('api/orders/<int:order_id>/edit/update-address/', order_edit_views.update_shipping_address, name='update_shipping_address'),
     path('api/orders/<int:order_id>/edit/courier-info/', order_edit_views.update_courier_info, name='update_courier_info'),
+    path('api/orders/<int:order_id>/edit/shipping/', order_edit_views.update_shipping_cost, name='update_shipping_cost'),
     path('api/orders/edit/available-products/', order_edit_views.get_available_products, name='get_available_products'),
     
     # Product variant nested endpoints

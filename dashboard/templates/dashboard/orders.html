@@ -1124,7 +1124,12 @@
                                     </tr>
                                     <tr>
                                         <td colspan="5" class="text-end">Shipping:</td>
-                                        <td class="text-end" id="orderDetailShipping"></td>
+                                        <td class="text-end" id="orderDetailShipping">
+                                            <span id="shippingAmountDisplay"></span>
+                                            <button class="btn btn-sm btn-outline-primary ms-2" id="editShippingBtn" style="display: none;">
+                                                <i class="fas fa-edit me-1"></i> Edit
+                                            </button>
+                                        </td>
                                     </tr>
                                     <tr id="orderDetailCouponRow" style="display: none;">
                                         <td colspan="5" class="text-end text-success">Coupon Discount (<span id="orderDetailCouponCode"></span>):</td>
@@ -1461,6 +1466,32 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" id="confirmEditCourierDateBtn">Update Courier Date</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Shipping Amount Modal -->
+<div class="modal fade" id="editShippingModal" tabindex="-1" aria-labelledby="editShippingModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editShippingModalLabel">Edit Shipping Amount</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="editShippingInput" class="form-label">Shipping Amount</label>
+                    <div class="input-group">
+                        <span class="input-group-text">৳</span>
+                        <input type="number" class="form-control" id="editShippingInput" min="0" step="0.01" placeholder="Enter shipping amount">
+                    </div>
+                    <small class="text-muted">Enter 0 for free shipping</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmEditShippingBtn">Update Shipping Amount</button>
             </div>
         </div>
     </div>
@@ -3360,7 +3391,16 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log(`Shipping: ৳${shipping}, Tax: ৳${tax}, Subtotal: ৳${subtotal}, Coupon Discount: ৳${couponDiscount}`);
         
-        document.getElementById('orderDetailShipping').textContent = `৳${shipping.toFixed(2)}`;
+        document.getElementById('shippingAmountDisplay').textContent = `৳${shipping.toFixed(2)}`;
+        
+        // Show edit shipping button for all orders except cancelled and delivered
+        const editShippingBtn = document.getElementById('editShippingBtn');
+        const orderStatus = currentOrder ? currentOrder.status : '';
+        if (orderStatus !== 'cancelled' && orderStatus !== 'delivered') {
+            editShippingBtn.style.display = 'inline-block';
+        } else {
+            editShippingBtn.style.display = 'none';
+        }
         
         // Handle coupon discount display
         const couponRow = document.getElementById('orderDetailCouponRow');
@@ -5906,6 +5946,92 @@ document.addEventListener('DOMContentLoaded', function() {
             Swal.fire({
                 title: 'Error',
                 text: error.message || 'Failed to update courier date.',
+                icon: 'error'
+            });
+        });
+    });
+    
+    // Edit Shipping Amount Event Listeners
+    document.getElementById('editShippingBtn').addEventListener('click', function() {
+        const currentShipping = window.currentOrderData.shipping_cost || 0;
+        document.getElementById('editShippingInput').value = currentShipping;
+        
+        const modal = new bootstrap.Modal(document.getElementById('editShippingModal'));
+        modal.show();
+    });
+    
+    // Confirm Edit Shipping Amount
+    document.getElementById('confirmEditShippingBtn').addEventListener('click', function() {
+        const newShippingAmount = parseFloat(document.getElementById('editShippingInput').value) || 0;
+        const orderId = window.currentOrderData.id;
+        
+        console.log('Updating shipping amount for order:', orderId, 'New amount:', newShippingAmount);
+        
+        // Update shipping amount via API
+        fetch(`/mb-admin/api/orders/${orderId}/edit/shipping/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                shipping_cost: newShippingAmount
+            })
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            
+            if (!response.ok) {
+                return response.text().then(text => {
+                    console.error('Non-JSON response:', text);
+                    throw new Error(`HTTP ${response.status}: ${text}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('API Response:', data);
+            
+            if (data.success) {
+                // Update display
+                document.getElementById('shippingAmountDisplay').textContent = `৳${newShippingAmount.toFixed(2)}`;
+                
+                // Update global order data
+                window.currentOrderData.shipping_cost = newShippingAmount;
+                
+                // Recalculate and update grand total
+                const currentOrder = window.currentOrderData;
+                const subtotal = parseFloat(document.getElementById('orderDetailSubtotal').textContent.replace('৳', '')) || 0;
+                const tax = currentOrder && currentOrder.tax_amount ? Number(currentOrder.tax_amount) : 0;
+                const couponDiscount = currentOrder && currentOrder.coupon_discount ? Number(currentOrder.coupon_discount) : 0;
+                const grandTotal = subtotal + newShippingAmount + tax - couponDiscount;
+                
+                document.getElementById('orderDetailGrandTotal').textContent = `৳${grandTotal.toFixed(2)}`;
+                
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('editShippingModal')).hide();
+                
+                // Show success message
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Shipping amount updated successfully.',
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                // Refresh the orders table to reflect the new total
+                loadOrders(currentPage);
+            } else {
+                throw new Error(data.error || 'Failed to update shipping amount');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating shipping amount:', error);
+            Swal.fire({
+                title: 'Error',
+                text: error.message || 'Failed to update shipping amount.',
                 icon: 'error'
             });
         });

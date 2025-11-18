@@ -26,6 +26,7 @@ urlpatterns = [
     path('edit/<int:order_id>/delete-item/', order_edit_views.delete_order_item, name='delete-order-item'),
     path('edit/<int:order_id>/update-address/', order_edit_views.update_shipping_address, name='update-shipping-address'),
     path('edit/<int:order_id>/courier-info/', order_edit_views.update_courier_info, name='update-courier-info'),
+    path('edit/<int:order_id>/shipping/', order_edit_views.update_shipping_cost, name='update-shipping-cost'),
     path('edit/available-products/', order_edit_views.get_available_products, name='get-available-products'),
     
     # Invoices
