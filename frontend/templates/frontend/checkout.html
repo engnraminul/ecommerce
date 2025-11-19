@@ -326,6 +326,9 @@
                                     {{ checkout_customization.place_order_button_text|default:"Place Order" }}
                                 </button>
                                 
+                                <p style="text-align: center;">
+                                    অর্ডার সম্পন্ন করতে উপরের "Place Order" বাটনে ক্লিক করুন।
+                                </p>
                                 {% if checkout_customization.show_security_badges %}
                                 <div class="security-badges">
                                     <div class="security-badge">
@@ -828,7 +831,7 @@
     }
 
     .payment-instructions strong {
-        color: var(--primary-color);
+        color: var(--white);
     }
 
     .cod-total {
@@ -840,6 +843,7 @@
         text-align: center;
         font-size: 1.1rem;
         box-shadow: 0 4px 12px rgba(147, 0, 0, 0.3);
+        
     }
 
     .card-types {
@@ -1475,6 +1479,25 @@
         .order-totals {
             padding: 1rem;
         }
+
+        .breadcrumb {
+            margin-bottom: 1rem!important;
+            padding: 0rem!important;
+        }
+
+        .form-section {
+            margin-bottom: 1rem;
+            padding-bottom: 0rem;
+        }
+
+        .location-options {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .payment-options {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
     }
     
     @keyframes pointingAnimation {
