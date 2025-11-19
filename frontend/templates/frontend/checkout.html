@@ -1618,6 +1618,21 @@
         nagadMerchantNumber: '{{ checkout_customization.nagad_merchant_number|default:"01XXXXXXXXX" }}'
     };
 
+    // Delivery estimates data for JavaScript
+    window.deliveryEstimates = {
+        dhaka: {
+            dateRange: '{{ delivery_estimates.dhaka.date_range|default:"1-2 days" }}',
+            areaLabel: '{{ delivery_estimates.dhaka.area_label|default:"Inside Dhaka City" }}'
+        },
+        outside: {
+            dateRange: '{{ delivery_estimates.outside.date_range|default:"2-4 days" }}',
+            areaLabel: '{{ delivery_estimates.outside.area_label|default:"Outside Dhaka City" }}'
+        }
+    };
+    
+    // Debug: Log delivery estimates to console
+    console.log('Delivery Estimates Loaded:', window.deliveryEstimates);
+
     document.addEventListener('DOMContentLoaded', function() {
         loadOrderSummary();
         setupFormValidation();
@@ -1859,6 +1874,9 @@
         
         // Show default shipping options if API fails
         function showDefaultShippingOptions(location) {
+            console.log('showDefaultShippingOptions called for location:', location);
+            console.log('Using delivery estimates:', window.deliveryEstimates);
+            
             const shippingContainer = document.getElementById('shipping-options');
             let optionsHtml = '';
             
@@ -1868,8 +1886,8 @@
                         <input type="radio" id="standard_dhaka" name="shipping_method" value="standard" data-cost="70" checked>
                         <label for="standard_dhaka">
                             <div class="shipping-info">
-                                <div class="shipping-name">Standard Shipping (Dhaka City)</div>
-                                <div class="shipping-description">1-2 days</div>
+                                <div class="shipping-name">Standard Shipping (${window.deliveryEstimates.dhaka.areaLabel})</div>
+                                <div class="shipping-description">${window.deliveryEstimates.dhaka.dateRange}</div>
                             </div>
                             <div class="shipping-price">70৳</div>
                         </label>
@@ -1891,14 +1909,16 @@
                         <input type="radio" id="standard_outside" name="shipping_method" value="standard" data-cost="120" checked>
                         <label for="standard_outside">
                             <div class="shipping-info">
-                                <div class="shipping-name">Standard Shipping (Outside Dhaka)</div>
-                                <div class="shipping-description">2-4 days</div>
+                                <div class="shipping-name">Standard Shipping (${window.deliveryEstimates.outside.areaLabel})</div>
+                                <div class="shipping-description">${window.deliveryEstimates.outside.dateRange}</div>
                             </div>
                             <div class="shipping-price">120৳</div>
                         </label>
                     </div>
                 `;
             }
+            
+            console.log('Generated shipping options HTML:', optionsHtml);
             
             shippingContainer.innerHTML = optionsHtml;
             setupShippingMethodListeners();

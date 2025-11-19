@@ -2,6 +2,7 @@
 Shipping calculation service
 """
 from decimal import Decimal
+from settings.utils import get_formatted_delivery_estimates
 
 
 class ShippingCalculator:
@@ -24,6 +25,16 @@ class ShippingCalculator:
         """
         self.cart_items = cart_items
         self.location = location
+        
+    def _get_delivery_estimates(self):
+        """Get dynamic delivery estimates from settings"""
+        try:
+            delivery_estimates = get_formatted_delivery_estimates()
+            area = 'dhaka' if self.location == 'dhaka' else 'outside'
+            return delivery_estimates[area]['date_range']
+        except Exception:
+            # Fallback to static estimates if service fails
+            return '1-2 days' if self.location == 'dhaka' else '2-4 days'
     
     def get_available_shipping_options(self):
         """
@@ -53,8 +64,9 @@ class ShippingCalculator:
         )
         
         # Add main shipping options (Free takes priority over Standard)
+        estimated_days = self._get_delivery_estimates()
+        
         if has_free_shipping:
-            estimated_days = '1-2 days' if self.location == 'dhaka' else '2-4 days'
             options.append({
                 'type': 'free',
                 'name': 'Free Shipping',
@@ -65,7 +77,6 @@ class ShippingCalculator:
         elif has_standard_shipping:
             cost = self._calculate_standard_shipping_cost()
             location_name = 'Dhaka City' if self.location == 'dhaka' else 'Outside Dhaka'
-            estimated_days = '1-2 days' if self.location == 'dhaka' else '2-4 days'
             options.append({
                 'type': 'standard',
                 'name': f'Standard Shipping ({location_name})',

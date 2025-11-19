@@ -675,3 +675,55 @@ def calculate_shipping_cost(request):
         return Response({
             'error': 'Cart not found'
         }, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def delivery_estimates(request):
+    """Get delivery estimates for both Dhaka and outside Dhaka"""
+    try:
+        from settings.utils import get_formatted_delivery_estimates
+        
+        # Get delivery estimates from settings utils
+        estimates = get_formatted_delivery_estimates()
+        
+        return Response({
+            'success': True,
+            'estimates': {
+                'dhaka': {
+                    'area_label': estimates['dhaka']['area_label'],
+                    'date_range': estimates['dhaka']['date_range'],
+                    'days_range': estimates['dhaka']['days_range']
+                },
+                'outside': {
+                    'area_label': estimates['outside']['area_label'], 
+                    'date_range': estimates['outside']['date_range'],
+                    'days_range': estimates['outside']['days_range']
+                },
+                'settings': {
+                    'today_date': estimates['settings']['today_date'],
+                    'current_time': estimates['settings']['current_time'],
+                    'cutoff_time': estimates['settings']['cutoff_time'],
+                    'is_after_cutoff': estimates['settings']['is_after_cutoff'],
+                    'custom_date_set': estimates['settings']['custom_date_set']
+                }
+            }
+        })
+        
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': f'Failed to get delivery estimates: {str(e)}',
+            'estimates': {
+                'dhaka': {
+                    'area_label': 'Inside Dhaka City',
+                    'date_range': '1-2 days',
+                    'days_range': '1-2'
+                },
+                'outside': {
+                    'area_label': 'Outside Dhaka City',
+                    'date_range': '2-4 days', 
+                    'days_range': '2-4'
+                }
+            }
+        })

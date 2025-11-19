@@ -623,6 +623,10 @@ def checkout(request):
     shipping_cost = 0  # You can implement shipping calculation logic here
     total = subtotal + shipping_cost
     
+    # Get delivery estimates
+    from settings.utils import get_formatted_delivery_estimates
+    delivery_estimates = get_formatted_delivery_estimates()
+    
     context = {
         'cart': cart_obj,
         'cart_items': cart_items,
@@ -630,6 +634,7 @@ def checkout(request):
         'shipping_cost': shipping_cost,
         'total': total,
         'is_guest': not request.user.is_authenticated,
+        'delivery_estimates': delivery_estimates,
     }
     return render(request, 'frontend/checkout.html', context)
 
