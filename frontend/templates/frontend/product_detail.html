@@ -138,8 +138,9 @@
                         {% if color_groups %}
                         <div class="variant-selector color-selector">
                             <label>Color: <span id="selected-color-label">
+                                <!-- need to show default variant name -->
                                 {% with default_variant=product.default_variant %}
-                                    {% if default_variant %}{{ default_variant.color_name|default:default_variant.name }}{% else %}Please select{% endif %}
+                                    {% if default_variant and default_variant.color %}{{ default_variant.name }}{% else %}Please select{% endif %}
                                 {% endwith %}
                             </span></label>
                             <div class="color-grid">
@@ -149,8 +150,8 @@
                                 {% with default_variant=product.default_variant %}
                                 <button class="color-btn{% if default_variant and default_variant.color == color_group.grouper %} selected{% endif %}" 
                                         data-color="{{ color_group.grouper }}" 
-                                        data-color-name="{% for word in first_variant.name.split %}{% if forloop.first %}{{ word }}{% endif %}{% endfor %}"
-                                        title="{% for word in first_variant.name.split %}{% if forloop.first %}{{ word }}{% endif %}{% endfor %}">
+                                        data-color-name="{{ first_variant.name }}"
+                                        title="{{ first_variant.name }}">
                                 {% endwith %}
                                     {% if first_variant.image %}
                                     <img src="{{ first_variant.image_url }}" 
@@ -161,7 +162,7 @@
                                     {% else %}
                                     <span class="color-display" style="background-color: {{ color_group.grouper }};"></span>
                                     {% endif %}
-                                    <span class="color-name">{% for word in first_variant.name.split %}{% if forloop.first %}{{ word }}{% endif %}{% endfor %}</span>
+                                    <span class="color-name">{{ first_variant.color }}</span>
                                 </button>
                                 {% endwith %}
                                 {% endif %}
