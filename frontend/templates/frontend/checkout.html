@@ -83,12 +83,13 @@
 
                         <!-- Order Instructions -->
                         <div class="form-section">
-                            <h2 class="section-title">
+                            <h2 class="section-title toggle-section" id="instructions-toggle">
                                 <i class="fas fa-clipboard-list"></i>
                                 {{ checkout_customization.instructions_section_title|default:"Order Instructions" }}
+                                <i class="fas fa-chevron-down toggle-icon" id="instructions-chevron"></i>
                             </h2>
                             
-                            <div class="form-row">
+                            <div class="form-row collapsible-content" id="instructions-content" style="display: none;">
                                 <div class="form-group">
                                     <label for="order_instruction">{{ checkout_customization.instructions_label|default:"Special Instructions (Optional)" }}</label>
                                     <textarea id="order_instruction" name="order_instruction" rows="4" 
@@ -109,14 +110,14 @@
                                     <label>{{ checkout_customization.delivery_location_label|default:"Delivery Location *" }}</label>
                                     <div class="location-options">
                                         <div class="location-option">
-                                            <input type="radio" id="location_dhaka" name="location" value="dhaka" checked required>
+                                            <input type="radio" id="location_dhaka" name="location" value="dhaka" required>
                                             <label for="location_dhaka">
                                                 <i class="fas fa-city"></i>
                                                 <span>{{ checkout_customization.dhaka_location_label|default:"Dhaka City" }}</span>
                                             </label>
                                         </div>
                                         <div class="location-option">
-                                            <input type="radio" id="location_outside" name="location" value="outside" required>
+                                            <input type="radio" id="location_outside" name="location" value="outside" checked required>
                                             <label for="location_outside">
                                                 <i class="fas fa-map-marker-alt"></i>
                                                 <span>{{ checkout_customization.outside_location_label|default:"Outside Dhaka" }}</span>
@@ -177,14 +178,18 @@
                                     </div>
                                     <div class="payment-instructions">
                                         <p><strong>Follow these steps:</strong></p>
-                                        <ol>
-                                            <li>Go to your bKash Mobile Menu by dialing *247#</li>
-                                            <li>Choose "Send Money"</li>
-                                            <li>Enter Merchant bKash Account Number: <strong>{{ checkout_customization.bkash_merchant_number|default:"01XXXXXXXXX" }}</strong></li>
-                                            <li>Enter the total amount: <strong id="bkash-amount">$0.00</strong></li>
-                                            <li>Enter a reference: Your phone number</li>
-                                            <li>Now enter your bKash Mobile Menu PIN and confirm</li>
-                                        </ol>
+                                        {% if checkout_customization.bkash_instructions %}
+                                            {{ checkout_customization.bkash_instructions|safe }}
+                                        {% else %}
+                                            <ol>
+                                                <li>Go to your bKash Mobile Menu by dialing *247#</li>
+                                                <li>Choose "Send Money"</li>
+                                                <li>Enter Merchant bKash Account Number: <strong>{{ checkout_customization.bkash_merchant_number|default:"01XXXXXXXXX" }}</strong></li>
+                                                <li>Enter the total amount: <strong id="bkash-amount">৳{{ total|floatformat:2 }}</strong></li>
+                                                <li>Enter a reference: Your phone number</li>
+                                                <li>Now enter your bKash PIN and confirm</li>
+                                            </ol>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 <div class="form-row">
@@ -212,14 +217,18 @@
                                     </div>
                                     <div class="payment-instructions">
                                         <p><strong>Follow these steps:</strong></p>
-                                        <ol>
-                                            <li>Go to your Nagad Mobile Menu by dialing *167#</li>
-                                            <li>Choose "Send Money"</li>
-                                            <li>Enter Merchant Nagad Account Number: <strong>{{ checkout_customization.nagad_merchant_number|default:"01XXXXXXXXX" }}</strong></li>
-                                            <li>Enter the total amount: <strong id="nagad-amount">$0.00</strong></li>
-                                            <li>Enter a reference: Your phone number</li>
-                                            <li>Now enter your Nagad PIN and confirm</li>
-                                        </ol>
+                                        {% if checkout_customization.nagad_instructions %}
+                                            {{ checkout_customization.nagad_instructions|safe }}
+                                        {% else %}
+                                            <ol>
+                                                <li>Go to your Nagad Mobile Menu by dialing *167#</li>
+                                                <li>Choose "Send Money"</li>
+                                                <li>Enter Merchant Nagad Account Number: <strong>{{ checkout_customization.nagad_merchant_number|default:"01XXXXXXXXX" }}</strong></li>
+                                                <li>Enter the total amount: <strong id="nagad-amount">৳{{ total|floatformat:2 }}</strong></li>
+                                                <li>Enter a reference: Your phone number</li>
+                                                <li>Now enter your Nagad PIN and confirm</li>
+                                            </ol>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 <div class="form-row">
@@ -249,7 +258,7 @@
                                         <p><strong>Payment Information:</strong></p>
                                         {{ checkout_customization.cod_instructions|default:"<ul><li>Pay cash when you receive your order</li><li>Make sure to have exact amount ready</li><li>Our delivery person will collect the payment</li><li>You can inspect the product before payment</li></ul>"|safe }}
                                         <div class="cod-total">
-                                            <strong>Total Amount to Pay: <span id="cod-amount">৳0.00</span></strong>
+                                            <strong>Total Amount to Pay: <span id="cod-amount">৳{{ total|floatformat:2 }}</span></strong>
                                         </div>
                                     </div>
                                 </div>
@@ -485,6 +494,43 @@
         padding: 0.5rem;
         background: rgba(147, 0, 0, 0.1);
         border-radius: 8px;
+    }
+
+    /* Toggle Section Styles */
+    .toggle-section {
+        cursor: pointer;
+        position: relative;
+        user-select: none;
+        transition: all 0.3s ease;
+    }
+
+    .toggle-section:hover {
+        color: #b91c1c;
+        transform: translateX(5px);
+    }
+
+    .toggle-icon {
+        margin-left: auto;
+        transition: transform 0.3s ease;
+        font-size: 1rem !important;
+        padding: 0.25rem !important;
+    }
+
+    .toggle-icon.rotated {
+        transform: rotate(180deg);
+    }
+
+    .collapsible-content {
+        overflow: hidden;
+        transition: all 0.4s ease;
+        opacity: 0;
+        max-height: 0;
+    }
+
+    .collapsible-content.show {
+        opacity: 1;
+        max-height: 500px;
+        padding-top: 1rem;
     }
 
     /* Form Elements */
@@ -831,13 +877,14 @@
     }
 
     .payment-instructions strong {
-        color: var(--white);
+        color: var(--primary-color);
+        font-weight: 700;
     }
 
     .cod-total {
         margin-top: 1rem;
         padding: 1rem;
-        background: linear-gradient(135deg, var(--primary-color), #b91c1c);
+        background: linear-gradient(135deg, rgba(147, 0, 0, 0.1), rgba(147, 0, 0, 0.05));
         color: var(--white);
         border-radius: var(--border-radius);
         text-align: center;
@@ -1663,6 +1710,7 @@
         setupLocationChangeListener();
         setupPhoneValidation();
         setupButtonAnimation();
+        setupInstructionsToggle();
         
         // বাটন এনিমেশন সেটআপ
         function setupButtonAnimation() {
@@ -1829,6 +1877,33 @@
             });
         }
         
+        // Setup instructions toggle functionality
+        function setupInstructionsToggle() {
+            const toggleButton = document.getElementById('instructions-toggle');
+            const content = document.getElementById('instructions-content');
+            const chevron = document.getElementById('instructions-chevron');
+            
+            if (toggleButton && content && chevron) {
+                toggleButton.addEventListener('click', function() {
+                    const isVisible = content.classList.contains('show');
+                    
+                    if (isVisible) {
+                        // Hide content
+                        content.classList.remove('show');
+                        chevron.classList.remove('rotated');
+                        content.style.display = 'none';
+                    } else {
+                        // Show content
+                        content.style.display = 'flex';
+                        setTimeout(() => {
+                            content.classList.add('show');
+                            chevron.classList.add('rotated');
+                        }, 10);
+                    }
+                });
+            }
+        }
+        
         // Setup location change listener
         function setupLocationChangeListener() {
             const locationRadios = document.querySelectorAll('input[name="location"]');
@@ -1846,7 +1921,7 @@
         // Load order summary
         function loadOrderSummary() {
             const locationRadio = document.querySelector('input[name="location"]:checked');
-            const location = locationRadio ? locationRadio.value : 'dhaka';
+            const location = locationRadio ? locationRadio.value : 'outside';
             
             fetch(`/api/v1/cart/summary/?location=${location}`, {
                 headers: {
@@ -1874,7 +1949,7 @@
         }
         
         // Load shipping options based on location
-        function loadShippingOptions(location = 'dhaka') {
+        function loadShippingOptions(location = 'outside') {
             fetch(`/api/v1/cart/shipping-options/?location=${location}`, {
                 headers: {
                     'X-CSRFToken': getCookie('csrftoken')
@@ -2162,15 +2237,19 @@
         // Update payment amount in forms
         function updatePaymentAmount() {
             const totalElement = document.getElementById('order-total');
-            const total = totalElement ? totalElement.textContent : '$0.00';
+            const totalText = totalElement ? totalElement.textContent : '৳0.00';
+            
+            // Extract just the amount (remove ৳ symbol and format properly)
+            const amount = totalText.replace('৳', '').trim();
+            const formattedAmount = `৳${amount}`;
             
             const bkashAmount = document.getElementById('bkash-amount');
             const nagadAmount = document.getElementById('nagad-amount');
             const codAmount = document.getElementById('cod-amount');
             
-            if (bkashAmount) bkashAmount.textContent = total;
-            if (nagadAmount) nagadAmount.textContent = total;
-            if (codAmount) codAmount.textContent = total;
+            if (bkashAmount) bkashAmount.textContent = formattedAmount;
+            if (nagadAmount) nagadAmount.textContent = formattedAmount;
+            if (codAmount) codAmount.textContent = formattedAmount;
         }
         
         // Form validation

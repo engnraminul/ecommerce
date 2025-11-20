@@ -627,6 +627,70 @@ def checkout(request):
     from settings.utils import get_formatted_delivery_estimates
     delivery_estimates = get_formatted_delivery_estimates()
     
+    # Get checkout customization settings for payment methods
+    from settings.models import CheckoutCustomization
+    checkout_customization = CheckoutCustomization.get_active_settings()
+    
+    # Process payment instructions to replace placeholders
+    total_amount = f"৳{total:.2f}"
+    
+    # Create a copy of checkout_customization with processed instructions
+    class ProcessedCheckoutCustomization:
+        def __init__(self, original):
+            # Copy specific field attributes from original, avoiding Django model internals
+            model_fields = [field.name for field in original._meta.fields]
+            for field_name in model_fields:
+                if hasattr(original, field_name):
+                    setattr(self, field_name, getattr(original, field_name))
+            
+            # Process bKash instructions
+            if self.bkash_instructions:
+                processed_bkash = self.bkash_instructions.replace(
+                    '{merchant_number}', f'<strong>{self.bkash_merchant_number}</strong>'
+                ).replace(
+                    '{amount}', f'<strong id="bkash-amount">{total_amount}</strong>'
+                )
+                # Convert numbered lines to HTML list
+                lines = processed_bkash.split('\n')
+                if lines[0].strip().startswith('Follow these steps:'):
+                    lines = lines[1:]  # Remove the "Follow these steps" line
+                
+                formatted_lines = []
+                for line in lines:
+                    line = line.strip()
+                    if line:
+                        # Remove number prefix like "1. ", "2. " etc.
+                        import re
+                        line = re.sub(r'^\d+\.\s*', '', line)
+                        formatted_lines.append(f'<li>{line}</li>')
+                
+                self.bkash_instructions = f'<ol>{"".join(formatted_lines)}</ol>'
+            
+            # Process Nagad instructions
+            if self.nagad_instructions:
+                processed_nagad = self.nagad_instructions.replace(
+                    '{merchant_number}', f'<strong>{self.nagad_merchant_number}</strong>'
+                ).replace(
+                    '{amount}', f'<strong id="nagad-amount">{total_amount}</strong>'
+                )
+                # Convert numbered lines to HTML list
+                lines = processed_nagad.split('\n')
+                if lines[0].strip().startswith('Follow these steps:'):
+                    lines = lines[1:]  # Remove the "Follow these steps" line
+                
+                formatted_lines = []
+                for line in lines:
+                    line = line.strip()
+                    if line:
+                        # Remove number prefix like "1. ", "2. " etc.
+                        import re
+                        line = re.sub(r'^\d+\.\s*', '', line)
+                        formatted_lines.append(f'<li>{line}</li>')
+                
+                self.nagad_instructions = f'<ol>{"".join(formatted_lines)}</ol>'
+    
+    processed_checkout_customization = ProcessedCheckoutCustomization(checkout_customization)
+    
     context = {
         'cart': cart_obj,
         'cart_items': cart_items,
@@ -635,6 +699,7 @@ def checkout(request):
         'total': total,
         'is_guest': not request.user.is_authenticated,
         'delivery_estimates': delivery_estimates,
+        'checkout_customization': processed_checkout_customization,
     }
     return render(request, 'frontend/checkout.html', context)
 
