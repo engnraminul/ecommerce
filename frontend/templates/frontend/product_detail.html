@@ -258,6 +258,10 @@
                                 <i class="far fa-heart"></i>
                                 Wishlist
                             </button>
+                            <button class="whatsapp secondary" data-product-id="{{ product.id }}">
+                                <i class="fab fa-whatsapp"></i>
+                                <span>WhatsApp</span>
+                            </button>
                         </div>
                         
                         {% else %}
@@ -1247,6 +1251,32 @@
     .wishlist-btn:hover {
         background: var(--primary-color);
         color: var(--white);
+    }
+
+    .whatsapp {
+        flex: 1;
+        padding: 1rem;
+        background: #25D366;
+        color: var(--white);
+        border: 2px solid #25D366;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .whatsapp:hover {
+        background: #128C7E;
+        border-color: #128C7E;
+        transform: translateY(-2px);
+    }
+
+    .whatsapp i {
+        font-size: 1.5rem;
     }
 
     .buy-now-btn {
@@ -3672,7 +3702,7 @@
             gap: 0.75rem;
         }
 
-        .add-to-cart-btn, .wishlist-btn, .buy-now-btn {
+        .add-to-cart-btn, .wishlist-btn, .whatsapp, .buy-now-btn {
             padding: 0.875rem 1.5rem;
             font-size: 1rem;
         }
@@ -3996,9 +4026,14 @@
             gap: 0.5rem;
         }
 
-        .add-to-cart-btn, .wishlist-btn {
+        .add-to-cart-btn, .wishlist-btn, .whatsapp {
             padding: 0.75rem 1rem;
             font-size: 0.9rem;
+        }
+
+        /* Hide WhatsApp text on very small screens */
+        .whatsapp span {
+            display: none;
         }
 
         .product-features {
@@ -4368,6 +4403,7 @@
     .size-btn,
     .add-to-cart-btn,
     .wishlist-btn,
+    .whatsapp,
     .buy-now-btn,
     .tab-btn,
     .gallery-thumbnail {
@@ -5629,6 +5665,66 @@
                     this.style.color = '';
                     this.style.borderColor = '';
                 }
+            });
+        });
+
+        // WhatsApp functionality
+        const whatsappBtns = document.querySelectorAll('.whatsapp');
+        whatsappBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Get phone number from site settings
+                let rawPhoneNumber = '{{ site_settings.contact_phone|default:"01777173040" }}';
+                console.log('Raw phone number from settings:', rawPhoneNumber);
+                
+                // Clean the phone number - remove all non-digit characters except +
+                let phoneNumber = rawPhoneNumber.replace(/[^\d+]/g, '');
+                console.log('Cleaned phone number:', phoneNumber);
+                
+                // Format phone number for WhatsApp
+                let finalPhoneNumber;
+                if (phoneNumber.startsWith('+880')) {
+                    // Already has Bangladesh country code with +
+                    finalPhoneNumber = phoneNumber.substring(1); // Remove +, WhatsApp uses without +
+                } else if (phoneNumber.startsWith('880')) {
+                    // Has Bangladesh country code without +
+                    finalPhoneNumber = phoneNumber;
+                } else if (phoneNumber.startsWith('88')) {
+                    // Has partial country code
+                    finalPhoneNumber = '880' + phoneNumber.substring(2);
+                } else if (phoneNumber.startsWith('0')) {
+                    // Local Bangladesh number starting with 0
+                    finalPhoneNumber = '880' + phoneNumber.substring(1);
+                } else if (phoneNumber.length >= 10) {
+                    // Assume it's a Bangladesh mobile number without 0
+                    finalPhoneNumber = '880' + phoneNumber;
+                } else {
+                    // Default to a standard format
+                    finalPhoneNumber = '8801777173040';
+                }
+                
+                console.log('Final WhatsApp phone number:', finalPhoneNumber);
+                
+                // Get product name for better context
+                const productName = document.querySelector('.product-title')?.textContent || 'Product';
+                
+                // Create WhatsApp message in Bengali and English
+                const message = encodeURIComponent(`আসসালামু আলাইকুম! আমি এই প্রোডাক্টটি সম্পর্কে জানতে চাই:
+
+${productName}
+
+Product Link: ${window.location.href}
+
+অনুগ্রহ করে দাম এবং আরো বিস্তারিত জানাবেন।
+
+Hi! I'm interested in this product: ${productName}
+Please provide price and more details.`);
+                
+                // Create WhatsApp URL
+                const whatsappUrl = `https://wa.me/${finalPhoneNumber}?text=${message}`;
+                console.log('WhatsApp URL:', whatsappUrl);
+                
+                // Open WhatsApp in a new window/tab
+                window.open(whatsappUrl, '_blank');
             });
         });
 
