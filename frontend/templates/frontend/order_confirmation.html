@@ -724,7 +724,7 @@
         }
 
         .order-info-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, 1fr);
             gap: 1rem;
         }
 
@@ -1217,14 +1217,78 @@
             position: fixed;
             top: -9999px;
             left: -9999px;
-            width: 800px;
+            width: 840px;
             background: white;
             padding: 20px;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            box-sizing: border-box;
+            overflow: hidden;
         `;
+        
+        // Add desktop-only styles to override mobile responsive design
+        const desktopStyleSheet = document.createElement('style');
+        desktopStyleSheet.textContent = `
+            .desktop-invoice-container * {
+                /* Force desktop layout regardless of screen size */
+            }
+            .desktop-invoice-container .order-info-grid {
+                grid-template-columns: repeat(4, 1fr) !important;
+                gap: 1.5rem !important;
+            }
+            .desktop-invoice-container .card-header {
+                flex-direction: row !important;
+                text-align: left !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+            }
+            .desktop-invoice-container .order-item {
+                flex-direction: row !important;
+                text-align: left !important;
+                align-items: center !important;
+            }
+            .desktop-invoice-container .item-price {
+                justify-content: flex-start !important;
+            }
+            .desktop-invoice-container .action-buttons {
+                flex-direction: row !important;
+                align-items: center !important;
+            }
+            .desktop-invoice-container .btn {
+                width: auto !important;
+                max-width: none !important;
+                justify-content: center !important;
+            }
+            .desktop-invoice-container .success-title {
+                font-size: 2.5rem !important;
+            }
+            .desktop-invoice-container .success-subtitle {
+                font-size: 1.125rem !important;
+            }
+            .desktop-invoice-container {
+                width: 800px !important;
+                max-width: 800px !important;
+                min-width: 800px !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-sizing: border-box !important;
+            }
+        `;
+        document.head.appendChild(desktopStyleSheet);
         
         // Clone the order card (same as image function)
         const clonedCard = orderCard.cloneNode(true);
+        
+        // Add desktop container class to force desktop layout
+        clonedCard.classList.add('desktop-invoice-container');
+        
+        // Ensure proper styling for the cloned card
+        clonedCard.style.cssText = `
+            width: 800px !important;
+            max-width: 800px !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+        `;
         
         // Hide save buttons in the clone (same as image function)
         const saveSection = clonedCard.querySelector('.save-invoice-section');
@@ -1235,14 +1299,23 @@
         if (actionButtons) actionButtons.style.display = 'none';
         if (whatsNextSection) whatsNextSection.style.display = 'none';
         
-        // Add header and content to the temp container (same as image function)
-        tempContainer.innerHTML = 
+        // Create a content wrapper for better centering
+        const contentWrapper = document.createElement('div');
+        contentWrapper.style.cssText = `
+            width: 800px;
+            margin: 0 auto;
+            padding: 0;
+        `;
+        
+        // Add header and content to the content wrapper (same as image function)
+        contentWrapper.innerHTML = 
             '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px 20px; border-radius: 8px; background: linear-gradient(135deg, ' + primaryColor + ', #20c997); color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">' +
                 '<div style="font-size: 18px; font-weight: bold; color: white;">www.manobbazar.com</div>' +
                 '<div style="font-size: 14px; font-weight: bold; color: white; background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 15px;">📞 📱 01777173040</div>' +
             '</div>';
         
-        tempContainer.appendChild(clonedCard);
+        contentWrapper.appendChild(clonedCard);
+        tempContainer.appendChild(contentWrapper);
         document.body.appendChild(tempContainer);
         
         // Use html2canvas to generate the image first, then convert to PDF
@@ -1264,11 +1337,16 @@
                 scale: 2,
                 useCORS: true,
                 allowTaint: true,
-                width: 800,
-                height: tempContainer.scrollHeight + 40
+                width: 840,
+                height: tempContainer.scrollHeight + 40,
+                x: 0,
+                y: 0,
+                scrollX: 0,
+                scrollY: 0
             }).then(canvas => {
-                // Clean up temp container
+                // Clean up temp container and stylesheet
                 document.body.removeChild(tempContainer);
+                document.head.removeChild(desktopStyleSheet);
                 
                 // Create a new window with the canvas content for PDF printing
                 const printWindow = window.open('', '_blank', 'width=1024,height=768,scrollbars=yes,resizable=yes,toolbar=yes,menubar=yes');
@@ -1340,8 +1418,9 @@
                     alert('Unable to open print window. Please allow pop-ups for this site.');
                 }
             }).catch(error => {
-                // Clean up temp container
+                // Clean up temp container and stylesheet
                 document.body.removeChild(tempContainer);
+                document.head.removeChild(desktopStyleSheet);
                 console.error('Error generating PDF preview:', error);
                 alert('Error generating PDF preview. Please try again.');
             });
@@ -1389,17 +1468,81 @@
             position: fixed;
             top: -9999px;
             left: -9999px;
-            width: 800px;
+            width: 840px;
             background: white;
             padding: 20px;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            box-sizing: border-box;
+            overflow: hidden;
         `;
+        
+        // Add desktop-only styles to override mobile responsive design
+        const desktopStyleSheet = document.createElement('style');
+        desktopStyleSheet.textContent = `
+            .desktop-invoice-container * {
+                /* Force desktop layout regardless of screen size */
+            }
+            .desktop-invoice-container .order-info-grid {
+                grid-template-columns: repeat(4, 1fr) !important;
+                gap: 1.5rem !important;
+            }
+            .desktop-invoice-container .card-header {
+                flex-direction: row !important;
+                text-align: left !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+            }
+            .desktop-invoice-container .order-item {
+                flex-direction: row !important;
+                text-align: left !important;
+                align-items: center !important;
+            }
+            .desktop-invoice-container .item-price {
+                justify-content: flex-start !important;
+            }
+            .desktop-invoice-container .action-buttons {
+                flex-direction: row !important;
+                align-items: center !important;
+            }
+            .desktop-invoice-container .btn {
+                width: auto !important;
+                max-width: none !important;
+                justify-content: center !important;
+            }
+            .desktop-invoice-container .success-title {
+                font-size: 2.5rem !important;
+            }
+            .desktop-invoice-container .success-subtitle {
+                font-size: 1.125rem !important;
+            }
+            .desktop-invoice-container {
+                width: 800px !important;
+                max-width: 800px !important;
+                min-width: 800px !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-sizing: border-box !important;
+            }
+        `;
+        document.head.appendChild(desktopStyleSheet);
         
         // Get primary color from CSS variables
         const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color') || '#930000';
         
         // Clone the order card
         const clonedCard = orderCard.cloneNode(true);
+        
+        // Add desktop container class to force desktop layout
+        clonedCard.classList.add('desktop-invoice-container');
+        
+        // Ensure proper styling for the cloned card
+        clonedCard.style.cssText = `
+            width: 800px !important;
+            max-width: 800px !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+        `;
         
         // Hide save buttons in the clone
         const saveSection = clonedCard.querySelector('.save-invoice-section');
@@ -1410,14 +1553,23 @@
         if (actionButtons) actionButtons.style.display = 'none';
         if (whatsNextSection) whatsNextSection.style.display = 'none';
         
-        // Add header and content to the temp container
-        tempContainer.innerHTML = 
+        // Create a content wrapper for better centering
+        const contentWrapper = document.createElement('div');
+        contentWrapper.style.cssText = `
+            width: 800px;
+            margin: 0 auto;
+            padding: 0;
+        `;
+        
+        // Add header and content to the content wrapper
+        contentWrapper.innerHTML = 
             '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px 20px; border-radius: 8px; background: ' + primaryColor + '; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">' +
                 '<div style="font-size: 18px; font-weight: bold; color: white;">www.manobbazar.com</div>' +
                 '<div style="font-size: 14px; font-weight: bold; color: white; background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 15px;">📞 📱 01777173040</div>' +
             '</div>';
         
-        tempContainer.appendChild(clonedCard);
+        contentWrapper.appendChild(clonedCard);
+        tempContainer.appendChild(contentWrapper);
         document.body.appendChild(tempContainer);
         
         html2canvas(tempContainer, {
@@ -1425,11 +1577,16 @@
             scale: 2,
             useCORS: true,
             allowTaint: true,
-            width: 800,
-            height: tempContainer.scrollHeight + 40
+            width: 840,
+            height: tempContainer.scrollHeight + 40,
+            x: 0,
+            y: 0,
+            scrollX: 0,
+            scrollY: 0
         }).then(canvas => {
-            // Clean up temp container
+            // Clean up temp container and stylesheet
             document.body.removeChild(tempContainer);
+            document.head.removeChild(desktopStyleSheet);
             
             // Convert canvas to blob and download
             canvas.toBlob(function(blob) {
@@ -1464,8 +1621,9 @@
                 }
             }, 'image/png', 0.95);
         }).catch(error => {
-            // Clean up temp container
+            // Clean up temp container and stylesheet
             document.body.removeChild(tempContainer);
+            document.head.removeChild(desktopStyleSheet);
             
             console.error('Error generating invoice image:', error);
             if (!isAutoDownload && typeof Swal !== 'undefined') {
