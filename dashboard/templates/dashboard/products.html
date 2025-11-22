@@ -1594,8 +1594,56 @@ input[readonly]:focus {
 {% endblock %}
 
 {% block extra_js %}
-<!-- TinyMCE Script - With API Key -->
-<script src="https://cdn.tiny.cloud/1/otaolz4vlw64z1nic5r4gpfpoe1zju4rtax994f61d5ilduq/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
+<!-- Quill Editor -->
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+
+<style>
+    /* Custom Quill Editor Styles */
+    .ql-editor {
+        min-height: 200px;
+        font-size: 14px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        line-height: 1.6;
+    }
+    
+    .ql-toolbar {
+        border-top: 1px solid #dee2e6;
+        border-left: 1px solid #dee2e6;
+        border-right: 1px solid #dee2e6;
+        border-radius: 0.375rem 0.375rem 0 0;
+    }
+    
+    .ql-container {
+        border-bottom: 1px solid #dee2e6;
+        border-left: 1px solid #dee2e6;
+        border-right: 1px solid #dee2e6;
+        border-radius: 0 0 0.375rem 0.375rem;
+        font-family: inherit;
+    }
+    
+    .ql-snow .ql-picker {
+        line-height: 1.5;
+    }
+    
+    .ql-snow .ql-stroke {
+        stroke: #495057;
+    }
+    
+    .ql-snow .ql-fill {
+        fill: #495057;
+    }
+    
+    .ql-snow .ql-picker-options {
+        z-index: 1050;
+    }
+    
+    /* Focus states */
+    .ql-container.ql-snow:focus-within {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -1620,24 +1668,24 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('updateVariantBtn').addEventListener('click', updateVariant);
     document.getElementById('confirmCloneBtn').addEventListener('click', cloneProduct);
     
-    // Initialize TinyMCE when Add Product Modal is shown
+    // Initialize Quill when Add Product Modal is shown
     document.getElementById('addProductModal').addEventListener('shown.bs.modal', function() {
-        initializeTinyMCE('productDescription');
+        initializeQuill('productDescription');
     });
     
-    // Destroy TinyMCE when Add Product Modal is hidden
+    // Destroy Quill when Add Product Modal is hidden
     document.getElementById('addProductModal').addEventListener('hidden.bs.modal', function() {
-        destroyTinyMCE('productDescription');
+        destroyQuill('productDescription');
     });
     
-    // Initialize TinyMCE when Edit Product Modal is shown
+    // Initialize Quill when Edit Product Modal is shown
     document.getElementById('editProductModal').addEventListener('shown.bs.modal', function() {
-        initializeTinyMCE('editProductDescription');
+        initializeQuill('editProductDescription');
     });
     
-    // Destroy TinyMCE when Edit Product Modal is hidden
+    // Destroy Quill when Edit Product Modal is hidden
     document.getElementById('editProductModal').addEventListener('hidden.bs.modal', function() {
-        destroyTinyMCE('editProductDescription');
+        destroyQuill('editProductDescription');
     });
     
     // Media Library Event Listeners
@@ -2110,10 +2158,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('addProductForm');
         const formData = new FormData(form);
         
-        // Get TinyMCE content for description
-        const descriptionEditor = tinymce.get('productDescription');
-        if (descriptionEditor) {
-            const descriptionContent = descriptionEditor.getContent();
+        // Get Quill content for description
+        if (productDescriptionEditor) {
+            const descriptionContent = productDescriptionEditor.root.innerHTML;
             formData.set('description', descriptionContent);
         }
         
@@ -2202,6 +2249,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
             modal.hide();
             form.reset();
+            
+            // Clear Quill editor content
+            if (productDescriptionEditor) {
+                productDescriptionEditor.setContents([]);
+            }
+            
             document.getElementById('imagePreview').style.display = 'none';
             document.getElementById('imagePreview').innerHTML = '';
             document.getElementById('imageManagementContainer').style.display = 'none';
@@ -2257,11 +2310,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('editProductName').value = product.name || '';
                 document.getElementById('editProductSlug').value = product.slug || '';
                 
-                // Set TinyMCE content for description
-                const descriptionEditor = tinymce.get('editProductDescription');
-                if (descriptionEditor) {
-                    descriptionEditor.setContent(product.description || '');
+                // Set Quill content for description
+                if (editProductDescriptionEditor) {
+                    // Use Quill's clipboard to safely set HTML content
+                    editProductDescriptionEditor.clipboard.dangerouslyPasteHTML(product.description || '');
                 } else {
+                    // Set content in the hidden textarea if editor not ready
                     document.getElementById('editProductDescription').value = product.description || '';
                 }
                 
@@ -2325,10 +2379,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData(form);
         const productId = document.getElementById('editProductId').value;
         
-        // Get TinyMCE content for description
-        const descriptionEditor = tinymce.get('editProductDescription');
-        if (descriptionEditor) {
-            const descriptionContent = descriptionEditor.getContent();
+        // Get Quill content for description
+        if (editProductDescriptionEditor) {
+            const descriptionContent = editProductDescriptionEditor.root.innerHTML;
             formData.set('description', descriptionContent);
         }
         
@@ -3727,13 +3780,16 @@ document.addEventListener('DOMContentLoaded', function() {
         return col;
     }
     
-    // TinyMCE initialization function
-    function initializeTinyMCE(textareaId) {
-        console.log('Initializing TinyMCE for:', textareaId);
+    // Quill editor instances storage
+    let quillEditors = {};
+    
+    // Quill initialization function
+    function initializeQuill(textareaId) {
+        console.log('Initializing Quill for:', textareaId);
         
-        // Check if TinyMCE is loaded
-        if (typeof tinymce === 'undefined') {
-            console.error('TinyMCE not loaded');
+        // Check if Quill is loaded
+        if (typeof Quill === 'undefined') {
+            console.error('Quill not loaded');
             return false;
         }
         
@@ -3745,151 +3801,183 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Remove existing instance if it exists
-        const existingEditor = tinymce.get(textareaId);
-        if (existingEditor) {
-            console.log('Removing existing TinyMCE instance for:', textareaId);
-            existingEditor.remove();
+        if (quillEditors[textareaId]) {
+            destroyQuill(textareaId);
         }
         
         try {
-            // Initialize TinyMCE with premium features
-            tinymce.init({
-                selector: '#' + textareaId,
-                height: 500,
-                
-                // Core editing features + Premium features
-                plugins: [
-                    // Core editing features
-                    'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'link', 'lists', 
-                    'media', 'searchreplace', 'table', 'visualblocks', 'wordcount', 'code', 'fullscreen',
-                    'image', 'insertdatetime', 'preview', 'help',
-                    
-                    // Premium features (trial until Nov 13, 2025)
-                    'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed', 
-                    'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste', 
-                    'advtable', 'advcode', 'advtemplate', 'ai', 'mentions', 
-                    'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 
-                    'autocorrect', 'typography', 'inlinecss', 'markdown', 
-                    'importword', 'exportword', 'exportpdf'
-                ],
-                
-                toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | ' +
-                    'link image media table mergetags | addcomment showcomments | ' +
-                    'spellcheckdialog a11ycheck typography | align lineheight | ' +
-                    'checklist numlist bullist indent outdent | emoticons charmap | ' +
-                    'codesample code | preview fullscreen | removeformat help',
-                
-                menubar: 'file edit view insert format tools table help',
-                
-                // Comments configuration
-                tinycomments_mode: 'embedded',
-                tinycomments_author: 'Admin',
-                
-                // Merge tags for dynamic content
-                mergetags_list: [
-                    { value: 'product.name', title: 'Product Name' },
-                    { value: 'product.price', title: 'Product Price' },
-                    { value: 'product.sku', title: 'Product SKU' },
-                    { value: 'category.name', title: 'Category Name' },
-                ],
-                
-                // AI Assistant configuration (placeholder - requires backend implementation)
-                ai_request: (request, respondWith) => respondWith.string(() => 
-                    Promise.reject('AI Assistant requires backend implementation')
-                ),
-                
-                // Content styling
-                content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; line-height: 1.6; }',
-                
-                // Branding
-                branding: false,
-                promotion: false,
-                
-                // URL handling
-                relative_urls: false,
-                remove_script_host: false,
-                convert_urls: true,
-                
-                // Image upload handler
-                images_upload_handler: function (blobInfo, success, failure) {
-                    const formData = new FormData();
-                    formData.append('file', blobInfo.blob(), blobInfo.filename());
-                    
-                    fetch('/mb-admin/api/media/', {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRFToken': getCookie('csrftoken')
-                        },
-                        body: formData
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.file) {
-                            success(data.file);
-                        } else {
-                            failure('Failed to upload image');
+            // Create a div container for Quill editor
+            const editorContainer = document.createElement('div');
+            editorContainer.id = textareaId + '_quill_editor';
+            editorContainer.style.minHeight = '400px';
+            
+            // Hide the original textarea
+            textarea.style.display = 'none';
+            
+            // Insert the editor container after the textarea
+            textarea.parentNode.insertBefore(editorContainer, textarea.nextSibling);
+            
+            // Initialize Quill editor
+            const quill = new Quill('#' + textareaId + '_quill_editor', {
+                theme: 'snow',
+                modules: {
+                    toolbar: {
+                        container: [
+                            [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                            [{ 'font': [] }],
+                            [{ 'size': ['small', false, 'large', 'huge'] }],
+                            ['bold', 'italic', 'underline', 'strike'],
+                            [{ 'color': [] }, { 'background': [] }],
+                            [{ 'script': 'sub'}, { 'script': 'super' }],
+                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                            [{ 'indent': '-1'}, { 'indent': '+1' }],
+                            [{ 'direction': 'rtl' }],
+                            [{ 'align': [] }],
+                            ['link', 'image', 'video', 'code-block'],
+                            ['blockquote', 'code-block'],
+                            ['clean']
+                        ],
+                        handlers: {
+                            'image': function() {
+                                selectLocalImage(quill);
+                            }
                         }
-                    })
-                    .catch(error => {
-                        failure('Error uploading image: ' + error);
-                    });
+                    },
+                    clipboard: {
+                        matchVisual: false
+                    }
                 },
-                
-                // Font options
-                font_family_formats: 'Arial=arial,helvetica,sans-serif; Courier New=courier new,courier,monospace; Georgia=georgia,palatino; Tahoma=tahoma,arial,helvetica,sans-serif; Times New Roman=times new roman,times; Verdana=verdana,geneva',
-                
-                font_size_formats: '8pt 10pt 12pt 14pt 16pt 18pt 24pt 36pt 48pt',
-                
-                // Advanced table features
-                table_toolbar: 'tableprops tabledelete | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol',
-                
-                table_class_list: [
-                    { title: 'None', value: '' },
-                    { title: 'Table Bordered', value: 'table table-bordered' },
-                    { title: 'Table Striped', value: 'table table-striped' },
-                    { title: 'Table Hover', value: 'table table-hover' },
-                ],
-                
-                // Setup callback
-                setup: function(editor) {
-                    editor.on('init', function() {
-                        console.log('TinyMCE editor initialized:', textareaId);
-                        if (textareaId === 'productDescription') {
-                            productDescriptionEditor = editor;
-                        } else if (textareaId === 'editProductDescription') {
-                            editProductDescriptionEditor = editor;
-                        }
-                    });
-                    
-                    editor.on('change', function() {
-                        editor.save(); // Save content back to textarea
-                    });
-                }
+                placeholder: 'Enter product description...',
+                readOnly: false
             });
             
-            console.log('TinyMCE initialization started for:', textareaId);
+            // Set initial content from textarea
+            if (textarea.value) {
+                quill.clipboard.dangerouslyPasteHTML(textarea.value);
+            }
+            
+            // Store editor instance
+            quillEditors[textareaId] = quill;
+            
+            // Update textarea content when editor changes
+            quill.on('text-change', function() {
+                textarea.value = quill.root.innerHTML;
+            });
+            
+            // Set global references for easy access
+            if (textareaId === 'productDescription') {
+                productDescriptionEditor = quill;
+            } else if (textareaId === 'editProductDescription') {
+                editProductDescriptionEditor = quill;
+            }
+            
+            console.log('Quill editor initialized:', textareaId);
             return true;
+            
         } catch (error) {
-            console.error('Error initializing TinyMCE:', error);
+            console.error('Error initializing Quill:', error);
             return false;
         }
     }
     
-    // TinyMCE destroy function
-    function destroyTinyMCE(textareaId) {
-        console.log('Destroying TinyMCE for:', textareaId);
-        const editor = tinymce.get(textareaId);
-        if (editor) {
-            editor.remove();
-            console.log('TinyMCE removed for:', textareaId);
+    // Quill destroy function
+    function destroyQuill(textareaId) {
+        console.log('Destroying Quill for:', textareaId);
+        
+        const quill = quillEditors[textareaId];
+        if (quill) {
+            // Get the editor container and remove it
+            const editorContainer = document.getElementById(textareaId + '_quill_editor');
+            if (editorContainer) {
+                editorContainer.remove();
+            }
+            
+            // Show the original textarea
+            const textarea = document.getElementById(textareaId);
+            if (textarea) {
+                textarea.style.display = 'block';
+            }
+            
+            // Remove from storage
+            delete quillEditors[textareaId];
+            
+            console.log('Quill removed for:', textareaId);
         }
         
-        // Clear references
+        // Clear global references
         if (textareaId === 'productDescription') {
             productDescriptionEditor = null;
         } else if (textareaId === 'editProductDescription') {
             editProductDescriptionEditor = null;
         }
+    }
+    
+    // Image upload handler for Quill editor
+    function selectLocalImage(quill) {
+        const input = document.createElement('input');
+        input.setAttribute('type', 'file');
+        input.setAttribute('accept', 'image/*');
+        input.click();
+
+        input.onchange = () => {
+            const file = input.files[0];
+            
+            // File type validation
+            if (!/^image\//.test(file.type)) {
+                showAlert('Please select an image file.', 'warning');
+                return;
+            }
+
+            // File size validation (5MB limit)
+            if (file.size > 5 * 1024 * 1024) {
+                showAlert('Image file size should be less than 5MB.', 'warning');
+                return;
+            }
+
+            uploadImageToServer(file, quill);
+        };
+    }
+
+    function uploadImageToServer(file, quill) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Show upload progress
+        const range = quill.getSelection(true);
+        quill.insertText(range.index, 'Uploading image...', 'user');
+        
+        fetch('/mb-admin/api/media/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Remove the "uploading" text
+            quill.deleteText(range.index, 'Uploading image...'.length);
+            
+            if (data.file || data.url) {
+                // Insert the image
+                const imageUrl = data.file || data.url;
+                quill.insertEmbed(range.index, 'image', imageUrl, 'user');
+                
+                // Move cursor to next line
+                quill.setSelection(range.index + 1);
+                
+                showAlert('Image uploaded successfully!', 'success');
+            } else {
+                showAlert('Failed to upload image.', 'danger');
+            }
+        })
+        .catch(error => {
+            // Remove the "uploading" text
+            quill.deleteText(range.index, 'Uploading image...'.length);
+            
+            console.error('Error uploading image:', error);
+            showAlert('Error uploading image. Please try again.', 'danger');
+        });
     }
 });
 </script>
