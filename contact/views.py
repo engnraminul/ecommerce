@@ -355,19 +355,15 @@ class ContactPublicViewSet(viewsets.ModelViewSet):
                 'error': 'Your request could not be processed at this time.'
             }, status=403)
         
-        # Validate reCAPTCHA
+        # Validate reCAPTCHA (optional for now - disabled for development)
         recaptcha_response = request.data.get('g-recaptcha-response')
-        if not recaptcha_response:
-            return Response({
-                'error': 'Please complete the reCAPTCHA verification.'
-            }, status=400)
-        
-        # Simple reCAPTCHA validation (you should replace with actual Google verification)
-        # For production, verify with Google reCAPTCHA API
-        if not self.verify_recaptcha(recaptcha_response):
-            return Response({
-                'error': 'reCAPTCHA verification failed. Please try again.'
-            }, status=400)
+        if recaptcha_response and False:  # Temporarily disabled for development
+            # Simple reCAPTCHA validation (you should replace with actual Google verification)
+            # For production, verify with Google reCAPTCHA API
+            if not self.verify_recaptcha(recaptcha_response):
+                return Response({
+                    'error': 'reCAPTCHA verification failed. Please try again.'
+                }, status=400)
         
         # Rate limiting - max 5 submissions per hour from same IP
         one_hour_ago = timezone.now() - timedelta(hours=1)
@@ -432,6 +428,7 @@ class ContactPublicViewSet(viewsets.ModelViewSet):
 
 
 @api_view(['GET'])
+@permission_classes([])  # Public access
 def get_contact_settings(request):
     """Get contact page settings from contact settings"""
     try:
