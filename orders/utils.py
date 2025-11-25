@@ -66,13 +66,20 @@ def get_public_ip():
     logger.error("All public IP services failed")
     return None
 
-def get_client_ip(request):
+def get_client_ip(request, force_public=None):
     """
     Get the real IP address of the client making the request.
     This function handles cases where the request might come through proxies,
-    load balancers, or CDNs. For development, it returns a simple IP without
-    external API calls.
+    load balancers, or CDNs.
+    
+    Args:
+        request: Django request object
+        force_public: If True, will try to get public IP when detected IP is private.
+                     If None, uses the FORCE_PUBLIC_IP_DETECTION setting.
     """
+    # Use setting if force_public is not explicitly provided
+    if force_public is None:
+        force_public = getattr(settings, 'FORCE_PUBLIC_IP_DETECTION', True)
     # List of headers to check for IP addresses (in order of preference)
     ip_headers = [
         'HTTP_X_FORWARDED_FOR',  # Standard proxy header
@@ -105,11 +112,30 @@ def get_client_ip(request):
                 logger.warning(f"Invalid IP format in {header}: {ip_value}")
                 continue
     
-    # If we have a detected IP, return it (even if private)
+    # If we have a detected IP
     if detected_ip:
-        logger.info(f"Using detected IP {detected_ip} from {source}")
-        return detected_ip
+        # Check if it's a private IP and force_public is enabled
+        if force_public and is_private_ip(detected_ip):
+            logger.info(f"Detected private IP {detected_ip} from {source}, attempting to get public IP")
+            public_ip = get_public_ip()
+            if public_ip:
+                logger.info(f"Using public IP {public_ip} instead of private IP {detected_ip}")
+                return public_ip
+            else:
+                logger.warning(f"Failed to get public IP, using detected private IP {detected_ip}")
+                return detected_ip
+        else:
+            logger.info(f"Using detected IP {detected_ip} from {source}")
+            return detected_ip
     
-    # For development, fallback to localhost instead of making external requests
-    logger.debug("No valid IP found in headers, using localhost for development")
+    # No valid IP found in headers
+    if force_public:
+        # Try to get public IP directly
+        public_ip = get_public_ip()
+        if public_ip:
+            logger.info(f"No IP detected from headers, using public IP: {public_ip}")
+            return public_ip
+    
+    # Fallback to localhost
+    logger.debug("No valid IP found in headers, using localhost")
     return '127.0.0.1'

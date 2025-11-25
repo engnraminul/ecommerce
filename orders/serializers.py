@@ -214,7 +214,7 @@ class CreateOrderSerializer(serializers.Serializer):
         guest_email = validated_data.get('guest_email', '')
         guest_phone = validated_data.get('guest_phone', '')
         
-        # Get customer IP address
+        # Get customer IP address (uses FORCE_PUBLIC_IP_DETECTION setting)
         customer_ip = get_client_ip(request)
         
         logger.info(f"Creating order for user: {user} (guest: {not bool(user)})")

@@ -387,4 +387,9 @@ BACKUP_COMPRESSION_LEVEL = config('BACKUP_COMPRESSION_LEVEL', default=6, cast=in
 BACKUP_EMAIL_NOTIFICATIONS = config('BACKUP_EMAIL_NOTIFICATIONS', default=False, cast=bool)
 BACKUP_NOTIFICATION_EMAIL = config('BACKUP_NOTIFICATION_EMAIL', default='')
 
+# IP Detection Settings
+# Force detection of public IP addresses for order tracking
+# Set to True in production to capture real customer IP addresses
+FORCE_PUBLIC_IP_DETECTION = config('FORCE_PUBLIC_IP_DETECTION', default=True, cast=bool)
+
 
