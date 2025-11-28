@@ -5,6 +5,36 @@
 
 {% block extra_css %}
 {{ form.media.css }}
+<style>
+.copy-variable {
+    padding: 2px 6px !important;
+    border-radius: 3px !important;
+    background-color: #f8f9fa !important;
+    border: 1px solid #e9ecef !important;
+    transition: all 0.2s ease !important;
+}
+
+.copy-variable:hover {
+    background-color: #e9ecef !important;
+    border-color: #007bff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,123,255,0.2) !important;
+}
+
+.variable-category {
+    margin-bottom: 1rem;
+}
+
+.variable-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+#template-variables .small {
+    font-size: 0.8rem !important;
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -198,33 +228,273 @@ document.addEventListener('DOMContentLoaded', function() {
     const templateTypeField = document.getElementById('{{ form.template_type.id_for_label }}');
     const variablesDiv = document.getElementById('template-variables');
     
+    console.log('Template type field:', templateTypeField);
+    console.log('Variables div:', variablesDiv);
+    
+    if (!templateTypeField || !variablesDiv) {
+        console.error('Required elements not found');
+        return;
+    }
+    
     const templateVariables = {
-        'welcome': ['user_name', 'user_email', 'site_name', 'site_url'],
-        'activation': ['user_name', 'user_email', 'activation_url', 'activation_token', 'site_name'],
-        'password_reset': ['user_name', 'user_email', 'reset_url', 'reset_token', 'site_name'],
-        'order_confirmed': ['user_name', 'order_number', 'order_total', 'order_date', 'site_name'],
-        'order_shipped': ['user_name', 'order_number', 'tracking_number', 'carrier', 'site_name'],
-        'order_delivered': ['user_name', 'order_number', 'delivery_date', 'site_name'],
-        'order_cancelled': ['user_name', 'order_number', 'cancellation_reason', 'site_name'],
-        'newsletter': ['user_name', 'user_email', 'site_name', 'site_url'],
-        'custom': ['user_name', 'user_email', 'site_name', 'site_url', 'current_year']
+        'welcome': [
+            // Actually used in template
+            'user_name', 'site_name', 'site_url', 'current_year',
+            // Additional available
+            'user_email', 'user_full_name', 'current_date', 'current_time'
+        ],
+        'activation': [
+            // Actually used in template
+            'user_name', 'activation_url', 'site_name', 'site_url', 'current_year',
+            // Additional available
+            'user_email', 'user_full_name', 'activation_token', 'current_date', 'current_time'
+        ],
+        'password_reset': [
+            // Actually used in template
+            'user_name', 'user_email', 'reset_url', 'site_name', 'site_url', 'current_year',
+            'current_date', 'current_time', 'expiry_date', 'expiry_time',
+            // Additional available
+            'user_full_name', 'reset_token'
+        ],
+        'order_confirmed': [
+            // Actually used in template
+            'user_name', 'order_number', 'order_total', 'site_name', 'site_url', 'current_year',
+            'tax_amount', 'discount_amount',
+            // Additional available from email service
+            'user_email', 'user_full_name', 'order_subtotal', 'order_date', 'current_date', 'current_time', 
+            'payment_method', 'shipping_cost', 'shipping_name', 'shipping_address', 'shipping_city',
+            'shipping_state', 'shipping_zip', 'shipping_country', 'estimated_delivery', 'shipping_method', 
+            'order_items'
+        ],
+        'order_shipped': [
+            // Actually used in template
+            'user_name', 'order_number', 'tracking_number', 'carrier', 'site_name', 'site_url', 
+            'current_year', 'shipping_method', 'estimated_delivery', 'tracking_url',
+            // Additional available
+            'user_email', 'user_full_name', 'current_date', 'current_time', 'shipping_address'
+        ],
+        'order_delivered': [
+            // Actually used in template
+            'user_name', 'order_number', 'site_name', 'site_url', 'current_year', 'delivery_photo',
+            // Additional available from email service
+            'user_email', 'user_full_name', 'delivery_date', 'current_date', 'current_time',
+            'delivery_location', 'received_by', 'signature_status', 'loyalty_points'
+        ],
+        'order_cancelled': [
+            // Actually used in template
+            'user_name', 'order_number', 'order_total', 'cancellation_reason', 'site_name', 'site_url', 'current_year',
+            // Additional available from email service
+            'user_email', 'user_full_name', 'order_date', 'cancellation_date', 'new_status',
+            'current_date', 'current_time', 'refund_amount', 'payment_method', 'expected_refund_date'
+        ],
+        'newsletter': [
+            // Common variables for newsletter
+            'user_name', 'user_email', 'user_full_name', 'site_name', 'site_url', 
+            'current_year', 'current_date', 'current_time'
+        ],
+        'custom': [
+            // All commonly used variables for custom templates
+            'user_name', 'user_email', 'user_full_name', 'site_name', 'site_url', 
+            'current_year', 'current_date', 'current_time', 'order_number', 'order_total',
+            'tracking_number', 'carrier', 'shipping_method', 'estimated_delivery', 'activation_url',
+            'reset_url', 'cancellation_reason', 'tax_amount', 'discount_amount'
+        ]
     };
     
     function updateVariables() {
         const selectedType = templateTypeField.value;
         const variables = templateVariables[selectedType] || [];
         
+        console.log('Selected type:', selectedType);
+        console.log('Variables:', variables);
+        
         if (variables.length > 0) {
-            let html = '<h6>Available Variables:</h6><ul class="list-unstyled">';
-            variables.forEach(variable => {
-                html += '<li><code class="text-primary">{{' + variable + '}}</code></li>';
-            });
-            html += '</ul>';
-            html += '<small class="text-muted">Copy and paste these variables into your content.</small>';
+            // Categorize variables
+            const userVars = variables.filter(v => v.includes('user_'));
+            const siteVars = variables.filter(v => v.includes('site_') || v.includes('current_'));
+            const orderVars = variables.filter(v => v.includes('order_') || v.includes('tracking_') || v.includes('carrier') || v.includes('shipping_') || v.includes('payment_') || v.includes('delivery_'));
+            const actionVars = variables.filter(v => v.includes('activation_') || v.includes('reset_') || v.includes('cancellation_') || v.includes('refund_') || v.includes('expiry_'));
+            const otherVars = variables.filter(v => !userVars.includes(v) && !siteVars.includes(v) && !orderVars.includes(v) && !actionVars.includes(v));
+            
+            let html = '<h6 class="mb-3">Available Variables:</h6>';
+            
+            if (userVars.length > 0) {
+                html += '<div class="variable-category"><strong class="text-info">👤 User Variables:</strong>';
+                html += '<div class="variable-list mt-2">';
+                userVars.forEach(variable => {
+                    html += '<code class="text-primary small copy-variable">' + String.fromCharCode(123, 123) + variable + String.fromCharCode(125, 125) + '</code>';
+                });
+                html += '</div></div>';
+            }
+            
+            if (siteVars.length > 0) {
+                html += '<div class="variable-category"><strong class="text-success">🌐 Site Variables:</strong>';
+                html += '<div class="variable-list mt-2">';
+                siteVars.forEach(variable => {
+                    html += '<code class="text-primary small copy-variable">' + String.fromCharCode(123, 123) + variable + String.fromCharCode(125, 125) + '</code>';
+                });
+                html += '</div></div>';
+            }
+            
+            if (orderVars.length > 0) {
+                html += '<div class="variable-category"><strong class="text-warning">📦 Order Variables:</strong>';
+                html += '<div class="variable-list mt-2">';
+                orderVars.forEach(variable => {
+                    html += '<code class="text-primary small copy-variable">' + String.fromCharCode(123, 123) + variable + String.fromCharCode(125, 125) + '</code>';
+                });
+                html += '</div></div>';
+            }
+            
+            if (actionVars.length > 0) {
+                html += '<div class="variable-category"><strong class="text-danger">🔐 Action Variables:</strong>';
+                html += '<div class="variable-list mt-2">';
+                actionVars.forEach(variable => {
+                    html += '<code class="text-primary small copy-variable">' + String.fromCharCode(123, 123) + variable + String.fromCharCode(125, 125) + '</code>';
+                });
+                html += '</div></div>';
+            }
+            
+            if (otherVars.length > 0) {
+                html += '<div class="variable-category"><strong class="text-secondary">🔧 Other Variables:</strong>';
+                html += '<div class="variable-list mt-2">';
+                otherVars.forEach(variable => {
+                    html += '<code class="text-primary small copy-variable">' + String.fromCharCode(123, 123) + variable + String.fromCharCode(125, 125) + '</code>';
+                });
+                html += '</div></div>';
+            }
+            
+            html += '<small class="text-muted mt-2 d-block">Click any variable to copy it to clipboard. Use these in your email content and subject line.</small>';
             variablesDiv.innerHTML = html;
+            
+            // Add click to copy functionality
+            variablesDiv.querySelectorAll('.copy-variable').forEach(code => {
+                code.title = 'Click to copy variable';
+                code.addEventListener('click', function() {
+                    const variableText = this.textContent;
+                    
+                    // Try to copy to clipboard
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(variableText).then(() => {
+                            showCopyFeedback(this, variableText);
+                        }).catch(() => {
+                            fallbackCopy(variableText, this);
+                        });
+                    } else {
+                        fallbackCopy(variableText, this);
+                    }
+                });
+            });
+            
+            function showCopyFeedback(element, originalText) {
+                element.textContent = '✓ Copied!';
+                element.classList.remove('text-primary');
+                element.classList.add('text-success');
+                element.style.fontWeight = 'bold';
+                
+                setTimeout(() => {
+                    element.textContent = originalText;
+                    element.classList.remove('text-success');
+                    element.classList.add('text-primary');
+                    element.style.fontWeight = 'normal';
+                }, 1500);
+            }
+            
+            function fallbackCopy(text, element) {
+                // Fallback method for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                
+                try {
+                    document.execCommand('copy');
+                    showCopyFeedback(element, text);
+                } catch (err) {
+                    console.error('Could not copy text: ', err);
+                    element.textContent = 'Copy failed';
+                    setTimeout(() => {
+                        element.textContent = text;
+                    }, 1000);
+                }
+                
+                document.body.removeChild(textArea);
+            }
         } else {
-            variablesDiv.innerHTML = '<p class="text-muted">No specific variables for this template type.</p>';
+            // Show all available variables if no specific type is selected
+            const allVariables = [
+                // User variables
+                'user_name', 'user_email', 'user_full_name',
+                // Site variables
+                'site_name', 'site_url', 'current_year', 'current_date', 'current_time',
+                // Order variables
+                'order_number', 'order_total', 'tracking_number', 'carrier', 'estimated_delivery', 
+                'shipping_method', 'tracking_url', 'delivery_photo', 'discount_amount', 'tax_amount',
+                // Action variables
+                'activation_url', 'reset_url', 'cancellation_reason', 'expiry_date', 'expiry_time'
+            ];
+            
+            let html = '<h6 class="mb-3">📋 Common Variables:</h6>';
+            html += '<div class="variable-list">';
+            allVariables.forEach(variable => {
+                html += '<code class="text-primary small copy-variable">' + String.fromCharCode(123, 123) + variable + String.fromCharCode(125, 125) + '</code>';
+            });
+            html += '</div>';
+            html += '<small class="text-muted mt-2 d-block">Select a template type above to see specific variables for that template.</small>';
+            
+            variablesDiv.innerHTML = html;
+            
+            // Add click to copy functionality for fallback variables too
+            variablesDiv.querySelectorAll('.copy-variable').forEach(code => {
+                code.title = 'Click to copy variable';
+                code.addEventListener('click', function() {
+                    const variableText = this.textContent;
+                    
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(variableText).then(() => {
+                            showCopyFeedback(this, variableText);
+                        }).catch(() => {
+                            fallbackCopy(variableText, this);
+                        });
+                    } else {
+                        fallbackCopy(variableText, this);
+                    }
+                });
+            });
         }
+    }
+    
+    function showCopyFeedback(element, originalText) {
+        element.textContent = '✓ Copied!';
+        element.classList.remove('text-primary');
+        element.classList.add('text-success');
+        element.style.fontWeight = 'bold';
+        
+        setTimeout(() => {
+            element.textContent = originalText;
+            element.classList.remove('text-success');
+            element.classList.add('text-primary');
+            element.style.fontWeight = 'normal';
+        }, 1500);
+    }
+    
+    function fallbackCopy(text, element) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            showCopyFeedback(element, text);
+        } catch (err) {
+            console.error('Could not copy text: ', err);
+            element.textContent = 'Copy failed';
+            setTimeout(() => {
+                element.textContent = text;
+            }, 1000);
+        }
+        
+        document.body.removeChild(textArea);
     }
     
     templateTypeField.addEventListener('change', updateVariables);
