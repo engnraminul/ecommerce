@@ -163,17 +163,17 @@ class Command(BaseCommand):
                             <div class="logo">{{site_name}}</div>
                             <div class="tagline">Account Activation Required</div>
                         </div>
-                        
+
                         <div class="content">
                             <h1 style="color: #17a2b8; margin-bottom: 20px;">Almost There, {{user_name}}! 🔐</h1>
-                            
+
                             <div class="activation-box">
                                 <h2 style="color: #17a2b8; margin-bottom: 15px;">🎯 One Step Away from Shopping!</h2>
                                 <p>Thank you for registering with {{site_name}}! To complete your account setup and start enjoying our premium shopping experience, please activate your account.</p>
                             </div>
-                            
+
                             <p style="margin: 25px 0;">Click the button below to activate your account and unlock access to:</p>
-                            
+
                             <ul style="margin: 20px 0; color: #6c757d; line-height: 2;">
                                 <li>🛍️ <strong>Exclusive Products</strong> - Access to our full catalog</li>
                                 <li>💰 <strong>Member Discounts</strong> - Special pricing for registered users</li>
@@ -181,13 +181,13 @@ class Command(BaseCommand):
                                 <li>💝 <strong>Wishlist Feature</strong> - Save your favorite items</li>
                                 <li>🎁 <strong>Loyalty Rewards</strong> - Earn points with every purchase</li>
                             </ul>
-                            
+
                             <div style="text-align: center; margin: 35px 0;">
                                 <a href="{{activation_url}}" class="cta-button">🚀 Activate My Account Now</a>
                             </div>
-                            
+
                             <div class="divider"></div>
-                            
+
                             <div class="security-info">
                                 <div class="security-icon">🔒</div>
                                 <h4 style="color: #856404; margin-bottom: 10px;">Security Information</h4>
@@ -197,25 +197,25 @@ class Command(BaseCommand):
                                     <li>If the link expires, you can request a new activation email</li>
                                 </ul>
                             </div>
-                            
+
                             <h4 style="color: #343a40; margin: 25px 0;">Having trouble with the button?</h4>
                             <p style="margin-bottom: 15px; color: #6c757d;">Copy and paste this link into your browser:</p>
                             <div class="url-box">{{activation_url}}</div>
-                            
+
                             <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 25px 0;">
                                 <h4 style="color: #007bff; margin-bottom: 15px;">❓ Didn't register?</h4>
                                 <p style="color: #6c757d;">If you didn't create an account with {{site_name}}, please ignore this email. Your information is safe and no account has been created.</p>
                             </div>
-                            
+
                             <p style="margin: 25px 0; color: #6c757d;">Need help? Our support team is available 24/7 to assist you with account activation or any other questions.</p>
                         </div>
-                        
+
                         <div class="footer">
                             <div style="margin-bottom: 20px;">
                                 <strong>{{site_name}} Security Team</strong><br>
                                 <span style="opacity: 0.8;">Keeping your account safe and secure</span>
                             </div>
-                            
+
                             <div style="opacity: 0.8; font-size: 12px; margin-top: 20px;">
                                 © {{current_year}} {{site_name}}. All rights reserved.<br>
                                 This is an automated security email. Please do not reply to this message.<br>
