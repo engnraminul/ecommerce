@@ -73,6 +73,8 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'users.middleware.DashboardPermissionMiddleware',
+    'dashboard.middleware.DashboardSecurityMiddleware',  # Enhanced dashboard security
+    'dashboard.middleware.DashboardCSRFMiddleware',     # Enhanced CSRF protection
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'incomplete_orders.middleware.CheckoutAbandonmentMiddleware',
@@ -391,5 +393,75 @@ BACKUP_NOTIFICATION_EMAIL = config('BACKUP_NOTIFICATION_EMAIL', default='')
 # Force detection of public IP addresses for order tracking
 # Set to True in production to capture real customer IP addresses
 FORCE_PUBLIC_IP_DETECTION = config('FORCE_PUBLIC_IP_DETECTION', default=True, cast=bool)
+
+# ==============================
+# DASHBOARD SECURITY SETTINGS
+# ==============================
+
+# Dashboard session timeout in minutes (default: 30 minutes)
+DASHBOARD_SESSION_TIMEOUT = config('DASHBOARD_SESSION_TIMEOUT', default=30, cast=int)
+
+# IP address validation for dashboard sessions (set to True in production)
+DASHBOARD_VALIDATE_IP = config('DASHBOARD_VALIDATE_IP', default=False, cast=bool)
+
+# User agent validation for dashboard sessions
+DASHBOARD_VALIDATE_USER_AGENT = config('DASHBOARD_VALIDATE_USER_AGENT', default=False, cast=bool)
+
+# Session security settings
+SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=False, cast=bool)  # Set to True with HTTPS
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_AGE = 60 * 60 * 8  # 8 hours default session age
+
+# CSRF security settings
+CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool)  # Set to True with HTTPS
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+# Security headers (will be added by middleware for dashboard)
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+
+# Logging configuration for security events
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'dashboard_security.log',
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        'dashboard.views': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'dashboard.middleware': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
 
 

@@ -2217,41 +2217,166 @@ class OrderStatusBreakdownView(APIView):
 # Frontend views for dashboard SPA
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash, get_user_model
 from django.contrib import messages
+
+User = get_user_model()
+from django.contrib.sessions.models import Session
+from django.utils import timezone
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.debug import sensitive_post_parameters
+from django.core.exceptions import ValidationError
+from django.contrib.auth.password_validation import validate_password
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from orders.models import Order, OrderItem
+import logging
+from datetime import timedelta
+
+logger = logging.getLogger(__name__)
 
 def is_admin(user):
-    return user.is_staff
+    """Check if user is staff and active"""
+    return user.is_authenticated and user.is_staff and user.is_active
 
+@sensitive_post_parameters('password')
+@csrf_protect
+@never_cache
 def dashboard_login(request):
+    """
+    Professional dashboard login with enhanced security features
+    """
+    # Redirect authenticated staff users
     if request.user.is_authenticated and request.user.is_staff:
-        return redirect('dashboard:home')
-        
+        logger.info(f"Already authenticated user {request.user.username} accessing login page")
+        next_url = request.GET.get('next', reverse('dashboard:home'))
+        return HttpResponseRedirect(next_url)
+    
+    # Handle login attempt
     if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '')
+        remember_me = request.POST.get('remember_me', False)
+        
+        # Basic validation
+        if not username or not password:
+            messages.error(request, 'Please enter both username and password.')
+            return render(request, 'dashboard/login.html')
+        
+        # Authenticate user
         user = authenticate(request, username=username, password=password)
         
-        if user is not None and user.is_staff:
-            login(request, user)
-            return redirect('dashboard:home')
+        if user is not None:
+            if user.is_active:
+                if user.is_staff:
+                    # Successful login
+                    login(request, user)
+                    
+                    # Set session timeout based on remember_me
+                    if remember_me:
+                        request.session.set_expiry(timedelta(days=30))  # 30 days
+                    else:
+                        request.session.set_expiry(timedelta(hours=8))  # 8 hours
+                    
+                    # Log successful login
+                    logger.info(f"Successful admin login: {user.username} from IP {get_client_ip(request)}")
+                    
+                    # Update last login
+                    user.last_login = timezone.now()
+                    user.save(update_fields=['last_login'])
+                    
+                    # Redirect to next URL or dashboard home
+                    next_url = request.GET.get('next', reverse('dashboard:home'))
+                    messages.success(request, f'Welcome back, {user.get_full_name() or user.username}!')
+                    
+                    return HttpResponseRedirect(next_url)
+                else:
+                    # User is not staff
+                    messages.error(request, 'You do not have permission to access this dashboard.')
+                    logger.warning(f"Non-staff user {username} attempted to access dashboard from IP {get_client_ip(request)}")
+            else:
+                # User account is disabled
+                messages.error(request, 'Your account has been disabled. Please contact an administrator.')
+                logger.warning(f"Disabled user {username} attempted login from IP {get_client_ip(request)}")
         else:
-            messages.error(request, 'Invalid login credentials or insufficient permissions.')
+            # Invalid credentials
+            messages.error(request, 'Invalid username or password. Please try again.')
+            logger.warning(f"Failed login attempt for username '{username}' from IP {get_client_ip(request)}")
     
-    return render(request, 'dashboard/login.html')
+    # Render login page
+    site_settings = SiteSettings.get_active_settings()
+    context = {
+        'next': request.GET.get('next', ''),
+        'page_title': 'Dashboard Login',
+        'site_settings': site_settings,
+    }
+    
+    return render(request, 'dashboard/login.html', context)
+
+def get_client_ip(request):
+    """Get client IP address from request"""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
 
 @login_required
+@never_cache
 def dashboard_logout(request):
-    logout(request)
-    return redirect('dashboard:login')
+    """
+    Professional logout with session cleanup and confirmation
+    """
+    if request.method == 'POST':
+        # Handle actual logout
+        if request.user.is_authenticated:
+            username = request.user.username
+            logger.info(f"User {username} logged out from IP {get_client_ip(request)}")
+            
+            # Clear all user sessions (optional - for enhanced security)
+            if request.POST.get('logout_all_devices'):
+                user_sessions = Session.objects.filter(expire_date__gte=timezone.now())
+                for session in user_sessions:
+                    try:
+                        session_data = session.get_decoded()
+                        if session_data.get('_auth_user_id') == str(request.user.id):
+                            session.delete()
+                            logger.info(f"Cleared session for user {username}")
+                    except Exception as e:
+                        logger.warning(f"Error clearing session: {e}")
+            
+            logout(request)
+            messages.success(request, 'You have been successfully logged out.')
+        
+        return redirect('dashboard:login')
+    
+    else:
+        # Show logout confirmation page
+        if not request.user.is_authenticated:
+            return redirect('dashboard:login')
+        
+        context = {
+            'user': request.user,
+            'page_title': 'Logout Confirmation',
+        }
+        
+        return render(request, 'dashboard/logout.html', context)
 
-@login_required
-@user_passes_test(is_admin)
+@login_required(login_url='dashboard:login')
+@user_passes_test(is_admin, login_url='dashboard:login')
+@never_cache
 def dashboard_home(request):
+    """
+    Dashboard home with user activity tracking and enhanced statistics
+    """
+    # Track user activity
+    request.session['last_activity'] = timezone.now().isoformat()
+    
     # Get some basic statistics for the dashboard home
     total_orders = Order.objects.count()
     total_products = Product.objects.count()
@@ -2263,7 +2388,11 @@ def dashboard_home(request):
         'total_products': total_products,
         'total_users': total_users,
         'recent_orders': recent_orders,
-        'active_page': 'home'
+        'active_page': 'home',
+        'user': request.user,
+        'last_login': request.user.last_login,
+        'session_expiry': request.session.get_expiry_date(),
+        'page_title': 'Dashboard Home',
     }
     
     return render(request, 'dashboard/index.html', context)
