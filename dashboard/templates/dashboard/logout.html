@@ -1,9 +1,10 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manob Bazar - Admin Logout</title>
+    <title>{{ site_settings.site_name|default:'Manob Bazar' }} - Admin Dashboard Logout</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,82 +24,524 @@
             --manob-shadow-lg: 0 8px 25px rgba(147, 0, 0, 0.4);
         }
         
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, var(--manob-primary) 0%, var(--manob-primary-light) 50%, var(--manob-dark) 100%);
+            background: linear-gradient(135deg, #0d1117 0%, var(--manob-primary) 15%, #1a1a2e 50%, var(--manob-primary-dark) 85%, #16213e 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Particle Container */
+        .particles-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        /* Floating Particles */
+        .particle {
+            position: absolute;
+            background: rgba(255, 215, 0, 0.8);
+            border-radius: 50%;
+            animation: particleFloat 15s linear infinite;
+        }
+        
+        .particle:nth-child(1) { width: 4px; height: 4px; left: 10%; animation-delay: 0s; animation-duration: 12s; }
+        .particle:nth-child(2) { width: 6px; height: 6px; left: 20%; animation-delay: 2s; animation-duration: 14s; }
+        .particle:nth-child(3) { width: 3px; height: 3px; left: 30%; animation-delay: 4s; animation-duration: 16s; }
+        .particle:nth-child(4) { width: 5px; height: 5px; left: 40%; animation-delay: 1s; animation-duration: 13s; }
+        .particle:nth-child(5) { width: 4px; height: 4px; left: 50%; animation-delay: 3s; animation-duration: 15s; }
+        .particle:nth-child(6) { width: 7px; height: 7px; left: 60%; animation-delay: 5s; animation-duration: 11s; }
+        .particle:nth-child(7) { width: 3px; height: 3px; left: 70%; animation-delay: 2.5s; animation-duration: 17s; }
+        .particle:nth-child(8) { width: 5px; height: 5px; left: 80%; animation-delay: 4.5s; animation-duration: 12s; }
+        .particle:nth-child(9) { width: 4px; height: 4px; left: 90%; animation-delay: 6s; animation-duration: 14s; }
+        .particle:nth-child(10) { width: 6px; height: 6px; left: 15%; animation-delay: 7s; animation-duration: 13s; }
+        
+        @keyframes particleFloat {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        /* Geometric Art Elements */
+        .art-element {
+            position: absolute;
+            pointer-events: none;
+            opacity: 0.1;
+        }
+        
+        .art-element-1 {
+            top: 10%;
+            left: 5%;
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(45deg, var(--manob-primary), transparent);
+            border-radius: 50%;
+            animation: artFloat1 20s ease-in-out infinite;
+        }
+        
+        .art-element-2 {
+            bottom: 15%;
+            right: 8%;
+            width: 150px;
+            height: 150px;
+            background: linear-gradient(135deg, var(--manob-gold), transparent);
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            animation: artFloat2 25s ease-in-out infinite reverse;
+        }
+        
+        .art-element-3 {
+            top: 50%;
+            right: 5%;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), transparent);
+            border-radius: 20px;
+            animation: artRotate 30s linear infinite;
+        }
+        
+        .art-element-4 {
+            bottom: 30%;
+            left: 3%;
+            width: 120px;
+            height: 120px;
+            border: 2px solid rgba(255, 215, 0, 0.2);
+            border-radius: 50%;
+            animation: artPulse 8s ease-in-out infinite;
+        }
+        
+        @keyframes artFloat1 {
+            0%, 100% { transform: translateY(0px) translateX(0px) scale(1); }
+            25% { transform: translateY(-30px) translateX(20px) scale(1.1); }
+            50% { transform: translateY(-10px) translateX(-15px) scale(0.9); }
+            75% { transform: translateY(20px) translateX(10px) scale(1.05); }
+        }
+        
+        @keyframes artFloat2 {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-40px) rotate(180deg); }
+        }
+        
+        @keyframes artRotate {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.2); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+        
+        @keyframes artPulse {
+            0%, 100% { transform: scale(1); opacity: 0.1; }
+            50% { transform: scale(1.3); opacity: 0.3; }
+        }
+        
+        /* Constellation Effect */
+        .constellation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(2px 2px at 20px 30px, rgba(255, 215, 0, 0.3), transparent),
+                radial-gradient(2px 2px at 40px 70px, rgba(255, 255, 255, 0.2), transparent),
+                radial-gradient(1px 1px at 90px 40px, rgba(255, 215, 0, 0.4), transparent),
+                radial-gradient(1px 1px at 130px 80px, rgba(255, 255, 255, 0.1), transparent),
+                radial-gradient(2px 2px at 160px 30px, rgba(255, 215, 0, 0.2), transparent);
+            background-repeat: repeat;
+            background-size: 200px 100px;
+            animation: constellationMove 40s linear infinite;
+        }
+        
+        @keyframes constellationMove {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 200px 100px; }
         }
         
         .logout-container {
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            box-shadow: 
+                0 25px 45px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
             overflow: hidden;
             width: 100%;
             max-width: 450px;
+            border: 1px solid rgba(147, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
+            animation: containerSlideUp 0.8s ease-out;
+        }
+        
+        @keyframes containerSlideUp {
+            0% {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Subtle container glow animation */
+        .logout-container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, 
+                transparent, 
+                rgba(147, 0, 0, 0.3), 
+                rgba(255, 215, 0, 0.2), 
+                rgba(147, 0, 0, 0.3), 
+                transparent
+            );
+            border-radius: 25px;
+            z-index: -1;
+            animation: containerGlow 4s ease-in-out infinite;
+        }
+        
+        @keyframes containerGlow {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 0.8; }
         }
         
         .logout-header {
             background: linear-gradient(135deg, var(--manob-primary) 0%, var(--manob-primary-light) 100%);
-            color: white;
-            padding: 25px;
+            color: var(--manob-white);
+            padding: 30px 20px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
         }
         
-        .logout-body {
-            padding: 30px;
+        .logout-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.1), transparent);
+            animation: headerShine 3s linear infinite;
         }
         
-        .btn-danger {
-            background-color: var(--accent-color);
-            border-color: var(--accent-color);
-            width: 100%;
-            padding: 12px;
-            font-weight: 500;
+        @keyframes headerShine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
             margin-bottom: 10px;
         }
         
+        .logo-container {
+            width: 70px;
+            height: 70px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 
+                0 6px 15px rgba(255, 215, 0, 0.4),
+                0 2px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 2;
+            padding: 8px;
+            overflow: hidden;
+        }
+        
+        .site-logo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 4px;
+        }
+        
+        .brand-text h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 
+                2px 2px 4px rgba(0, 0, 0, 0.5),
+                0 0 10px rgba(255, 215, 0, 0.3),
+                0 0 20px rgba(255, 215, 0, 0.2);
+            position: relative;
+            z-index: 2;
+            color: rgba(255, 255, 255, 0.95);
+        }
+        
+        .brand-tagline {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+            position: relative;
+            z-index: 2;
+            color: rgba(255, 215, 0, 0.9);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        }
+        
+        .logout-body {
+            padding: 40px 35px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, var(--manob-primary) 0%, var(--manob-primary-light) 100%);
+            border: none;
+            width: 100%;
+            padding: 15px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: var(--manob-shadow);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        
         .btn-danger:hover {
-            background-color: #c0392b;
-            border-color: #c0392b;
+            background: linear-gradient(135deg, var(--manob-primary-dark) 0%, var(--manob-primary) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(147, 0, 0, 0.4);
+        }
+        
+        .btn-danger:active {
+            transform: translateY(0);
         }
         
         .btn-secondary {
+            border: 2px solid rgba(255, 215, 0, 0.6);
+            color: rgba(255, 215, 0, 0.9);
+            background: rgba(255, 215, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
             width: 100%;
-            padding: 12px;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
             font-weight: 500;
         }
         
+        .btn-secondary:hover {
+            background: rgba(255, 215, 0, 0.2);
+            color: rgba(255, 255, 255, 1);
+            border-color: rgba(255, 215, 0, 0.8);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+        
         .logout-footer {
-            background-color: #f8f9fa;
-            border-top: 1px solid #eee;
-            padding: 15px 30px;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px 35px;
             text-align: center;
-            font-size: 14px;
-            color: #666;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
         }
         
         .security-options {
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
-            padding: 15px;
-            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .security-options h6 {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
         
         .form-check {
             margin-bottom: 10px;
         }
+        
+        .form-check-input:checked {
+            background-color: var(--manob-primary);
+            border-color: var(--manob-primary);
+        }
+        
+        .form-check-label {
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .form-check-label small {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .logout-content {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        .logout-icon {
+            font-size: 4rem;
+            color: rgba(255, 215, 0, 0.8);
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+        
+        .logout-content h5 {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .logout-content p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.95rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .alert {
+            border-radius: 12px;
+            border: none;
+            font-weight: 500;
+            margin-bottom: 25px;
+        }
+        
+        .alert-success {
+            background: rgba(40, 167, 69, 0.2);
+            color: #90ee90;
+            border: 1px solid rgba(40, 167, 69, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .alert-danger {
+            background: rgba(220, 53, 69, 0.2);
+            color: #ff6b7a;
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .alert-warning {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffd93d;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        /* Mobile Responsiveness */
+        @media (max-width: 576px) {
+            .logout-container {
+                margin: 20px;
+                max-width: none;
+            }
+            
+            .logout-body {
+                padding: 30px 25px;
+            }
+            
+            .logout-header {
+                padding: 25px 15px;
+            }
+            
+            .brand-logo {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .logo-container {
+                width: 55px;
+                height: 55px;
+                padding: 6px;
+            }
+            
+            .brand-text h2 {
+                font-size: 1.5rem;
+            }
+            
+            .logout-footer {
+                padding: 15px 20px;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Particle Container -->
+    <div class="particles-container">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <!-- Geometric Art Elements -->
+    <div class="art-element art-element-1"></div>
+    <div class="art-element art-element-2"></div>
+    <div class="art-element art-element-3"></div>
+    <div class="art-element art-element-4"></div>
+
+    <!-- Constellation Background -->
+    <div class="constellation"></div>
+
     <div class="logout-container">
         <div class="logout-header">
-            <h2><i class="fas fa-sign-out-alt me-2"></i>Manob Bazar Admin</h2>
-            <p class="mb-0">Secure Logout - মানব বাজার</p>
+            <div class="brand-logo">
+                <div class="logo-container">
+                    {% if site_settings.site_logo %}
+                        <img src="{{ site_settings.site_logo }}" alt="{{ site_settings.site_name|default:'Manob Bazar' }} Logo" class="site-logo-img">
+                    {% else %}
+                        <img src="{% static 'images/MB-logo.png' %}" alt="{{ site_settings.site_name|default:'Manob Bazar' }} Logo" class="site-logo-img">
+                    {% endif %}
+                </div>
+                <div class="brand-text">
+                    <h2>{{ site_settings.site_name|default:'Manob Bazar' }} Admin</h2>
+                </div>
+            </div>
+            <p class="brand-tagline mb-0">Secure Logout - {{ site_settings.site_tagline|default:'মানব বাজার' }}</p>
         </div>
         
         <div class="logout-body">
@@ -111,10 +554,12 @@
                 {% endfor %}
             {% endif %}
             
-            <div class="text-center mb-3">
-                <i class="fas fa-user-shield fa-3x text-primary mb-3"></i>
+            <div class="logout-content">
+                <div class="logout-icon">
+                    <i class="fas fa-sign-out-alt"></i>
+                </div>
                 <h5>Are you sure you want to logout?</h5>
-                <p class="text-muted">This will end your current admin session.</p>
+                <p>This will end your current admin session securely.</p>
             </div>
             
             <div class="security-options">
@@ -124,7 +569,7 @@
                     <label class="form-check-label" for="logout_all_devices">
                         <i class="fas fa-devices me-1"></i>
                         Logout from all devices
-                        <small class="text-muted d-block">This will end all your active sessions</small>
+                        <small class="d-block">This will end all your active sessions</small>
                     </label>
                 </div>
             </div>
@@ -137,7 +582,7 @@
                     <i class="fas fa-sign-out-alt me-2"></i>Yes, Logout
                 </button>
                 <a href="{% url 'dashboard:home' %}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left me-2"></i>Cancel
+                    <i class="fas fa-arrow-left me-2"></i>Cancel & Stay
                 </a>
             </form>
         </div>
@@ -145,7 +590,7 @@
         <div class="logout-footer">
             <p class="mb-0">
                 <i class="fas fa-info-circle me-1"></i>
-                Your session data will be securely cleared.
+                Your session data will be securely cleared upon logout.
             </p>
         </div>
     </div>
