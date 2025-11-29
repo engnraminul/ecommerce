@@ -1,7 +1,195 @@
 {% extends 'frontend/base.html' %}
 {% load static %}
 
-{% block title %}{{ product.name }} - Professional eCommerce{% endblock %}
+{% block title %}{% if product.meta_title %}{{ product.meta_title }}{% else %}{{ product.name|truncatechars:55 }} | Buy Online{% endif %}{% endblock %}
+
+{% block meta_description %}{% if product.meta_description %}{{ product.meta_description }}{% else %}{{ product.short_description|default:product.description|truncatechars:155|striptags }}{% endif %}{% endblock %}
+
+{% block extra_head %}
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{{ request.build_absolute_uri }}">
+    
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="{% if product.meta_title %}{{ product.meta_title }}{% else %}{{ product.name }}{% endif %}">
+    <meta property="og:description" content="{% if product.meta_description %}{{ product.meta_description }}{% else %}{{ product.short_description|default:product.description|truncatechars:155|striptags }}{% endif %}">
+    <meta property="og:image" content="{% if product.images.exists %}{{ request.scheme }}://{{ request.get_host }}{{ product.images.first.image_url }}{% else %}{{ request.scheme }}://{{ request.get_host }}{% static 'frontend/images/default-product.jpg' %}{% endif %}">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:type" content="product">
+    <meta property="og:site_name" content="Professional eCommerce">
+    <meta property="product:price:amount" content="{{ product.price }}">
+    <meta property="product:price:currency" content="BDT">
+    <meta property="product:availability" content="{% if product.is_available %}in stock{% else %}out of stock{% endif %}">
+    <meta property="product:condition" content="new">
+    <meta property="product:retailer_item_id" content="{{ product.sku|default:product.id }}">
+    
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% if product.meta_title %}{{ product.meta_title }}{% else %}{{ product.name }}{% endif %}">
+    <meta name="twitter:description" content="{% if product.meta_description %}{{ product.meta_description }}{% else %}{{ product.short_description|default:product.description|truncatechars:155|striptags }}{% endif %}">
+    <meta name="twitter:image" content="{% if product.images.exists %}{{ request.scheme }}://{{ request.get_host }}{{ product.images.first.image_url }}{% else %}{{ request.scheme }}://{{ request.get_host }}{% static 'frontend/images/default-product.jpg' %}{% endif %}">
+    
+    <!-- Product Schema (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "{{ product.name|escapejs }}",
+        "description": "{{ product.description|striptags|escapejs }}",
+        "image": [
+            {% if product.images.exists %}
+                {% for image in product.images.all %}
+                    "{{ request.scheme }}://{{ request.get_host }}{{ image.image_url }}"{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            {% else %}
+                "{{ request.scheme }}://{{ request.get_host }}{% static 'frontend/images/default-product.jpg' %}"
+            {% endif %}
+        ],
+        "brand": {
+            "@type": "Brand",
+            "name": "{{ product.category.name|escapejs }}"
+        },
+        "category": "{{ product.category.name|escapejs }}",
+        "sku": "{{ product.sku|default:product.id }}",
+        "gtin": "{{ product.barcode|default:'' }}",
+        "url": "{{ request.build_absolute_uri }}",
+        {% if product.review_count > 0 %}
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "{{ product.average_rating|floatformat:1 }}",
+            "reviewCount": "{{ product.review_count }}",
+            "bestRating": "5",
+            "worstRating": "1"
+        },
+        {% endif %}
+        "offers": {
+            "@type": "Offer",
+            "price": "{{ product.price }}",
+            "priceCurrency": "BDT",
+            "availability": "{% if product.is_available %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
+            "url": "{{ request.build_absolute_uri }}",
+            "priceValidUntil": "{{ product.updated_at|date:'Y-m-d' }}",
+            "seller": {
+                "@type": "Organization",
+                "name": "Professional eCommerce"
+            },
+            "itemCondition": "https://schema.org/NewCondition"
+            {% if product.compare_price and product.compare_price > product.price %}
+            ,"priceSpecification": {
+                "@type": "UnitPriceSpecification",
+                "price": "{{ product.price }}",
+                "priceCurrency": "BDT"
+            },
+            "eligibleQuantity": {
+                "@type": "QuantitativeValue",
+                "minValue": 1
+            }
+            {% endif %}
+        }
+        {% if product.weight %}
+        ,"weight": {
+            "@type": "QuantitativeValue",
+            "value": "{{ product.weight }}",
+            "unitCode": "KG"
+        }
+        {% endif %}
+        {% if product.dimensions %}
+        ,"depth": {
+            "@type": "Distance",
+            "name": "{{ product.dimensions|escapejs }}"
+        }
+        {% endif %}
+    }
+    </script>
+    
+    {% if product.review_count > 0 %}
+    <!-- Reviews Schema (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "{{ product.name|escapejs }}",
+        "review": [
+            {% for review in product.reviews.all %}{% if review.is_approved and forloop.counter <= 5 %}
+            {
+                "@type": "Review",
+                "reviewRating": {
+                    "@type": "Rating",
+                    "ratingValue": "{{ review.rating }}",
+                    "bestRating": "5",
+                    "worstRating": "1"
+                },
+                "author": {
+                    "@type": "Person",
+                    "name": "{{ review.reviewer_name|escapejs }}"
+                },
+                "datePublished": "{{ review.created_at|date:'Y-m-d' }}",
+                "reviewBody": "{{ review.comment|striptags|escapejs }}"
+                {% if review.title %}
+                ,"headline": "{{ review.title|escapejs }}"
+                {% endif %}
+            }{% if not forloop.last and forloop.counter < 5 %},{% endif %}
+            {% endif %}{% endfor %}
+        ],
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "{{ product.average_rating|floatformat:1 }}",
+            "reviewCount": "{{ product.review_count }}",
+            "bestRating": "5",
+            "worstRating": "1"
+        }
+    }
+    </script>
+    {% endif %}
+    
+    <!-- Breadcrumb Schema (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'frontend:home' %}"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Categories",
+                "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'frontend:categories' %}"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "{{ product.category.name }}",
+                "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'frontend:category_products' product.category.slug %}"
+            },
+            {
+                "@type": "ListItem",
+                "position": 4,
+                "name": "{{ product.name }}",
+                "item": "{{ request.build_absolute_uri }}"
+            }
+        ]
+    }
+    </script>
+    
+    <!-- Organization Schema (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Professional eCommerce",
+        "url": "{{ request.scheme }}://{{ request.get_host }}",
+        "logo": "{{ request.scheme }}://{{ request.get_host }}{% static 'frontend/images/logo.png' %}",
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "Customer Service"
+        }
+    }
+    </script>
+{% endblock %}
 
 {% block content %}
     <div class="container">
