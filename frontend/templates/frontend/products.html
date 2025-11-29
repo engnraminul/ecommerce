@@ -1,7 +1,128 @@
 {% extends 'frontend/base.html' %}
 {% load static %}
 
-{% block title %}Products - Professional eCommerce{% endblock %}
+{% block title %}All Fashion Accessories | {{ site_settings.site_name|default:'Manob Bazar' }} - Premium Brand Bangladesh{% endblock %}
+
+{% block meta_description %}Browse all premium fashion accessories at {{ site_settings.site_name|default:'Manob Bazar' }}. {{ site_settings.site_tagline|default:'Discover authentic leather wallets, belts, watches, ladies bags & clothing from Bangladesh\'s trusted brand. Quality guaranteed.' }}{% endblock %}
+
+{% block extra_head %}
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{{ request.build_absolute_uri }}">
+    
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="All Products - Shop Online | Professional eCommerce">
+    <meta property="og:description" content="Browse all products at Professional eCommerce. Discover quality items across all categories with competitive prices, fast shipping, and secure checkout.">
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'frontend/images/products-og.jpg' %}">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ site_settings.site_name|default:'Manob Bazar' }}">
+    <meta property="og:locale" content="en_BD">
+    
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="All Fashion Accessories | {{ site_settings.site_name|default:'Manob Bazar' }}">
+    <meta name="twitter:description" content="Browse all premium fashion accessories at {{ site_settings.site_name|default:'Manob Bazar' }}. {{ site_settings.site_tagline|default:'Authentic leather goods, watches & clothing from Bangladesh\'s trusted brand.' }}">
+    <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'frontend/images/products-og.jpg' %}">
+    
+    {% if products %}
+    <!-- Product Listing Schema (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": "All Products",
+        "description": "Complete collection of products available at Professional eCommerce",
+        "url": "{{ request.build_absolute_uri }}",
+        "numberOfItems": {{ products.count }},
+        "itemListElement": [
+            {% for product in products %}
+            {
+                "@type": "ListItem",
+                "position": {{ forloop.counter }},
+                "item": {
+                    "@type": "Product",
+                    "name": "{{ product.name|escapejs }}",
+                    "description": "{{ product.short_description|default:product.description|striptags|truncatechars:100|escapejs }}",
+                    "image": "{% if product.images.exists %}{{ request.scheme }}://{{ request.get_host }}{{ product.images.first.image_url }}{% endif %}",
+                    "url": "{{ request.scheme }}://{{ request.get_host }}/product/{{ product.slug }}/",
+                    "brand": {
+                        "@type": "Brand",
+                        "name": "{{ product.category.name|escapejs }}"
+                    },
+                    "category": "{{ product.category.name|escapejs }}",
+                    "offers": {
+                        "@type": "Offer",
+                        "price": "{{ product.price }}",
+                        "priceCurrency": "BDT",
+                        "availability": "{% if product.is_available %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
+                        "seller": {
+                            "@type": "Organization",
+                            "name": "Professional eCommerce"
+                        }
+                    }
+                    {% if product.review_count > 0 %}
+                    ,"aggregateRating": {
+                        "@type": "AggregateRating",
+                        "ratingValue": "{{ product.average_rating|floatformat:1 }}",
+                        "reviewCount": "{{ product.review_count }}"
+                    }
+                    {% endif %}
+                }
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ]
+    }
+    </script>
+    {% endif %}
+    
+    <!-- Collection Page Schema (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": "All Products",
+        "description": "Browse our complete product catalog with advanced filtering and search options",
+        "url": "{{ request.build_absolute_uri }}",
+        "mainEntity": {
+            "@type": "ItemList",
+            "numberOfItems": {{ products.count }},
+            "name": "Product Catalog"
+        }
+    }
+    </script>
+    
+    <!-- Breadcrumb Schema (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'frontend:home' %}"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Products",
+                "item": "{{ request.build_absolute_uri }}"
+            }
+        ]
+    }
+    </script>
+    
+    {% if page_obj.has_other_pages %}
+    <!-- Pagination Meta Tags -->
+    {% if page_obj.has_previous %}
+    <link rel="prev" href="{% url 'frontend:products' %}?page={{ page_obj.previous_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+    {% endif %}
+    {% if page_obj.has_next %}
+    <link rel="next" href="{% url 'frontend:products' %}?page={{ page_obj.next_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+    {% endif %}
+    {% endif %}
+{% endblock %}
 
 {% block content %}
     <div class="container">

@@ -3,17 +3,141 @@
 
 {% block title %}
     {% if query %}
-        Search Results for "{{ query }}" - Professional eCommerce
+        {% if products %}Search Results for "{{ query }}" - {{ products.count }} Products Found{% else %}No Results for "{{ query }}" - Try Different Keywords{% endif %}
     {% else %}
-        Search - Professional eCommerce
+        Search Products - Professional eCommerce
     {% endif %}
 {% endblock %}
 
 {% block meta_description %}
     {% if query %}
-        Search results for "{{ query }}". Find the best products and deals.
+        {% if products %}Found {{ products.count }} products for "{{ query }}". Shop quality items with fast delivery and secure checkout at Professional eCommerce.{% else %}No products found for "{{ query }}". Try different keywords or browse our categories for similar items.{% endif %}
     {% else %}
-        Search our extensive product catalog to find exactly what you're looking for.
+        Search our extensive product catalog to find exactly what you're looking for. Advanced search with filters and categories.
+    {% endif %}
+{% endblock %}
+
+{% block extra_head %}
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{{ request.build_absolute_uri }}">
+    
+    {% if not products and query %}
+    <!-- No Index for Empty Search Results -->
+    <meta name="robots" content="noindex, follow">
+    {% endif %}
+    
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="{% if query %}Search Results for {{ query }}{% else %}Search Products{% endif %} - Professional eCommerce">
+    <meta property="og:description" content="{% if query and products %}Found {{ products.count }} products for {{ query }}{% else %}Search our product catalog{% endif %}">
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'frontend/images/search-og.jpg' %}">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ site_settings.site_name|default:'Manob Bazar' }}">
+    <meta property="og:locale" content="en_BD">
+    
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{% if query %}Search Results for {{ query }} | {{ site_settings.site_name|default:'Manob Bazar' }}{% else %}Search Fashion Accessories | {{ site_settings.site_name|default:'Manob Bazar' }}{% endif %}">
+    <meta name="twitter:description" content="{% if query and products %}Found {{ products.count }} fashion accessories for {{ query }} at {{ site_settings.site_name|default:'Manob Bazar' }}{% else %}Search premium fashion accessories at {{ site_settings.site_name|default:'Manob Bazar' }}{% endif %}">
+    
+    {% if query and products %}
+    <!-- Search Results Schema (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SearchResultsPage",
+        "name": "Search Results for {{ query|escapejs }}",
+        "description": "Search results for {{ query|escapejs }} at Professional eCommerce",
+        "url": "{{ request.build_absolute_uri }}",
+        "mainEntity": {
+            "@type": "ItemList",
+            "numberOfItems": {{ products.count }},
+            "name": "Search Results for {{ query|escapejs }}",
+            "itemListElement": [
+                {% for product in products %}
+                {
+                    "@type": "ListItem",
+                    "position": {{ forloop.counter }},
+                    "item": {
+                        "@type": "Product",
+                        "name": "{{ product.name|escapejs }}",
+                        "description": "{{ product.short_description|default:product.description|striptags|truncatechars:100|escapejs }}",
+                        "image": "{% if product.images.exists %}{{ request.scheme }}://{{ request.get_host }}{{ product.images.first.image_url }}{% endif %}",
+                        "url": "{{ request.scheme }}://{{ request.get_host }}/product/{{ product.slug }}/",
+                        "brand": {
+                            "@type": "Brand",
+                            "name": "{{ product.category.name|escapejs }}"
+                        },
+                        "category": "{{ product.category.name|escapejs }}",
+                        "offers": {
+                            "@type": "Offer",
+                            "price": "{{ product.price }}",
+                            "priceCurrency": "BDT",
+                            "availability": "{% if product.is_available %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}"
+                        }
+                        {% if product.review_count > 0 %}
+                        ,"aggregateRating": {
+                            "@type": "AggregateRating",
+                            "ratingValue": "{{ product.average_rating|floatformat:1 }}",
+                            "reviewCount": "{{ product.review_count }}"
+                        }
+                        {% endif %}
+                    }
+                }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ]
+        }
+    }
+    </script>
+    {% endif %}
+    
+    <!-- Website Search Schema (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "url": "{{ request.scheme }}://{{ request.get_host }}",
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "{{ request.scheme }}://{{ request.get_host }}/search/?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+        }
+    }
+    </script>
+    
+    <!-- Breadcrumb Schema (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'frontend:home' %}"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Search{% if query %} Results for {{ query }}{% endif %}",
+                "item": "{{ request.build_absolute_uri }}"
+            }
+        ]
+    }
+    </script>
+    
+    {% if page_obj.has_other_pages %}
+    <!-- Pagination Meta Tags -->
+    {% if page_obj.has_previous %}
+    <link rel="prev" href="{% url 'frontend:search' %}?q={{ query }}&page={{ page_obj.previous_page_number }}">
+    {% endif %}
+    {% if page_obj.has_next %}
+    <link rel="next" href="{% url 'frontend:search' %}?q={{ query }}&page={{ page_obj.next_page_number }}">
+    {% endif %}
     {% endif %}
 {% endblock %}
 

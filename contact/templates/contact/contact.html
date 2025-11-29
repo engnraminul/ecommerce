@@ -1,9 +1,82 @@
 {% extends 'frontend/base.html' %}
 {% load static %}
 
-{% block page_title %}Contact Us{% endblock %}
+{% block title %}Contact {{ site_settings.site_name|default:'Manob Bazar' }} - Customer Support Bangladesh{% endblock %}
+
+{% block meta_description %}Contact {{ site_settings.site_name|default:'Manob Bazar' }} for inquiries about premium fashion accessories. {{ site_settings.site_tagline|default:'Expert support for leather wallets, belts, watches & ladies bags. Bangladesh\'s trusted fashion brand since inception.' }}{% endblock %}
 
 {% block extra_head %}
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{{ request.build_absolute_uri }}">
+    
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="Contact Us - Professional eCommerce">
+    <meta property="og:description" content="Get in touch with Professional eCommerce. We're here to help with your shopping experience and answer any questions you may have.">
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'frontend/images/contact-og.jpg' %}">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ site_settings.site_name|default:'Manob Bazar' }}">
+    <meta property="og:locale" content="en_BD">
+    
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Contact {{ site_settings.site_name|default:'Manob Bazar' }} - Customer Support">
+    <meta name="twitter:description" content="Get in touch with {{ site_settings.site_name|default:'Manob Bazar' }} for premium fashion accessories support. Bangladesh's trusted brand for quality leather goods.">
+    
+    <!-- Contact Page Schema (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "ContactPage",
+        "name": "Contact Professional eCommerce",
+        "description": "Contact page for customer inquiries and support",
+        "url": "{{ request.build_absolute_uri }}",
+        "mainEntity": {
+            "@type": "Organization",
+            "name": "{{ site_settings.site_name|default:'Manob Bazar'|escapejs }}",
+            "alternateName": "মানব বাজার",
+            "description": "{{ site_settings.site_tagline|default:'Premium Bangladeshi fashion accessories brand'|escapejs }}",
+            "knowsAbout": ["Fashion Accessories", "Leather Goods", "Wallets", "Belts", "Watches", "Ladies Bags"],
+            "contactPoint": [
+                {
+                    "@type": "ContactPoint",
+                    "contactType": "Customer Service",
+                    "availableLanguage": ["English", "Bengali"],
+                    "areaServed": "BD"
+                },
+                {
+                    "@type": "ContactPoint",
+                    "contactType": "Sales",
+                    "availableLanguage": ["English", "Bengali"],
+                    "areaServed": "BD"
+                }
+            ]
+        }
+    }
+    </script>
+    
+    <!-- Breadcrumb Schema (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'frontend:home' %}"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Contact Us",
+                "item": "{{ request.build_absolute_uri }}"
+            }
+        ]
+    }
+    </script>
+
 <meta name="csrf-token" content="{{ csrf_token }}">
 {% endblock %}
 

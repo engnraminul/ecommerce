@@ -1,7 +1,140 @@
 {% extends 'frontend/base.html' %}
 {% load static %}
 
-{% block title %}{{ category.name }} - Professional eCommerce{% endblock %}
+{% block title %}{% if category.meta_title %}{{ category.meta_title }}{% else %}{{ category.name }} | {{ site_settings.site_name|default:'Manob Bazar' }} - Premium Fashion Accessories BD{% endif %}{% endblock %}
+
+{% block meta_description %}{% if category.meta_description %}{{ category.meta_description }}{% else %}Shop premium {{ category.name|lower }} at {{ site_settings.site_name|default:'Manob Bazar' }}. Discover {{ products.count }} authentic fashion accessories from Bangladesh's trusted brand. Quality leather goods, watches & more.{% endif %}{% endblock %}
+
+{% block extra_head %}
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{{ request.build_absolute_uri }}">
+    
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="{% if category.meta_title %}{{ category.meta_title }}{% else %}{{ category.name }} - Shop Online{% endif %}">
+    <meta property="og:description" content="{% if category.meta_description %}{{ category.meta_description }}{% else %}Shop {{ category.name|lower }} products at Professional eCommerce. Browse {{ products.count }} quality items with fast delivery and secure payments.{% endif %}">
+    <meta property="og:image" content="{% if category.image_url %}{{ request.scheme }}://{{ request.get_host }}{{ category.image_url }}{% else %}{{ request.scheme }}://{{ request.get_host }}{% static 'frontend/images/default-category.jpg' %}{% endif %}">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ site_settings.site_name|default:'Manob Bazar' }}">
+    <meta property="og:locale" content="en_BD">
+    
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% if category.meta_title %}{{ category.meta_title }}{% else %}{{ category.name }} - {{ site_settings.site_name|default:'Manob Bazar' }}{% endif %}">
+    <meta name="twitter:description" content="{% if category.meta_description %}{{ category.meta_description }}{% else %}Shop premium {{ category.name|lower }} at {{ site_settings.site_name|default:'Manob Bazar' }}. Quality fashion accessories from Bangladesh's trusted brand.{% endif %}">
+    <meta name="twitter:image" content="{% if category.image_url %}{{ request.scheme }}://{{ request.get_host }}{{ category.image_url }}{% else %}{{ request.scheme }}://{{ request.get_host }}{% static 'frontend/images/default-category.jpg' %}{% endif %}">
+    
+    {% if products %}
+    <!-- Product Listing Schema (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": "{{ category.name }} Products",
+        "description": "{% if category.description %}{{ category.description|striptags|escapejs }}{% else %}Quality {{ category.name|lower }} products{% endif %}",
+        "url": "{{ request.build_absolute_uri }}",
+        "numberOfItems": {{ products.count }},
+        "itemListElement": [
+            {% for product in products %}
+            {
+                "@type": "ListItem",
+                "position": {{ forloop.counter }},
+                "item": {
+                    "@type": "Product",
+                    "name": "{{ product.name|escapejs }}",
+                    "description": "{{ product.short_description|default:product.description|striptags|truncatechars:100|escapejs }}",
+                    "image": "{% if product.images.exists %}{{ request.scheme }}://{{ request.get_host }}{{ product.images.first.image_url }}{% endif %}",
+                    "url": "{{ request.scheme }}://{{ request.get_host }}/product/{{ product.slug }}/",
+                    "brand": {
+                        "@type": "Brand",
+                        "name": "{{ site_settings.site_name|default:'Manob Bazar'|escapejs }}",
+                        "alternateName": "মানব বাজার"
+                    },
+                    "category": "Fashion Accessories",
+                    "additionalType": "{{ category.name|escapejs }}",
+                    "offers": {
+                        "@type": "Offer",
+                        "price": "{{ product.price }}",
+                        "priceCurrency": "BDT",
+                        "availability": "{% if product.is_available %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
+                        "seller": {
+                            "@type": "Organization",
+                            "name": "{{ site_settings.site_name|default:'Manob Bazar'|escapejs }}",
+                            "areaServed": "BD"
+                        }
+                    }
+                    {% if product.review_count > 0 %}
+                    ,"aggregateRating": {
+                        "@type": "AggregateRating",
+                        "ratingValue": "{{ product.average_rating|floatformat:1 }}",
+                        "reviewCount": "{{ product.review_count }}"
+                    }
+                    {% endif %}
+                }
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ]
+    }
+    </script>
+    {% endif %}
+    
+    <!-- Category Schema (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": "{{ category.name|escapejs }}",
+        "description": "{% if category.description %}{{ category.description|striptags|escapejs }}{% else %}Browse our {{ category.name|lower }} collection{% endif %}",
+        "url": "{{ request.build_absolute_uri }}",
+        "mainEntity": {
+            "@type": "ItemList",
+            "numberOfItems": {{ products.count }},
+            "name": "{{ category.name }} Products"
+        }
+        {% if category.image_url %}
+        ,"image": "{{ request.scheme }}://{{ request.get_host }}{{ category.image_url }}"
+        {% endif %}
+    }
+    </script>
+    
+    <!-- Breadcrumb Schema (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'frontend:home' %}"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Categories",
+                "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'frontend:categories' %}"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "{{ category.name }}",
+                "item": "{{ request.build_absolute_uri }}"
+            }
+        ]
+    }
+    </script>
+    
+    {% if page_obj.has_other_pages %}
+    <!-- Pagination Meta Tags -->
+    {% if page_obj.has_previous %}
+    <link rel="prev" href="{% url 'frontend:category_products' category.slug %}?page={{ page_obj.previous_page_number }}">
+    {% endif %}
+    {% if page_obj.has_next %}
+    <link rel="next" href="{% url 'frontend:category_products' category.slug %}?page={{ page_obj.next_page_number }}">
+    {% endif %}
+    {% endif %}
+{% endblock %}
 
 {% block content %}
     <div class="container">

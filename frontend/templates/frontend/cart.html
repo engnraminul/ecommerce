@@ -1,7 +1,48 @@
 {% extends 'frontend/base.html' %}
 {% load static %}
 
-{% block title %}Shopping Cart - Professional eCommerce{% endblock %}
+{% block title %}{% if cart_items %}Shopping Cart ({{ cart_items|length }} items) - {{ site_settings.site_name|default:'Manob Bazar' }}{% else %}Shopping Cart - {{ site_settings.site_name|default:'Manob Bazar' }}{% endif %}{% endblock %}
+
+{% block meta_description %}{% if cart_items %}Review your shopping cart with {{ cart_items|length }} items. Secure checkout, fast delivery, and excellent customer service at {{ site_settings.site_name|default:'Manob Bazar' }}.{% else %}Your shopping cart is currently empty. Browse our products and add items for secure checkout with fast delivery.{% endif %}{% endblock %}
+
+{% block extra_head %}
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{{ request.build_absolute_uri }}">
+    
+    <!-- No Index for Cart Pages (Privacy) -->
+    <meta name="robots" content="noindex, follow">
+    
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="Shopping Cart - {{ site_settings.site_name|default:'Manob Bazar' }}">
+    <meta property="og:description" content="Secure shopping cart with easy checkout process and fast delivery options.">
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'frontend/images/cart-og.jpg' %}">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ site_settings.site_name|default:'Manob Bazar' }}">
+    <meta property="og:locale" content="en_BD">
+    
+    <!-- Breadcrumb Schema (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'frontend:home' %}"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Shopping Cart",
+                "item": "{{ request.build_absolute_uri }}"
+            }
+        ]
+    }
+    </script>
+{% endblock %}
 
 {% block content %}
     <div class="container">

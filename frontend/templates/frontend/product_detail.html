@@ -1,9 +1,9 @@
 {% extends 'frontend/base.html' %}
 {% load static %}
 
-{% block title %}{% if product.meta_title %}{{ product.meta_title }}{% else %}{{ product.name|truncatechars:55 }} | Buy Online{% endif %}{% endblock %}
+{% block title %}{% if product.meta_title %}{{ product.meta_title }}{% else %}{{ product.name|truncatechars:45 }} | {{ site_settings.site_name|default:'Manob Bazar' }} BD{% endif %}{% endblock %}
 
-{% block meta_description %}{% if product.meta_description %}{{ product.meta_description }}{% else %}{{ product.short_description|default:product.description|truncatechars:155|striptags }}{% endif %}{% endblock %}
+{% block meta_description %}{% if product.meta_description %}{{ product.meta_description }}{% else %}{{ product.short_description|default:product.description|truncatechars:140|striptags }} - Premium fashion accessories from {{ site_settings.site_name|default:'Manob Bazar' }}, Bangladesh's trusted brand.{% endif %}{% endblock %}
 
 {% block extra_head %}
     <!-- Canonical URL -->
@@ -15,12 +15,15 @@
     <meta property="og:image" content="{% if product.images.exists %}{{ request.scheme }}://{{ request.get_host }}{{ product.images.first.image_url }}{% else %}{{ request.scheme }}://{{ request.get_host }}{% static 'frontend/images/default-product.jpg' %}{% endif %}">
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
     <meta property="og:type" content="product">
-    <meta property="og:site_name" content="Professional eCommerce">
+    <meta property="og:site_name" content="{{ site_settings.site_name|default:'Manob Bazar' }}">
+    <meta property="og:locale" content="en_BD">
+    <meta property="product:brand" content="{{ site_settings.site_name|default:'Manob Bazar' }}">
     <meta property="product:price:amount" content="{{ product.price }}">
     <meta property="product:price:currency" content="BDT">
     <meta property="product:availability" content="{% if product.is_available %}in stock{% else %}out of stock{% endif %}">
     <meta property="product:condition" content="new">
     <meta property="product:retailer_item_id" content="{{ product.sku|default:product.id }}">
+    <meta property="product:category" content="Fashion Accessories">
     
     <!-- Twitter Card Tags -->
     <meta name="twitter:card" content="summary_large_image">
@@ -46,12 +49,19 @@
         ],
         "brand": {
             "@type": "Brand",
-            "name": "{{ product.category.name|escapejs }}"
+            "name": "{{ site_settings.site_name|default:'Manob Bazar'|escapejs }}",
+            "alternateName": "মানব বাজার",
+            "logo": "{{ request.scheme }}://{{ request.get_host }}{% if site_settings.site_logo %}{{ site_settings.site_logo }}{% else %}{% static 'frontend/images/logo.png' %}{% endif %}"
         },
-        "category": "{{ product.category.name|escapejs }}",
+        "category": "Fashion Accessories",
+        "additionalType": "{{ product.category.name|escapejs }}",
         "sku": "{{ product.sku|default:product.id }}",
         "gtin": "{{ product.barcode|default:'' }}",
         "url": "{{ request.build_absolute_uri }}",
+        "countryOfOrigin": {
+            "@type": "Country",
+            "name": "Bangladesh"
+        },
         {% if product.review_count > 0 %}
         "aggregateRating": {
             "@type": "AggregateRating",
@@ -70,7 +80,9 @@
             "priceValidUntil": "{{ product.updated_at|date:'Y-m-d' }}",
             "seller": {
                 "@type": "Organization",
-                "name": "Professional eCommerce"
+                "name": "{{ site_settings.site_name|default:'Manob Bazar'|escapejs }}",
+                "alternateName": "মানব বাজার",
+                "areaServed": "BD"
             },
             "itemCondition": "https://schema.org/NewCondition"
             {% if product.compare_price and product.compare_price > product.price %}

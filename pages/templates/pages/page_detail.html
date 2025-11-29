@@ -1,13 +1,100 @@
 {% extends "frontend/base.html" %}
 {% load static %}
 
-{% block title %}{{ page.meta_title|default:page.title }} - {{ block.super }}{% endblock %}
+{% block title %}{{ page.meta_title|default:page.title }} - Professional eCommerce{% endblock %}
 
-{% block meta_description %}{{ page.meta_description|default:page.excerpt|truncatewords:30 }}{% endblock %}
+{% block meta_description %}{{ page.meta_description|default:page.excerpt|default:page.content|striptags|truncatechars:155 }}{% endblock %}
 
-{% block meta_keywords %}{{ page.meta_keywords }}{% endblock %}
-
-{% block canonical_url %}{{ page.canonical_url|default:page.get_absolute_url }}{% endblock %}
+{% block extra_head %}
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{{ page.canonical_url|default:request.build_absolute_uri }}">
+    
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="{{ page.meta_title|default:page.title }}">
+    <meta property="og:description" content="{{ page.meta_description|default:page.excerpt|default:page.content|striptags|truncatechars:155 }}">
+    <meta property="og:image" content="{% if page.featured_image %}{{ request.scheme }}://{{ request.get_host }}{{ page.featured_image.url }}{% else %}{{ request.scheme }}://{{ request.get_host }}{% static 'frontend/images/page-og.jpg' %}{% endif %}">
+    <meta property="og:url" content="{{ page.canonical_url|default:request.build_absolute_uri }}">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="Professional eCommerce">
+    {% if page.created_at %}
+    <meta property="article:published_time" content="{{ page.created_at|date:'c' }}">
+    {% endif %}
+    {% if page.updated_at %}
+    <meta property="article:modified_time" content="{{ page.updated_at|date:'c' }}">
+    {% endif %}
+    
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ page.meta_title|default:page.title }}">
+    <meta name="twitter:description" content="{{ page.meta_description|default:page.excerpt|default:page.content|striptags|truncatechars:155 }}">
+    <meta name="twitter:image" content="{% if page.featured_image %}{{ request.scheme }}://{{ request.get_host }}{{ page.featured_image.url }}{% else %}{{ request.scheme }}://{{ request.get_host }}{% static 'frontend/images/page-og.jpg' %}{% endif %}">
+    
+    <!-- Article Schema (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "{% if page.page_type == 'about' %}AboutPage{% elif page.page_type == 'contact' %}ContactPage{% elif page.page_type == 'faq' %}FAQPage{% else %}WebPage{% endif %}",
+        "name": "{{ page.title|escapejs }}",
+        "description": "{{ page.meta_description|default:page.excerpt|default:page.content|striptags|truncatechars:155|escapejs }}",
+        "url": "{{ page.canonical_url|default:request.build_absolute_uri }}",
+        {% if page.featured_image %}
+        "image": "{{ request.scheme }}://{{ request.get_host }}{{ page.featured_image.url }}",
+        {% endif %}
+        "publisher": {
+            "@type": "Organization",
+            "name": "Professional eCommerce"
+        },
+        {% if page.created_at %}
+        "datePublished": "{{ page.created_at|date:'c' }}",
+        {% endif %}
+        {% if page.updated_at %}
+        "dateModified": "{{ page.updated_at|date:'c' }}",
+        {% endif %}
+        "inLanguage": "en",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "{{ page.canonical_url|default:request.build_absolute_uri }}"
+        }
+    }
+    </script>
+    
+    <!-- Breadcrumb Schema (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'frontend:home' %}"
+            }
+            {% if page.category %}
+            ,{
+                "@type": "ListItem",
+                "position": 2,
+                "name": "{{ page.category.name }}",
+                "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'pages_app:page_category' page.category.slug %}"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "{{ page.title }}",
+                "item": "{{ page.canonical_url|default:request.build_absolute_uri }}"
+            }
+            {% else %}
+            ,{
+                "@type": "ListItem",
+                "position": 2,
+                "name": "{{ page.title }}",
+                "item": "{{ page.canonical_url|default:request.build_absolute_uri }}"
+            }
+            {% endif %}
+        ]
+    }
+    </script>
+{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
