@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
-from decouple import config
 from datetime import timedelta
 import os
 
@@ -23,10 +22,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me-in-production')
+SECRET_KEY = 'django-insecure-change-me-in-production'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']
 
@@ -62,10 +61,12 @@ INSTALLED_APPS = [
     'pages.apps.PagesConfig',
     'contact.apps.ContactConfig',
     'backups.apps.BackupsConfig',
+    'utils.apps.UtilsConfig',
 ]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
+    # 'django.middleware.cache.UpdateCacheMiddleware',  # Cache middleware (disabled temporarily)
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -78,6 +79,7 @@ MIDDLEWARE = [
     'dashboard.middleware.DashboardCSRFMiddleware',     # Enhanced CSRF protection
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'incomplete_orders.middleware.CheckoutAbandonmentMiddleware',
+    # 'django.middleware.cache.FetchFromCacheMiddleware',  # Cache middleware (disabled temporarily)
 ]
 
 ROOT_URLCONF = 'ecommerce_project.urls'
@@ -118,8 +120,84 @@ DATABASES = {
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         },
+        'CONN_MAX_AGE': 600,  # Connection reuse for 10 minutes
     }
 }
+
+# Caching Configuration  
+USE_REDIS = False  # Set to True when Redis is available
+
+if USE_REDIS:
+    # Redis Caching Configuration (Production)
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': 'redis://127.0.0.1:6379/1',
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'CONNECTION_POOL_KWARGS': {
+                    'max_connections': 50,
+                    'retry_on_timeout': True,
+                },
+                'PARSER_CLASS': 'redis.connection.HiredisParser',
+                'PICKLE_VERSION': -1,
+            },
+            'KEY_PREFIX': 'ecommerce',
+            'TIMEOUT': 300,  # Default cache timeout (5 minutes)
+        },
+        'sessions': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': 'redis://127.0.0.1:6379/2',
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'CONNECTION_POOL_KWARGS': {
+                    'max_connections': 20,
+                },
+            },
+            'KEY_PREFIX': 'sessions',
+            'TIMEOUT': 86400,  # Session cache timeout (1 day)
+        },
+        'products': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': 'redis://127.0.0.1:6379/3',
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'CONNECTION_POOL_KWARGS': {
+                    'max_connections': 30,
+                },
+            },
+            'KEY_PREFIX': 'products',
+            'TIMEOUT': 3600,  # Product cache timeout (1 hour)
+        }
+    }
+else:
+    # Database Cache (Development/Fallback)
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+            'LOCATION': 'cache_table',
+            'TIMEOUT': 300,
+            'OPTIONS': {
+                'MAX_ENTRIES': 1000,
+            }
+        },
+        'sessions': {
+            'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+            'LOCATION': 'session_cache_table',
+            'TIMEOUT': 86400,
+            'OPTIONS': {
+                'MAX_ENTRIES': 500,
+            }
+        },
+        'products': {
+            'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+            'LOCATION': 'product_cache_table',
+            'TIMEOUT': 3600,
+            'OPTIONS': {
+                'MAX_ENTRIES': 1000,
+            }
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -156,14 +234,14 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / config('STATIC_ROOT', default='staticfiles')
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
 # Media files
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / config('MEDIA_ROOT', default='media')
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -190,8 +268,8 @@ REST_FRAMEWORK = {
 
 # JWT Settings
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=config('JWT_ACCESS_TOKEN_LIFETIME_MINUTES', default=60, cast=int)),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=config('JWT_REFRESH_TOKEN_LIFETIME_DAYS', default=7, cast=int)),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
@@ -215,26 +293,19 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 
 # Email settings
-EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
-EMAIL_HOST = config('EMAIL_HOST', default='')
-
-# Handle EMAIL_PORT safely
-email_port_str = config('EMAIL_PORT', default='587')
-EMAIL_PORT = int(email_port_str) if email_port_str else 587
-
-# Handle EMAIL_USE_TLS safely  
-email_use_tls_str = config('EMAIL_USE_TLS', default='True')
-EMAIL_USE_TLS = email_use_tls_str.lower() == 'true' if email_use_tls_str else True
-
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = ''
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
 
 # Custom user model
 AUTH_USER_MODEL = 'users.User'
 
 # Celery settings (for background tasks like email notifications)
-CELERY_BROKER_URL = config('REDIS_URL', default='redis://localhost:6379')
-CELERY_RESULT_BACKEND = config('REDIS_URL', default='redis://localhost:6379')
+CELERY_BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
@@ -246,7 +317,7 @@ try:
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-            'LOCATION': config('REDIS_URL', default='redis://127.0.0.1:6379/1'),
+            'LOCATION': 'redis://127.0.0.1:6379/1',
         }
     }
 except ImportError:
@@ -352,7 +423,7 @@ CKEDITOR_CONFIGS = {
 }
 
 # Site configuration
-SITE_URL = config('SITE_URL', default='http://127.0.0.1:8000')
+SITE_URL = 'http://127.0.0.1:8000'
 
 # Authentication backends
 AUTHENTICATION_BACKENDS = [
@@ -363,58 +434,64 @@ AUTHENTICATION_BACKENDS = [
 # reCAPTCHA Settings
 # For demonstration purposes - you should replace these with your actual reCAPTCHA keys
 # Get your keys from: https://www.google.com/recaptcha/admin/create
-RECAPTCHA_SITE_KEY = config('RECAPTCHA_SITE_KEY', default='6LfaffsrAAAAAFD2-bNrYWkEp2D2esUfmDf1l4TA')
-RECAPTCHA_SECRET_KEY = config('RECAPTCHA_SECRET_KEY', default=None)  # Set this in your .env file for production
+RECAPTCHA_SITE_KEY = '6LfaffsrAAAAAFD2-bNrYWkEp2D2esUfmDf1l4TA'
+RECAPTCHA_SECRET_KEY = None  # Set this in your .env file for production
 
 # For development/demonstration - bypass reCAPTCHA verification if no secret key is set
-RECAPTCHA_BYPASS_FOR_DEMO = config('RECAPTCHA_BYPASS_FOR_DEMO', default=True, cast=bool)
+RECAPTCHA_BYPASS_FOR_DEMO = True
 
 # Backup System Settings
-BACKUP_DIRECTORY = config('BACKUP_DIRECTORY', default='backups_storage/')
-BACKUP_RETENTION_DAYS = config('BACKUP_RETENTION_DAYS', default=30, cast=int)
-BACKUP_AUTO_CLEANUP = config('BACKUP_AUTO_CLEANUP', default=True, cast=bool)
+BACKUP_DIRECTORY = 'backups_storage/'
+BACKUP_RETENTION_DAYS = 30
+BACKUP_AUTO_CLEANUP = True
 
 # MySQL Backup Settings
-BACKUP_MYSQL_PATH = config('BACKUP_MYSQL_PATH', default='mysqldump')
-BACKUP_MYSQL_HOST = config('BACKUP_MYSQL_HOST', default='127.0.0.1')
-BACKUP_MYSQL_PORT = config('BACKUP_MYSQL_PORT', default=3306, cast=int)
-BACKUP_MYSQL_USER = config('BACKUP_MYSQL_USER', default='root')
-BACKUP_MYSQL_PASSWORD = config('BACKUP_MYSQL_PASSWORD', default='aminul3065')
-BACKUP_MYSQL_DATABASE = config('BACKUP_MYSQL_DATABASE', default='manob_bazar')
+BACKUP_MYSQL_PATH = 'mysqldump'
+BACKUP_MYSQL_HOST = '127.0.0.1'
+BACKUP_MYSQL_PORT = 3306
+BACKUP_MYSQL_USER = 'root'
+BACKUP_MYSQL_PASSWORD = 'aminul3065'
+BACKUP_MYSQL_DATABASE = 'manob_bazar'
 
 # Backup Compression Settings
-BACKUP_COMPRESSION_LEVEL = config('BACKUP_COMPRESSION_LEVEL', default=6, cast=int)
+BACKUP_COMPRESSION_LEVEL = 6
 
 # Backup Notification Settings
-BACKUP_EMAIL_NOTIFICATIONS = config('BACKUP_EMAIL_NOTIFICATIONS', default=False, cast=bool)
-BACKUP_NOTIFICATION_EMAIL = config('BACKUP_NOTIFICATION_EMAIL', default='')
+BACKUP_EMAIL_NOTIFICATIONS = False
+BACKUP_NOTIFICATION_EMAIL = ''
 
 # IP Detection Settings
 # Force detection of public IP addresses for order tracking
 # Set to True in production to capture real customer IP addresses
-FORCE_PUBLIC_IP_DETECTION = config('FORCE_PUBLIC_IP_DETECTION', default=True, cast=bool)
+FORCE_PUBLIC_IP_DETECTION = True
 
 # ==============================
 # DASHBOARD SECURITY SETTINGS
 # ==============================
 
 # Dashboard session timeout in minutes (default: 30 minutes)
-DASHBOARD_SESSION_TIMEOUT = config('DASHBOARD_SESSION_TIMEOUT', default=30, cast=int)
+DASHBOARD_SESSION_TIMEOUT = 30
 
 # IP address validation for dashboard sessions (set to True in production)
-DASHBOARD_VALIDATE_IP = config('DASHBOARD_VALIDATE_IP', default=False, cast=bool)
+DASHBOARD_VALIDATE_IP = False
 
 # User agent validation for dashboard sessions
-DASHBOARD_VALIDATE_USER_AGENT = config('DASHBOARD_VALIDATE_USER_AGENT', default=False, cast=bool)
+DASHBOARD_VALIDATE_USER_AGENT = False
 
-# Session security settings
-SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=False, cast=bool)  # Set to True with HTTPS
+# Session configuration with caching
+if USE_REDIS:
+    SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+    SESSION_CACHE_ALIAS = 'sessions'
+else:
+    SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Database only for development
+SESSION_COOKIE_SECURE = False  # Set to True with HTTPS
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_AGE = 60 * 60 * 8  # 8 hours default session age
+SESSION_SAVE_EVERY_REQUEST = True
 
 # CSRF security settings
-CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool)  # Set to True with HTTPS
+CSRF_COOKIE_SECURE = False  # Set to True with HTTPS
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
 
@@ -462,6 +539,30 @@ LOGGING = {
             'propagate': True,
         },
     },
+}
+
+# Cache Framework Configuration
+CACHE_MIDDLEWARE_ALIAS = 'default'
+CACHE_MIDDLEWARE_SECONDS = 300  # 5 minutes default
+CACHE_MIDDLEWARE_KEY_PREFIX = 'ecommerce'
+
+# Cache timeout settings for different content types
+CACHE_TIMEOUTS = {
+    'home_page': 300,       # 5 minutes
+    'product_list': 600,    # 10 minutes
+    'product_detail': 1800, # 30 minutes
+    'category_list': 3600,  # 1 hour
+    'static_pages': 86400,  # 24 hours
+}
+
+# Cache keys configuration
+CACHE_KEYS = {
+    'featured_products': 'featured_products',
+    'categories': 'categories_list',
+    'hero_slides': 'hero_slides',
+    'site_settings': 'site_settings',
+    'popular_products': 'popular_products_{category_id}',
+    'product_reviews': 'product_reviews_{product_id}',
 }
 
 

@@ -7,7 +7,9 @@ from django.db.models import Q, Avg
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.cache import cache_page
 from django.utils import timezone
+from django.core.cache import cache
 from datetime import timedelta
 import logging
 
@@ -16,6 +18,7 @@ from users.models import User
 from cart.models import Cart, CartItem
 from orders.models import Order
 from pages.models import Page
+from utils.cache_utils import get_cache_manager, cache_view
 
 logger = logging.getLogger(__name__)
 
@@ -56,47 +59,88 @@ def get_image_url(image_path, request=None):
         return f"{base_url}/media/{image_path}"
 
 
+@cache_view(timeout=300, vary_on_user=False)  # Cache for 5 minutes
 def home(request):
     """Homepage view with featured products and categories."""
     from settings.models import HeroContent
     
-    # Get hero slides
-    hero_slides = HeroContent.get_active_slides()
+    # Try to get cached homepage data
+    cache_manager = get_cache_manager()
+    cache_key = 'homepage_data'
+    cached_data = cache_manager.get_page_cache(cache_key)
     
-    featured_products = Product.objects.filter(
-        is_featured=True, 
-        is_active=True
-    ).select_related('category').prefetch_related('images')[:8]
+    if cached_data is not None:
+        context = cached_data
+        # Add request-specific data that shouldn't be cached
+        context['request'] = request
+    else:
+        # Get hero slides
+        hero_slides = list(HeroContent.get_active_slides())
+        
+        # Get featured products
+        featured_products = list(Product.objects.filter(
+            is_featured=True, 
+            is_active=True
+        ).select_related('category').prefetch_related('images')[:8])
+        
+        # Get all parent categories (not limited to 6)
+        parent_categories = list(Category.objects.filter(
+            is_active=True, 
+            parent=None
+        ).order_by('name'))
+        
+        # Also keep featured categories for backward compatibility if needed
+        featured_categories = parent_categories[:6]
+        
+        context = {
+            'hero_slides': hero_slides,
+            'featured_products': featured_products,
+            'featured_categories': featured_categories,
+            'parent_categories': parent_categories,  # All parent categories
+        }
+        
+        # Cache the data
+        cache_manager.set_page_cache(cache_key, context, 'home_page')
     
-    # Get all parent categories (not limited to 6)
-    parent_categories = Category.objects.filter(
-        is_active=True, 
-        parent=None
-    ).order_by('name')
-    
-    # Also keep featured categories for backward compatibility if needed
-    featured_categories = parent_categories[:6]
-    
-    context = {
-        'hero_slides': hero_slides,
-        'featured_products': featured_products,
-        'featured_categories': featured_categories,
-        'parent_categories': parent_categories,  # All parent categories
-    }
     return render(request, 'frontend/home.html', context)
 
 
 
+@cache_view(timeout=600, vary_on_params=True)  # Cache for 10 minutes, vary on filters
 def products(request):
     """Products listing page with filters."""
     from django.db.models import Avg
+    
+    # Generate cache key based on filters
+    filters = {
+        'category': request.GET.get('category'),
+        'min_price': request.GET.get('min_price'),
+        'max_price': request.GET.get('max_price'),
+        'sort': request.GET.get('sort'),
+        'page': request.GET.get('page', '1'),
+    }
+    
+    # Remove None values for cache key
+    clean_filters = {k: v for k, v in filters.items() if v}
+    cache_key = f"products_page_{hash(str(sorted(clean_filters.items())))}"
+    
+    # Try cache first for basic queries
+    cache_manager = get_cache_manager()
+    if len(clean_filters) <= 2:  # Only cache simple queries
+        cached_data = cache_manager.get_page_cache(cache_key)
+        if cached_data:
+            return render(request, 'frontend/products.html', cached_data)
     
     products_list = Product.objects.filter(is_active=True).select_related(
         'category'
     ).prefetch_related('images')
     
-    # Get all categories for filter dropdown
-    categories = Category.objects.filter(is_active=True)
+    # Get all categories for filter dropdown (cached)
+    categories_key = 'all_categories'
+    categories = cache_manager.get_page_cache(categories_key)
+    if not categories:
+        categories = list(Category.objects.filter(is_active=True))
+        cache_manager.set_page_cache(categories_key, categories, 'category_list')
     
     # Apply filters
     category_slug = request.GET.get('category')

@@ -5,6 +5,10 @@ from rest_framework import serializers as drf_serializers
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q, Avg, Count
 from django.shortcuts import get_object_or_404
+from django.core.cache import cache
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
+from django.views.decorators.vary import vary_on_headers, vary_on_cookie
 from .models import Category, Product, ProductImage, Review, ReviewImage, Wishlist
 from .serializers import (
     CategorySerializer, 
@@ -18,21 +22,55 @@ from .serializers import (
     ProductSearchSerializer
 )
 from .filters import ProductFilter
+from utils.cache_utils import get_cache_manager, cache_view
 
 
+@method_decorator(cache_page(3600), name='dispatch')  # Cache for 1 hour
+@method_decorator(vary_on_headers('Accept-Language'), name='dispatch')
 class CategoryListView(generics.ListAPIView):
     """List all active categories"""
     queryset = Category.objects.filter(is_active=True, parent=None).prefetch_related('subcategories')
     serializer_class = CategorySerializer
     permission_classes = [permissions.AllowAny]
+    
+    def get_queryset(self):
+        """Get categories with caching"""
+        cache_manager = get_cache_manager()
+        cache_key = cache_manager.get_cache_key('categories')
+        cached_categories = cache_manager.get_page_cache(cache_key)
+        
+        if cached_categories is not None:
+            return cached_categories
+        
+        queryset = super().get_queryset()
+        categories = list(queryset)
+        cache_manager.set_page_cache(cache_key, categories, 'category_list')
+        
+        return categories
 
 
+@method_decorator(cache_page(1800), name='dispatch')  # Cache for 30 minutes
 class CategoryDetailView(generics.RetrieveAPIView):
     """Category detail with products"""
     queryset = Category.objects.filter(is_active=True)
     serializer_class = CategorySerializer
     permission_classes = [permissions.AllowAny]
     lookup_field = 'slug'
+    
+    def retrieve(self, request, *args, **kwargs):
+        """Get category with caching"""
+        cache_manager = get_cache_manager()
+        slug = kwargs.get('slug')
+        cache_key = f'category_detail_{slug}'
+        
+        cached_category = cache_manager.get_page_cache(cache_key)
+        if cached_category is not None:
+            return Response(cached_category)
+        
+        response = super().retrieve(request, *args, **kwargs)
+        cache_manager.set_page_cache(cache_key, response.data, 'category_list')
+        
+        return response
 
 
 class ProductListView(generics.ListAPIView):
@@ -76,8 +114,35 @@ class ProductListView(generics.ListAPIView):
             ).filter(avg_rating__gte=min_rating)
         
         return queryset
+    
+    def list(self, request, *args, **kwargs):
+        """List products with caching for common queries"""
+        cache_manager = get_cache_manager()
+        
+        # Generate cache key based on query parameters
+        query_params = dict(request.GET)
+        cache_key = f"product_list_{hash(str(sorted(query_params.items())))}"
+        
+        # Check if it's a simple query that can be cached
+        cacheable_params = ['category', 'featured', 'in_stock', 'page']
+        is_cacheable = not any(param not in cacheable_params for param in query_params.keys())
+        
+        if is_cacheable:
+            cached_response = cache_manager.get_product_cache(cache_key)
+            if cached_response is not None:
+                return Response(cached_response)
+        
+        response = super().list(request, *args, **kwargs)
+        
+        # Cache the response if it's cacheable
+        if is_cacheable and response.status_code == 200:
+            timeout = cache_manager.get_timeout('product_list')
+            cache_manager.set_product_cache(cache_key, response.data, timeout)
+        
+        return response
 
 
+@method_decorator(cache_page(1800), name='dispatch')  # Cache for 30 minutes
 class ProductDetailView(generics.RetrieveAPIView):
     """Product detail view"""
     queryset = Product.objects.filter(is_active=True).select_related('category').prefetch_related(
@@ -86,6 +151,30 @@ class ProductDetailView(generics.RetrieveAPIView):
     serializer_class = ProductDetailSerializer
     permission_classes = [permissions.AllowAny]
     lookup_field = 'slug'
+    
+    def retrieve(self, request, *args, **kwargs):
+        """Get product with caching"""
+        cache_manager = get_cache_manager()
+        slug = kwargs.get('slug')
+        cache_key = f'product_detail_{slug}'
+        
+        cached_product = cache_manager.get_product_cache(cache_key)
+        if cached_product is not None:
+            return Response(cached_product)
+        
+        response = super().retrieve(request, *args, **kwargs)
+        
+        if response.status_code == 200:
+            timeout = cache_manager.get_timeout('product_detail')
+            cache_manager.set_product_cache(cache_key, response.data, timeout)
+            
+            # Increment view count (don't cache this)
+            product = self.get_object()
+            Product.objects.filter(id=product.id).update(
+                view_count=product.view_count + 1
+            )
+        
+        return response
 
 
 class ProductCreateView(generics.CreateAPIView):
