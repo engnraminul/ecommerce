@@ -3524,40 +3524,39 @@ document.addEventListener('DOMContentLoaded', function() {
                             product_variant_sku: item.product_variant_sku
                         });
                         
-                        // Try multiple possible field names for the SKU
+                        // Use same logic as courier service: variant info for variants, product name for non-variants
                         let displayName;
                         
-                        // Check all possible SKU field names
-                        const possibleSkuFields = [
-                            'variant_display_name',  // New field with full SKU or variant name
-                            'variant_sku',
-                            'sku', 
-                            'product_variant_sku',
-                            'variant_code'
-                        ];
-                        
-                        let skuFound = false;
-                        for (let field of possibleSkuFields) {
-                            if (item[field] && typeof item[field] === 'string' && item[field].trim() !== '') {
-                                displayName = item[field].trim();
-                                console.log(`Using ${field}:`, displayName);
-                                skuFound = true;
-                                break;
+                        // If item has variant, prioritize variant information
+                        if (item.variant || item.variant_name) {
+                            // Try variant_display_name first (should have the SKU like "MW02 Black")
+                            if (item.variant_display_name && typeof item.variant_display_name === 'string' && item.variant_display_name.trim() !== '') {
+                                displayName = item.variant_display_name.trim();
+                                console.log('Using variant_display_name:', displayName);
+                            }
+                            // Try variant_sku next
+                            else if (item.variant_sku && typeof item.variant_sku === 'string' && item.variant_sku.trim() !== '') {
+                                displayName = item.variant_sku.trim();
+                                console.log('Using variant_sku:', displayName);
+                            }
+                            // Try variant_name as fallback
+                            else if (item.variant_name && typeof item.variant_name === 'string' && item.variant_name.trim() !== '') {
+                                displayName = item.variant_name.trim();
+                                console.log('Using variant_name:', displayName);
+                            }
+                            // If all else fails for variant, use product_name
+                            else {
+                                displayName = item.product_name && typeof item.product_name === 'string' ? item.product_name.trim() : 'Unknown Product';
+                                console.log('Fallback to product_name for variant item:', displayName);
                             }
                         }
-                        
-                        // If no SKU found, try variant_name
-                        if (!skuFound && item.variant_name && typeof item.variant_name === 'string' && item.variant_name.trim() !== '') {
-                            displayName = item.variant_name.trim();
-                            console.log('Using variant_name:', displayName);
-                        } 
-                        // If still no luck, try product_name
-                        else if (!skuFound && item.product_name && typeof item.product_name === 'string' && item.product_name.trim() !== '') {
+                        // If no variant, use full product name
+                        else if (item.product_name && typeof item.product_name === 'string' && item.product_name.trim() !== '') {
                             displayName = item.product_name.trim();
-                            console.log('Using product_name:', displayName);
-                        } 
+                            console.log('Using product_name (no variant):', displayName);
+                        }
                         // Last resort
-                        else if (!skuFound) {
+                        else {
                             displayName = 'UNKNOWN';
                             console.log('Using fallback: UNKNOWN');
                         }

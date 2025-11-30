@@ -52,8 +52,18 @@ def send_order_to_curier(order):
         items = order.items.all()
         item_descriptions = []
         for item in items:
-            sku = item.variant.sku if item.variant and hasattr(item.variant, 'sku') and item.variant.sku else item.product_sku
-            item_descriptions.append(f"{item.quantity}x {item.product_name} {sku}")
+            # If item has variant, show variant name/sku (like "MW02 Black")
+            # If no variant, show full product name
+            if item.variant:
+                # Use variant SKU if available, otherwise variant name
+                display_name = item.variant.sku if item.variant.sku else item.variant.name
+                if not display_name or display_name.strip() == '':
+                    display_name = item.variant_name or item.product_name
+            else:
+                # For products without variants, use full product name
+                display_name = item.product_name
+            
+            item_descriptions.append(f"{item.quantity}x {display_name}")
         
         item_description = ", ".join(item_descriptions) if item_descriptions else "Order items"
         
