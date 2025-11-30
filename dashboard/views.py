@@ -4559,7 +4559,7 @@ def dashboard_contacts(request):
 class IntegrationSettingsViewSet(viewsets.ModelViewSet):
     """ViewSet for managing Integration Settings"""
     queryset = IntegrationSettings.objects.all()
-    permission_classes = [IsStaffUser]
+    permission_classes = [IsAdminUser]
     
     def get_serializer_class(self):
         """Return appropriate serializer for Integration Settings"""
@@ -4590,7 +4590,7 @@ class IntegrationSettingsViewSet(viewsets.ModelViewSet):
                 'error': str(e)
             }, status=500)
     
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'], permission_classes=[IsAdminUser])
     def bulk_update(self, request):
         """Update integration settings via bulk update"""
         try:

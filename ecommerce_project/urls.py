@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from test_integration import test_integration_view
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -69,6 +70,9 @@ urlpatterns = [
     path('backups/', include('backups.urls')),
     
     path('mb-admin/', include('dashboard.urls')),  # Dashboard URLs
+    
+    # Test URLs
+    path('test-integration/', test_integration_view, name='test_integration'),
 ]
 
 # Serve media files during development

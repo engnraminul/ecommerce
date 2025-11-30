@@ -611,8 +611,14 @@ class IntegrationSettings(models.Model):
         """Get the active integration settings"""
         active_settings = cls.objects.filter(is_active=True).first()
         if active_settings is None:
-            # Return default settings if none exist
-            return cls()
+            # Create and save default settings if none exist
+            try:
+                active_settings = cls.objects.create(is_active=True)
+                print(f"Created default IntegrationSettings with ID: {active_settings.pk}")
+            except Exception as e:
+                print(f"Error creating default integration settings: {e}")
+                # Return unsaved default settings as fallback
+                return cls()
         return active_settings
     
     def get_meta_pixel_script(self):

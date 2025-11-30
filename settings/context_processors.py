@@ -59,14 +59,39 @@ def integration_settings(request):
     try:
         settings = IntegrationSettings.get_active_settings()
         
-        # Return all integration data and helper methods
-        return {
-            'integration_settings': settings,
-            'integration_meta_tags': settings.get_verification_meta_tags() if settings else '',
-            'integration_header_scripts': settings.get_all_header_scripts() if settings else '',
-            'integration_body_scripts': settings.get_all_body_scripts() if settings else '',
-            'integration_footer_scripts': settings.get_footer_scripts() if settings else '',
-        }
+        # Debug: Check if settings have a primary key (are saved to database)
+        if not settings or not hasattr(settings, 'pk') or settings.pk is None:
+            # Create default settings if none exist or if we got an unsaved instance
+            try:
+                settings = IntegrationSettings.objects.filter(is_active=True).first()
+                if not settings:
+                    # Create a new default settings instance
+                    settings = IntegrationSettings.objects.create(is_active=True)
+                    print(f"Created new IntegrationSettings with ID: {settings.pk}")
+            except Exception as create_error:
+                print(f"Error creating default integration settings: {create_error}")
+                # Fallback to empty instance
+                settings = IntegrationSettings()
+        
+        # Only call methods if we have a saved instance with data
+        if settings and hasattr(settings, 'pk') and settings.pk:
+            return {
+                'integration_settings': settings,
+                'integration_meta_tags': settings.get_verification_meta_tags(),
+                'integration_header_scripts': settings.get_all_header_scripts(),
+                'integration_body_scripts': settings.get_all_body_scripts(),
+                'integration_footer_scripts': settings.get_footer_scripts(),
+            }
+        else:
+            # Return empty values if no valid settings
+            return {
+                'integration_settings': None,
+                'integration_meta_tags': '',
+                'integration_header_scripts': '',
+                'integration_body_scripts': '',
+                'integration_footer_scripts': '',
+            }
+            
     except Exception as e:
         # Return empty values if there's an error to prevent template crashes
         print(f"Error loading integration settings: {e}")
