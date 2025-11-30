@@ -2326,7 +2326,7 @@ def get_client_ip(request):
         ip = request.META.get('REMOTE_ADDR')
     return ip
 
-@login_required
+@login_required(login_url='dashboard:login')
 @never_cache
 def dashboard_logout(request):
     """
@@ -2360,9 +2360,11 @@ def dashboard_logout(request):
         if not request.user.is_authenticated:
             return redirect('dashboard:login')
         
+        site_settings = SiteSettings.get_active_settings()
         context = {
             'user': request.user,
             'page_title': 'Logout Confirmation',
+            'site_settings': site_settings,
         }
         
         return render(request, 'dashboard/logout.html', context)
@@ -2397,7 +2399,7 @@ def dashboard_home(request):
     
     return render(request, 'dashboard/index.html', context)
 
-@login_required
+@login_required(login_url='dashboard:login')
 @user_passes_test(is_admin)
 def dashboard_products(request):
     context = {
@@ -2405,7 +2407,7 @@ def dashboard_products(request):
     }
     return render(request, 'dashboard/products.html', context)
 
-@login_required
+@login_required(login_url='dashboard:login')
 @user_passes_test(is_admin)
 def dashboard_categories(request):
     context = {
@@ -2413,7 +2415,7 @@ def dashboard_categories(request):
     }
     return render(request, 'dashboard/categories.html', context)
 
-@login_required
+@login_required(login_url='dashboard:login')
 @user_passes_test(is_admin)
 def dashboard_media(request):
     context = {
@@ -2421,7 +2423,7 @@ def dashboard_media(request):
     }
     return render(request, 'dashboard/media.html', context)
 
-@login_required
+@login_required(login_url='dashboard:login')
 @user_passes_test(is_admin)
 def dashboard_orders(request):
     context = {
@@ -2429,7 +2431,7 @@ def dashboard_orders(request):
     }
     return render(request, 'dashboard/orders.html', context)
 
-@login_required
+@login_required(login_url='dashboard:login')
 @user_passes_test(is_admin)
 def dashboard_incomplete_orders(request):
     context = {
@@ -2437,7 +2439,7 @@ def dashboard_incomplete_orders(request):
     }
     return render(request, 'dashboard/incomplete_orders.html', context)
 
-@login_required
+@login_required(login_url='dashboard:login')
 @user_passes_test(is_admin)
 def dashboard_users(request):
     context = {
@@ -2445,7 +2447,7 @@ def dashboard_users(request):
     }
     return render(request, 'dashboard/users.html', context)
 
-@login_required
+@login_required(login_url='dashboard:login')
 @user_passes_test(is_admin)
 def dashboard_statistics(request):
     context = {
@@ -2453,9 +2455,7 @@ def dashboard_statistics(request):
     }
     return render(request, 'dashboard/statistics.html', context)
 
-@login_required
-@user_passes_test(is_admin)
-@login_required
+@login_required(login_url='dashboard:login')
 @user_passes_test(is_admin)
 def dashboard_settings(request):
     if request.method == 'POST':
@@ -2473,7 +2473,7 @@ def dashboard_settings(request):
     }
     return render(request, 'dashboard/settings.html', context)
 
-@login_required
+@login_required(login_url='dashboard:login')
 @user_passes_test(is_admin)
 def debug_settings(request):
     """Debug page for testing settings functionality"""
@@ -2504,7 +2504,7 @@ def test_settings_post(request):
             'message': 'Only POST requests allowed'
         })
 
-@login_required
+@login_required(login_url='dashboard:login')
 @user_passes_test(is_admin)
 def handle_general_settings_update(request):
     """Handle the general settings form submission"""
@@ -2640,7 +2640,7 @@ def handle_general_settings_update(request):
         })
 
 
-@login_required
+@login_required(login_url='dashboard:login')
 @user_passes_test(is_admin)
 def dashboard_profile(request):
     context = {
@@ -2648,7 +2648,7 @@ def dashboard_profile(request):
     }
     return render(request, 'dashboard/profile.html', context)
 
-@login_required
+@login_required(login_url='dashboard:login')
 @user_passes_test(is_admin)
 def dashboard_api_docs(request):
     context = {
@@ -2656,7 +2656,7 @@ def dashboard_api_docs(request):
     }
     return render(request, 'dashboard/api_docs.html', context)
 
-@login_required
+@login_required(login_url='dashboard:login')
 @user_passes_test(is_admin)
 def dashboard_pages(request):
     """Pages management dashboard view"""
@@ -2670,7 +2670,7 @@ def dashboard_pages(request):
     }
     return render(request, 'dashboard/pages.html', context)
 
-@login_required
+@login_required(login_url='dashboard:login')
 @user_passes_test(is_admin)
 def dashboard_expenses(request):
     context = {
@@ -2678,9 +2678,9 @@ def dashboard_expenses(request):
     }
     return render(request, 'dashboard/expenses.html', context)
 
-@login_required
+@login_required(login_url='dashboard:login')
 @user_passes_test(is_admin)
-@login_required
+@login_required(login_url='dashboard:login')
 @user_passes_test(is_admin)
 def dashboard_stock(request):
     context = {
@@ -5420,7 +5420,7 @@ def coupon_analytics_api(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@login_required
+@login_required(login_url='dashboard:login')
 @staff_member_required
 def dashboard_backups(request):
     """Dashboard view for backup management"""

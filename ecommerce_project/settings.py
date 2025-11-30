@@ -72,10 +72,10 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',  # Moved before custom middleware
     'users.middleware.DashboardPermissionMiddleware',
     'dashboard.middleware.DashboardSecurityMiddleware',  # Enhanced dashboard security
     'dashboard.middleware.DashboardCSRFMiddleware',     # Enhanced CSRF protection
-    'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'incomplete_orders.middleware.CheckoutAbandonmentMiddleware',
 ]
