@@ -323,196 +323,6 @@ class Curier(models.Model):
         return f"{self.name} ({self.api_url})"
 
 
-class CourierSettings(models.Model):
-    """Model for storing comprehensive courier service configurations"""
-    
-    # Steadfast Courier Configuration
-    steadfast_enabled = models.BooleanField(default=True, help_text="Enable Steadfast courier service")
-    steadfast_base_url = models.URLField(
-        max_length=500, 
-        default="https://portal.steadfast.com.bd/api/v1",
-        help_text="Steadfast API base URL"
-    )
-    steadfast_api_key = models.CharField(
-        max_length=255, 
-        blank=True, 
-        null=True,
-        help_text="Steadfast API key from merchant panel"
-    )
-    steadfast_secret_key = models.CharField(
-        max_length=255, 
-        blank=True, 
-        null=True,
-        help_text="Steadfast secret key for API authentication"
-    )
-    steadfast_merchant_id = models.CharField(
-        max_length=100, 
-        blank=True, 
-        null=True,
-        help_text="Steadfast merchant identifier"
-    )
-    steadfast_dhaka_rate = models.DecimalField(
-        max_digits=8, 
-        decimal_places=2, 
-        default=60.00,
-        help_text="Delivery charge for Dhaka city"
-    )
-    steadfast_outside_rate = models.DecimalField(
-        max_digits=8, 
-        decimal_places=2, 
-        default=100.00,
-        help_text="Delivery charge for outside Dhaka"
-    )
-    
-    # Pathao Courier Configuration
-    pathao_enabled = models.BooleanField(default=False, help_text="Enable Pathao courier service")
-    pathao_base_url = models.URLField(
-        max_length=500, 
-        default="https://courier-api-sandbox.pathao.com/api/v1",
-        help_text="Pathao API base URL (sandbox or production)"
-    )
-    pathao_client_id = models.CharField(
-        max_length=255, 
-        blank=True, 
-        null=True,
-        help_text="OAuth client ID from Pathao"
-    )
-    pathao_client_secret = models.CharField(
-        max_length=255, 
-        blank=True, 
-        null=True,
-        help_text="OAuth client secret from Pathao"
-    )
-    pathao_username = models.CharField(
-        max_length=100, 
-        blank=True, 
-        null=True,
-        help_text="Pathao merchant username"
-    )
-    pathao_password = models.CharField(
-        max_length=255, 
-        blank=True, 
-        null=True,
-        help_text="Pathao merchant password"
-    )
-    pathao_store_id = models.CharField(
-        max_length=100, 
-        blank=True, 
-        null=True,
-        help_text="Pathao store identifier"
-    )
-    
-    # RedX Courier Configuration
-    redx_enabled = models.BooleanField(default=False, help_text="Enable RedX courier service")
-    redx_base_url = models.URLField(
-        max_length=500, 
-        default="https://openapi.redx.com.bd/v1.0.0-beta",
-        help_text="RedX API base URL"
-    )
-    redx_api_token = models.CharField(
-        max_length=255, 
-        blank=True, 
-        null=True,
-        help_text="RedX API token from merchant panel"
-    )
-    
-    # Global Courier Settings
-    default_courier = models.CharField(
-        max_length=20,
-        choices=[
-            ('steadfast', 'Steadfast'),
-            ('pathao', 'Pathao'),
-            ('redx', 'RedX'),
-        ],
-        default='steadfast',
-        help_text="Primary courier service for new orders"
-    )
-    courier_timeout = models.PositiveIntegerField(
-        default=30,
-        help_text="Maximum time to wait for courier API response (seconds)"
-    )
-    auto_create_parcel = models.BooleanField(
-        default=False,
-        help_text="Automatically create courier parcels when orders are confirmed"
-    )
-    enable_tracking = models.BooleanField(
-        default=True,
-        help_text="Allow customers to track their orders via courier API"
-    )
-    
-    # Metadata
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        verbose_name = "Courier Settings"
-        verbose_name_plural = "Courier Settings"
-    
-    def __str__(self):
-        if self.updated_at:
-            return f"Courier Settings (Updated: {self.updated_at.strftime('%Y-%m-%d %H:%M')})"
-        else:
-            return "Courier Settings (New)"
-    
-    @classmethod
-    def get_active_settings(cls):
-        """Get the active courier settings"""
-        active_settings = cls.objects.filter(is_active=True).first()
-        if active_settings is None:
-            # Return default settings if none exist
-            return cls()
-        return active_settings
-    
-    def get_enabled_couriers(self):
-        """Get list of enabled courier services"""
-        enabled = []
-        if self.steadfast_enabled and self.steadfast_api_key:
-            enabled.append('steadfast')
-        if self.pathao_enabled and self.pathao_client_id:
-            enabled.append('pathao')
-        if self.redx_enabled and self.redx_api_token:
-            enabled.append('redx')
-        return enabled
-    
-    def is_courier_configured(self, courier_name):
-        """Check if a specific courier is properly configured"""
-        if courier_name == 'steadfast':
-            return self.steadfast_enabled and bool(self.steadfast_api_key and self.steadfast_secret_key)
-        elif courier_name == 'pathao':
-            return self.pathao_enabled and bool(self.pathao_client_id and self.pathao_client_secret)
-        elif courier_name == 'redx':
-            return self.redx_enabled and bool(self.redx_api_token)
-        return False
-    
-    def get_courier_config(self, courier_name):
-        """Get configuration dictionary for a specific courier"""
-        if courier_name == 'steadfast':
-            return {
-                'base_url': self.steadfast_base_url,
-                'api_key': self.steadfast_api_key,
-                'secret_key': self.steadfast_secret_key,
-                'merchant_id': self.steadfast_merchant_id,
-                'dhaka_rate': self.steadfast_dhaka_rate,
-                'outside_rate': self.steadfast_outside_rate,
-            }
-        elif courier_name == 'pathao':
-            return {
-                'base_url': self.pathao_base_url,
-                'client_id': self.pathao_client_id,
-                'client_secret': self.pathao_client_secret,
-                'username': self.pathao_username,
-                'password': self.pathao_password,
-                'store_id': self.pathao_store_id,
-            }
-        elif courier_name == 'redx':
-            return {
-                'base_url': self.redx_base_url,
-                'api_token': self.redx_api_token,
-            }
-        return {}
-
-
 class CheckoutCustomization(models.Model):
     """Model for storing checkout page customization settings"""
     
@@ -687,9 +497,30 @@ class IntegrationSettings(models.Model):
     meta_pixel_code = models.TextField(
         blank=True, 
         null=True,
-        help_text="Meta Pixel code for Facebook advertising and analytics"
+        help_text="Meta Pixel code for Facebook advertising and analytics (Legacy)"
+    )
+    meta_pixel_id = models.CharField(
+        max_length=50,
+        blank=True, 
+        null=True,
+        help_text="Meta Pixel ID (e.g., 123456789012345)"
+    )
+    meta_access_token = models.CharField(
+        max_length=500,
+        blank=True, 
+        null=True,
+        help_text="Meta Access Token for Conversions API"
     )
     meta_pixel_enabled = models.BooleanField(default=False)
+    
+    # Meta Pixel Advanced Tracking Options
+    meta_scroll_tracking = models.BooleanField(default=False, help_text="Enable scroll depth tracking")
+    meta_time_tracking = models.BooleanField(default=False, help_text="Enable time on page tracking")
+    meta_hover_tracking = models.BooleanField(default=False, help_text="Enable element hover tracking")
+    meta_section_tracking = models.BooleanField(default=False, help_text="Enable section view tracking")
+    meta_cart_tracking = models.BooleanField(default=False, help_text="Enable advanced cart tracking")
+    meta_checkout_tracking = models.BooleanField(default=False, help_text="Enable checkout funnel tracking")
+    meta_capi_enabled = models.BooleanField(default=False, help_text="Enable Conversions API")
     
     # Google Analytics Integration
     google_analytics_code = models.TextField(
@@ -785,22 +616,280 @@ class IntegrationSettings(models.Model):
         return active_settings
     
     def get_meta_pixel_script(self):
-        """Generate Meta Pixel script tag"""
-        if not self.meta_pixel_enabled or not self.meta_pixel_code:
+        """Generate Meta Pixel script tag with advanced tracking"""
+        if not self.meta_pixel_enabled:
             return ""
         
-        # If the code already contains script tags, return as is
-        if '<script>' in self.meta_pixel_code.lower():
-            return self.meta_pixel_code
+        scripts = []
         
-        # Otherwise, wrap the code in script tags
-        return f"""
+        # Base Meta Pixel Code
+        if self.meta_pixel_id:
+            # Modern approach using Pixel ID
+            scripts.append(f"""
 <!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{{if(f.fbq)return;n=f.fbq=function(){{n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)}};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '{self.meta_pixel_id}');
+fbq('track', 'PageView');
+</script>
+<!-- End Meta Pixel Code -->""".strip())
+        elif self.meta_pixel_code:
+            # Legacy approach using full code
+            if '<script>' in self.meta_pixel_code.lower():
+                scripts.append(self.meta_pixel_code)
+            else:
+                scripts.append(f"""
+<!-- Meta Pixel Code (Legacy) -->
 <script>
 {self.meta_pixel_code}
 </script>
-<!-- End Meta Pixel Code -->
-        """.strip()
+<!-- End Meta Pixel Code (Legacy) -->""".strip())
+        else:
+            return ""
+        
+        # Add advanced tracking scripts if enabled
+        if any([self.meta_scroll_tracking, self.meta_time_tracking, self.meta_hover_tracking, 
+                self.meta_section_tracking, self.meta_cart_tracking, self.meta_checkout_tracking]):
+            
+            advanced_script = """
+<!-- Meta Pixel Advanced Tracking -->
+<script>
+// Advanced Meta Pixel Tracking Implementation
+window.MetaPixelAdvanced = {
+    scrollTracked: false,
+    timeTracked: {15: false, 30: false, 60: false, 120: false},
+    sectionsTracked: new Set(),
+    
+    init: function() {"""
+            
+            if self.meta_scroll_tracking:
+                advanced_script += """
+        this.initScrollTracking();"""
+            
+            if self.meta_time_tracking:
+                advanced_script += """
+        this.initTimeTracking();"""
+            
+            if self.meta_hover_tracking:
+                advanced_script += """
+        this.initHoverTracking();"""
+            
+            if self.meta_section_tracking:
+                advanced_script += """
+        this.initSectionTracking();"""
+            
+            if self.meta_cart_tracking:
+                advanced_script += """
+        this.initCartTracking();"""
+            
+            if self.meta_checkout_tracking:
+                advanced_script += """
+        this.initCheckoutTracking();"""
+            
+            advanced_script += """
+    },"""
+            
+            # Scroll Depth Tracking
+            if self.meta_scroll_tracking:
+                advanced_script += """
+    
+    initScrollTracking: function() {
+        let scrollThresholds = [25, 50, 75, 100];
+        let trackedThresholds = new Set();
+        
+        window.addEventListener('scroll', function() {
+            let scrollPercent = Math.round(
+                ((window.scrollY + window.innerHeight) / document.body.scrollHeight) * 100
+            );
+            
+            scrollThresholds.forEach(threshold => {
+                if (scrollPercent >= threshold && !trackedThresholds.has(threshold)) {
+                    trackedThresholds.add(threshold);
+                    fbq('trackCustom', 'ScrollDepth', {
+                        scroll_percent: threshold,
+                        page_url: window.location.href
+                    });
+                }
+            });
+        });
+    },"""
+            
+            # Time on Page Tracking
+            if self.meta_time_tracking:
+                advanced_script += """
+    
+    initTimeTracking: function() {
+        [15, 30, 60, 120].forEach(seconds => {
+            setTimeout(() => {
+                if (!this.timeTracked[seconds]) {
+                    this.timeTracked[seconds] = true;
+                    fbq('trackCustom', 'TimeOnPage', {
+                        time_seconds: seconds,
+                        page_url: window.location.href
+                    });
+                }
+            }, seconds * 1000);
+        });
+    },"""
+            
+            # Hover Tracking
+            if self.meta_hover_tracking:
+                advanced_script += """
+    
+    initHoverTracking: function() {
+        document.addEventListener('DOMContentLoaded', function() {
+            const hoverElements = '.btn, .product-card, .add-to-cart, .product-item, .cta-button';
+            document.querySelectorAll(hoverElements).forEach(el => {
+                let hoverTracked = false;
+                el.addEventListener('mouseover', function() {
+                    if (!hoverTracked) {
+                        hoverTracked = true;
+                        fbq('trackCustom', 'HoverIntent', {
+                            element_type: this.className,
+                            element_id: this.id || null,
+                            product_id: this.dataset.productId || null,
+                            page_url: window.location.href
+                        });
+                    }
+                });
+            });
+        });
+    },"""
+            
+            # Section View Tracking
+            if self.meta_section_tracking:
+                advanced_script += """
+    
+    initSectionTracking: function() {
+        const sections = document.querySelectorAll('.section, .hero-section, .products-section, .about-section');
+        const options = { threshold: 0.5 };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && !this.sectionsTracked.has(entry.target.id)) {
+                    this.sectionsTracked.add(entry.target.id);
+                    fbq('trackCustom', 'ViewSection', {
+                        section_id: entry.target.id,
+                        section_class: entry.target.className,
+                        page_url: window.location.href
+                    });
+                }
+            });
+        }, options);
+        
+        sections.forEach(section => {
+            if (section.id) observer.observe(section);
+        });
+    },"""
+            
+            # Cart Tracking
+            if self.meta_cart_tracking:
+                advanced_script += """
+    
+    initCartTracking: function() {
+        // Track Add to Cart events
+        document.addEventListener('click', function(e) {
+            if (e.target.matches('.add-to-cart, .btn-add-cart')) {
+                const productId = e.target.dataset.productId;
+                const productName = e.target.dataset.productName;
+                
+                fbq('trackCustom', 'AddToCart', {
+                    product_id: productId,
+                    product_name: productName,
+                    timestamp: Date.now()
+                });
+                
+                // Set flag for cart abandonment tracking
+                localStorage.setItem('meta_cart_action', JSON.stringify({
+                    action: 'add_to_cart',
+                    timestamp: Date.now(),
+                    product_id: productId
+                }));
+            }
+        });
+        
+        // Track cart abandonment
+        window.addEventListener('beforeunload', function() {
+            const cartAction = localStorage.getItem('meta_cart_action');
+            if (cartAction && !window.location.pathname.includes('/checkout')) {
+                const actionData = JSON.parse(cartAction);
+                if (Date.now() - actionData.timestamp < 300000) { // 5 minutes
+                    fbq('trackCustom', 'CartAbandon', {
+                        product_id: actionData.product_id,
+                        time_on_page: Date.now() - actionData.timestamp
+                    });
+                }
+            }
+        });
+    },"""
+            
+            # Checkout Funnel Tracking
+            if self.meta_checkout_tracking:
+                advanced_script += """
+    
+    initCheckoutTracking: function() {
+        // Track checkout steps based on URL patterns
+        const currentPath = window.location.pathname;
+        
+        if (currentPath.includes('/checkout')) {
+            fbq('trackCustom', 'InitiateCheckout', {
+                page_url: window.location.href
+            });
+            
+            // Clear cart abandonment flag
+            localStorage.removeItem('meta_cart_action');
+        }
+        
+        if (currentPath.includes('/shipping') || currentPath.includes('/delivery')) {
+            fbq('trackCustom', 'CheckoutShipping', {
+                page_url: window.location.href
+            });
+        }
+        
+        if (currentPath.includes('/payment')) {
+            fbq('trackCustom', 'CheckoutPayment', {
+                page_url: window.location.href
+            });
+            
+            // Track payment abandonment
+            window.addEventListener('beforeunload', function() {
+                if (!window.location.pathname.includes('/success')) {
+                    fbq('trackCustom', 'PaymentAbandon', {
+                        page_url: window.location.href
+                    });
+                }
+            });
+        }
+        
+        if (currentPath.includes('/success') || currentPath.includes('/complete')) {
+            fbq('trackCustom', 'CheckoutComplete', {
+                page_url: window.location.href
+            });
+        }
+    }"""
+            
+            advanced_script += """
+};
+
+// Initialize advanced tracking when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => MetaPixelAdvanced.init());
+} else {
+    MetaPixelAdvanced.init();
+}
+</script>
+<!-- End Meta Pixel Advanced Tracking -->"""
+            
+            scripts.append(advanced_script.strip())
+        
+        return '\n\n'.join(scripts)
     
     def get_google_analytics_script(self):
         """Generate Google Analytics script tag"""

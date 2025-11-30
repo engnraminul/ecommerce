@@ -819,7 +819,9 @@ class IntegrationSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = None  # Will be imported dynamically to avoid circular imports
         fields = [
-            'id', 'meta_pixel_code', 'meta_pixel_enabled',
+            'id', 'meta_pixel_code', 'meta_pixel_id', 'meta_access_token', 'meta_pixel_enabled',
+            'meta_scroll_tracking', 'meta_time_tracking', 'meta_hover_tracking', 
+            'meta_section_tracking', 'meta_cart_tracking', 'meta_checkout_tracking', 'meta_capi_enabled',
             'google_analytics_code', 'google_analytics_measurement_id', 'google_analytics_enabled',
             'google_search_console_code', 'google_search_console_enabled',
             'bing_webmaster_code', 'bing_webmaster_enabled',

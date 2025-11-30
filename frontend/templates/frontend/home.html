@@ -145,7 +145,7 @@
 {% block content %}
     <!-- Hero Carousel Section -->
     {% if hero_slides %}
-    <section class="hero-carousel-section">
+    <section id="hero" class="hero-carousel-section section hero-section">
         <div class="hero-carousel-wrapper">
             <!-- Navigation Arrows -->
             <button class="hero-nav prev-btn" id="heroPrevBtn" aria-label="Previous slide">
@@ -302,12 +302,12 @@
     </section>
 
     <!-- Featured Products -->
-    <section class="section">
+    <section id="featured-products" class="section products-section">
         <div class="container">
             <h2 class="section-title">Featured Products</h2>
             <div class="product-grid">
                 {% for product in featured_products %}
-                <div class="product-card">
+                <div class="product-card product-item" data-product-id="{{ product.id }}" data-product-name="{{ product.name }}">
                     <div class="product-image-container">
                         <a href="{% url 'frontend:product_detail' product.slug %}" class="product-image-link">
                             <!-- Primary Image -->

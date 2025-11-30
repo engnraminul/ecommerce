@@ -450,7 +450,11 @@
                         </button>
                         </div>
                         <div class="action-buttons">
-                            <button class="add-to-cart-btn primary" data-product-id="{{ product.id }}">
+                            <button class="add-to-cart-btn primary add-to-cart" 
+                                    data-product-id="{{ product.id }}"
+                                    data-product-name="{{ product.name }}"
+                                    data-product-price="{{ product.price }}"
+                                    data-product-category="{{ product.category.name|default:'' }}">
                                 <i class="fas fa-shopping-cart"></i>
                                 Add to Cart
                             </button>

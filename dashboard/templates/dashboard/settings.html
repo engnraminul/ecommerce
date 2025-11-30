@@ -1649,12 +1649,103 @@
                                         </div>
                                     </div>
                                     <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="metaPixelId" class="form-label fw-medium">Meta Pixel ID</label>
+                                                <input type="text" class="form-control" id="metaPixelId" name="meta_pixel_id" value="{{ integration_settings.meta_pixel_id|default:"" }}" placeholder="Enter your Pixel ID (e.g., 123456789012345)">
+                                                <div class="form-text">
+                                                    <i class="fas fa-info-circle me-1"></i>
+                                                    Find your Pixel ID in Facebook Events Manager
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="metaAccessToken" class="form-label fw-medium">Access Token (for CAPI)</label>
+                                                <input type="password" class="form-control" id="metaAccessToken" name="meta_access_token" value="{{ integration_settings.meta_access_token|default:"" }}" placeholder="Enter your Access Token">
+                                                <div class="form-text">
+                                                    <i class="fas fa-info-circle me-1"></i>
+                                                    Required for server-side conversions (CAPI)
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
                                         <div class="mb-3">
-                                            <label for="metaPixelCode" class="form-label fw-medium">Meta Pixel Code</label>
-                                            <textarea class="form-control" id="metaPixelCode" name="meta_pixel_code" rows="6" placeholder="Paste your Meta Pixel tracking code here...">{{ integration_settings.meta_pixel_code|default:"" }}</textarea>
+                                            <label for="metaPixelCode" class="form-label fw-medium">Meta Pixel Code (Legacy)</label>
+                                            <textarea class="form-control" id="metaPixelCode" name="meta_pixel_code" rows="4" placeholder="Paste your complete Meta Pixel code if using legacy method...">{{ integration_settings.meta_pixel_code|default:"" }}</textarea>
                                             <div class="form-text">
                                                 <i class="fas fa-info-circle me-1"></i>
-                                                Paste the complete Meta Pixel code from your Facebook Ads Manager. This helps track conversions and optimize your Facebook ads.
+                                                Leave this empty if using Pixel ID above. This is for backward compatibility only.
+                                            </div>
+                                        </div>
+
+                                        <!-- Advanced Micro-Behavior Tracking Options -->
+                                        <div class="border-top pt-3 mb-3">
+                                            <h6 class="text-muted mb-3">🎯 Advanced Micro-Behavior Tracking</h6>
+                                            
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" id="metaScrollTracking" name="meta_scroll_tracking" {{ integration_settings.meta_scroll_tracking|yesno:"checked," }}>
+                                                        <label class="form-check-label" for="metaScrollTracking">
+                                                            <strong>Scroll Depth Tracking</strong><br>
+                                                            <small class="text-muted">Track when users scroll 25%, 50%, 75%, 100%</small>
+                                                        </label>
+                                                    </div>
+                                                    
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" id="metaTimeTracking" name="meta_time_tracking" {{ integration_settings.meta_time_tracking|yesno:"checked," }}>
+                                                        <label class="form-check-label" for="metaTimeTracking">
+                                                            <strong>Time on Page Tracking</strong><br>
+                                                            <small class="text-muted">Track 15s, 30s, 60s, 120s page engagement</small>
+                                                        </label>
+                                                    </div>
+                                                    
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" id="metaHoverTracking" name="meta_hover_tracking" {{ integration_settings.meta_hover_tracking|yesno:"checked," }}>
+                                                        <label class="form-check-label" for="metaHoverTracking">
+                                                            <strong>Element Hover Tracking</strong><br>
+                                                            <small class="text-muted">Track hovers on products, buttons, etc.</small>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="col-md-6">
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" id="metaSectionTracking" name="meta_section_tracking" {{ integration_settings.meta_section_tracking|yesno:"checked," }}>
+                                                        <label class="form-check-label" for="metaSectionTracking">
+                                                            <strong>Section View Tracking</strong><br>
+                                                            <small class="text-muted">Track when sections come into view</small>
+                                                        </label>
+                                                    </div>
+                                                    
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" id="metaCartTracking" name="meta_cart_tracking" {{ integration_settings.meta_cart_tracking|yesno:"checked," }}>
+                                                        <label class="form-check-label" for="metaCartTracking">
+                                                            <strong>Advanced Cart Tracking</strong><br>
+                                                            <small class="text-muted">Track cart abandonment & recovery</small>
+                                                        </label>
+                                                    </div>
+                                                    
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" id="metaCheckoutTracking" name="meta_checkout_tracking" {{ integration_settings.meta_checkout_tracking|yesno:"checked," }}>
+                                                        <label class="form-check-label" for="metaCheckoutTracking">
+                                                            <strong>Checkout Funnel Tracking</strong><br>
+                                                            <small class="text-muted">Track checkout steps & drop-offs</small>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Server-Side API Options -->
+                                        <div class="border-top pt-3">
+                                            <h6 class="text-muted mb-3">🔧 Server-Side Conversions API (CAPI)</h6>
+                                            
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="metaCAPIEnabled" name="meta_capi_enabled" {{ integration_settings.meta_capi_enabled|yesno:"checked," }}>
+                                                <label class="form-check-label" for="metaCAPIEnabled">
+                                                    <strong>Enable Server-Side Conversions API</strong><br>
+                                                    <small class="text-muted">Send purchase events directly from server for better accuracy</small>
+                                                </label>
                                             </div>
                                         </div>
                                     </div>
@@ -2983,7 +3074,16 @@ document.addEventListener('DOMContentLoaded', function() {
         // Convert camelCase field names to HTML input IDs
         const conversions = {
             'meta_pixel_code': 'metaPixelCode',
+            'meta_pixel_id': 'metaPixelId',
+            'meta_access_token': 'metaAccessToken',
             'meta_pixel_enabled': 'metaPixelEnabled',
+            'meta_scroll_tracking': 'metaScrollTracking',
+            'meta_time_tracking': 'metaTimeTracking',
+            'meta_hover_tracking': 'metaHoverTracking',
+            'meta_section_tracking': 'metaSectionTracking',
+            'meta_cart_tracking': 'metaCartTracking',
+            'meta_checkout_tracking': 'metaCheckoutTracking',
+            'meta_capi_enabled': 'metaCAPIEnabled',
             'google_analytics_code': 'googleAnalyticsCode',
             'google_analytics_measurement_id': 'googleAnalyticsMeasurementId',
             'google_analytics_enabled': 'googleAnalyticsEnabled',
