@@ -177,6 +177,7 @@ class DashboardPermission(models.Model):
         ('email_settings', 'Email Settings'),
         ('settings', 'Settings'),
         ('api_docs', 'API Docs'),
+        ('backups', 'Backups'),
     ]
     
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='dashboard_permissions')
