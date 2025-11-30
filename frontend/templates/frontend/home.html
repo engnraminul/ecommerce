@@ -457,15 +457,23 @@
     .hero-carousel-section {
         position: relative;
         overflow: hidden;
-        height: 60vh;
+        height: 80vh;
         min-height: 500px;
         max-height: 700px;
+        width: 100vw;
+        margin: 0;
+        padding: 0;
+        left: 50%;
+        right: 50%;
+        margin-left: -50vw;
+        margin-right: -50vw;
     }
 
     .hero-carousel-wrapper {
         position: relative;
         width: 100%;
         height: 100%;
+        overflow: hidden;
     }
 
     .hero-carousel {
@@ -487,6 +495,7 @@
         align-items: center;
         justify-content: center;
         background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        z-index: 1;
     }
 
     .hero-slide.active {
@@ -506,7 +515,8 @@
         left: 0;
         width: 100%;
         height: 100%;
-        z-index: 1;
+        z-index: 0;
+        overflow: hidden;
     }
 
     .hero-bg-image {
@@ -514,6 +524,7 @@
         height: 100%;
         object-fit: cover;
         object-position: center;
+        display: block;
     }
 
     /* Show desktop image by default, mobile on small screens */
@@ -537,14 +548,15 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.3);
-        z-index: 2;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 1;
+        pointer-events: none;
     }
 
     /* Hero Content */
     .hero-content {
         position: relative;
-        z-index: 3;
+        z-index: 5;
         text-align: center;
         color: var(--white);
         padding: 2rem;
@@ -612,11 +624,12 @@
         justify-content: center;
         cursor: pointer;
         transition: all 0.3s ease;
-        z-index: 10;
+        z-index: 100;
         font-size: 1.2rem;
         color: var(--dark-color);
         backdrop-filter: blur(10px);
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        pointer-events: auto;
     }
 
     .hero-nav:hover {
@@ -635,7 +648,17 @@
 
     /* Hide arrows on single slide */
     .hero-carousel-wrapper[data-single-slide="true"] .hero-nav {
-        display: none;
+        display: none !important;
+    }
+
+    /* Ensure buttons are always on top and clickable */
+    .hero-nav:active {
+        transform: translateY(-50%) scale(0.95);
+    }
+
+    .hero-nav:focus {
+        outline: 2px solid var(--primary-color);
+        outline-offset: 2px;
     }
 
     /* Pagination Dots */
@@ -646,7 +669,7 @@
         transform: translateX(-50%);
         display: flex;
         gap: 0.75rem;
-        z-index: 10;
+        z-index: 100;
     }
 
     .pagination-dot {
@@ -658,6 +681,7 @@
         cursor: pointer;
         transition: all 0.3s ease;
         backdrop-filter: blur(5px);
+        pointer-events: auto;
     }
 
     .pagination-dot.active {
@@ -675,7 +699,7 @@
     .hero-section {
         background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
         color: var(--white);
-        padding: 6rem 0;
+        padding: 0rem 0;
         text-align: center;
         position: relative;
         overflow: hidden;
@@ -722,8 +746,9 @@
     /* Responsive Design */
     @media (max-width: 1024px) {
         .hero-carousel-section {
-            height: 50vh;
-            min-height: 400px;
+            height: 70vh;
+            min-height: 450px;
+            max-height: 600px;
         }
 
         .hero-nav {
@@ -751,8 +776,9 @@
 
     @media (max-width: 768px) {
         .hero-carousel-section {
-            height: 60vh;
-            min-height: 450px;
+            height: 50vh;
+            min-height: 500px;
+            max-height: none;
         }
 
         .hero-title {
@@ -2247,6 +2273,11 @@
             return;
         }
         
+        // Ensure navigation buttons are visible for multiple slides
+        if (prevBtn) prevBtn.style.display = 'flex';
+        if (nextBtn) nextBtn.style.display = 'flex';
+        if (pagination) pagination.style.display = 'flex';
+        
         let currentSlide = 0;
         let autoSlideInterval;
         let isTransitioning = false;
@@ -2256,6 +2287,7 @@
         
         // Initialize carousel
         function init() {
+            
             // Ensure first slide is active
             slides.forEach((slide, index) => {
                 slide.classList.toggle('active', index === 0);
@@ -2342,23 +2374,26 @@
         function addEventListeners() {
             // Navigation buttons
             if (prevBtn) {
-                prevBtn.addEventListener('click', () => {
+                prevBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     prevSlide();
                     stopAutoSlide();
                     // Restart auto-slide after user interaction
                     setTimeout(startAutoSlide, AUTO_SLIDE_DELAY);
                 });
             }
-            
+
             if (nextBtn) {
-                nextBtn.addEventListener('click', () => {
+                nextBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Next button clicked');
                     nextSlide();
                     stopAutoSlide();
                     setTimeout(startAutoSlide, AUTO_SLIDE_DELAY);
                 });
-            }
-            
-            // Pagination dots
+            }            // Pagination dots
             if (pagination) {
                 pagination.addEventListener('click', (e) => {
                     if (e.target.classList.contains('pagination-dot')) {
