@@ -431,7 +431,7 @@
                         <option value="name">Sort by Name</option>
                     </select>
                     <button class="btn btn-sm btn-outline-secondary" id="products-refresh">
-                        <i class="fas fa-sync-alt"></i>
+                        <i class="fas fa-arrows-rotate"></i>
                     </button>
                 </div>
             </div>
@@ -634,7 +634,7 @@
                             </small>
                             <div class="btn-group btn-group-sm" role="group">
                                 <button type="button" class="btn btn-outline-primary btn-sm" id="refresh-status" title="Refresh Data">
-                                    <i class="fas fa-sync-alt"></i>
+                                    <i class="fas fa-arrows-rotate"></i>
                                 </button>
                                 <button type="button" class="btn btn-outline-success btn-sm" id="export-status" title="Export Status Data">
                                     <i class="fas fa-download"></i>
@@ -2006,10 +2006,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (data.total_revenue < 0) {
             revenueElement.style.color = '#dc3545'; // Red for negative
-            revenueIcon.className = 'fas fa-chart-line-down fa-2x text-danger';
+            revenueIcon.className = 'fas fa-arrow-trend-down fa-2x text-danger';
         } else {
             revenueElement.style.color = '#28a745'; // Green for positive
-            revenueIcon.className = 'fas fa-chart-line fa-2x text-success';
+            revenueIcon.className = 'fas fa-arrow-trend-up fa-2x text-success';
         }
         
         // Update profit margin color based on percentage

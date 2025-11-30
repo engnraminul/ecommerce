@@ -752,7 +752,7 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Orders</h5>
         <button class="btn btn-sm btn-secondary" id="refreshOrdersBtn">
-            <i class="fas fa-sync-alt me-1"></i> Refresh
+            <i class="fas fa-arrows-rotate me-1"></i> Refresh
         </button>
     </div>
     <div class="filter-with-status-list">
@@ -2928,7 +2928,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             document.getElementById('orderItemsTableBody').innerHTML += 
                                 `<tr><td colspan="5" class="text-center">
                                     <button class="btn btn-sm btn-outline-primary retry-items-btn mt-2">
-                                        <i class="fas fa-sync-alt me-1"></i> Retry
+                                        <i class="fas fa-arrows-rotate me-1"></i> Retry
                                     </button>
                                 </td></tr>`;
                                 
@@ -3069,7 +3069,7 @@ document.addEventListener('DOMContentLoaded', function() {
         //     </span>
         //     ${customerPhone !== 'N/A' ? `
         //     <a href="tel:${customerPhone}" class="ms-2 text-primary" title="Call customer">
-        //         <i class="fas fa-phone-alt"></i>
+        //         <i class="fas fa-phone"></i>
         //     </a>` : ''}
         // `;
         
@@ -3103,7 +3103,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div><br>
                     ${phone ? `<div class="copy-text" data-value="${phone}">Phone: ${phone} <i class="fas fa-copy copy-icon" title="Copy phone"></i>
                         <a href="tel:${phone}" class="ms-2 text-primary" title="Call customer">
-                            <i class="fas fa-phone-alt"></i>
+                            <i class="fas fa-phone"></i>
                         </a></div><br>` : ''}
                     <div id="orderProductsList">
                         <strong>Products:</strong> <span id="orderProductsText">Loading products...</span>

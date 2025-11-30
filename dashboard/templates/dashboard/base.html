@@ -10,7 +10,9 @@
     <title>{% block title %}MB Admin Dashboard{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.5.1/css/all.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
+    <!-- Font Awesome Fallback -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" crossorigin="anonymous">
     <!-- Favicon -->
     {% if site_settings.site_favicon %}
         <link rel="icon" type="image/x-icon" href="{{ site_settings.site_favicon }}">
@@ -35,6 +37,24 @@
             --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.2);
             --transition: all 0.3s ease;
+        }
+        
+        /* Font Awesome Icon Fallback */
+        [class^="fa-"], [class*=" fa-"] {
+            font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands", "Font Awesome 6 Pro" !important;
+            display: inline-block;
+            font-style: normal;
+            font-variant: normal;
+            text-rendering: auto;
+            line-height: 1;
+        }
+        
+        .fas, .far, .fab, .fa {
+            font-family: "Font Awesome 6 Free" !important;
+        }
+        
+        .fab {
+            font-family: "Font Awesome 6 Brands" !important;
         }
         
         body {
@@ -440,6 +460,34 @@
             // Listen for resize events
             window.addEventListener('resize', checkWidth);
         });
+        
+        // Font Awesome Icon Check
+        setTimeout(function() {
+            const testIcon = document.createElement('i');
+            testIcon.className = 'fas fa-home';
+            testIcon.style.position = 'absolute';
+            testIcon.style.left = '-9999px';
+            document.body.appendChild(testIcon);
+            
+            const computedStyle = window.getComputedStyle(testIcon, ':before');
+            const fontFamily = computedStyle.getPropertyValue('font-family');
+            
+            if (!fontFamily || !fontFamily.toLowerCase().includes('font awesome')) {
+                console.warn('Font Awesome icons may not be loading properly');
+                // Add fallback styling for icons that aren't loading
+                document.querySelectorAll('[class*="fa-"]').forEach(function(icon) {
+                    if (!icon.textContent) {
+                        icon.style.backgroundColor = '#ddd';
+                        icon.style.width = '1em';
+                        icon.style.height = '1em';
+                        icon.style.display = 'inline-block';
+                        icon.style.borderRadius = '2px';
+                    }
+                });
+            }
+            
+            document.body.removeChild(testIcon);
+        }, 500);
     </script>
     {% block extra_js %}{% endblock %}
 </body>
