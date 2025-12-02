@@ -504,18 +504,43 @@ document.addEventListener('DOMContentLoaded', function() {
             description: formData.get('description') || ''
         };
 
+        // Debug logging
+        console.log('Form data being sent:', expenseData);
+        console.log('CSRF Token:', getCookie('csrftoken'));
+
+        // Validate required fields
+        if (!expenseData.expense_type) {
+            showAlert('Please select an expense type.', 'warning');
+            return;
+        }
+        if (!expenseData.amount || isNaN(expenseData.amount) || expenseData.amount <= 0) {
+            showAlert('Please enter a valid amount greater than 0.', 'warning');
+            return;
+        }
+
+        // Get CSRF token from meta tag (more reliable than cookie when HTTPONLY is true)
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || getCookie('csrftoken');
+        
+        if (!csrfToken) {
+            showAlert('Security token not found. Please refresh the page and try again.', 'danger');
+            return;
+        }
+
         fetch('/mb-admin/api/expenses/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
+                'X-CSRFToken': csrfToken
             },
             body: JSON.stringify(expenseData)
         })
         .then(response => {
             if (!response.ok) {
                 return response.json().then(data => {
-                    throw new Error(JSON.stringify(data));
+                    console.error('Server error response:', data);
+                    throw new Error(`Server returned ${response.status}: ${JSON.stringify(data)}`);
+                }).catch(() => {
+                    throw new Error(`Server returned ${response.status}: ${response.statusText}`);
                 });
             }
             return response.json();
@@ -530,7 +555,18 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error saving expense:', error);
-            showAlert('Failed to save expense. Please check your input.', 'danger');
+            // Show more detailed error message
+            let errorMessage = 'Failed to save expense. ';
+            if (error.message.includes('403')) {
+                errorMessage += 'Access denied. Please refresh the page and try again.';
+            } else if (error.message.includes('400')) {
+                errorMessage += 'Invalid data provided. Please check all required fields.';
+            } else if (error.message.includes('500')) {
+                errorMessage += 'Server error. Please try again later.';
+            } else {
+                errorMessage += error.message;
+            }
+            showAlert(errorMessage, 'danger');
         });
     }
 
@@ -563,11 +599,19 @@ document.addEventListener('DOMContentLoaded', function() {
             description: formData.get('description') || ''
         };
 
+        // Get CSRF token from meta tag (more reliable than cookie when HTTPONLY is true)
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || getCookie('csrftoken');
+        
+        if (!csrfToken) {
+            showAlert('Security token not found. Please refresh the page and try again.', 'danger');
+            return;
+        }
+
         fetch(`/mb-admin/api/expenses/${expenseId}/`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
+                'X-CSRFToken': csrfToken
             },
             body: JSON.stringify(expenseData)
         })
@@ -593,10 +637,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function deleteExpense(expenseId) {
+        // Get CSRF token from meta tag (more reliable than cookie when HTTPONLY is true)
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || getCookie('csrftoken');
+        
+        if (!csrfToken) {
+            showAlert('Security token not found. Please refresh the page and try again.', 'danger');
+            return;
+        }
+
         fetch(`/mb-admin/api/expenses/${expenseId}/`, {
             method: 'DELETE',
             headers: {
-                'X-CSRFToken': getCookie('csrftoken')
+                'X-CSRFToken': csrfToken
             }
         })
         .then(response => {
@@ -616,7 +668,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function loadStatistics() {
         fetch('/mb-admin/api/expenses/statistics/')
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 // Update statistics cards
                 document.getElementById('totalExpenses').textContent = `$${data.total_expenses.toFixed(2)}`;
@@ -642,14 +699,27 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error loading statistics:', error);
+                showAlert('Failed to load expense statistics. Please refresh the page.', 'danger');
             });
     }
 
     function updateMonthlyChart(monthlyData) {
-        const ctx = document.getElementById('monthlyExpenseChart').getContext('2d');
+        const chartElement = document.getElementById('monthlyExpenseChart');
+        if (!chartElement) {
+            console.error('Monthly expense chart element not found');
+            return;
+        }
+        
+        const ctx = chartElement.getContext('2d');
         
         if (monthlyChart) {
             monthlyChart.destroy();
+        }
+
+        // Validate data structure
+        if (!monthlyData || !Array.isArray(monthlyData)) {
+            console.error('Invalid monthly data provided to chart');
+            return;
         }
 
         monthlyChart = new Chart(ctx, {
@@ -765,6 +835,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
+        
+        // If cookie not found, try to get from meta tag
+        if (!cookieValue && name === 'csrftoken') {
+            const meta = document.querySelector('meta[name="csrf-token"]');
+            if (meta) {
+                cookieValue = meta.getAttribute('content');
+            }
+        }
+        
         return cookieValue;
     }
 

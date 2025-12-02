@@ -3368,17 +3368,31 @@ class ExpenseDashboardViewSet(viewsets.ModelViewSet):
         monthly_expenses = []
         
         for i in range(12):
-            month_date = now.replace(day=1) - timedelta(days=30*i)
+            # Calculate the month we want to query
+            target_month = (now.month - i - 1) % 12 + 1
+            target_year = now.year if (now.month - i) > 0 else now.year - 1
+            
+            # Create date range for the month
+            month_start = timezone.datetime(target_year, target_month, 1)
+            if target_month == 12:
+                month_end = timezone.datetime(target_year + 1, 1, 1) - timedelta(seconds=1)
+            else:
+                month_end = timezone.datetime(target_year, target_month + 1, 1) - timedelta(seconds=1)
+            
+            # Make timezone aware
+            month_start = timezone.make_aware(month_start, timezone.get_default_timezone())
+            month_end = timezone.make_aware(month_end, timezone.get_default_timezone())
+            
             month_expenses = queryset.filter(
-                created_at__year=month_date.year,
-                created_at__month=month_date.month
+                created_at__gte=month_start,
+                created_at__lte=month_end
             ).aggregate(total=Sum('amount'))['total'] or 0
             
             monthly_expenses.insert(0, {
-                'month': calendar.month_name[month_date.month],
-                'year': month_date.year,
+                'month': calendar.month_name[target_month],
+                'year': target_year,
                 'total': float(month_expenses),
-                'date': f"{month_date.year}-{month_date.month:02d}"
+                'date': f"{target_year}-{target_month:02d}"
             })
         
         # Expenses by type for pie chart
@@ -3474,44 +3488,36 @@ class ProductPerformanceView(APIView):
             products_data = []
             
             for product in products_query:
-                # Build the base query for orders containing this product
-                base_order_query = Order.objects.filter(items__product=product)
-                
-                # Apply date filtering if specified
-                if order_date_filter:
-                    base_order_query = base_order_query.filter(order_date_filter)
-                
-                # Get distinct orders for this product within date range
-                product_orders = base_order_query.distinct()
+                # Get all orders for this product within date range
+                product_orders = Order.objects.filter(
+                    order_date_filter,
+                    items__product=product
+                ).distinct()
                 
                 # Count total orders
                 orders_count = product_orders.count()
                 
-                # Calculate delivered quantity from delivered and shipped orders
+                # Calculate delivered quantity
                 delivered_orders = product_orders.filter(status__in=['delivered', 'shipped'])
                 delivered_quantity = OrderItem.objects.filter(
                     order__in=delivered_orders,
                     product=product
                 ).aggregate(total=Sum('quantity'))['total'] or 0
                 
-                # Calculate revenue from delivered and shipped orders
-                revenue_from_items = OrderItem.objects.filter(
-                    order__in=delivered_orders,
-                    product=product
-                ).aggregate(
-                    total_revenue=Sum(F('quantity') * F('unit_price'))
-                )['total_revenue'] or 0
+                # Calculate revenue (from delivered and shipped orders + partial returns)
+                delivered_shipped_revenue = Order.objects.filter(
+                    order_date_filter &
+                    Q(status__in=['delivered', 'shipped']) &
+                    Q(items__product=product)
+                ).aggregate(total=Sum('total_amount'))['total'] or 0
                 
-                # Calculate revenue from partially returned orders
-                partial_return_orders = product_orders.filter(status='partially_returned')
-                partial_return_revenue = OrderItem.objects.filter(
-                    order__in=partial_return_orders,
-                    product=product
-                ).aggregate(
-                    total_revenue=Sum(F('quantity') * F('unit_price'))
-                )['total_revenue'] or 0
+                partial_return_revenue = Order.objects.filter(
+                    order_date_filter &
+                    Q(status='partially_returned') &
+                    Q(items__product=product)
+                ).aggregate(total=Sum('partially_ammount'))['total'] or 0
                 
-                total_revenue = revenue_from_items + partial_return_revenue
+                total_revenue = delivered_shipped_revenue + partial_return_revenue
                 
                 # Get category name
                 category_name = product.category.name if product.category else 'Uncategorized'
