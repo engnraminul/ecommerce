@@ -125,7 +125,9 @@ DATABASES = {
 }
 
 # Caching Configuration  
-USE_REDIS = False  # Set to True when Redis is available
+# For production: Set USE_REDIS = True and ensure Redis server is running
+# For development: Set USE_REDIS = False to use database caching
+USE_REDIS = os.getenv('USE_REDIS', 'False').lower() == 'true'
 
 if USE_REDIS:
     # Redis Caching Configuration (Production)
@@ -311,22 +313,8 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Asia/Dhaka'
 
-# Cache settings - Use Redis if available, otherwise fallback to dummy cache
-try:
-    import redis
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-            'LOCATION': 'redis://127.0.0.1:6379/1',
-        }
-    }
-except ImportError:
-    # Fallback to dummy cache if Redis is not available
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
-        }
-    }
+# Cache configuration is handled earlier in the file (lines 128-180)
+# based on USE_REDIS setting
 
 # Logging
 LOGGING = {

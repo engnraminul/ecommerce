@@ -21,11 +21,13 @@ def get_public_ip():
     """
     Get the public IP address using external services with caching
     """
-    # Check cache first (cache for 5 minutes to avoid frequent API calls)
-    cached_ip = cache.get('public_ip')
-    if cached_ip:
-        logger.debug(f"Using cached public IP: {cached_ip}")
-        return cached_ip
+    # Use caching only when Redis is properly configured in production
+    from django.conf import settings
+    if getattr(settings, 'USE_REDIS', False):
+        cached_ip = cache.get('public_ip')
+        if cached_ip:
+            logger.debug(f"Using cached public IP: {cached_ip}")
+            return cached_ip
     
     services = [
         'https://ifconfig.co/ip',
@@ -45,8 +47,9 @@ def get_public_ip():
                 # Validate that it's a valid IP address
                 try:
                     ipaddress.ip_address(public_ip)
-                    # Cache the IP for 5 minutes
-                    cache.set('public_ip', public_ip, 300)
+                    # Cache the IP for 5 minutes (only in production with Redis)
+                    if getattr(settings, 'USE_REDIS', False):
+                        cache.set('public_ip', public_ip, 300)
                     logger.info(f"Successfully detected public IP: {public_ip}")
                     return public_ip
                 except ValueError:
