@@ -3474,36 +3474,44 @@ class ProductPerformanceView(APIView):
             products_data = []
             
             for product in products_query:
-                # Get all orders for this product within date range
-                product_orders = Order.objects.filter(
-                    order_date_filter,
-                    items__product=product
-                ).distinct()
+                # Build the base query for orders containing this product
+                base_order_query = Order.objects.filter(items__product=product)
+                
+                # Apply date filtering if specified
+                if order_date_filter:
+                    base_order_query = base_order_query.filter(order_date_filter)
+                
+                # Get distinct orders for this product within date range
+                product_orders = base_order_query.distinct()
                 
                 # Count total orders
                 orders_count = product_orders.count()
                 
-                # Calculate delivered quantity
+                # Calculate delivered quantity from delivered and shipped orders
                 delivered_orders = product_orders.filter(status__in=['delivered', 'shipped'])
                 delivered_quantity = OrderItem.objects.filter(
                     order__in=delivered_orders,
                     product=product
                 ).aggregate(total=Sum('quantity'))['total'] or 0
                 
-                # Calculate revenue (from delivered and shipped orders + partial returns)
-                delivered_shipped_revenue = Order.objects.filter(
-                    order_date_filter &
-                    Q(status__in=['delivered', 'shipped']) &
-                    Q(items__product=product)
-                ).aggregate(total=Sum('total_amount'))['total'] or 0
+                # Calculate revenue from delivered and shipped orders
+                revenue_from_items = OrderItem.objects.filter(
+                    order__in=delivered_orders,
+                    product=product
+                ).aggregate(
+                    total_revenue=Sum(F('quantity') * F('unit_price'))
+                )['total_revenue'] or 0
                 
-                partial_return_revenue = Order.objects.filter(
-                    order_date_filter &
-                    Q(status='partially_returned') &
-                    Q(items__product=product)
-                ).aggregate(total=Sum('partially_ammount'))['total'] or 0
+                # Calculate revenue from partially returned orders
+                partial_return_orders = product_orders.filter(status='partially_returned')
+                partial_return_revenue = OrderItem.objects.filter(
+                    order__in=partial_return_orders,
+                    product=product
+                ).aggregate(
+                    total_revenue=Sum(F('quantity') * F('unit_price'))
+                )['total_revenue'] or 0
                 
-                total_revenue = delivered_shipped_revenue + partial_return_revenue
+                total_revenue = revenue_from_items + partial_return_revenue
                 
                 # Get category name
                 category_name = product.category.name if product.category else 'Uncategorized'

@@ -27,9 +27,10 @@
                         <div class="dropdown w-100 w-sm-auto">
                             <select class="form-select form-select-sm" id="period-filter" style="min-width: 150px;">
                                 <option value="week">This Week</option>
-                                <option value="month" selected>This Month</option>
+                                <option value="month">This Month</option>
                                 <option value="last_month">Last Month</option>
                                 <option value="year">This Year</option>
+                                <option value="all" selected>All Time</option>
                                 <option value="custom">Custom Range</option>
                             </select>
                         </div>
@@ -436,19 +437,12 @@
                 </div>
             </div>
             <div class="card-body">
-                <!-- Search and Date Filter Controls -->
+                <!-- Search Controls -->
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text"><i class="fas fa-search"></i></span>
                             <input type="text" class="form-control" id="products-search" placeholder="Search products...">
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text"><i class="fas fa-calendar"></i></span>
-                            <input type="date" class="form-control" id="products-date-from" title="From Date">
-                            <input type="date" class="form-control" id="products-date-to" title="To Date">
                         </div>
                     </div>
                 </div>
@@ -537,39 +531,6 @@
                 </div>
             </div>
             <div class="card-body">
-                <!-- Date Filter Controls for Order Status -->
-                <div class="row mb-3">
-                    <div class="col-md-12">
-                        <div class="status-filter-controls">
-                            <div class="d-flex gap-2 align-items-center flex-wrap">
-                            <small class="text-muted fw-medium me-2">
-                                <i class="fas fa-calendar-alt me-1"></i>Filter by Date:
-                            </small>
-                            <div class="input-group input-group-sm" style="width: auto; min-width: 140px;">
-                                <span class="input-group-text bg-light border-end-0">
-                                    <i class="fas fa-calendar text-muted" style="font-size: 0.75rem;"></i>
-                                </span>
-                                <input type="date" class="form-control border-start-0" id="status-date-from" 
-                                       title="From Date" placeholder="From Date">
-                            </div>
-                            <span class="text-muted mx-1">to</span>
-                            <div class="input-group input-group-sm" style="width: auto; min-width: 140px;">
-                                <span class="input-group-text bg-light border-end-0">
-                                    <i class="fas fa-calendar text-muted" style="font-size: 0.75rem;"></i>
-                                </span>
-                                <input type="date" class="form-control border-start-0" id="status-date-to" 
-                                       title="To Date" placeholder="To Date">
-                            </div>
-                            <button class="btn btn-sm btn-outline-primary" id="status-apply-filter" title="Apply Date Filter">
-                                <i class="fas fa-filter"></i> Apply
-                            </button>
-                            <button class="btn btn-sm btn-outline-secondary" id="status-clear-filter" title="Clear Date Filter">
-                                <i class="fas fa-times"></i> Clear
-                            </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
                 
                 <div class="row">
                     <div class="col-md-6">
@@ -640,99 +601,6 @@
                                     <i class="fas fa-download"></i>
                                 </button>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Sales Analytics</h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="card border mb-3">
-                            <div class="card-body">
-                                <h6 class="card-title">Customer Retention Rate</h6>
-                                <div class="d-flex align-items-center">
-                                    <div class="display-4 me-3" id="retention-rate">-%</div>
-                                    <div class="flex-grow-1">
-                                        <div class="progress" style="height: 10px;">
-                                            <div class="progress-bar bg-success" role="progressbar" style="width: 0%;" id="retention-progress"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <small class="text-muted">Percentage of repeat customers</small>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-4">
-                        <div class="card border mb-3">
-                            <div class="card-body">
-                                <h6 class="card-title">Conversion Rate</h6>
-                                <div class="d-flex align-items-center">
-                                    <div class="display-4 me-3" id="conversion-rate">-%</div>
-                                    <div class="flex-grow-1">
-                                        <div class="progress" style="height: 10px;">
-                                            <div class="progress-bar bg-primary" role="progressbar" style="width: 0%;" id="conversion-progress"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <small class="text-muted">Orders to site visits ratio</small>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-4">
-                        <div class="card border mb-3">
-                            <div class="card-body">
-                                <h6 class="card-title">Inventory Turnover</h6>
-                                <div class="d-flex align-items-center">
-                                    <div class="display-4 me-3" id="inventory-turnover">-</div>
-                                    <div class="flex-grow-1">
-                                        <div class="progress" style="height: 10px;">
-                                            <div class="progress-bar bg-info" role="progressbar" style="width: 0%;" id="inventory-progress"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <small class="text-muted">Sales to inventory ratio</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6 class="mb-3">Recommendations</h6>
-                        <div class="list-group" id="recommendations-list">
-                            <div class="text-center py-3">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                <p class="mt-2">Analyzing data for recommendations...</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <h6 class="mb-3">Download Reports</h6>
-                        <div class="d-grid gap-2">
-                            <button class="btn btn-outline-primary" id="download-sales-report-btn">
-                                <i class="fas fa-file-excel me-2"></i> Sales Report
-                            </button>
-                            <button class="btn btn-outline-primary" id="download-product-report-btn">
-                                <i class="fas fa-file-excel me-2"></i> Product Performance Report
-                            </button>
-                            <button class="btn btn-outline-primary" id="download-customer-report-btn">
-                                <i class="fas fa-file-excel me-2"></i> Customer Analysis Report
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -1646,7 +1514,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let salesChart, categoryChart, orderStatusChart;
     
     // Current period selection
-    let currentPeriod = 'month';
+    let currentPeriod = 'all';
     let currentYear = getDhakaTime().getFullYear().toString();
     let customDateRange = { from: null, to: null };
     
@@ -1661,18 +1529,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set current year as default in dropdown
     document.getElementById('year-filter').value = currentYear;
     
-    // Set default date range (current month) using Dhaka timezone
+    // Initialize date variables for internal use
     const today = getDhakaTime();
     const firstDayOfMonth = getFirstDayOfMonth(today);
-    document.getElementById('products-date-from').value = formatDhakaDate(firstDayOfMonth);
-    document.getElementById('products-date-to').value = formatDhakaDate(today);
-    
-    // Set default date range for status section (current month) using Dhaka timezone
-    document.getElementById('status-date-from').value = formatDhakaDate(firstDayOfMonth);
-    document.getElementById('status-date-to').value = formatDhakaDate(today);
     
     // Load initial data
     loadStatistics(currentPeriod);
+    
+    // Load product performance data separately to ensure it loads
+    loadProductsWithFilters();
     
     // Set up event listener for period dropdown
     document.getElementById('period-filter').addEventListener('change', function() {
@@ -1759,19 +1624,7 @@ document.addEventListener('DOMContentLoaded', function() {
         exportOrderStatusData();
     });
     
-    // Set up event listeners for status date filters
-    document.getElementById('status-apply-filter').addEventListener('click', function() {
-        loadOrderStatusWithDateFilter();
-    });
-    
-    document.getElementById('status-clear-filter').addEventListener('click', function() {
-        // Reset date filters to current month using Dhaka timezone
-        const today = getDhakaTime();
-        const firstDayOfMonth = getFirstDayOfMonth(today);
-        document.getElementById('status-date-from').value = formatDhakaDate(firstDayOfMonth);
-        document.getElementById('status-date-to').value = formatDhakaDate(today);
-        loadOrderStatusWithDateFilter();
-    });
+
     
     // Set up event listeners for chart options
     document.querySelectorAll('.chart-type-option').forEach(option => {
@@ -1808,19 +1661,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Set up event listeners for report download buttons
-    document.getElementById('download-sales-report-btn').addEventListener('click', function() {
-        downloadReport('sales', currentPeriod);
-    });
-    
-    document.getElementById('download-product-report-btn').addEventListener('click', function() {
-        downloadReport('products', currentPeriod);
-    });
-    
-    document.getElementById('download-customer-report-btn').addEventListener('click', function() {
-        downloadReport('customers', currentPeriod);
-    });
-    
     // Set up event listeners for product filtering
     document.getElementById('products-sort').addEventListener('change', function() {
         productsSortBy = this.value;
@@ -1832,15 +1672,7 @@ document.addEventListener('DOMContentLoaded', function() {
         sortAndFilterProducts();
     });
     
-    document.getElementById('products-date-from').addEventListener('change', function() {
-        productsCurrentPage = 1;
-        loadProductsWithFilters();
-    });
-    
-    document.getElementById('products-date-to').addEventListener('change', function() {
-        productsCurrentPage = 1;
-        loadProductsWithFilters();
-    });
+
     
     document.getElementById('products-refresh').addEventListener('click', function() {
         loadProductsWithFilters();
@@ -1849,10 +1681,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('products-clear-filters').addEventListener('click', function() {
         document.getElementById('products-search').value = '';
         document.getElementById('products-sort').value = 'orders';
-        const today = getDhakaTime();
-        const firstDayOfMonth = getFirstDayOfMonth(today);
-        document.getElementById('products-date-from').value = formatDhakaDate(firstDayOfMonth);
-        document.getElementById('products-date-to').value = formatDhakaDate(today);
         productsSortBy = 'orders';
         productsCurrentPage = 1;
         loadProductsWithFilters();
@@ -1911,12 +1739,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Load detailed products data with current filters
                 loadProductsWithFilters();
-                
-                // Update analytics metrics
-                updateAnalyticsMetrics(data.analytics || {});
-                
-                // Update recommendations
-                updateRecommendations(data.recommendations || []);
             })
             .catch(error => {
                 console.error('Error loading statistics:', error);
@@ -1964,12 +1786,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Load detailed products data with current filters
                 loadProductsWithFilters();
-                
-                // Update analytics metrics
-                updateAnalyticsMetrics(data.analytics || {});
-                
-                // Update recommendations
-                updateRecommendations(data.recommendations || []);
                 
                 // Show success message
                 showAlert(`Statistics loaded for custom range: ${dateFrom} to ${dateTo}`, 'success');
@@ -2418,48 +2234,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Load order status data with date filter
-    function loadOrderStatusWithDateFilter() {
-        const dateFrom = document.getElementById('status-date-from').value;
-        const dateTo = document.getElementById('status-date-to').value;
-        
-        // Show loading
-        document.getElementById('status-chart-loading').classList.remove('d-none');
-        
-        // Build URL with date parameters
-        let url = `/mb-admin/api/order-status-breakdown/?period=${currentPeriod}`;
-        if (dateFrom) url += `&date_from=${dateFrom}`;
-        if (dateTo) url += `&date_to=${dateTo}`;
-        
-        fetch(url, {
-            headers: {
-                'X-CSRFToken': getCookie('csrftoken')
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Update order status chart with filtered data
-            updateOrderStatusChart(data.orders_by_status || []);
-            
-            // Update order status table with filtered data  
-            updateOrderStatusTable(data.orders_by_status || []);
-        })
-        .catch(error => {
-            console.error('Error loading filtered order status data:', error);
-            document.getElementById('status-chart-loading').classList.add('d-none');
-            showAlert('Failed to load filtered order status data.', 'danger');
-        });
-    }
+
     
     // Load products with filters
     function loadProductsWithFilters() {
-        const dateFrom = document.getElementById('products-date-from').value;
-        const dateTo = document.getElementById('products-date-to').value;
-        
         // Show loading
         const tbody = document.getElementById('top-products-table');
         tbody.innerHTML = `
@@ -2474,8 +2252,6 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         
         let url = `/mb-admin/api/products-performance/?period=${currentPeriod}`;
-        if (dateFrom) url += `&date_from=${dateFrom}`;
-        if (dateTo) url += `&date_to=${dateTo}`;
         
         fetch(url, {
             headers: {
@@ -2926,9 +2702,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const totalDelivered = productsFilteredData.reduce((sum, product) => sum + (product.delivered_quantity || 0), 0);
         
         const searchTerm = document.getElementById('products-search').value.trim();
-        const hasFilters = searchTerm || 
-                          document.getElementById('products-date-from').value || 
-                          document.getElementById('products-date-to').value;
+        const hasFilters = searchTerm;
         
         let summaryText = `${totalProducts} products`;
         if (hasFilters) summaryText += ' (filtered)';
@@ -2951,13 +2725,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Export products data
     function exportProductsData() {
-        const dateFrom = document.getElementById('products-date-from').value;
-        const dateTo = document.getElementById('products-date-to').value;
         const searchTerm = document.getElementById('products-search').value;
         
         let url = `/mb-admin/api/export-products/?period=${currentPeriod}&sort=${productsSortBy}&order=${productsSortOrder}`;
-        if (dateFrom) url += `&date_from=${dateFrom}`;
-        if (dateTo) url += `&date_to=${dateTo}`;
         if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
         
         // Create a temporary link to download
@@ -3255,67 +3025,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.removeChild(link);
         
         showAlert('Order status data exported successfully!', 'success');
-    }
-    
-    // Update analytics metrics
-    function updateAnalyticsMetrics(analytics) {
-        // Default values if data is not available
-        const retention = analytics.customer_retention_rate || 0;
-        const conversion = analytics.conversion_rate || 0;
-        const inventory = analytics.inventory_turnover || 0;
-        
-        // Update retention rate
-        document.getElementById('retention-rate').textContent = `${retention}%`;
-        document.getElementById('retention-progress').style.width = `${retention}%`;
-        
-        // Update conversion rate
-        document.getElementById('conversion-rate').textContent = `${conversion}%`;
-        document.getElementById('conversion-progress').style.width = `${conversion}%`;
-        
-        // Update inventory turnover
-        document.getElementById('inventory-turnover').textContent = inventory.toFixed(1);
-        document.getElementById('inventory-progress').style.width = `${Math.min(inventory * 10, 100)}%`;
-    }
-    
-    // Update recommendations
-    function updateRecommendations(recommendations) {
-        const list = document.getElementById('recommendations-list');
-        list.innerHTML = '';
-        
-        if (recommendations.length === 0) {
-            list.innerHTML = '<div class="alert alert-info">No recommendations available at this time.</div>';
-            return;
-        }
-        
-        recommendations.forEach(recommendation => {
-            const item = document.createElement('div');
-            item.className = 'list-group-item';
-            
-            let iconClass = 'info';
-            switch(recommendation.type) {
-                case 'warning':
-                    iconClass = 'warning text-warning';
-                    break;
-                case 'success':
-                    iconClass = 'check-circle text-success';
-                    break;
-                case 'danger':
-                    iconClass = 'exclamation-triangle text-danger';
-                    break;
-            }
-            
-            item.innerHTML = `
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-${iconClass} me-3"></i>
-                    <div>
-                        <h6 class="mb-1">${recommendation.title}</h6>
-                        <p class="mb-0 small">${recommendation.description}</p>
-                    </div>
-                </div>
-            `;
-            
-            list.appendChild(item);
-        });
     }
     
     // Download reports
