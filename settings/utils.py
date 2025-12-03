@@ -69,11 +69,12 @@ def send_order_to_curier(order):
         
         # Build request payload for SteadFast API
         # Make sure to follow exactly what's in the API documentation
+        # Use only address_line_1 as per requirement (not full_address)
         payload = {
             "invoice": str(order.order_number),
             "recipient_name": shipping_address.full_name,
             "recipient_phone": shipping_address.phone or "",
-            "recipient_address": shipping_address.full_address,
+            "recipient_address": shipping_address.address_line_1 or "",
             "cod_amount": str(order.total_amount),
             "item_description": item_description,
             "status": "in_review",
