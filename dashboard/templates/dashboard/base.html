@@ -488,6 +488,57 @@
             
             document.body.removeChild(testIcon);
         }, 500);
+        
+        // Global CSRF token helper function
+        window.getCsrfToken = function() {
+            // First try to get from meta tag (preferred method)
+            const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+            if (csrfMeta) {
+                return csrfMeta.getAttribute('content');
+            }
+            
+            // Fallback to cookie reading (for backward compatibility)
+            const name = 'csrftoken';
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        return decodeURIComponent(cookie.substring(name.length + 1));
+                    }
+                }
+            }
+            
+            // Last fallback - try to get from hidden input field
+            const csrfInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+            if (csrfInput) {
+                return csrfInput.value;
+            }
+            
+            console.error('CSRF token not found in meta tag, cookies, or hidden input');
+            return null;
+        };
+        
+        // Backward compatibility - override getCookie function for csrftoken
+        window.getCookie = function(name) {
+            if (name === 'csrftoken') {
+                return window.getCsrfToken();
+            }
+            
+            // For other cookies, use standard cookie reading
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        };
     </script>
     {% block extra_js %}{% endblock %}
 </body>

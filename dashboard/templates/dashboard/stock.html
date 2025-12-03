@@ -549,6 +549,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // CSRF token helper function
     function getCookie(name) {
+        // Special handling for CSRF token - get from meta tag if available
+        if (name === 'csrftoken') {
+            const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+            if (csrfMeta) {
+                return csrfMeta.getAttribute('content');
+            }
+        }
+        
+        // Fallback to cookie reading for other cookies
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
             const cookies = document.cookie.split(';');

@@ -5756,9 +5756,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function getCookie(name) {
+        // Special handling for CSRF token - get from meta tag if available
+        if (name === 'csrftoken') {
+            const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+            if (csrfMeta) {
+                return csrfMeta.getAttribute('content');
+            }
+        }
+        
         let cookieValue = null;
         
-        // First try to get from cookies
+        // Try to get from cookies
         if (document.cookie && document.cookie !== '') {
             const cookies = document.cookie.split(';');
             for (let i = 0; i < cookies.length; i++) {
@@ -5775,7 +5783,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const csrfInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
             if (csrfInput) {
                 cookieValue = csrfInput.value;
-                console.log('Got CSRF token from hidden input:', cookieValue);
             }
         }
         
