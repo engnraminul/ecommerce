@@ -329,9 +329,13 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label">Google Maps Embed URL</label>
-                        <input type="url" class="form-control" name="map_embed_url" id="map_embed_url" placeholder="https://www.google.com/maps/embed?pb=...">
-                        <div class="form-text">Get this from Google Maps > Share > Embed</div>
+                        <label class="form-label">Map URL or Coordinates</label>
+                        <input type="url" class="form-control" name="map_embed_url" id="map_embed_url" placeholder="https://www.openstreetmap.org/?#map=19/23.892996/90.382711">
+                        <div class="form-text">
+                            Paste any map URL from:
+                            <br>• OpenStreetMap: Copy URL from browser address bar
+                            <br>• Or enter coordinates directly: 23.892996,90.382711
+                        </div>
                     </div>
                     
                     <h6 class="mb-3">Social Media Links</h6>
@@ -905,18 +909,23 @@ function saveContactSettings() {
         },
         body: JSON.stringify({ contact_settings: settings })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             showAlert('success', 'Contact settings saved successfully');
             bootstrap.Modal.getInstance(document.getElementById('settingsModal')).hide();
         } else {
-            showAlert('error', 'Failed to save settings');
+            showAlert('error', `Failed to save settings: ${data.error || 'Unknown error'}`);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showAlert('error', 'An error occurred');
+        showAlert('error', `An error occurred: ${error.message}`);
     });
 }
 

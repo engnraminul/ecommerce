@@ -9,6 +9,9 @@ from rest_framework.response import Response
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAdminUser
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.middleware.csrf import get_token
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q, Count
@@ -16,6 +19,8 @@ from django.db.models import Q, Count
 from .models import Contact, ContactSetting, ContactActivity
 from .serializers import ContactSerializer, ContactSubmissionSerializer, ContactSettingSerializer
 from dashboard.models import BlockList
+import re
+import urllib.parse as urlparse
 
 
 class IsStaffUser(permissions.BasePermission):
@@ -28,7 +33,7 @@ class ContactDashboardViewSet(viewsets.ModelViewSet):
     """ViewSet for managing contact submissions in dashboard"""
     queryset = Contact.objects.all()
     serializer_class = ContactSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsStaffUser]
     filterset_fields = ['status', 'priority', 'assigned_to']
     search_fields = ['name', 'email', 'phone', 'subject', 'message']
     ordering_fields = ['submitted_at', 'updated_at', 'priority', 'status']
@@ -185,6 +190,68 @@ class ContactDashboardViewSet(viewsets.ModelViewSet):
         """Assign contact to a specific user"""
         from django.contrib.auth import get_user_model
         User = get_user_model()
+
+
+def extract_coordinates_from_url(url):
+    """
+    Extract latitude and longitude from various map URL formats.
+    Supports OpenStreetMap, Google Maps, and direct coordinate formats.
+    Returns coordinates as 'lat,lon' string or None if not found.
+    """
+    if not url:
+        return None
+    
+    try:
+        # OpenStreetMap URL patterns
+        # Pattern 1: https://www.openstreetmap.org/?#map=19/23.892996/90.382711
+        osm_pattern1 = r'openstreetmap\.org/.*#map=\d+/([\d.-]+)/([\d.-]+)'
+        match = re.search(osm_pattern1, url)
+        if match:
+            lat, lon = match.groups()
+            return f"{lat},{lon}"
+        
+        # Pattern 2: https://www.openstreetmap.org/search?query=lat,lon
+        osm_pattern2 = r'openstreetmap\.org.*[?&]query=([\d.-]+),([\d.-]+)'
+        match = re.search(osm_pattern2, url)
+        if match:
+            lat, lon = match.groups()
+            return f"{lat},{lon}"
+        
+        # Pattern 3: Embed URLs with bbox and marker
+        # https://www.openstreetmap.org/export/embed.html?bbox=...&marker=23.7808875,90.3492859
+        marker_pattern = r'marker=([\d.-]+),([\d.-]+)'
+        match = re.search(marker_pattern, url)
+        if match:
+            lat, lon = match.groups()
+            return f"{lat},{lon}"
+        
+        # Google Maps URL patterns
+        # Pattern 1: https://maps.google.com/?q=23.892996,90.382711
+        google_pattern1 = r'maps\.google\.com.*[?&]q=([\d.-]+),([\d.-]+)'
+        match = re.search(google_pattern1, url)
+        if match:
+            lat, lon = match.groups()
+            return f"{lat},{lon}"
+        
+        # Pattern 2: https://www.google.com/maps/@23.892996,90.382711,17z
+        google_pattern2 = r'google\.com/maps/@([\d.-]+),([\d.-]+),\d+z'
+        match = re.search(google_pattern2, url)
+        if match:
+            lat, lon = match.groups()
+            return f"{lat},{lon}"
+        
+        # Direct coordinate format: "23.892996,90.382711"
+        coord_pattern = r'^([\d.-]+)\s*,\s*([\d.-]+)$'
+        match = re.search(coord_pattern, url.strip())
+        if match:
+            lat, lon = match.groups()
+            return f"{lat},{lon}"
+        
+        return None
+        
+    except Exception as e:
+        print(f"Error extracting coordinates from URL: {e}")
+        return None
         
         contact = self.get_object()
         user_id = request.data.get('user_id')
@@ -427,10 +494,12 @@ class ContactPublicViewSet(viewsets.ModelViewSet):
         return self.request.META.get('REMOTE_ADDR')
 
 
-@api_view(['GET'])
-@permission_classes([])  # Public access
 def get_contact_settings(request):
     """Get contact page settings from contact settings"""
+    # Check if user is staff
+    if not (request.user.is_authenticated and request.user.is_staff):
+        return JsonResponse({'error': 'Authentication required'}, status=401)
+    
     try:
         # Get contact settings
         contact_settings = {}
@@ -453,37 +522,66 @@ def get_contact_settings(request):
                 'instagram': '',
                 'linkedin': ''
             },
-            'map_embed_url': 'https://www.openstreetmap.org/export/embed.html?bbox=90.3369%2C23.7461%2C90.4204%2C23.8161&layer=mapnik&marker=23.7808875%2C90.3492859',
+            'map_embed_url': 'https://www.openstreetmap.org/?#map=16/23.7809/90.3493',
+            'map_coordinates': '23.7809,90.3493',
             'additional_info': ''
         }
         
         # Merge with defaults
         final_settings = {**default_settings, **contact_settings}
         
-        return Response({
+        return JsonResponse({
             'success': True,
             'contact_settings': final_settings
         })
         
     except Exception as e:
-        return Response({
+        return JsonResponse({
             'error': str(e)
         }, status=500)
 
 
-@api_view(['POST'])
-@permission_classes([IsAdminUser])
+@csrf_exempt
 def update_contact_settings(request):
     """Update contact page settings"""
+    import logging
+    import json
+    from django.http import JsonResponse
+    logger = logging.getLogger(__name__)
+    
+    # Check if user is staff
+    if not (request.user.is_authenticated and request.user.is_staff):
+        return JsonResponse({'error': 'Authentication required'}, status=401)
+    
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
     try:
-        contact_data = request.data.get('contact_settings', {})
+        # Parse JSON body
+        data = json.loads(request.body.decode('utf-8'))
+        contact_data = data.get('contact_settings', {})
+        
+        if not contact_data:
+            logger.warning("No contact_settings data provided in request")
+            return JsonResponse({
+                'success': False,
+                'error': 'No contact_settings data provided'
+            }, status=400)
+        
+        # Process map URL and extract coordinates if provided
+        map_url = contact_data.get('map_embed_url', '')
+        if map_url:
+            coordinates = extract_coordinates_from_url(map_url)
+            if coordinates:
+                contact_data['map_coordinates'] = coordinates
+                logger.info(f"Extracted coordinates from URL: {coordinates}")
         
         # Get or create contact settings
         contact_setting, created = ContactSetting.objects.get_or_create(
             key='contact_details',
             defaults={
                 'value': contact_data,
-                'description': 'Contact page settings including business information, address, phone, email, and social media links'
+                'description': 'Contact page settings including business information, address, phone, email, social media links'
             }
         )
         
@@ -491,13 +589,17 @@ def update_contact_settings(request):
             contact_setting.value = contact_data
             contact_setting.save()
         
-        return Response({
+        logger.info(f"Contact settings updated successfully by user {request.user.username}")
+        
+        return JsonResponse({
             'success': True,
             'message': 'Contact settings updated successfully'
         })
         
     except Exception as e:
-        return Response({
+        logger.error(f"Error updating contact settings: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
             'error': str(e)
         }, status=500)
 
@@ -523,7 +625,8 @@ def contact_page(request):
             'instagram': '',
             'linkedin': ''
         },
-        'map_embed_url': 'https://www.openstreetmap.org/export/embed.html?bbox=90.3369%2C23.7461%2C90.4204%2C23.8161&layer=mapnik&marker=23.7808875%2C90.3492859',
+        'map_embed_url': 'https://www.openstreetmap.org/?#map=16/23.7809/90.3493',
+        'map_coordinates': '23.7809,90.3493',
         'additional_info': ''
     }
     
@@ -551,19 +654,12 @@ def contact_page(request):
             if len(parts) >= 2:
                 map_coordinates = f"{parts[0]},{parts[1]}"
 
-    # If no explicit coordinates, try to extract marker from an OpenStreetMap embed URL
+    # If no explicit coordinates, try to extract from map URL
     if not map_coordinates and final_settings.get('map_embed_url'):
         embed_url = final_settings.get('map_embed_url')
-        try:
-            # look for marker=lat%2Clon or marker=lat,lon
-            if 'marker=' in embed_url:
-                marker_part = embed_url.split('marker=')[1].split('&')[0]
-                marker_part = marker_part.replace('%2C', ',')
-                parts = [p.strip() for p in marker_part.split(',') if p.strip()]
-                if len(parts) >= 2:
-                    map_coordinates = f"{parts[0]},{parts[1]}"
-        except Exception:
-            map_coordinates = None
+        extracted_coords = extract_coordinates_from_url(embed_url)
+        if extracted_coords:
+            map_coordinates = extracted_coords
 
     # Determine source type
     if map_coordinates:
@@ -580,3 +676,6 @@ def contact_page(request):
     }
     
     return render(request, 'contact/contact.html', context)
+
+
+

@@ -16,6 +16,8 @@ urlpatterns = [
     path('api/contact-settings/', views.get_contact_settings, name='get_contact_settings'),
     path('api/contact-settings/update/', views.update_contact_settings, name='update_contact_settings'),
     
+
+    
     # Public contact page
     path('', views.contact_page, name='contact_page'),
 ]
