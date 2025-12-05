@@ -136,10 +136,60 @@ class SiteSettingsAdmin(admin.ModelAdmin):
 
 @admin.register(Curier)
 class CurierAdmin(admin.ModelAdmin):
-    list_display = ('name', 'api_url', 'is_active', 'created_at')
-    list_filter = ('is_active',)
+    list_display = ('name', 'api_url_short', 'has_credentials', 'is_active', 'created_at')
+    list_filter = ('is_active', 'created_at')
     search_fields = ('name', 'api_url')
     readonly_fields = ('created_at', 'updated_at')
+    
+    fieldsets = (
+        ('Courier Information', {
+            'fields': ('name', 'api_url', 'is_active'),
+            'description': 'Basic courier service configuration'
+        }),
+        ('API Credentials', {
+            'fields': ('api_key', 'secret_key'),
+            'description': '''
+            <strong>Fraud Checker API Integration:</strong><br>
+            • These credentials are used for Packzy fraud checking API<br>
+            • API endpoint: https://portal.packzy.com/api/v1/fraud_check/{phone_number}<br>
+            • Headers required: api-key and secret-key<br>
+            • For SteadFast courier integration, name should contain "steadfast" or "packzy"
+            '''
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+    
+    def api_url_short(self, obj):
+        """Display shortened API URL"""
+        if len(obj.api_url) > 50:
+            return obj.api_url[:47] + '...'
+        return obj.api_url
+    api_url_short.short_description = 'API URL'
+    
+    def has_credentials(self, obj):
+        """Check if courier has both API key and secret key"""
+        return bool(obj.api_key and obj.secret_key)
+    has_credentials.boolean = True
+    has_credentials.short_description = 'Has Credentials'
+    
+    def get_form(self, request, obj=None, **kwargs):
+        """Customize form to show help text for fraud checker integration"""
+        form = super().get_form(request, obj, **kwargs)
+        
+        # Add help text for API credentials
+        if 'api_key' in form.base_fields:
+            form.base_fields['api_key'].help_text = 'API Key for fraud checking service (e.g., Packzy/SteadFast API)'
+        
+        if 'secret_key' in form.base_fields:
+            form.base_fields['secret_key'].help_text = 'Secret Key for fraud checking service (e.g., Packzy/SteadFast API)'
+        
+        if 'name' in form.base_fields:
+            form.base_fields['name'].help_text = 'Courier name (use "SteadFast" or "Packzy" for fraud checker integration)'
+        
+        return form
 
 
 @admin.register(CheckoutCustomization)

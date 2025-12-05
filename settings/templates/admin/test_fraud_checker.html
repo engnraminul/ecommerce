@@ -1,0 +1,150 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Test Fraud Checker API{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; Test Fraud Checker API
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h1>🔍 Test Fraud Checker API</h1>
+    
+    {% if credentials_status %}
+    <div class="form-row">
+        <h3>📋 API Credentials Status</h3>
+        <ul>
+            <li>API Key: {% if credentials_status.api_key_configured %}<span style="color: green;">✓ Configured</span>{% else %}<span style="color: red;">✗ Missing</span>{% endif %}</li>
+            <li>Secret Key: {% if credentials_status.secret_key_configured %}<span style="color: green;">✓ Configured</span>{% else %}<span style="color: red;">✗ Missing</span>{% endif %}</li>
+            {% if credentials_status.api_key_preview %}
+            <li>API Key Preview: <code>{{ credentials_status.api_key_preview }}</code></li>
+            {% endif %}
+        </ul>
+    </div>
+    {% endif %}
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-row">
+            <div>
+                <label for="phone_number">📱 Phone Number:</label>
+                <input type="text" 
+                       name="phone_number" 
+                       id="phone_number" 
+                       value="{{ phone_number }}" 
+                       placeholder="01XXXXXXXXX or 8801XXXXXXXXX"
+                       required>
+                <p class="help">Enter a Bangladeshi phone number (11 digits starting with 01)</p>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div>
+                <label>
+                    <input type="checkbox" name="use_mock" {% if use_mock %}checked{% endif %}>
+                    🧪 Use Mock Data (for testing without real API call)
+                </label>
+            </div>
+        </div>
+        
+        <div class="submit-row">
+            <input type="submit" value="🔍 Check Fraud Status" class="default">
+        </div>
+    </form>
+    
+    {% if result %}
+    <div class="results" style="margin-top: 30px;">
+        <h3>📊 Fraud Check Results</h3>
+        
+        {% if result.success %}
+        <div style="background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 5px;">
+            <h4>✅ Success</h4>
+            <table>
+                <tr><td><strong>📱 Phone:</strong></td><td>{{ result.phone_number }}</td></tr>
+                <tr><td><strong>📦 Total Parcels:</strong></td><td>{{ result.total_parcels }}</td></tr>
+                <tr><td><strong>✅ Delivered:</strong></td><td>{{ result.total_delivered }}</td></tr>
+                <tr><td><strong>❌ Cancelled:</strong></td><td>{{ result.total_cancelled }}</td></tr>
+                <tr><td><strong>⚠️ Fraud Reports:</strong></td><td>{{ result.total_fraud_reports|length }}</td></tr>
+                <tr><td><strong>🎯 Fraud Score:</strong></td><td>{{ result.fraud_score }}/100</td></tr>
+                <tr><td><strong>🚨 Risk Level:</strong></td><td>
+                    <span style="
+                        {% if result.risk_level == 'HIGH' %}color: #dc3545; font-weight: bold;
+                        {% elif result.risk_level == 'MEDIUM' %}color: #fd7e14; font-weight: bold;
+                        {% elif result.risk_level == 'LOW' %}color: #0dcaf0;
+                        {% elif result.risk_level == 'MINIMAL' %}color: #198754;
+                        {% else %}color: #6c757d;
+                        {% endif %}
+                    ">{{ result.risk_level }}</span>
+                </td></tr>
+            </table>
+            
+            {% if result.total_fraud_reports %}
+            <div style="margin-top: 15px;">
+                <strong>📋 Fraud Reports:</strong>
+                <ul>
+                    {% for report in result.total_fraud_reports %}
+                    <li>{{ report }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div style="background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 5px;">
+            <h4>❌ Error</h4>
+            <p><strong>Error Message:</strong> {{ result.error }}</p>
+            
+            {% if not credentials_status.api_key_configured or not credentials_status.secret_key_configured %}
+            <div style="margin-top: 15px; background: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; border-radius: 3px;">
+                <strong>💡 Fix:</strong> Please configure the API credentials in the 
+                <a href="{% url 'admin:settings_curier_changelist' %}">Courier Settings</a>.
+                <br>Add a courier with name "SteadFast" or "Packzy" and enter the API key and secret key.
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <div style="margin-top: 30px; padding: 15px; background: #e9ecef; border-radius: 5px;">
+        <h4>ℹ️ Information</h4>
+        <ul>
+            <li><strong>API Endpoint:</strong> <code>https://portal.packzy.com/api/v1/fraud_check/{phone_number}</code></li>
+            <li><strong>Required Headers:</strong> <code>api-key</code> and <code>secret-key</code></li>
+            <li><strong>Credentials Source:</strong> Active courier with name containing "steadfast" or "packzy"</li>
+            <li><strong>Fallback:</strong> First active courier if no SteadFast courier found</li>
+        </ul>
+        
+        <p><strong>Setup Instructions:</strong></p>
+        <ol>
+            <li>Go to <a href="{% url 'admin:settings_curier_changelist' %}">Courier Settings</a></li>
+            <li>Add a new courier or edit existing one</li>
+            <li>Set name to "SteadFast" or "Packzy"</li>
+            <li>Enter your API key and secret key from Packzy portal</li>
+            <li>Set as active and save</li>
+        </ol>
+    </div>
+</div>
+
+<style>
+.results table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.results table td {
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+}
+
+.results table td:first-child {
+    width: 150px;
+    vertical-align: top;
+}
+</style>
+{% endblock %}

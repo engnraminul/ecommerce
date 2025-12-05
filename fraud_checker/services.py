@@ -1,6 +1,7 @@
 import requests
 import logging
 from typing import Optional, Dict, Any
+from django.core.exceptions import ObjectDoesNotExist
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,58 @@ class PackzyFraudChecker:
             'Accept-Encoding': 'gzip, deflate, br',
             'Connection': 'keep-alive',
         })
+        
+        # Initialize API credentials from SteadFast courier settings
+        self.api_key = None
+        self.secret_key = None
+        self._load_credentials()
+    
+    def _load_credentials(self):
+        """Load API credentials from SteadFast courier settings"""
+        try:
+            from settings.models import Curier
+            
+            # Try to find SteadFast courier configuration
+            # Looking for common variations of SteadFast name
+            steadfast_names = ['SteadFast', 'Steadfast', 'steadfast', 'STEADFAST', 'packzy', 'Packzy']
+            courier = None
+            
+            for name in steadfast_names:
+                try:
+                    courier = Curier.objects.filter(
+                        name__icontains=name,
+                        is_active=True
+                    ).first()
+                    if courier:
+                        break
+                except:
+                    continue
+            
+            # If no specific SteadFast found, try to get the first active courier
+            if not courier:
+                courier = Curier.objects.filter(is_active=True).first()
+            
+            if courier:
+                self.api_key = courier.api_key
+                self.secret_key = courier.secret_key
+                logger.info(f"Loaded credentials from courier: {courier.name}")
+            else:
+                logger.warning("No active courier configuration found for fraud check API")
+                
+        except Exception as e:
+            logger.error(f"Failed to load courier credentials: {str(e)}")
+    
+    def refresh_credentials(self):
+        """Refresh API credentials from database"""
+        self._load_credentials()
+    
+    def get_credentials_status(self):
+        """Get status of current credentials"""
+        return {
+            'api_key_configured': bool(self.api_key),
+            'secret_key_configured': bool(self.secret_key),
+            'api_key_preview': self.api_key[:10] + '...' if self.api_key else None
+        }
     
     def check_fraud(self, phone_number: str) -> Dict[str, Any]:
         """
@@ -39,6 +92,20 @@ class PackzyFraudChecker:
             return {
                 'success': False,
                 'error': 'Invalid phone number provided'
+            }
+        
+        # Check if credentials are available
+        if not self.USE_MOCK_DATA and (not self.api_key or not self.secret_key):
+            return {
+                'success': False,
+                'error': 'API credentials not configured. Please set up SteadFast courier API key and secret key in the admin panel.',
+                'courier': 'steadfast',
+                'total_parcels': 0,
+                'total_delivered': 0,
+                'total_cancelled': 0,
+                'fraud_score': 0,
+                'risk_level': 'UNKNOWN',
+                'risk_color': 'secondary'
             }
         
         # Make API call or use mock data
@@ -103,9 +170,26 @@ class PackzyFraudChecker:
         """Make the actual API call to Packzy"""
         url = f"{self.BASE_URL}/{phone_number}"
         
+        # Check if we have API credentials
+        if not self.api_key or not self.secret_key:
+            logger.error("API credentials not available. Please configure SteadFast courier settings.")
+            raise Exception("API credentials not configured. Please check courier settings.")
+        
+        # Prepare headers with API credentials
+        headers = {
+            'api-key': self.api_key,
+            'secret-key': self.secret_key,
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+        }
+        
         try:
             logger.info(f"Making GET request to: {url}")
-            response = self.session.get(url, timeout=self.TIMEOUT)
+            logger.info(f"Using API key: {self.api_key[:10]}...")  # Log first 10 chars for debugging
+            response = self.session.get(url, headers=headers, timeout=self.TIMEOUT)
             
             logger.debug(f"API Response Status: {response.status_code}")
             logger.debug(f"API Response Body: {response.text}")
