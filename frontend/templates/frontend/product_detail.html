@@ -5839,29 +5839,56 @@
                 // Check if this is an "Order Now" button
                 const isOrderNow = this.classList.contains('order-now-btn');
                 
-                // Simulate API call (replace with actual implementation)
-                setTimeout(() => {
-                    if (isOrderNow) {
-                        // For Order Now: Add to cart and redirect to checkout
-                        this.innerHTML = '<i class="fas fa-check"></i> Redirecting...';
-                        this.style.background = 'var(--success-color)';
-                        
-                        setTimeout(() => {
-                            // Redirect to checkout or product detail page for immediate order
-                            window.location.href = `/products/${productId}/`; // Adjust URL as needed
-                        }, 1000);
+                // Make actual API call to add to cart
+                fetch('/api/v1/cart/add/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(cartData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        this.innerHTML = originalText;
+                        this.disabled = false;
                     } else {
-                        // For Add to Cart: Show success message
-                        this.innerHTML = '<i class="fas fa-check"></i> Added!';
-                        this.style.background = 'var(--success-color)';
-                        
-                        setTimeout(() => {
-                            this.innerHTML = originalText;
-                            this.style.background = '';
-                            this.disabled = false;
-                        }, 2000);
+                        if (isOrderNow) {
+                            // For Order Now: Add to cart and redirect to checkout
+                            this.innerHTML = '<i class="fas fa-check"></i> Redirecting...';
+                            this.style.background = 'var(--success-color)';
+                            
+                            // Update cart count
+                            updateCartCount();
+                            
+                            setTimeout(() => {
+                                // Redirect to checkout for immediate order
+                                window.location.href = '/checkout/';
+                            }, 1000);
+                        } else {
+                            // For Add to Cart: Show success message
+                            this.innerHTML = '<i class="fas fa-check"></i> Added!';
+                            this.style.background = 'var(--success-color)';
+                            
+                            // Update cart count
+                            updateCartCount();
+                            
+                            setTimeout(() => {
+                                this.innerHTML = originalText;
+                                this.style.background = '';
+                                this.disabled = false;
+                            }, 2000);
+                        }
                     }
-                }, 1000);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error adding product to cart. Please try again.');
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                });
             });
         });
 

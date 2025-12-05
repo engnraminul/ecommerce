@@ -73,6 +73,7 @@
             color: var(--white);
             transition: var(--transition);
             z-index: 999;
+            margin-left: -250px; /* Default to collapsed */
         }
 
         .list-unstyled {
@@ -82,6 +83,38 @@
         
         #sidebar.collapsed {
             margin-left: -250px;
+        }
+        
+        #sidebar.expanded {
+            margin-left: 0;
+        }
+        
+        /* Mobile overlay backdrop */
+        .mobile-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1040;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            display: none; /* Hidden by default */
+        }
+        
+        .mobile-overlay.show {
+            opacity: 1;
+            visibility: visible;
+            display: block;
+        }
+        
+        /* Only show mobile overlay on mobile devices */
+        @media (max-width: 768px) {
+            .mobile-overlay {
+                display: block;
+            }
         }
         
         #sidebar .sidebar-header {
@@ -112,7 +145,7 @@
         
         /* Content */
         #content {
-            width: calc(100% - 250px);
+            width: 100%; /* Default to expanded (sidebar collapsed) */
             min-height: 100vh;
             position: absolute;
             right: 0;
@@ -122,6 +155,10 @@
         
         #content.expanded {
             width: 100%;
+        }
+        
+        #content.collapsed {
+            width: calc(100% - 250px);
         }
         
         /* Top navigation */
@@ -180,15 +217,17 @@
         @media (max-width: 768px) {
             #sidebar {
                 margin-left: -250px;
+                z-index: 1050; /* Higher z-index to appear on top */
             }
-            #sidebar.collapsed {
+            #sidebar.expanded {
                 margin-left: 0;
             }
             #content {
-                width: 100%;
+                width: 100% !important; /* Always full width on mobile */
+                margin-left: 0 !important;
             }
-            #content.expanded {
-                width: calc(100% - 250px);
+            #content.collapsed {
+                width: 100% !important; /* Keep full width even when sidebar is expanded */
             }
             .toggle-btn {
                 display: block;
@@ -377,6 +416,9 @@
             </ul>
         </nav>
 
+        <!-- Mobile Overlay for Sidebar -->
+        <div class="mobile-overlay" id="mobileOverlay"></div>
+
         <!-- Page Content -->
         <div id="content">
             <!-- Top Navbar -->
@@ -425,32 +467,103 @@
             const sidebar = document.getElementById('sidebar');
             const content = document.getElementById('content');
             const sidebarToggle = document.getElementById('sidebarCollapse');
+            const mobileOverlay = document.getElementById('mobileOverlay');
+            
+            // Check if mobile device
+            function isMobileDevice() {
+                return window.innerWidth < 768;
+            }
+            
+            // Show/hide mobile overlay
+            function toggleMobileOverlay(show) {
+                if (isMobileDevice()) {
+                    if (show) {
+                        mobileOverlay.classList.add('show');
+                    } else {
+                        mobileOverlay.classList.remove('show');
+                    }
+                }
+            }
             
             // Toggle sidebar
             sidebarToggle.addEventListener('click', function() {
-                sidebar.classList.toggle('collapsed');
-                content.classList.toggle('expanded');
+                const isCurrentlyExpanded = sidebar.classList.contains('expanded');
                 
-                // Save state to localStorage
-                const sidebarCollapsed = sidebar.classList.contains('collapsed');
-                localStorage.setItem('sidebarCollapsed', sidebarCollapsed);
+                if (isCurrentlyExpanded) {
+                    // Collapse sidebar
+                    sidebar.classList.remove('expanded');
+                    sidebar.classList.add('collapsed');
+                    content.classList.remove('collapsed');
+                    content.classList.add('expanded');
+                    localStorage.setItem('sidebarCollapsed', 'true');
+                    toggleMobileOverlay(false);
+                } else {
+                    // Expand sidebar  
+                    sidebar.classList.remove('collapsed');
+                    sidebar.classList.add('expanded');
+                    content.classList.remove('expanded');
+                    content.classList.add('collapsed');
+                    localStorage.setItem('sidebarCollapsed', 'false');
+                    toggleMobileOverlay(true);
+                }
+            });
+            
+            // Close sidebar when clicking on mobile overlay
+            mobileOverlay.addEventListener('click', function() {
+                if (isMobileDevice() && sidebar.classList.contains('expanded')) {
+                    sidebar.classList.remove('expanded');
+                    sidebar.classList.add('collapsed');
+                    content.classList.remove('collapsed');
+                    content.classList.add('expanded');
+                    localStorage.setItem('sidebarCollapsed', 'true');
+                    toggleMobileOverlay(false);
+                }
             });
 
-            // Check saved state on page load
+            // Check saved state on page load - Default to collapsed
             const savedState = localStorage.getItem('sidebarCollapsed');
-            if (savedState === 'true') {
+            if (savedState === 'false' && !isMobileDevice()) {
+                // Only expand if user explicitly chose to expand and not on mobile
+                sidebar.classList.remove('collapsed');
+                sidebar.classList.add('expanded');
+                content.classList.remove('expanded');
+                content.classList.add('collapsed');
+            } else {
+                // Default state: collapsed
                 sidebar.classList.add('collapsed');
+                sidebar.classList.remove('expanded');
                 content.classList.add('expanded');
+                content.classList.remove('collapsed');
             }
+            
+            // Hide mobile overlay initially
+            toggleMobileOverlay(false);
             
             // Responsive sidebar behavior
             function checkWidth() {
                 if (window.innerWidth < 768) {
+                    // Mobile: Always collapsed, hide overlay
                     sidebar.classList.add('collapsed');
+                    sidebar.classList.remove('expanded');
                     content.classList.add('expanded');
-                } else if (savedState !== 'true') {
-                    sidebar.classList.remove('collapsed');
-                    content.classList.remove('expanded');
+                    content.classList.remove('collapsed');
+                    toggleMobileOverlay(false);
+                } else {
+                    // Desktop: Hide mobile overlay
+                    toggleMobileOverlay(false);
+                    if (savedState === 'false') {
+                        // Only expand if user explicitly chose to expand
+                        sidebar.classList.remove('collapsed');
+                        sidebar.classList.add('expanded');
+                        content.classList.remove('expanded');
+                        content.classList.add('collapsed');
+                    } else {
+                        // Default state: collapsed
+                        sidebar.classList.add('collapsed');
+                        sidebar.classList.remove('expanded');
+                        content.classList.add('expanded');
+                        content.classList.remove('collapsed');
+                    }
                 }
             }
 

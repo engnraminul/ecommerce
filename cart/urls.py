@@ -1,4 +1,4 @@
-from django.urls import path
+﻿from django.urls import path
 from . import views
 
 app_name = 'cart'
@@ -28,7 +28,4 @@ urlpatterns = [
     # Shipping
     path('shipping-options/', views.get_shipping_options, name='shipping-options'),
     path('calculate-shipping/', views.calculate_shipping_cost, name='calculate-shipping'),
-    
-    # Delivery estimates
-    path('delivery-estimates/', views.delivery_estimates, name='delivery-estimates'),
 ]

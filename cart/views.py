@@ -1,9 +1,16 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.authentication import SessionAuthentication
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from decimal import Decimal
+
+
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    """Session authentication that doesn't enforce CSRF for API endpoints"""
+    def enforce_csrf(self, request):
+        return  # To not enforce CSRF
 from .models import Cart, CartItem, SavedItem, Coupon
 from .serializers import (
     CartSerializer, CartItemSerializer, AddToCartSerializer,
@@ -37,6 +44,7 @@ class CartView(generics.RetrieveAPIView):
 
 
 @api_view(['POST'])
+@authentication_classes([CsrfExemptSessionAuthentication])
 @permission_classes([permissions.AllowAny])
 def add_to_cart(request):
     """Add product to cart - supports both authenticated users and guests"""
@@ -104,11 +112,17 @@ def add_to_cart(request):
             }, status=status.HTTP_400_BAD_REQUEST)
     
     # Add to cart or update quantity
+    # Determine the unit price first
+    if variant:
+        unit_price = variant.effective_price
+    else:
+        unit_price = product.price
+    
     cart_item, created = CartItem.objects.get_or_create(
         cart=cart,
         product=product,
         variant=variant,
-        defaults={'quantity': quantity}
+        defaults={'quantity': quantity, 'unit_price': unit_price}
     )
     
     if not created:
@@ -157,6 +171,7 @@ def add_to_cart(request):
 
 
 @api_view(['PUT'])
+@authentication_classes([CsrfExemptSessionAuthentication])
 @permission_classes([permissions.AllowAny])
 def update_cart_item(request, item_id):
     """Update cart item quantity - supports both authenticated users and guests"""
@@ -675,55 +690,3 @@ def calculate_shipping_cost(request):
         return Response({
             'error': 'Cart not found'
         }, status=status.HTTP_404_NOT_FOUND)
-
-
-@api_view(['GET'])
-@permission_classes([permissions.AllowAny])
-def delivery_estimates(request):
-    """Get delivery estimates for both Dhaka and outside Dhaka"""
-    try:
-        from settings.utils import get_formatted_delivery_estimates
-        
-        # Get delivery estimates from settings utils
-        estimates = get_formatted_delivery_estimates()
-        
-        return Response({
-            'success': True,
-            'estimates': {
-                'dhaka': {
-                    'area_label': estimates['dhaka']['area_label'],
-                    'date_range': estimates['dhaka']['date_range'],
-                    'days_range': estimates['dhaka']['days_range']
-                },
-                'outside': {
-                    'area_label': estimates['outside']['area_label'], 
-                    'date_range': estimates['outside']['date_range'],
-                    'days_range': estimates['outside']['days_range']
-                },
-                'settings': {
-                    'today_date': estimates['settings']['today_date'],
-                    'current_time': estimates['settings']['current_time'],
-                    'cutoff_time': estimates['settings']['cutoff_time'],
-                    'is_after_cutoff': estimates['settings']['is_after_cutoff'],
-                    'custom_date_set': estimates['settings']['custom_date_set']
-                }
-            }
-        })
-        
-    except Exception as e:
-        return Response({
-            'success': False,
-            'error': f'Failed to get delivery estimates: {str(e)}',
-            'estimates': {
-                'dhaka': {
-                    'area_label': 'Inside Dhaka City',
-                    'date_range': '1-2 days',
-                    'days_range': '1-2'
-                },
-                'outside': {
-                    'area_label': 'Outside Dhaka City',
-                    'date_range': '2-4 days', 
-                    'days_range': '2-4'
-                }
-            }
-        })
