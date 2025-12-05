@@ -223,14 +223,32 @@ class CreateOrderSerializer(serializers.Serializer):
         logger.info(f"Shipping option: {shipping_option}")
         logger.info(f"Shipping location: {shipping_location}")
         
-        # Get cart - either user's cart or session cart for guests
+        # Get cart - check both user cart and session cart for authenticated users
+        cart = None
+        
         if user:
+            # First try to get user's cart
             try:
                 cart = Cart.objects.get(user=user)
                 logger.info(f"Found user cart with {cart.items.count()} items")
             except Cart.DoesNotExist:
-                logger.error("Cart not found for authenticated user")
-                raise serializers.ValidationError("Cart is empty.")
+                logger.info("No user cart found, checking session cart...")
+                # If no user cart, check for session cart (user might have added items before logging in)
+                session_id = request.session.session_key
+                if session_id:
+                    try:
+                        cart = Cart.objects.get(session_id=session_id, user=None)
+                        logger.info(f"Found session cart with {cart.items.count()} items for logged-in user")
+                        # Optionally, we could merge this cart to the user here
+                        # cart.user = user
+                        # cart.session_id = None
+                        # cart.save()
+                    except Cart.DoesNotExist:
+                        logger.error("No cart found for authenticated user (neither user cart nor session cart)")
+                        raise serializers.ValidationError("Cart is empty. Please add items to your cart first.")
+                else:
+                    logger.error("Cart not found for authenticated user")
+                    raise serializers.ValidationError("Cart is empty. Please add items to your cart first.")
         else:
             # For guest users, get cart by session
             session_id = request.session.session_key
@@ -244,6 +262,10 @@ class CreateOrderSerializer(serializers.Serializer):
             except Cart.DoesNotExist:
                 logger.error("Cart not found for guest user")
                 raise serializers.ValidationError("Cart is empty. Please add items to your cart first.")
+        
+        if not cart:
+            logger.error("No cart found")
+            raise serializers.ValidationError("Cart is empty. Please add items to your cart first.")
         
         if not cart.items.exists():
             logger.error("Cart has no items")

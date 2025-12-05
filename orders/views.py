@@ -1,10 +1,13 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.authentication import SessionAuthentication
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.db.models import Avg
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from .models import Order, OrderItem, ShippingAddress, OrderStatusHistory, Invoice, RefundRequest
 from .serializers import (
     OrderListSerializer, OrderDetailSerializer, CreateOrderSerializer,
@@ -12,6 +15,12 @@ from .serializers import (
 )
 from dashboard.models import BlockList
 from .utils import get_client_ip
+
+
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    """Session authentication without CSRF checks for order creation"""
+    def enforce_csrf(self, request):
+        return  # Skip CSRF check
 
 
 def is_blocked(phone=None, ip=None):
@@ -65,6 +74,7 @@ class CreateOrderView(generics.CreateAPIView):
     """Create new order from cart - supports both authenticated users and guests"""
     serializer_class = CreateOrderSerializer
     permission_classes = [permissions.AllowAny]  # Allow guest users
+    authentication_classes = [CsrfExemptSessionAuthentication]  # Custom auth without CSRF checks
     
     def create(self, request, *args, **kwargs):
         try:
