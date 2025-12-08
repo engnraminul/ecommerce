@@ -2137,11 +2137,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('addProductForm');
         const formData = new FormData(form);
         
-        // Get Quill content for description
-        if (productDescriptionEditor) {
-            const descriptionContent = productDescriptionEditor.root.innerHTML;
-            formData.set('description', descriptionContent);
-        }
+        // Get TinyMCE content for description
+        const descriptionContent = getTinyMCEContent('productDescription');
+        formData.set('description', descriptionContent);
         
         // Convert checkbox values to boolean
         formData.set('is_active', document.getElementById('productStatus').value === 'true');
@@ -2358,11 +2356,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData(form);
         const productId = document.getElementById('editProductId').value;
         
-        // Get Quill content for description
-        if (editProductDescriptionEditor) {
-            const descriptionContent = editProductDescriptionEditor.root.innerHTML;
-            formData.set('description', descriptionContent);
-        }
+        // Get TinyMCE content for description
+        const descriptionContent = getTinyMCEContent('editProductDescription');
+        formData.set('description', descriptionContent);
         
         // Convert checkbox values to boolean
         formData.set('is_active', document.getElementById('editProductStatus').value === 'true');
