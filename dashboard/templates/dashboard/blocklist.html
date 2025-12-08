@@ -361,7 +361,20 @@
                     </div>
                     <div class="mb-3">
                         <label for="blockReason" class="form-label">Reason</label>
-                        <textarea class="form-control" id="blockReason" rows="3" placeholder="Enter reason for blocking (optional)"></textarea>
+                        <select class="form-select" id="blockReason" required>
+                            <option value="manual">Manual Block</option>
+                            <option value="fraud">Fraud Detection</option>
+                            <option value="spam">Spam/Abuse</option>
+                            <option value="fake_order">Fake Orders</option>
+                            <option value="payment_issue">Payment Issues</option>
+                            <option value="harassment">Harassment</option>
+                            <option value="policy_violation">Policy Violation</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="blockDescription" class="form-label">Description (Optional)</label>
+                        <textarea class="form-control" id="blockDescription" rows="3" placeholder="Enter additional details about why this was blocked"></textarea>
                     </div>
                     <div class="mb-3">
                         <div class="form-check">
@@ -405,7 +418,20 @@
                     </div>
                     <div class="mb-3">
                         <label for="editBlockReason" class="form-label">Reason</label>
-                        <textarea class="form-control" id="editBlockReason" rows="3" placeholder="Enter reason for blocking (optional)"></textarea>
+                        <select class="form-select" id="editBlockReason" required>
+                            <option value="manual">Manual Block</option>
+                            <option value="fraud">Fraud Detection</option>
+                            <option value="spam">Spam/Abuse</option>
+                            <option value="fake_order">Fake Orders</option>
+                            <option value="payment_issue">Payment Issues</option>
+                            <option value="harassment">Harassment</option>
+                            <option value="policy_violation">Policy Violation</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editBlockDescription" class="form-label">Description (Optional)</label>
+                        <textarea class="form-control" id="editBlockDescription" rows="3" placeholder="Enter additional details about why this was blocked"></textarea>
                     </div>
                     <div class="mb-3">
                         <div class="form-check">
@@ -654,11 +680,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = {
             block_type: document.getElementById('blockType').value,
             value: document.getElementById('blockValue').value.trim(),
-            reason: document.getElementById('blockReason').value.trim(),
+            reason: document.getElementById('blockReason').value,
+            description: document.getElementById('blockDescription').value.trim(),
             is_active: document.getElementById('blockIsActive').checked
         };
         
-        if (!formData.block_type || !formData.value) {
+        if (!formData.block_type || !formData.value || !formData.reason) {
             showErrorMessage('Please fill in all required fields');
             return;
         }
@@ -694,7 +721,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateBlockEntry() {
         const id = document.getElementById('editBlockId').value;
         const formData = {
-            reason: document.getElementById('editBlockReason').value.trim(),
+            reason: document.getElementById('editBlockReason').value,
+            description: document.getElementById('editBlockDescription').value.trim(),
             is_active: document.getElementById('editBlockIsActive').checked
         };
         
@@ -798,7 +826,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('editBlockId').value = data.id;
                 document.getElementById('editBlockType').value = data.block_type.toUpperCase();
                 document.getElementById('editBlockValue').value = data.value;
-                document.getElementById('editBlockReason').value = data.reason || '';
+                document.getElementById('editBlockReason').value = data.reason || 'manual';
+                document.getElementById('editBlockDescription').value = data.description || '';
                 document.getElementById('editBlockIsActive').checked = data.is_active;
                 
                 new bootstrap.Modal(document.getElementById('editBlockModal')).show();
