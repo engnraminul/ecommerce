@@ -110,6 +110,7 @@ urlpatterns = [
     path('contacts/', views.dashboard_contacts, name='contacts'),
     path('coupons/', views.coupon_management, name='coupons'),
     path('backups/', views.dashboard_backups, name='backups'),
+    path('cache/', views.dashboard_cache, name='cache'),
     
     # Invoice printing
     path('orders/<int:order_id>/invoice/', views.print_order_invoice, name='print_order_invoice'),
@@ -152,4 +153,11 @@ urlpatterns = [
     # AJAX URLs
     path('ajax/smtp-defaults/', email_views.ajax_get_smtp_defaults, name='ajax_smtp_defaults'),
     path('ajax/template-variables/<int:pk>/', email_views.ajax_template_variables, name='ajax_template_variables'),
+    
+    # Redis Cache Management API
+    path('api/cache/status/', views.cache_status_api, name='cache_status_api'),
+    path('api/cache/clear/', views.cache_clear_api, name='cache_clear_api'),
+    path('api/cache/search-keys/', views.cache_search_keys_api, name='cache_search_keys_api'),
+    path('api/cache/delete-keys/', views.cache_delete_keys_api, name='cache_delete_keys_api'),
+    path('api/cache/warmup/', views.cache_warmup_api, name='cache_warmup_api'),
 ]

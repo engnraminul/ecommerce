@@ -302,6 +302,9 @@
                     <button class="nav-link text-start" id="integration-tab" data-bs-toggle="pill" data-bs-target="#integration" type="button" role="tab" aria-selected="false">
                         <i class="fas fa-plug fa-fw me-2"></i> Integration Settings
                     </button>
+                    <button class="nav-link text-start" id="cache-tab" data-bs-toggle="pill" data-bs-target="#cache" type="button" role="tab" aria-selected="false">
+                        <i class="fas fa-database fa-fw me-2"></i> Redis Cache
+                    </button>
                 </div>
             </div>
         </div>
@@ -1709,6 +1712,354 @@
                                 </button>
                             </div>
                         </form>
+                    </div>
+                    
+                    <!-- Redis Cache Management -->
+                    <div class="tab-pane fade" id="cache" role="tabpanel" aria-labelledby="cache-tab">
+                        <h5 class="mb-4">Redis Cache Management</h5>
+                        <p class="text-muted mb-4">Monitor and manage your Redis cache to optimize application performance.</p>
+                        
+                        <!-- Cache Status -->
+                        <div class="mb-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-server me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                                <h6 class="mb-0">Cache Status</h6>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-body text-center">
+                                            <div class="mb-3">
+                                                <i class="fas fa-circle text-success" id="cacheStatusIcon" style="font-size: 3rem;"></i>
+                                            </div>
+                                            <h6 class="text-muted">Connection Status</h6>
+                                            <h4 id="cacheStatus" class="text-success">Checking...</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-body text-center">
+                                            <div class="mb-3">
+                                                <i class="fas fa-memory" style="font-size: 3rem; color: #007bff;"></i>
+                                            </div>
+                                            <h6 class="text-muted">Memory Usage</h6>
+                                            <h4 id="cacheMemory">Loading...</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-body text-center">
+                                            <div class="mb-3">
+                                                <i class="fas fa-key" style="font-size: 3rem; color: #ffc107;"></i>
+                                            </div>
+                                            <h6 class="text-muted">Total Keys</h6>
+                                            <h4 id="cacheTotalKeys">Loading...</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Cache Statistics -->
+                        <div class="mb-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-chart-bar me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                                <h6 class="mb-0">Cache Statistics</h6>
+                            </div>
+                            
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <h6 class="mb-0"><i class="fas fa-tachometer-alt me-2" style="color: var(--primary-color, #930000);"></i>Performance Metrics</h6>
+                                        <button type="button" class="btn btn-sm btn-outline-light" id="refreshCacheStats">
+                                            <i class="fas fa-sync-alt me-1"></i> Refresh
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="text-center p-3 border-end">
+                                                <h5 id="cacheHits" class="text-success mb-1">0</h5>
+                                                <small class="text-muted">Cache Hits</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center p-3 border-end">
+                                                <h5 id="cacheMisses" class="text-danger mb-1">0</h5>
+                                                <small class="text-muted">Cache Misses</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center p-3 border-end">
+                                                <h5 id="cacheHitRatio" class="text-primary mb-1">0%</h5>
+                                                <small class="text-muted">Hit Ratio</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center p-3">
+                                                <h5 id="cacheUptime" class="text-info mb-1">0d 0h</h5>
+                                                <small class="text-muted">Uptime</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Hit Ratio Progress Bar -->
+                                    <div class="mt-4">
+                                        <label class="form-label fw-medium">Cache Hit Ratio</label>
+                                        <div class="progress" style="height: 25px;">
+                                            <div class="progress-bar bg-success" role="progressbar" id="cacheHitBar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                                <span id="cacheHitBarText">0%</span>
+                                            </div>
+                                            <div class="progress-bar bg-danger" role="progressbar" id="cacheMissBar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                                <span id="cacheMissBarText">0%</span>
+                                            </div>
+                                        </div>
+                                        <small class="text-muted mt-2 d-block">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Higher hit ratio means better cache performance
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Cache Databases -->
+                        <div class="mb-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-database me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                                <h6 class="mb-0">Cache Databases</h6>
+                            </div>
+                            
+                            <div class="row">
+                                <!-- Default Cache -->
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                            <h6 class="mb-0"><i class="fas fa-layer-group me-2"></i>Default Cache</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span class="text-muted">Keys:</span>
+                                                <span class="fw-bold" id="defaultCacheKeys">0</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span class="text-muted">Memory:</span>
+                                                <span class="fw-bold" id="defaultCacheMemory">0 MB</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-3">
+                                                <span class="text-muted">Timeout:</span>
+                                                <span class="fw-bold">5 min</span>
+                                            </div>
+                                            <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="clearCacheDb('default')">
+                                                <i class="fas fa-trash me-1"></i> Clear
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Sessions Cache -->
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                            <h6 class="mb-0"><i class="fas fa-user-clock me-2"></i>Sessions Cache</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span class="text-muted">Keys:</span>
+                                                <span class="fw-bold" id="sessionsCacheKeys">0</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span class="text-muted">Memory:</span>
+                                                <span class="fw-bold" id="sessionsCacheMemory">0 MB</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-3">
+                                                <span class="text-muted">Timeout:</span>
+                                                <span class="fw-bold">24 hours</span>
+                                            </div>
+                                            <button type="button" class="btn btn-outline-warning btn-sm w-100" onclick="clearCacheDb('sessions')">
+                                                <i class="fas fa-trash me-1"></i> Clear (Logs out users)
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Products Cache -->
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                            <h6 class="mb-0"><i class="fas fa-shopping-bag me-2"></i>Products Cache</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span class="text-muted">Keys:</span>
+                                                <span class="fw-bold" id="productsCacheKeys">0</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span class="text-muted">Memory:</span>
+                                                <span class="fw-bold" id="productsCacheMemory">0 MB</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-3">
+                                                <span class="text-muted">Timeout:</span>
+                                                <span class="fw-bold">1 hour</span>
+                                            </div>
+                                            <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="clearCacheDb('products')">
+                                                <i class="fas fa-trash me-1"></i> Clear
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Cache Key Management -->
+                        <div class="mb-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-key me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                                <h6 class="mb-0">Cache Key Management</h6>
+                            </div>
+                            
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                    <h6 class="mb-0"><i class="fas fa-search me-2" style="color: var(--primary-color, #930000);"></i>Search & Delete Keys</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-3">
+                                        <div class="col-md-4">
+                                            <label for="cacheDbSelect" class="form-label fw-medium">Cache Database</label>
+                                            <select class="form-select" id="cacheDbSelect">
+                                                <option value="default">Default Cache</option>
+                                                <option value="sessions">Sessions Cache</option>
+                                                <option value="products">Products Cache</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <label for="cacheKeyPattern" class="form-label fw-medium">Key Pattern</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="cacheKeyPattern" placeholder="Enter key pattern (e.g., product_* or user_123)">
+                                                <button class="btn btn-outline-primary" type="button" id="searchCacheKeys">
+                                                    <i class="fas fa-search me-1"></i> Search
+                                                </button>
+                                            </div>
+                                            <small class="text-muted">Use * as wildcard. Example: product_*, user_123, *_settings</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Search Results -->
+                                    <div id="cacheKeyResults" class="border rounded p-3" style="max-height: 300px; overflow-y: auto; display: none;">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <span class="fw-bold">Found Keys: <span id="foundKeysCount">0</span></span>
+                                            <button type="button" class="btn btn-sm btn-danger" id="deleteSelectedKeys" disabled>
+                                                <i class="fas fa-trash me-1"></i> Delete Selected
+                                            </button>
+                                        </div>
+                                        <div id="cacheKeysList">
+                                            <!-- Keys will be populated here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Actions -->
+                        <div class="mb-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-bolt me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                                <h6 class="mb-0">Quick Actions</h6>
+                            </div>
+                            
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3 mb-3">
+                                            <button type="button" class="btn btn-outline-primary w-100 py-3" id="clearAllCache">
+                                                <i class="fas fa-broom d-block mb-2" style="font-size: 1.5rem;"></i>
+                                                Clear All Caches
+                                            </button>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <button type="button" class="btn btn-outline-success w-100 py-3" id="warmupCache">
+                                                <i class="fas fa-fire d-block mb-2" style="font-size: 1.5rem;"></i>
+                                                Warmup Cache
+                                            </button>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <button type="button" class="btn btn-outline-warning w-100 py-3" id="clearProductCache">
+                                                <i class="fas fa-box d-block mb-2" style="font-size: 1.5rem;"></i>
+                                                Clear Product Cache
+                                            </button>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <button type="button" class="btn btn-outline-info w-100 py-3" id="exportCacheStats">
+                                                <i class="fas fa-download d-block mb-2" style="font-size: 1.5rem;"></i>
+                                                Export Stats
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Redis Server Info -->
+                        <div class="mb-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-info-circle me-2" style="color: var(--primary-color, #930000); font-size: 1.25rem;"></i>
+                                <h6 class="mb-0">Redis Server Information</h6>
+                            </div>
+                            
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header border-0" style="background-color: var(--secondary-color, #334155); color: white;">
+                                    <h6 class="mb-0"><i class="fas fa-server me-2" style="color: var(--primary-color, #930000);"></i>Server Details</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <table class="table table-sm table-borderless">
+                                                <tr>
+                                                    <td class="text-muted" style="width: 40%;">Redis Version:</td>
+                                                    <td class="fw-bold" id="redisVersion">N/A</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">Host:</td>
+                                                    <td class="fw-bold" id="redisHost">127.0.0.1</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">Port:</td>
+                                                    <td class="fw-bold" id="redisPort">6379</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">OS:</td>
+                                                    <td class="fw-bold" id="redisOS">N/A</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <table class="table table-sm table-borderless">
+                                                <tr>
+                                                    <td class="text-muted" style="width: 40%;">Max Memory:</td>
+                                                    <td class="fw-bold" id="redisMaxMemory">N/A</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">Max Clients:</td>
+                                                    <td class="fw-bold" id="redisMaxClients">N/A</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">Connected Clients:</td>
+                                                    <td class="fw-bold" id="redisConnectedClients">N/A</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">Cache Backend:</td>
+                                                    <td class="fw-bold" id="cacheBackend">N/A</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -3644,6 +3995,430 @@ document.addEventListener('DOMContentLoaded', function() {
             input.addEventListener('input', function() {
                 updateHeroImagePreview(inputId, this.value);
             });
+        }
+    });
+    
+    // =============================================================================
+    // Redis Cache Management JavaScript
+    // =============================================================================
+    
+    // Load cache status on tab click
+    document.getElementById('cache-tab')?.addEventListener('shown.bs.tab', function() {
+        loadCacheStatus();
+    });
+    
+    // Also load on page ready if cache tab is active
+    if (document.getElementById('cache').classList.contains('active')) {
+        loadCacheStatus();
+    }
+    
+    // Refresh cache stats button
+    document.getElementById('refreshCacheStats')?.addEventListener('click', function() {
+        loadCacheStatus();
+    });
+    
+    // Clear all cache button
+    document.getElementById('clearAllCache')?.addEventListener('click', function() {
+        if (confirm('Are you sure you want to clear ALL caches? This may temporarily slow down the site.')) {
+            clearCache('all');
+        }
+    });
+    
+    // Clear product cache button
+    document.getElementById('clearProductCache')?.addEventListener('click', function() {
+        clearCache('products');
+    });
+    
+    // Warmup cache button
+    document.getElementById('warmupCache')?.addEventListener('click', function() {
+        warmupCache();
+    });
+    
+    // Export stats button
+    document.getElementById('exportCacheStats')?.addEventListener('click', function() {
+        exportCacheStats();
+    });
+    
+    // Search cache keys
+    document.getElementById('searchCacheKeys')?.addEventListener('click', function() {
+        searchCacheKeys();
+    });
+    
+    // Enter key support for search
+    document.getElementById('cacheKeyPattern')?.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchCacheKeys();
+        }
+    });
+    
+    // Delete selected keys
+    document.getElementById('deleteSelectedKeys')?.addEventListener('click', function() {
+        deleteSelectedKeys();
+    });
+    
+    // Load cache status
+    function loadCacheStatus() {
+        const statusEl = document.getElementById('cacheStatus');
+        const statusIconEl = document.getElementById('cacheStatusIcon');
+        
+        if (statusEl) statusEl.textContent = 'Loading...';
+        
+        fetch('/mb-admin/api/cache/status/', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateCacheUI(data.data);
+            } else {
+                showCacheError(data.error || 'Failed to load cache status');
+            }
+        })
+        .catch(error => {
+            console.error('Cache status error:', error);
+            showCacheError('Failed to connect to cache service');
+        });
+    }
+    
+    // Update cache UI with data
+    function updateCacheUI(data) {
+        // Status
+        const statusEl = document.getElementById('cacheStatus');
+        const statusIconEl = document.getElementById('cacheStatusIcon');
+        
+        if (data.status === 'connected') {
+            statusEl.textContent = 'Connected';
+            statusEl.className = 'text-success';
+            statusIconEl.className = 'fas fa-circle text-success';
+        } else if (data.status === 'disabled') {
+            statusEl.textContent = 'Redis Disabled';
+            statusEl.className = 'text-warning';
+            statusIconEl.className = 'fas fa-circle text-warning';
+        } else {
+            statusEl.textContent = 'Disconnected';
+            statusEl.className = 'text-danger';
+            statusIconEl.className = 'fas fa-circle text-danger';
+        }
+        
+        // Memory
+        document.getElementById('cacheMemory').textContent = data.memory?.used || '0 MB';
+        
+        // Total keys
+        document.getElementById('cacheTotalKeys').textContent = data.keys?.total || 0;
+        
+        // Stats
+        document.getElementById('cacheHits').textContent = formatNumber(data.stats?.hits || 0);
+        document.getElementById('cacheMisses').textContent = formatNumber(data.stats?.misses || 0);
+        document.getElementById('cacheHitRatio').textContent = (data.stats?.hit_ratio || 0) + '%';
+        document.getElementById('cacheUptime').textContent = data.stats?.uptime_formatted || '0d 0h';
+        
+        // Hit ratio bar
+        const hitRatio = data.stats?.hit_ratio || 0;
+        const missRatio = 100 - hitRatio;
+        
+        document.getElementById('cacheHitBar').style.width = hitRatio + '%';
+        document.getElementById('cacheHitBar').setAttribute('aria-valuenow', hitRatio);
+        document.getElementById('cacheHitBarText').textContent = hitRatio > 10 ? hitRatio.toFixed(1) + '% Hits' : '';
+        
+        document.getElementById('cacheMissBar').style.width = missRatio + '%';
+        document.getElementById('cacheMissBar').setAttribute('aria-valuenow', missRatio);
+        document.getElementById('cacheMissBarText').textContent = missRatio > 10 ? missRatio.toFixed(1) + '% Misses' : '';
+        
+        // Database stats
+        if (data.databases) {
+            document.getElementById('defaultCacheKeys').textContent = data.databases.default?.keys || 0;
+            document.getElementById('defaultCacheMemory').textContent = data.databases.default?.memory || '0 MB';
+            
+            document.getElementById('sessionsCacheKeys').textContent = data.databases.sessions?.keys || 0;
+            document.getElementById('sessionsCacheMemory').textContent = data.databases.sessions?.memory || '0 MB';
+            
+            document.getElementById('productsCacheKeys').textContent = data.databases.products?.keys || 0;
+            document.getElementById('productsCacheMemory').textContent = data.databases.products?.memory || '0 MB';
+        }
+        
+        // Server info
+        document.getElementById('redisVersion').textContent = data.server?.version || 'N/A';
+        document.getElementById('redisHost').textContent = data.server?.host || '127.0.0.1';
+        document.getElementById('redisPort').textContent = data.server?.port || '6379';
+        document.getElementById('redisOS').textContent = data.server?.os || 'N/A';
+        document.getElementById('redisMaxMemory').textContent = data.server?.max_memory || 'N/A';
+        document.getElementById('redisMaxClients').textContent = data.server?.max_clients || 'N/A';
+        document.getElementById('redisConnectedClients').textContent = data.server?.connected_clients || 0;
+        document.getElementById('cacheBackend').textContent = data.is_redis ? 'Redis' : 'Database Cache';
+    }
+    
+    // Clear cache function
+    function clearCache(cacheName) {
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Clearing...';
+        
+        fetch('/mb-admin/api/cache/clear/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({ cache: cacheName })
+        })
+        .then(response => response.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            
+            if (data.success) {
+                showCacheSuccess(data.message || 'Cache cleared successfully');
+                loadCacheStatus();
+            } else {
+                showCacheError(data.error || 'Failed to clear cache');
+            }
+        })
+        .catch(error => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            console.error('Clear cache error:', error);
+            showCacheError('Failed to clear cache');
+        });
+    }
+    
+    // Clear specific database cache
+    window.clearCacheDb = function(cacheName) {
+        if (cacheName === 'sessions') {
+            if (!confirm('Clearing sessions cache will log out all users. Continue?')) {
+                return;
+            }
+        }
+        clearCache(cacheName);
+    };
+    
+    // Warmup cache
+    function warmupCache() {
+        const btn = document.getElementById('warmupCache');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin d-block mb-2" style="font-size: 1.5rem;"></i>Warming up...';
+        
+        fetch('/mb-admin/api/cache/warmup/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            
+            if (data.success) {
+                showCacheSuccess(data.message || 'Cache warmup completed');
+                loadCacheStatus();
+            } else {
+                showCacheError(data.error || 'Failed to warmup cache');
+            }
+        })
+        .catch(error => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            console.error('Warmup error:', error);
+            showCacheError('Failed to warmup cache');
+        });
+    }
+    
+    // Search cache keys
+    function searchCacheKeys() {
+        const pattern = document.getElementById('cacheKeyPattern').value || '*';
+        const cacheName = document.getElementById('cacheDbSelect').value;
+        const resultsContainer = document.getElementById('cacheKeyResults');
+        const keysList = document.getElementById('cacheKeysList');
+        
+        resultsContainer.style.display = 'block';
+        keysList.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin me-2"></i>Searching...</div>';
+        
+        fetch('/mb-admin/api/cache/search-keys/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({ 
+                cache: cacheName,
+                pattern: pattern 
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('foundKeysCount').textContent = data.data.count;
+                
+                if (data.data.keys.length === 0) {
+                    keysList.innerHTML = '<div class="text-muted text-center">No keys found matching pattern</div>';
+                } else {
+                    keysList.innerHTML = data.data.keys.map(key => `
+                        <div class="form-check mb-2 p-2 border-bottom">
+                            <input class="form-check-input cache-key-checkbox" type="checkbox" value="${key.full_key}" id="key_${btoa(key.full_key).replace(/[^a-zA-Z0-9]/g, '')}">
+                            <label class="form-check-label d-flex justify-content-between w-100" for="key_${btoa(key.full_key).replace(/[^a-zA-Z0-9]/g, '')}">
+                                <code class="text-break">${key.key}</code>
+                                <small class="text-muted ms-2">${key.ttl_formatted}</small>
+                            </label>
+                        </div>
+                    `).join('');
+                    
+                    // Enable/disable delete button based on selection
+                    document.querySelectorAll('.cache-key-checkbox').forEach(checkbox => {
+                        checkbox.addEventListener('change', updateDeleteButtonState);
+                    });
+                }
+                
+                if (data.data.truncated) {
+                    keysList.innerHTML += '<div class="alert alert-info mt-2 mb-0"><small>Results limited to 100 keys. Use a more specific pattern for better results.</small></div>';
+                }
+            } else {
+                keysList.innerHTML = `<div class="alert alert-danger">${data.error || 'Search failed'}</div>`;
+            }
+        })
+        .catch(error => {
+            console.error('Search error:', error);
+            keysList.innerHTML = '<div class="alert alert-danger">Failed to search keys</div>';
+        });
+    }
+    
+    // Update delete button state
+    function updateDeleteButtonState() {
+        const selectedCount = document.querySelectorAll('.cache-key-checkbox:checked').length;
+        document.getElementById('deleteSelectedKeys').disabled = selectedCount === 0;
+    }
+    
+    // Delete selected keys
+    function deleteSelectedKeys() {
+        const selectedKeys = Array.from(document.querySelectorAll('.cache-key-checkbox:checked')).map(cb => cb.value);
+        const cacheName = document.getElementById('cacheDbSelect').value;
+        
+        if (selectedKeys.length === 0) {
+            showCacheError('No keys selected');
+            return;
+        }
+        
+        if (!confirm(`Are you sure you want to delete ${selectedKeys.length} key(s)?`)) {
+            return;
+        }
+        
+        fetch('/mb-admin/api/cache/delete-keys/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({ 
+                cache: cacheName,
+                keys: selectedKeys 
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showCacheSuccess(data.message || 'Keys deleted');
+                searchCacheKeys(); // Refresh results
+                loadCacheStatus(); // Update stats
+            } else {
+                showCacheError(data.error || 'Failed to delete keys');
+            }
+        })
+        .catch(error => {
+            console.error('Delete error:', error);
+            showCacheError('Failed to delete keys');
+        });
+    }
+    
+    // Export cache stats
+    function exportCacheStats() {
+        fetch('/mb-admin/api/cache/status/', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const exportData = {
+                    exported_at: new Date().toISOString(),
+                    ...data.data
+                };
+                
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `cache_stats_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showCacheSuccess('Cache stats exported');
+            } else {
+                showCacheError('Failed to export stats');
+            }
+        })
+        .catch(error => {
+            console.error('Export error:', error);
+            showCacheError('Failed to export stats');
+        });
+    }
+    
+    // Helper functions
+    function formatNumber(num) {
+        if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+        if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+        return num.toString();
+    }
+    
+    function showCacheSuccess(message) {
+        showPopupAlert('success', message);
+    }
+    
+    function showCacheError(message) {
+        showPopupAlert('danger', message);
+        
+        // Update UI to show error state
+        const statusEl = document.getElementById('cacheStatus');
+        if (statusEl && statusEl.textContent === 'Loading...') {
+            statusEl.textContent = 'Error';
+            statusEl.className = 'text-danger';
+        }
+    }
+    
+    function getCsrfToken() {
+        const csrfInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+        if (csrfInput) return csrfInput.value;
+        
+        const cookieValue = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('csrftoken='))
+            ?.split('=')[1];
+        return cookieValue || '';
+    }
+    
+    // Auto-load cache status if on cache tab
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if cache tab is active on page load
+        const cacheTab = document.getElementById('cache-tab');
+        if (cacheTab && cacheTab.classList.contains('active')) {
+            loadCacheStatus();
+        }
+        
+        // Also listen for hash change
+        if (window.location.hash === '#cache') {
+            const cacheTabEl = new bootstrap.Tab(document.getElementById('cache-tab'));
+            cacheTabEl.show();
+            loadCacheStatus();
         }
     });
 </script>

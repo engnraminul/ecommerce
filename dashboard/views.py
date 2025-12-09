@@ -4,9 +4,10 @@ from django.utils import timezone
 from datetime import timedelta, datetime
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action, api_view, permission_classes, authentication_classes
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAdminUser
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
@@ -5474,3 +5475,449 @@ def dashboard_backups(request):
         'page_title': 'Backup Management'
     }
     return render(request, 'backups/dashboard.html', context)
+
+
+@login_required(login_url='dashboard:login')
+@staff_member_required
+def dashboard_cache(request):
+    """Dashboard view for Redis cache management"""
+    context = {
+        'active_page': 'cache',
+        'page_title': 'Cache Management'
+    }
+    return render(request, 'dashboard/cache.html', context)
+
+
+# =============================================================================
+# Redis Cache Management API Views
+# =============================================================================
+
+@api_view(['GET'])
+@authentication_classes([SessionAuthentication, BasicAuthentication])
+@permission_classes([IsStaffUser])
+def cache_status_api(request):
+    """
+    Get Redis cache status and statistics
+    """
+    from django.core.cache import caches
+    from django.conf import settings
+    import time
+    
+    try:
+        cache_info = {
+            'status': 'disconnected',
+            'backend': 'unknown',
+            'is_redis': False,
+            'memory': {
+                'used': '0 MB',
+                'used_bytes': 0,
+                'peak': '0 MB'
+            },
+            'stats': {
+                'hits': 0,
+                'misses': 0,
+                'hit_ratio': 0,
+                'uptime_seconds': 0,
+                'uptime_formatted': '0d 0h'
+            },
+            'keys': {
+                'total': 0,
+                'default': 0,
+                'sessions': 0,
+                'products': 0
+            },
+            'server': {
+                'version': 'N/A',
+                'host': '127.0.0.1',
+                'port': 6379,
+                'os': 'N/A',
+                'max_memory': 'N/A',
+                'max_clients': 'N/A',
+                'connected_clients': 0
+            },
+            'databases': {}
+        }
+        
+        # Check if Redis is being used
+        use_redis = getattr(settings, 'USE_REDIS', False)
+        cache_backend = settings.CACHES.get('default', {}).get('BACKEND', '')
+        
+        cache_info['backend'] = cache_backend
+        cache_info['is_redis'] = 'redis' in cache_backend.lower()
+        
+        if cache_info['is_redis'] and use_redis:
+            try:
+                # Get Redis client from django-redis
+                from django_redis import get_redis_connection
+                
+                # Test default cache connection
+                default_cache = caches['default']
+                default_cache.set('_cache_test_', 'test', 5)
+                test_value = default_cache.get('_cache_test_')
+                
+                if test_value == 'test':
+                    cache_info['status'] = 'connected'
+                    
+                    # Get Redis client for detailed info
+                    redis_client = get_redis_connection("default")
+                    info = redis_client.info()
+                    
+                    # Memory info
+                    used_memory = info.get('used_memory', 0)
+                    used_memory_peak = info.get('used_memory_peak', 0)
+                    cache_info['memory']['used_bytes'] = used_memory
+                    cache_info['memory']['used'] = format_bytes(used_memory)
+                    cache_info['memory']['peak'] = format_bytes(used_memory_peak)
+                    
+                    # Stats
+                    hits = info.get('keyspace_hits', 0)
+                    misses = info.get('keyspace_misses', 0)
+                    total_ops = hits + misses
+                    hit_ratio = (hits / total_ops * 100) if total_ops > 0 else 0
+                    uptime_seconds = info.get('uptime_in_seconds', 0)
+                    
+                    cache_info['stats']['hits'] = hits
+                    cache_info['stats']['misses'] = misses
+                    cache_info['stats']['hit_ratio'] = round(hit_ratio, 2)
+                    cache_info['stats']['uptime_seconds'] = uptime_seconds
+                    cache_info['stats']['uptime_formatted'] = format_uptime(uptime_seconds)
+                    
+                    # Server info
+                    cache_info['server']['version'] = info.get('redis_version', 'N/A')
+                    cache_info['server']['os'] = info.get('os', 'N/A')
+                    cache_info['server']['max_memory'] = format_bytes(info.get('maxmemory', 0)) if info.get('maxmemory', 0) > 0 else 'No limit'
+                    cache_info['server']['max_clients'] = info.get('maxclients', 'N/A')
+                    cache_info['server']['connected_clients'] = info.get('connected_clients', 0)
+                    
+                    # Get location from settings
+                    location = settings.CACHES.get('default', {}).get('LOCATION', 'redis://127.0.0.1:6379/1')
+                    if '://' in location:
+                        parts = location.split('://')[-1].split(':')
+                        cache_info['server']['host'] = parts[0] if parts else '127.0.0.1'
+                        port_db = parts[1] if len(parts) > 1 else '6379'
+                        cache_info['server']['port'] = int(port_db.split('/')[0])
+                    
+                    # Keys per database
+                    total_keys = 0
+                    
+                    # Get keys from each configured cache
+                    cache_databases = ['default', 'sessions', 'products']
+                    for cache_name in cache_databases:
+                        try:
+                            if cache_name in settings.CACHES:
+                                cache_client = get_redis_connection(cache_name)
+                                db_size = cache_client.dbsize()
+                                cache_info['keys'][cache_name] = db_size
+                                total_keys += db_size
+                                
+                                # Get memory for this database
+                                db_info = cache_client.info('memory')
+                                cache_info['databases'][cache_name] = {
+                                    'keys': db_size,
+                                    'memory': format_bytes(db_info.get('used_memory', 0))
+                                }
+                        except Exception as e:
+                            cache_info['keys'][cache_name] = 0
+                            cache_info['databases'][cache_name] = {'keys': 0, 'memory': '0 MB'}
+                    
+                    cache_info['keys']['total'] = total_keys
+                    
+            except Exception as e:
+                cache_info['status'] = 'error'
+                cache_info['error'] = str(e)
+        else:
+            # Database cache or other backend
+            cache_info['status'] = 'connected' if not cache_info['is_redis'] else 'disabled'
+            cache_info['backend'] = cache_backend
+            
+            # For database cache, show basic info
+            if 'db' in cache_backend.lower():
+                cache_info['server']['version'] = 'Database Cache'
+                cache_info['server']['host'] = 'Local Database'
+                cache_info['server']['port'] = 'N/A'
+        
+        return Response({
+            'success': True,
+            'data': cache_info
+        })
+        
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@authentication_classes([SessionAuthentication, BasicAuthentication])
+@permission_classes([IsStaffUser])
+def cache_clear_api(request):
+    """
+    Clear cache - can clear all or specific cache database
+    """
+    from django.core.cache import caches
+    from django.conf import settings
+    
+    try:
+        cache_name = request.data.get('cache', 'all')
+        
+        cleared = []
+        
+        if cache_name == 'all':
+            # Clear all caches
+            for name in settings.CACHES.keys():
+                try:
+                    caches[name].clear()
+                    cleared.append(name)
+                except Exception as e:
+                    pass
+        else:
+            # Clear specific cache
+            if cache_name in settings.CACHES:
+                caches[cache_name].clear()
+                cleared.append(cache_name)
+            else:
+                return Response({
+                    'success': False,
+                    'error': f'Cache "{cache_name}" not found'
+                }, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response({
+            'success': True,
+            'message': f'Successfully cleared: {", ".join(cleared)}',
+            'cleared': cleared
+        })
+        
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@authentication_classes([SessionAuthentication, BasicAuthentication])
+@permission_classes([IsStaffUser])
+def cache_search_keys_api(request):
+    """
+    Search for cache keys by pattern
+    """
+    from django.core.cache import caches
+    from django.conf import settings
+    
+    try:
+        cache_name = request.data.get('cache', 'default')
+        pattern = request.data.get('pattern', '*')
+        
+        # Check if Redis is being used
+        use_redis = getattr(settings, 'USE_REDIS', False)
+        cache_backend = settings.CACHES.get('default', {}).get('BACKEND', '')
+        
+        if 'redis' not in cache_backend.lower() or not use_redis:
+            return Response({
+                'success': False,
+                'error': 'Key search is only available with Redis cache'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if cache_name not in settings.CACHES:
+            return Response({
+                'success': False,
+                'error': f'Cache "{cache_name}" not found'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        from django_redis import get_redis_connection
+        
+        redis_client = get_redis_connection(cache_name)
+        
+        # Get key prefix
+        key_prefix = settings.CACHES.get(cache_name, {}).get('KEY_PREFIX', '')
+        
+        # Search for keys
+        search_pattern = f"{key_prefix}:{pattern}" if key_prefix else pattern
+        keys = redis_client.keys(search_pattern)
+        
+        # Limit results
+        max_results = 100
+        keys = keys[:max_results]
+        
+        # Format keys for response
+        key_list = []
+        for key in keys:
+            key_str = key.decode('utf-8') if isinstance(key, bytes) else key
+            # Remove prefix for display
+            display_key = key_str.replace(f"{key_prefix}:", '') if key_prefix else key_str
+            
+            # Get TTL
+            ttl = redis_client.ttl(key)
+            
+            key_list.append({
+                'key': display_key,
+                'full_key': key_str,
+                'ttl': ttl,
+                'ttl_formatted': f"{ttl}s" if ttl > 0 else ('No expiry' if ttl == -1 else 'Expired')
+            })
+        
+        return Response({
+            'success': True,
+            'data': {
+                'keys': key_list,
+                'count': len(key_list),
+                'pattern': pattern,
+                'cache': cache_name,
+                'truncated': len(keys) >= max_results
+            }
+        })
+        
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@authentication_classes([SessionAuthentication, BasicAuthentication])
+@permission_classes([IsStaffUser])
+def cache_delete_keys_api(request):
+    """
+    Delete specific cache keys
+    """
+    from django.core.cache import caches
+    from django.conf import settings
+    
+    try:
+        cache_name = request.data.get('cache', 'default')
+        keys = request.data.get('keys', [])
+        
+        if not keys:
+            return Response({
+                'success': False,
+                'error': 'No keys provided'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if Redis is being used
+        use_redis = getattr(settings, 'USE_REDIS', False)
+        cache_backend = settings.CACHES.get('default', {}).get('BACKEND', '')
+        
+        if 'redis' not in cache_backend.lower() or not use_redis:
+            return Response({
+                'success': False,
+                'error': 'Key deletion is only available with Redis cache'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if cache_name not in settings.CACHES:
+            return Response({
+                'success': False,
+                'error': f'Cache "{cache_name}" not found'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        from django_redis import get_redis_connection
+        
+        redis_client = get_redis_connection(cache_name)
+        
+        # Delete keys
+        deleted_count = 0
+        for key in keys:
+            key_bytes = key.encode('utf-8') if isinstance(key, str) else key
+            result = redis_client.delete(key_bytes)
+            deleted_count += result
+        
+        return Response({
+            'success': True,
+            'message': f'Deleted {deleted_count} keys',
+            'deleted_count': deleted_count
+        })
+        
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@authentication_classes([SessionAuthentication, BasicAuthentication])
+@permission_classes([IsStaffUser])
+def cache_warmup_api(request):
+    """
+    Warmup cache by pre-loading common data
+    """
+    from django.core.cache import cache
+    from products.models import Product, Category
+    
+    try:
+        warmed_items = []
+        
+        # Cache active categories
+        try:
+            categories = list(Category.objects.filter(is_active=True).values('id', 'name', 'slug'))
+            cache.set('all_active_categories', categories, 3600)
+            warmed_items.append(f'Categories ({len(categories)} items)')
+        except Exception as e:
+            pass
+        
+        # Cache featured products
+        try:
+            featured = list(Product.objects.filter(
+                is_active=True, 
+                is_featured=True
+            ).values('id', 'name', 'slug', 'price')[:20])
+            cache.set('featured_products', featured, 3600)
+            warmed_items.append(f'Featured products ({len(featured)} items)')
+        except Exception as e:
+            pass
+        
+        # Cache product count
+        try:
+            product_count = Product.objects.filter(is_active=True).count()
+            cache.set('active_product_count', product_count, 3600)
+            warmed_items.append('Product count')
+        except Exception as e:
+            pass
+        
+        # Cache category count
+        try:
+            category_count = Category.objects.filter(is_active=True).count()
+            cache.set('active_category_count', category_count, 3600)
+            warmed_items.append('Category count')
+        except Exception as e:
+            pass
+        
+        return Response({
+            'success': True,
+            'message': f'Cache warmup completed. Warmed {len(warmed_items)} items.',
+            'warmed_items': warmed_items
+        })
+        
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def format_bytes(bytes_value):
+    """Format bytes to human readable string"""
+    if bytes_value == 0:
+        return '0 B'
+    
+    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        if bytes_value < 1024.0:
+            return f"{bytes_value:.2f} {unit}"
+        bytes_value /= 1024.0
+    return f"{bytes_value:.2f} PB"
+
+
+def format_uptime(seconds):
+    """Format seconds to human readable uptime string"""
+    days = seconds // 86400
+    hours = (seconds % 86400) // 3600
+    minutes = (seconds % 3600) // 60
+    
+    if days > 0:
+        return f"{days}d {hours}h"
+    elif hours > 0:
+        return f"{hours}h {minutes}m"
+    else:
+        return f"{minutes}m"
+

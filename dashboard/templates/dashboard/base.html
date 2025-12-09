@@ -389,6 +389,13 @@
                     </a>
                 </li>
                 {% endif %}
+                {% if user.is_superuser or user|has_dashboard_access:'cache' %}
+                <li>
+                    <a href="{% url 'dashboard:cache' %}" class="{% if active_page == 'cache' %}active{% endif %}">
+                        <i class="fas fa-bolt"></i> Cache
+                    </a>
+                </li>
+                {% endif %}
                 {% if user.is_superuser or user|has_dashboard_access:'settings' %}
                 <li>
                     <a href="{% url 'dashboard:settings' %}" class="{% if active_page == 'settings' %}active{% endif %}">

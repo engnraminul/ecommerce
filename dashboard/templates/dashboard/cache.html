@@ -1,0 +1,943 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Cache Management - MB Admin{% endblock %}
+
+{% block page_title %}Cache Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cache-status-card {
+        transition: all 0.3s ease;
+    }
+    
+    .cache-status-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        animation: pulse 2s infinite;
+    }
+    
+    .status-indicator.connected {
+        background-color: #28a745;
+    }
+    
+    .status-indicator.disconnected {
+        background-color: #dc3545;
+    }
+    
+    .status-indicator.warning {
+        background-color: #ffc107;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    
+    .stat-card {
+        border-left: 4px solid;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card.hits {
+        border-left-color: #28a745;
+    }
+    
+    .stat-card.misses {
+        border-left-color: #dc3545;
+    }
+    
+    .stat-card.ratio {
+        border-left-color: #007bff;
+    }
+    
+    .stat-card.uptime {
+        border-left-color: #17a2b8;
+    }
+    
+    .cache-db-card {
+        border: none;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .cache-db-card .card-header {
+        background: linear-gradient(135deg, #334155, #475569);
+        color: white;
+        border: none;
+    }
+    
+    .progress-thick {
+        height: 25px;
+        border-radius: 5px;
+    }
+    
+    .quick-action-btn {
+        padding: 20px;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .quick-action-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .quick-action-btn i {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+    
+    .key-item {
+        background: #f8f9fa;
+        border-radius: 5px;
+        margin-bottom: 8px;
+        padding: 10px 15px;
+        transition: all 0.2s ease;
+    }
+    
+    .key-item:hover {
+        background: #e9ecef;
+    }
+    
+    .server-info-table td {
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .server-info-table td:first-child {
+        color: #6c757d;
+        width: 45%;
+    }
+    
+    .server-info-table td:last-child {
+        font-weight: 600;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #930000;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- CSRF Token for AJAX requests -->
+{% csrf_token %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-1">
+                <i class="fas fa-bolt text-warning me-2"></i>
+                Redis Cache Management
+            </h4>
+            <p class="text-muted mb-0">Monitor and manage your application cache for optimal performance</p>
+        </div>
+        <button class="btn btn-primary" id="refreshAllStats">
+            <i class="fas fa-sync-alt me-1"></i> Refresh All
+        </button>
+    </div>
+
+    <!-- Status Cards Row -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card cache-status-card shadow-sm h-100">
+                <div class="card-body text-center py-4">
+                    <div class="mb-3">
+                        <span class="status-indicator disconnected" id="statusIndicator"></span>
+                    </div>
+                    <h6 class="text-muted mb-2">Connection Status</h6>
+                    <h3 id="cacheStatus" class="mb-0">Checking...</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card cache-status-card shadow-sm h-100">
+                <div class="card-body text-center py-4">
+                    <div class="mb-3">
+                        <i class="fas fa-memory text-primary" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <h6 class="text-muted mb-2">Memory Usage</h6>
+                    <h3 id="cacheMemory" class="mb-0">Loading...</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card cache-status-card shadow-sm h-100">
+                <div class="card-body text-center py-4">
+                    <div class="mb-3">
+                        <i class="fas fa-key text-warning" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <h6 class="text-muted mb-2">Total Cached Keys</h6>
+                    <h3 id="cacheTotalKeys" class="mb-0">Loading...</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Stats -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2" style="color: #930000;"></i>
+                        Performance Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card stat-card hits shadow-sm">
+                                <div class="card-body">
+                                    <h6 class="text-muted mb-1">Cache Hits</h6>
+                                    <h4 id="cacheHits" class="text-success mb-0">0</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card stat-card misses shadow-sm">
+                                <div class="card-body">
+                                    <h6 class="text-muted mb-1">Cache Misses</h6>
+                                    <h4 id="cacheMisses" class="text-danger mb-0">0</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card stat-card ratio shadow-sm">
+                                <div class="card-body">
+                                    <h6 class="text-muted mb-1">Hit Ratio</h6>
+                                    <h4 id="cacheHitRatio" class="text-primary mb-0">0%</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card stat-card uptime shadow-sm">
+                                <div class="card-body">
+                                    <h6 class="text-muted mb-1">Server Uptime</h6>
+                                    <h4 id="cacheUptime" class="text-info mb-0">0d 0h</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hit Ratio Bar -->
+                    <div>
+                        <label class="fw-bold mb-2">Cache Efficiency</label>
+                        <div class="progress progress-thick">
+                            <div class="progress-bar bg-success" role="progressbar" id="cacheHitBar" style="width: 0%;">
+                                <span id="cacheHitBarText">0% Hits</span>
+                            </div>
+                            <div class="progress-bar bg-danger" role="progressbar" id="cacheMissBar" style="width: 0%;">
+                                <span id="cacheMissBarText">0% Misses</span>
+                            </div>
+                        </div>
+                        <small class="text-muted mt-2 d-block">
+                            <i class="fas fa-info-circle me-1"></i>
+                            A higher hit ratio indicates better cache performance. Aim for 80%+ for optimal results.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cache Databases -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h5 class="mb-3">
+                <i class="fas fa-database me-2" style="color: #930000;"></i>
+                Cache Databases
+            </h5>
+        </div>
+        <div class="col-md-4">
+            <div class="card cache-db-card shadow-sm h-100">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-layer-group me-2"></i>Default Cache</h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-borderless mb-3">
+                        <tr>
+                            <td class="text-muted">Keys:</td>
+                            <td class="fw-bold text-end" id="defaultCacheKeys">0</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Memory:</td>
+                            <td class="fw-bold text-end" id="defaultCacheMemory">0 MB</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Timeout:</td>
+                            <td class="fw-bold text-end">5 minutes</td>
+                        </tr>
+                    </table>
+                    <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="clearCacheDb('default')">
+                        <i class="fas fa-trash me-1"></i> Clear Default Cache
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card cache-db-card shadow-sm h-100">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-user-clock me-2"></i>Sessions Cache</h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-borderless mb-3">
+                        <tr>
+                            <td class="text-muted">Keys:</td>
+                            <td class="fw-bold text-end" id="sessionsCacheKeys">0</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Memory:</td>
+                            <td class="fw-bold text-end" id="sessionsCacheMemory">0 MB</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Timeout:</td>
+                            <td class="fw-bold text-end">24 hours</td>
+                        </tr>
+                    </table>
+                    <button type="button" class="btn btn-outline-warning btn-sm w-100" onclick="clearCacheDb('sessions')">
+                        <i class="fas fa-exclamation-triangle me-1"></i> Clear Sessions (Logs out users)
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card cache-db-card shadow-sm h-100">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-shopping-bag me-2"></i>Products Cache</h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-borderless mb-3">
+                        <tr>
+                            <td class="text-muted">Keys:</td>
+                            <td class="fw-bold text-end" id="productsCacheKeys">0</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Memory:</td>
+                            <td class="fw-bold text-end" id="productsCacheMemory">0 MB</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Timeout:</td>
+                            <td class="fw-bold text-end">1 hour</td>
+                        </tr>
+                    </table>
+                    <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="clearCacheDb('products')">
+                        <i class="fas fa-trash me-1"></i> Clear Products Cache
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h5 class="mb-3">
+                <i class="fas fa-bolt me-2" style="color: #930000;"></i>
+                Quick Actions
+            </h5>
+        </div>
+        <div class="col-md-3 mb-3">
+            <button type="button" class="btn btn-outline-danger quick-action-btn w-100 h-100" id="clearAllCache">
+                <i class="fas fa-broom d-block"></i>
+                <span class="fw-bold">Clear All Caches</span>
+                <small class="d-block text-muted mt-1">Remove all cached data</small>
+            </button>
+        </div>
+        <div class="col-md-3 mb-3">
+            <button type="button" class="btn btn-outline-success quick-action-btn w-100 h-100" id="warmupCache">
+                <i class="fas fa-fire d-block"></i>
+                <span class="fw-bold">Warmup Cache</span>
+                <small class="d-block text-muted mt-1">Pre-load common data</small>
+            </button>
+        </div>
+        <div class="col-md-3 mb-3">
+            <button type="button" class="btn btn-outline-primary quick-action-btn w-100 h-100" id="clearProductCache">
+                <i class="fas fa-box d-block"></i>
+                <span class="fw-bold">Clear Products</span>
+                <small class="d-block text-muted mt-1">Refresh product data</small>
+            </button>
+        </div>
+        <div class="col-md-3 mb-3">
+            <button type="button" class="btn btn-outline-info quick-action-btn w-100 h-100" id="exportCacheStats">
+                <i class="fas fa-download d-block"></i>
+                <span class="fw-bold">Export Stats</span>
+                <small class="d-block text-muted mt-1">Download as JSON</small>
+            </button>
+        </div>
+    </div>
+
+    <!-- Key Search Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-search me-2" style="color: #930000;"></i>
+                        Cache Key Management
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="cacheDbSelect" class="form-label fw-bold">Cache Database</label>
+                            <select class="form-select" id="cacheDbSelect">
+                                <option value="default">Default Cache</option>
+                                <option value="sessions">Sessions Cache</option>
+                                <option value="products">Products Cache</option>
+                            </select>
+                        </div>
+                        <div class="col-md-9">
+                            <label for="cacheKeyPattern" class="form-label fw-bold">Key Pattern</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="cacheKeyPattern" placeholder="Enter key pattern (e.g., product_* or user_123)">
+                                <button class="btn btn-primary" type="button" id="searchCacheKeys">
+                                    <i class="fas fa-search me-1"></i> Search Keys
+                                </button>
+                            </div>
+                            <small class="text-muted">Use * as wildcard. Examples: product_*, user_123, *_settings</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Search Results -->
+                    <div id="cacheKeyResults" class="border rounded p-3" style="max-height: 400px; overflow-y: auto; display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="fw-bold">
+                                <i class="fas fa-key me-2"></i>
+                                Found Keys: <span id="foundKeysCount" class="badge bg-primary">0</span>
+                            </span>
+                            <button type="button" class="btn btn-sm btn-danger" id="deleteSelectedKeys" disabled>
+                                <i class="fas fa-trash me-1"></i> Delete Selected
+                            </button>
+                        </div>
+                        <div id="cacheKeysList">
+                            <!-- Keys will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Server Information -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-server me-2" style="color: #930000;"></i>
+                        Redis Server Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table server-info-table">
+                                <tr>
+                                    <td>Redis Version</td>
+                                    <td id="redisVersion">N/A</td>
+                                </tr>
+                                <tr>
+                                    <td>Host</td>
+                                    <td id="redisHost">127.0.0.1</td>
+                                </tr>
+                                <tr>
+                                    <td>Port</td>
+                                    <td id="redisPort">6379</td>
+                                </tr>
+                                <tr>
+                                    <td>Operating System</td>
+                                    <td id="redisOS">N/A</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table server-info-table">
+                                <tr>
+                                    <td>Max Memory</td>
+                                    <td id="redisMaxMemory">N/A</td>
+                                </tr>
+                                <tr>
+                                    <td>Max Clients</td>
+                                    <td id="redisMaxClients">N/A</td>
+                                </tr>
+                                <tr>
+                                    <td>Connected Clients</td>
+                                    <td id="redisConnectedClients">N/A</td>
+                                </tr>
+                                <tr>
+                                    <td>Cache Backend</td>
+                                    <td id="cacheBackend">N/A</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load cache status on page load
+    loadCacheStatus();
+    
+    // Refresh all stats button
+    document.getElementById('refreshAllStats').addEventListener('click', function() {
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-spinner me-1"></span> Refreshing...';
+        
+        loadCacheStatus().finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Refresh All';
+        });
+    });
+    
+    // Clear all cache button
+    document.getElementById('clearAllCache').addEventListener('click', function() {
+        if (confirm('Are you sure you want to clear ALL caches? This may temporarily slow down the site.')) {
+            clearCache('all', this);
+        }
+    });
+    
+    // Clear product cache button
+    document.getElementById('clearProductCache').addEventListener('click', function() {
+        clearCache('products', this);
+    });
+    
+    // Warmup cache button
+    document.getElementById('warmupCache').addEventListener('click', function() {
+        warmupCache(this);
+    });
+    
+    // Export stats button
+    document.getElementById('exportCacheStats').addEventListener('click', function() {
+        exportCacheStats(this);
+    });
+    
+    // Search cache keys
+    document.getElementById('searchCacheKeys').addEventListener('click', function() {
+        searchCacheKeys();
+    });
+    
+    // Enter key support for search
+    document.getElementById('cacheKeyPattern').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchCacheKeys();
+        }
+    });
+    
+    // Delete selected keys
+    document.getElementById('deleteSelectedKeys').addEventListener('click', function() {
+        deleteSelectedKeys();
+    });
+});
+
+// Load cache status
+function loadCacheStatus() {
+    return fetch('/mb-admin/api/cache/status/', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateCacheUI(data.data);
+        } else {
+            showError(data.error || 'Failed to load cache status');
+        }
+    })
+    .catch(error => {
+        console.error('Cache status error:', error);
+        showError('Failed to connect to cache service');
+    });
+}
+
+// Update cache UI with data
+function updateCacheUI(data) {
+    const statusIndicator = document.getElementById('statusIndicator');
+    const statusEl = document.getElementById('cacheStatus');
+    
+    if (data.status === 'connected') {
+        statusIndicator.className = 'status-indicator connected';
+        statusEl.textContent = 'Connected';
+        statusEl.className = 'text-success mb-0';
+    } else if (data.status === 'disabled') {
+        statusIndicator.className = 'status-indicator warning';
+        statusEl.textContent = 'Redis Disabled';
+        statusEl.className = 'text-warning mb-0';
+    } else {
+        statusIndicator.className = 'status-indicator disconnected';
+        statusEl.textContent = 'Disconnected';
+        statusEl.className = 'text-danger mb-0';
+    }
+    
+    // Memory
+    document.getElementById('cacheMemory').textContent = data.memory?.used || '0 MB';
+    
+    // Total keys
+    document.getElementById('cacheTotalKeys').textContent = formatNumber(data.keys?.total || 0);
+    
+    // Stats
+    document.getElementById('cacheHits').textContent = formatNumber(data.stats?.hits || 0);
+    document.getElementById('cacheMisses').textContent = formatNumber(data.stats?.misses || 0);
+    document.getElementById('cacheHitRatio').textContent = (data.stats?.hit_ratio || 0).toFixed(1) + '%';
+    document.getElementById('cacheUptime').textContent = data.stats?.uptime_formatted || '0d 0h';
+    
+    // Hit ratio bar
+    const hitRatio = data.stats?.hit_ratio || 0;
+    const missRatio = 100 - hitRatio;
+    
+    document.getElementById('cacheHitBar').style.width = hitRatio + '%';
+    document.getElementById('cacheHitBarText').textContent = hitRatio > 10 ? hitRatio.toFixed(1) + '% Hits' : '';
+    
+    document.getElementById('cacheMissBar').style.width = missRatio + '%';
+    document.getElementById('cacheMissBarText').textContent = missRatio > 10 ? missRatio.toFixed(1) + '% Misses' : '';
+    
+    // Database stats
+    if (data.databases) {
+        document.getElementById('defaultCacheKeys').textContent = formatNumber(data.databases.default?.keys || 0);
+        document.getElementById('defaultCacheMemory').textContent = data.databases.default?.memory || '0 MB';
+        
+        document.getElementById('sessionsCacheKeys').textContent = formatNumber(data.databases.sessions?.keys || 0);
+        document.getElementById('sessionsCacheMemory').textContent = data.databases.sessions?.memory || '0 MB';
+        
+        document.getElementById('productsCacheKeys').textContent = formatNumber(data.databases.products?.keys || 0);
+        document.getElementById('productsCacheMemory').textContent = data.databases.products?.memory || '0 MB';
+    }
+    
+    // Server info
+    document.getElementById('redisVersion').textContent = data.server?.version || 'N/A';
+    document.getElementById('redisHost').textContent = data.server?.host || '127.0.0.1';
+    document.getElementById('redisPort').textContent = data.server?.port || '6379';
+    document.getElementById('redisOS').textContent = data.server?.os || 'N/A';
+    document.getElementById('redisMaxMemory').textContent = data.server?.max_memory || 'N/A';
+    document.getElementById('redisMaxClients').textContent = data.server?.max_clients || 'N/A';
+    document.getElementById('redisConnectedClients').textContent = data.server?.connected_clients || 0;
+    document.getElementById('cacheBackend').textContent = data.is_redis ? 'Redis' : 'Database Cache';
+}
+
+// Clear cache function
+function clearCache(cacheName, btn) {
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner me-1"></span> Clearing...';
+    
+    fetch('/mb-admin/api/cache/clear/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({ cache: cacheName })
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+        
+        if (data.success) {
+            showSuccess(data.message || 'Cache cleared successfully');
+            loadCacheStatus();
+        } else {
+            showError(data.error || 'Failed to clear cache');
+        }
+    })
+    .catch(error => {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+        console.error('Clear cache error:', error);
+        showError('Failed to clear cache');
+    });
+}
+
+// Clear specific database cache
+window.clearCacheDb = function(cacheName) {
+    const btn = event.target;
+    if (cacheName === 'sessions') {
+        if (!confirm('Clearing sessions cache will log out all users. Continue?')) {
+            return;
+        }
+    }
+    clearCache(cacheName, btn);
+};
+
+// Warmup cache
+function warmupCache(btn) {
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner d-block mb-2"></span>Warming up...';
+    
+    fetch('/mb-admin/api/cache/warmup/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+        
+        if (data.success) {
+            showSuccess(data.message || 'Cache warmup completed');
+            loadCacheStatus();
+        } else {
+            showError(data.error || 'Failed to warmup cache');
+        }
+    })
+    .catch(error => {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+        console.error('Warmup error:', error);
+        showError('Failed to warmup cache');
+    });
+}
+
+// Search cache keys
+function searchCacheKeys() {
+    const pattern = document.getElementById('cacheKeyPattern').value || '*';
+    const cacheName = document.getElementById('cacheDbSelect').value;
+    const resultsContainer = document.getElementById('cacheKeyResults');
+    const keysList = document.getElementById('cacheKeysList');
+    
+    resultsContainer.style.display = 'block';
+    keysList.innerHTML = '<div class="text-center py-3"><span class="loading-spinner me-2"></span>Searching...</div>';
+    
+    fetch('/mb-admin/api/cache/search-keys/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({ 
+            cache: cacheName,
+            pattern: pattern 
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('foundKeysCount').textContent = data.data.count;
+            
+            if (data.data.keys.length === 0) {
+                keysList.innerHTML = '<div class="text-muted text-center py-3"><i class="fas fa-search me-2"></i>No keys found matching pattern</div>';
+            } else {
+                keysList.innerHTML = data.data.keys.map(key => `
+                    <div class="key-item d-flex align-items-center justify-content-between">
+                        <div class="form-check flex-grow-1">
+                            <input class="form-check-input cache-key-checkbox" type="checkbox" value="${key.full_key}" id="key_${btoa(key.full_key).replace(/[^a-zA-Z0-9]/g, '')}">
+                            <label class="form-check-label" for="key_${btoa(key.full_key).replace(/[^a-zA-Z0-9]/g, '')}">
+                                <code>${key.key}</code>
+                            </label>
+                        </div>
+                        <span class="badge bg-secondary">${key.ttl_formatted}</span>
+                    </div>
+                `).join('');
+                
+                // Enable/disable delete button based on selection
+                document.querySelectorAll('.cache-key-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', updateDeleteButtonState);
+                });
+            }
+            
+            if (data.data.truncated) {
+                keysList.innerHTML += '<div class="alert alert-info mt-3 mb-0"><i class="fas fa-info-circle me-2"></i>Results limited to 100 keys. Use a more specific pattern for better results.</div>';
+            }
+        } else {
+            keysList.innerHTML = `<div class="alert alert-danger mb-0"><i class="fas fa-exclamation-circle me-2"></i>${data.error || 'Search failed'}</div>`;
+        }
+    })
+    .catch(error => {
+        console.error('Search error:', error);
+        keysList.innerHTML = '<div class="alert alert-danger mb-0"><i class="fas fa-exclamation-circle me-2"></i>Failed to search keys</div>';
+    });
+}
+
+// Update delete button state
+function updateDeleteButtonState() {
+    const selectedCount = document.querySelectorAll('.cache-key-checkbox:checked').length;
+    document.getElementById('deleteSelectedKeys').disabled = selectedCount === 0;
+}
+
+// Delete selected keys
+function deleteSelectedKeys() {
+    const selectedKeys = Array.from(document.querySelectorAll('.cache-key-checkbox:checked')).map(cb => cb.value);
+    const cacheName = document.getElementById('cacheDbSelect').value;
+    
+    if (selectedKeys.length === 0) {
+        showError('No keys selected');
+        return;
+    }
+    
+    if (!confirm(`Are you sure you want to delete ${selectedKeys.length} key(s)?`)) {
+        return;
+    }
+    
+    const btn = document.getElementById('deleteSelectedKeys');
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner me-1"></span> Deleting...';
+    
+    fetch('/mb-admin/api/cache/delete-keys/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({ 
+            cache: cacheName,
+            keys: selectedKeys 
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.innerHTML = originalHTML;
+        
+        if (data.success) {
+            showSuccess(data.message || 'Keys deleted');
+            searchCacheKeys(); // Refresh results
+            loadCacheStatus(); // Update stats
+        } else {
+            showError(data.error || 'Failed to delete keys');
+        }
+    })
+    .catch(error => {
+        btn.innerHTML = originalHTML;
+        console.error('Delete error:', error);
+        showError('Failed to delete keys');
+    });
+}
+
+// Export cache stats
+function exportCacheStats(btn) {
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner d-block mb-2"></span>Exporting...';
+    
+    fetch('/mb-admin/api/cache/status/', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+        
+        if (data.success) {
+            const exportData = {
+                exported_at: new Date().toISOString(),
+                ...data.data
+            };
+            
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cache_stats_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showSuccess('Cache stats exported');
+        } else {
+            showError('Failed to export stats');
+        }
+    })
+    .catch(error => {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+        console.error('Export error:', error);
+        showError('Failed to export stats');
+    });
+}
+
+// Helper functions
+function formatNumber(num) {
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return num.toString();
+}
+
+function getCsrfToken() {
+    // First try to get from hidden input
+    const csrfInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    if (csrfInput) return csrfInput.value;
+    
+    // Fallback to cookie
+    const cookieValue = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('csrftoken='))
+        ?.split('=')[1];
+    return cookieValue || '';
+}
+
+function showSuccess(message) {
+    // Create toast notification
+    const toast = document.createElement('div');
+    toast.className = 'position-fixed top-0 end-0 p-3';
+    toast.style.zIndex = '9999';
+    toast.innerHTML = `
+        <div class="toast show align-items-center text-white bg-success border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-check-circle me-2"></i>${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="this.closest('.position-fixed').remove()"></button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 5000);
+}
+
+function showError(message) {
+    const toast = document.createElement('div');
+    toast.className = 'position-fixed top-0 end-0 p-3';
+    toast.style.zIndex = '9999';
+    toast.innerHTML = `
+        <div class="toast show align-items-center text-white bg-danger border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-exclamation-circle me-2"></i>${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="this.closest('.position-fixed').remove()"></button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 5000);
+}
+</script>
+{% endblock %}
