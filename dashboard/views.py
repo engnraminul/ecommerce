@@ -2100,6 +2100,37 @@ class DashboardStatisticsView(APIView):
                 for status, count in sorted(status_consolidation.items(), key=lambda x: x[1], reverse=True)
             ]
             
+            # Calculate sales by category (from delivered and shipped orders)
+            sales_by_category = []
+            try:
+                # Get all order items from delivered/shipped orders within date range
+                order_items_filter = Q(order__status__in=['delivered', 'shipped'])
+                if start_date and end_date:
+                    order_items_filter &= Q(order__created_at__gte=start_date.astimezone(timezone.timezone.utc), order__created_at__lte=end_date.astimezone(timezone.timezone.utc))
+                elif start_date:
+                    order_items_filter &= Q(order__created_at__gte=start_date.astimezone(timezone.timezone.utc))
+                
+                # Aggregate sales by category
+                category_sales = OrderItem.objects.filter(order_items_filter).values(
+                    'product__category__id',
+                    'product__category__name'
+                ).annotate(
+                    total_sales=Sum(F('unit_price') * F('quantity')),
+                    order_count=Count('order', distinct=True)
+                ).order_by('-total_sales')
+                
+                for cat_data in category_sales:
+                    if cat_data['product__category__name']:  # Only include if category exists
+                        sales_by_category.append({
+                            'category_id': cat_data['product__category__id'],
+                            'category_name': cat_data['product__category__name'],
+                            'sales': float(cat_data['total_sales'] or 0),
+                            'order_count': cat_data['order_count']
+                        })
+            except Exception as e:
+                print(f"Error calculating sales by category: {e}")
+                sales_by_category = []
+            
             # Prepare response data with simple defaults for now
             data = {
                 'total_sales': float(total_sales),
@@ -2115,7 +2146,7 @@ class DashboardStatisticsView(APIView):
                 'recent_orders': [],
                 'popular_products': [],
                 'sales_by_period': [],
-                'sales_by_category': [],
+                'sales_by_category': sales_by_category,
                 'orders_by_status': orders_status_list,
                 'analytics': {},
                 'recommendations': []

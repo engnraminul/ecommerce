@@ -54,7 +54,7 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-uppercase mb-1">Total Expenses</div>
-                            <div class="h5 mb-0 font-weight-bold" id="totalExpenses">$0.00</div>
+                            <div class="h5 mb-0 font-weight-bold" id="totalExpenses">৳0.00</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-money-bill-wave fa-2x"></i>
@@ -69,7 +69,7 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">This Month</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="thisMonthExpenses">$0.00</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="thisMonthExpenses">৳0.00</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-calendar fa-2x text-gray-300"></i>
@@ -99,7 +99,7 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Avg per Expense</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="avgExpense">$0.00</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="avgExpense">৳0.00</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-chart-line fa-2x text-gray-300"></i>
@@ -676,7 +676,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(data => {
                 // Update statistics cards
-                document.getElementById('totalExpenses').textContent = `$${data.total_expenses.toFixed(2)}`;
+                document.getElementById('totalExpenses').textContent = `৳${data.total_expenses.toFixed(2)}`;
                 document.getElementById('totalCount').textContent = data.total_count;
                 
                 // Calculate this month's expenses
@@ -687,11 +687,11 @@ document.addEventListener('DOMContentLoaded', function() {
                            monthDate.getFullYear() === now.getFullYear();
                 });
                 document.getElementById('thisMonthExpenses').textContent = 
-                    `$${(thisMonth ? thisMonth.total : 0).toFixed(2)}`;
+                    `৳${(thisMonth ? thisMonth.total : 0).toFixed(2)}`;
                 
                 // Calculate average
                 const avgExpense = data.total_count > 0 ? data.total_expenses / data.total_count : 0;
-                document.getElementById('avgExpense').textContent = `$${avgExpense.toFixed(2)}`;
+                document.getElementById('avgExpense').textContent = `৳${avgExpense.toFixed(2)}`;
 
                 // Update charts
                 updateMonthlyChart(data.monthly_expenses);
@@ -753,7 +753,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         beginAtZero: true,
                         ticks: {
                             callback: function(value) {
-                                return '$' + value.toFixed(2);
+                                return '৳' + value.toFixed(2);
                             }
                         }
                     }
@@ -814,7 +814,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             label: function(context) {
                                 const value = context.parsed;
                                 const percentage = expenseTypeData[context.dataIndex].percentage;
-                                return `${context.label}: $${value.toFixed(2)} (${percentage}%)`;
+                                return `${context.label}: ৳${value.toFixed(2)} (${percentage}%)`;
                             }
                         }
                     }

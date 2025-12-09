@@ -79,7 +79,7 @@
                         <div class="stat-icon-wrapper sales mb-3">
                             <i class="fas fa-money-bill-wave fa-lg"></i>
                         </div>
-                        <h2 class="stat-value mb-1" id="total-sales-stat">$0.00</h2>
+                        <h2 class="stat-value mb-1" id="total-sales-stat">৳0.00</h2>
                         <h6 class="stat-title mb-2">Total Sales Amount</h6>
                         <div class="stat-description">
                             <small class="text-muted">
@@ -145,7 +145,7 @@
                         <div class="stat-icon-wrapper expenses mb-3">
                             <i class="fas fa-receipt fa-lg"></i>
                         </div>
-                        <h2 class="stat-value mb-1" id="total-expenses-stat">$0.00</h2>
+                        <h2 class="stat-value mb-1" id="total-expenses-stat">৳0.00</h2>
                         <h6 class="stat-title mb-2">Total Expenses</h6>
                         <div class="stat-description">
                             <small class="text-muted">
@@ -178,7 +178,7 @@
                         <div class="stat-icon-wrapper revenue mb-3">
                             <i class="fas fa-chart-line fa-lg"></i>
                         </div>
-                        <h2 class="stat-value mb-1" id="total-revenue-stat">$0.00</h2>
+                        <h2 class="stat-value mb-1" id="total-revenue-stat">৳0.00</h2>
                         <h6 class="stat-title mb-2">Total Revenue</h6>
                         <div class="stat-description">
                             <small class="text-muted">
@@ -217,7 +217,7 @@
                             <h6 class="detail-stat-title mb-0">Total Courier Charge</h6>
                             <span class="badge bg-primary-subtle text-primary rounded-pill">Active</span>
                         </div>
-                        <h3 class="detail-stat-value detail-stat-value-courier mb-2" id="total-courier-charge-stat">$0.00</h3>
+                        <h3 class="detail-stat-value detail-stat-value-courier mb-2" id="total-courier-charge-stat">৳0.00</h3>
                         <div class="detail-stat-description">
                             <small class="text-muted d-block">
                                 <i class="fas fa-box me-1"></i>
@@ -248,7 +248,7 @@
                             <h6 class="detail-stat-title mb-0">Dashboard Expenses</h6>
                             <span class="badge bg-info-subtle text-info rounded-pill">Operational</span>
                         </div>
-                        <h3 class="detail-stat-value detail-stat-value-dashboard mb-2" id="dashboard-expenses-stat">$0.00</h3>
+                        <h3 class="detail-stat-value detail-stat-value-dashboard mb-2" id="dashboard-expenses-stat">৳0.00</h3>
                         <div class="detail-stat-description">
                             <small class="text-muted d-block">
                                 <i class="fas fa-building me-1"></i>
@@ -279,7 +279,7 @@
                             <h6 class="detail-stat-title mb-0">Product Cost</h6>
                             <span class="badge bg-success-subtle text-success rounded-pill">Cost of Goods</span>
                         </div>
-                        <h3 class="detail-stat-value detail-stat-value-product mb-2" id="product-cost-stat">$0.00</h3>
+                        <h3 class="detail-stat-value detail-stat-value-product mb-2" id="product-cost-stat">৳0.00</h3>
                         <div class="detail-stat-description">
                             <small class="text-muted d-block">
                                 <i class="fas fa-tags me-1"></i>
@@ -1804,15 +1804,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update summary statistics
     function updateSummaryStats(data) {
-        document.getElementById('total-sales-stat').textContent = `$${data.total_sales.toFixed(2)}`;
+        document.getElementById('total-sales-stat').textContent = `৳${data.total_sales.toFixed(2)}`;
         document.getElementById('total-orders-stat').textContent = data.orders_count;
-        document.getElementById('total-expenses-stat').textContent = `$${data.total_expenses.toFixed(2)}`;
-        document.getElementById('total-revenue-stat').textContent = `$${data.total_revenue.toFixed(2)}`;
+        document.getElementById('total-expenses-stat').textContent = `৳${data.total_expenses.toFixed(2)}`;
+        document.getElementById('total-revenue-stat').textContent = `৳${data.total_revenue.toFixed(2)}`;
         
         // Update detailed expense breakdown
-        document.getElementById('total-courier-charge-stat').textContent = `$${data.courier_expenses.toFixed(2)}`;
-        document.getElementById('dashboard-expenses-stat').textContent = `$${data.dashboard_expenses.toFixed(2)}`;
-        document.getElementById('product-cost-stat').textContent = `$${data.total_product_cost.toFixed(2)}`;
+        document.getElementById('total-courier-charge-stat').textContent = `৳${data.courier_expenses.toFixed(2)}`;
+        document.getElementById('dashboard-expenses-stat').textContent = `৳${data.dashboard_expenses.toFixed(2)}`;
+        document.getElementById('product-cost-stat').textContent = `৳${data.total_product_cost.toFixed(2)}`;
         document.getElementById('profit-margin-stat').textContent = `${data.profit_margin}%`;
         
         // Update revenue color based on positive/negative value
@@ -1970,7 +1970,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         label: function(context) {
                             const value = context.parsed.y;
                             const label = context.dataset.label;
-                            return `${label}: $${value.toLocaleString()}`;
+                            return `${label}: ৳${value.toLocaleString()}`;
                         },
                         afterLabel: function(context) {
                             if (context.datasetIndex === 2) { // Revenue
@@ -2013,7 +2013,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             size: 11
                         },
                         callback: function(value) {
-                            return '$' + value.toLocaleString();
+                            return '৳' + value.toLocaleString();
                         }
                     }
                 }
@@ -2076,6 +2076,24 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateCategoryChart(categoryData) {
         const ctx = document.getElementById('categoryChart').getContext('2d');
         
+        // Handle empty data
+        if (!categoryData || categoryData.length === 0) {
+            // Destroy existing chart if exists
+            if (categoryChart) {
+                categoryChart.destroy();
+                categoryChart = null;
+            }
+            // Show "No data" message
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            ctx.font = '16px Arial';
+            ctx.fillStyle = '#6c757d';
+            ctx.textAlign = 'center';
+            ctx.fillText('No sales data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
+            ctx.font = '12px Arial';
+            ctx.fillText('Sales by category will appear here', ctx.canvas.width / 2, ctx.canvas.height / 2 + 25);
+            return;
+        }
+        
         const chartData = {
             labels: categoryData.map(item => item.category_name),
             datasets: [{
@@ -2087,7 +2105,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     'rgba(230, 126, 34, 0.7)',
                     'rgba(231, 76, 60, 0.7)',
                     'rgba(52, 73, 94, 0.7)',
-                    'rgba(241, 196, 15, 0.7)'
+                    'rgba(241, 196, 15, 0.7)',
+                    'rgba(26, 188, 156, 0.7)',
+                    'rgba(142, 68, 173, 0.7)',
+                    'rgba(44, 62, 80, 0.7)'
                 ],
                 borderWidth: 1
             }]
@@ -2108,7 +2129,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         label: function(context) {
                             const label = context.label || '';
                             const value = context.parsed || 0;
-                            return label + ': $' + value.toFixed(2);
+                            return label + ': ৳' + value.toFixed(2);
                         }
                     }
                 }
@@ -2365,8 +2386,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     <span class="badge bg-success">${product.delivered_quantity || 0}</span>
                 </td>
                 <td class="text-end">
-                    <strong class="text-primary">$${(product.revenue || 0).toFixed(2)}</strong>
-                    ${product.orders > 0 ? `<br><small class="text-muted">$${(product.revenue / product.orders).toFixed(2)}/order</small>` : ''}
+                    <strong class="text-primary">৳${(product.revenue || 0).toFixed(2)}</strong>
+                    ${product.orders > 0 ? `<br><small class="text-muted">৳${(product.revenue / product.orders).toFixed(2)}/order</small>` : ''}
                 </td>
             `;
             tbody.appendChild(tr);
@@ -2543,11 +2564,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div class="col-sm-6">
                             <label class="form-label text-muted">Base Price</label>
-                            <div class="fw-bold text-success">$${parseFloat(product.price || 0).toFixed(2)}</div>
+                            <div class="fw-bold text-success">৳${parseFloat(product.price || 0).toFixed(2)}</div>
                         </div>
                         <div class="col-sm-6">
                             <label class="form-label text-muted">Cost Price</label>
-                            <div class="fw-bold text-warning">$${parseFloat(product.cost_price || 0).toFixed(2)}</div>
+                            <div class="fw-bold text-warning">৳${parseFloat(product.cost_price || 0).toFixed(2)}</div>
                         </div>
                     </div>
                 </div>
@@ -2706,7 +2727,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let summaryText = `${totalProducts} products`;
         if (hasFilters) summaryText += ' (filtered)';
-        summaryText += ` • ${totalOrders} orders • ${totalDelivered} delivered • $${totalRevenue.toFixed(2)} revenue`;
+        summaryText += ` • ${totalOrders} orders • ${totalDelivered} delivered • ৳${totalRevenue.toFixed(2)} revenue`;
         
         document.getElementById('products-summary').textContent = summaryText;
     }
