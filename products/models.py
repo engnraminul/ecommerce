@@ -22,6 +22,7 @@ class Category(models.Model):
     meta_description = models.TextField(max_length=300, blank=True)
     
     is_active = models.BooleanField(default=True)
+    show_homepage = models.BooleanField(default=False, help_text="Show this category products on homepage")
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

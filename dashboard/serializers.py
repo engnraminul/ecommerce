@@ -136,7 +136,7 @@ class CategoryDashboardSerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'name', 'slug', 'description', 'image', 'parent', 'parent_name', 
-                 'meta_title', 'meta_description', 'is_active', 'product_count', 
+                 'meta_title', 'meta_description', 'is_active', 'show_homepage', 'product_count', 
                  'created_at', 'updated_at']
     
     def get_product_count(self, obj):

@@ -12,7 +12,7 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = (
             'id', 'name', 'slug', 'description', 'image', 'parent',
-            'product_count', 'subcategories', 'is_active',
+            'product_count', 'subcategories', 'is_active', 'show_homepage',
             'get_absolute_url', 'created_at'
         )
         read_only_fields = ('id', 'product_count', 'subcategories', 'get_absolute_url', 'created_at')

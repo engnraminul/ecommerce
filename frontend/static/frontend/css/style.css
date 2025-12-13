@@ -876,3 +876,124 @@ body {
 .bg-light { background-color: var(--light-color); }
 .bg-dark { background-color: var(--dark-color); }
 .bg-white { background-color: var(--white); }
+
+/* Category Products Section */
+.category-products-section {
+    padding: 3rem 0;
+    background: var(--light-color);
+}
+
+.category-products-section:nth-child(odd) {
+    background: var(--white);
+}
+
+.category-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.category-section-title {
+    text-align: left;
+    margin-bottom: 0;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--dark-color);
+    position: relative;
+}
+
+.category-section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -1rem;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background: var(--primary-color);
+    border-radius: 2px;
+}
+
+.show-all-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.5rem;
+    background: var(--primary-color);
+    color: var(--white);
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: var(--transition);
+    box-shadow: 0 4px 15px rgba(147, 0, 0, 0.2);
+}
+
+.show-all-btn:hover {
+    background: var(--dark-color);
+    transform: translateX(5px);
+    color: var(--white);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    text-decoration: none;
+}
+
+.show-all-btn i {
+    font-size: 0.85rem;
+    transition: transform 0.3s ease;
+}
+
+.show-all-btn:hover i {
+    transform: translateX(5px);
+}
+
+.category-product-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+}
+
+@media (max-width: 1200px) {
+    .category-product-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 992px) {
+    .category-product-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .category-section-title {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .category-product-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .category-section-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .category-section-title {
+        font-size: 1.2rem;
+    }
+    
+    .category-section-title::after {
+        width: 40px;
+        height: 2px;
+    }
+    
+    .show-all-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+}
+

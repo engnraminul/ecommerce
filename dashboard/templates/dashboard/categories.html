@@ -81,13 +81,14 @@
                         <th>Parent Category</th>
                         <th>Products</th>
                         <th>Status</th>
+                        <th>Homepage</th>
                         <th>Created</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="categoriesTableBody">
                     <tr>
-                        <td colspan="7" class="text-center py-4">
+                        <td colspan="8" class="text-center py-4">
                             <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
@@ -151,6 +152,9 @@
                                     
                                     <dt class="col-sm-5">Status</dt>
                                     <dd class="col-sm-7" id="categoryDetailStatus"></dd>
+                                    
+                                    <dt class="col-sm-5">Show on Homepage</dt>
+                                    <dd class="col-sm-7" id="categoryDetailShowHomepage"></dd>
                                 </dl>
                             </div>
                             <div class="col-md-6">
@@ -255,6 +259,14 @@
                                 </div>
                             </div>
 
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="categoryShowHomepage" name="show_homepage">
+                                    <label class="form-check-label" for="categoryShowHomepage">Show on Homepage</label>
+                                </div>
+                                <small class="form-text text-muted">Display this category's products on the homepage</small>
+                            </div>
+
                             <hr>
                             
                             <h6 class="mb-3 text-primary">Category Image</h6>
@@ -355,6 +367,14 @@
                                     <input class="form-check-input" type="checkbox" id="editCategoryIsActive" name="is_active">
                                     <label class="form-check-label" for="editCategoryIsActive">Active Category</label>
                                 </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="editCategoryShowHomepage" name="show_homepage">
+                                    <label class="form-check-label" for="editCategoryShowHomepage">Show on Homepage</label>
+                                </div>
+                                <small class="form-text text-muted">Display this category's products on the homepage</small>
                             </div>
 
                             <hr>
@@ -611,7 +631,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error loading categories:', error);
                 document.getElementById('categoriesTableBody').innerHTML = `
                     <tr>
-                        <td colspan="7" class="text-center py-4 text-danger">
+                        <td colspan="8" class="text-center py-4 text-danger">
                             <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
                             <p>Error loading categories. Please try again.</p>
                         </td>
@@ -627,7 +647,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!categories || categories.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="7" class="text-center py-4">
+                    <td colspan="8" class="text-center py-4">
                         <i class="fas fa-folder-open fa-2x text-muted mb-3"></i>
                         <p class="text-muted">No categories found.</p>
                     </td>
@@ -642,6 +662,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const statusBadge = category.is_active ? 
                 '<span class="badge bg-success">Active</span>' : 
                 '<span class="badge bg-danger">Inactive</span>';
+            
+            const homepageBadge = category.show_homepage ? 
+                '<span class="badge bg-primary"><i class="fas fa-home me-1"></i>Yes</span>' : 
+                '<span class="badge bg-secondary">No</span>';
             
             const parentName = category.parent_name || '-';
             const productCount = category.product_count || 0;
@@ -665,6 +689,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <span class="badge bg-info">${productCount}</span>
                 </td>
                 <td>${statusBadge}</td>
+                <td>${homepageBadge}</td>
                 <td>${new Date(category.created_at).toLocaleDateString()}</td>
                 <td>
                     <div class="btn-group btn-group-sm" role="group">
@@ -760,6 +785,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('categoryDetailStatus').innerHTML = category.is_active ? 
             '<span class="badge bg-success">Active</span>' : 
             '<span class="badge bg-danger">Inactive</span>';
+        document.getElementById('categoryDetailShowHomepage').innerHTML = category.show_homepage ? 
+            '<span class="badge bg-primary">Yes</span>' : 
+            '<span class="badge bg-secondary">No</span>';
         document.getElementById('categoryDetailMetaTitle').textContent = category.meta_title || '-';
         document.getElementById('categoryDetailMetaDescription').textContent = category.meta_description || '-';
         document.getElementById('categoryDetailCreated').textContent = new Date(category.created_at).toLocaleDateString();
@@ -860,6 +888,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('editCategoryMetaTitle').value = category.meta_title || '';
                 document.getElementById('editCategoryMetaDescription').value = category.meta_description || '';
                 document.getElementById('editCategoryIsActive').checked = category.is_active;
+                document.getElementById('editCategoryShowHomepage').checked = category.show_homepage;
                 
                 // Display system information
                 document.getElementById('editCategoryIdDisplay').textContent = category.id;

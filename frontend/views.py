@@ -92,11 +92,47 @@ def home(request):
         # Also keep featured categories for backward compatibility if needed
         featured_categories = parent_categories[:6]
         
+        # Get categories marked to show on homepage with their products
+        homepage_categories_data = []
+        homepage_categories = Category.objects.filter(
+            is_active=True,
+            show_homepage=True
+        ).order_by('name')
+        
+        for category in homepage_categories:
+            # If it's a parent category, get all products from this category and its children
+            if category.parent is None:
+                # Get all child category IDs
+                child_categories = Category.objects.filter(
+                    parent=category, 
+                    is_active=True
+                ).values_list('id', flat=True)
+                
+                # Include both parent and child category products
+                category_ids = list(child_categories) + [category.id]
+                category_products = Product.objects.filter(
+                    category_id__in=category_ids,
+                    is_active=True
+                ).select_related('category').prefetch_related('images')[:4]
+            else:
+                # If it's a child category, get only its products
+                category_products = Product.objects.filter(
+                    category=category,
+                    is_active=True
+                ).select_related('category').prefetch_related('images')[:4]
+            
+            if category_products.exists():
+                homepage_categories_data.append({
+                    'category': category,
+                    'products': list(category_products)
+                })
+        
         context = {
             'hero_slides': hero_slides,
             'featured_products': featured_products,
             'featured_categories': featured_categories,
             'parent_categories': parent_categories,  # All parent categories
+            'homepage_categories': homepage_categories_data,  # Categories with show_homepage=True
         }
         
         # Cache the data
