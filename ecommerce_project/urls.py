@@ -18,6 +18,8 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib.sitemaps.views import sitemap
+from django.views.generic import TemplateView
 from test_integration import test_integration_view
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import (
@@ -25,6 +27,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 from dashboard.views import get_checkout_customization
+from products.sitemaps import sitemaps
 
 # API URL patterns
 api_urlpatterns = [
@@ -47,6 +50,10 @@ api_urlpatterns = [
 urlpatterns = [
     # Admin
     path('admin/', admin.site.urls),
+    
+    # SEO: Sitemap and Robots.txt
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
+    path('robots.txt', TemplateView.as_view(template_name='robots.txt', content_type='text/plain'), name='robots_txt'),
     
     # CKEditor
     path('ckeditor/', include('ckeditor_uploader.urls')),
