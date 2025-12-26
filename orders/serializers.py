@@ -324,9 +324,8 @@ class CreateOrderSerializer(serializers.Serializer):
             customer_email = guest_email or shipping_data.get('email', '')
             customer_phone = guest_phone or shipping_data.get('phone', '')
         
-        # Validate guest order requirements
-        if not user and not customer_email:
-            raise serializers.ValidationError("Email is required for guest orders.")
+        # Email is now optional for all orders (both authenticated and guest)
+        # No validation required for missing email
         
         # Get payment method data
         payment_method = validated_data.get('payment_method', 'cod')

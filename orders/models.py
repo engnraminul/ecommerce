@@ -74,7 +74,7 @@ class Order(models.Model):
     nagad_sender_number = models.CharField(max_length=15, blank=True)
     
     # Customer information (stored for record keeping)
-    customer_email = models.EmailField()
+    customer_email = models.EmailField(blank=True)
     customer_phone = models.CharField(max_length=15, blank=True)
     customer_ip = models.GenericIPAddressField(blank=True, null=True, help_text="Customer's IP address when placing order")
     
@@ -107,7 +107,7 @@ class Order(models.Model):
     def __str__(self):
         if self.user:
             return f"Order {self.order_number} - {self.user.username}"
-        return f"Guest Order {self.order_number} - {self.customer_email}"
+        return f"Guest Order {self.order_number} - {self.customer_email or 'No Email'}"
     
     def save(self, *args, **kwargs):
         # Normalize phone numbers before saving
@@ -374,7 +374,7 @@ class Invoice(models.Model):
     
     # Billing information (copied from order)
     billing_name = models.CharField(max_length=200)
-    billing_email = models.EmailField()
+    billing_email = models.EmailField(blank=True)
     billing_address = models.TextField()
     
     created_at = models.DateTimeField(auto_now_add=True)
